@@ -1,6 +1,7 @@
 // src/components/LiveStats.tsx
 import { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient'; // adjust if needed
+import { supabase } from '../supabaseClient';
+import DualAxisChart from './DualAxisChart';
 
 interface LogEntry {
   id?: string;
@@ -18,6 +19,7 @@ interface LogEntry {
 
 const LiveStats = () => {
   const [latest, setLatest] = useState<LogEntry | null>(null);
+  const [sensorLogs, setSensorLogs] = useState<LogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const fetchFromSupabase = async () => {
@@ -41,6 +43,23 @@ const LiveStats = () => {
     }
   };
 
+  const fetchLogHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sensor_logs')
+        .select('id, timestamp, data')
+        .order('timestamp', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        setSensorLogs(data.reverse());
+      }
+    } catch (err: any) {
+      console.error('Error fetching log history:', err.message);
+    }
+  };
+
   const fetchFromFallback = async () => {
     try {
       const response = await fetch('/api/latest');
@@ -56,7 +75,11 @@ const LiveStats = () => {
 
   useEffect(() => {
     fetchFromSupabase();
-    const interval = setInterval(fetchFromSupabase, 5000);
+    fetchLogHistory();
+    const interval = setInterval(() => {
+      fetchFromSupabase();
+      fetchLogHistory();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -74,23 +97,37 @@ const LiveStats = () => {
   } = latest.data;
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem',
-        textAlign: 'center',
-      }}
-    >
-      <div>🌡️ <strong>Temp:</strong> {temperature.toFixed(1)} °F</div>
-      <div>💧 <strong>Humidity:</strong> {humidity.toFixed(1)} %</div>
-      <div>🌴 <strong>Soil Moisture:</strong> {moisture.toFixed(1)}%</div>
-      <div>🕒 <strong>Duration:</strong> {(duration / 1000).toFixed(1)}s</div>
-      <div>⏱️ <strong>Last Watering Duration:</strong> {lastWateringDuration.toFixed(1)}s</div>
-      <div>🚿 <strong>Last Watered:</strong> {lastWateredTime}</div>
-      <div>📅 <strong>Log Time:</strong> {new Date(latest.timestamp).toLocaleString()}</div>
-      <div>🔄 <strong>Currently Watering:</strong> {watering ? 'Yes' : 'No'}</div>
-    </div>
+    <>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          textAlign: 'center',
+        }}
+      >
+        <div>🌡️ <strong>Temp:</strong> {temperature.toFixed(1)} °F</div>
+        <div>💧 <strong>Humidity:</strong> {humidity.toFixed(1)} %</div>
+        <div>🌴 <strong>Soil Moisture:</strong> {moisture.toFixed(1)}%</div>
+        <div>🕒 <strong>Duration:</strong> {(duration / 1000).toFixed(1)}s</div>
+        <div>⏱️ <strong>Last Watering Duration:</strong> {lastWateringDuration.toFixed(1)}s</div>
+        <div>🚿 <strong>Last Watered:</strong> {lastWateredTime}</div>
+        <div>📅 <strong>Log Time:</strong> {new Date(latest.timestamp).toLocaleString()}</div>
+        <div>🔄 <strong>Currently Watering:</strong> {watering ? 'Yes' : 'No'}</div>
+      </div>
+
+      <div style={{ marginTop: "2rem" }}>
+        <h3 style={{ textAlign: "center" }}>📈 Sensor Trends</h3>
+        <DualAxisChart
+          sensorLogs={sensorLogs.map(log => ({
+            timestamp: log.timestamp,
+            temperature: log.data.temperature,
+            humidity: log.data.humidity,
+            moisture: log.data.moisture,
+          }))}
+        />
+      </div>
+    </>
   );
 };
 
