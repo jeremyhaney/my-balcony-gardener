@@ -1,0 +1,9 @@
+{
+  "data": {
+    "duration": 0,
+    "humidity": 51,
+    "moisture": 82,
+    "watering": false,
+    "temperature": 79.88
+  }
+}

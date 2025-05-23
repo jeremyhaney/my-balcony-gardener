@@ -1,0 +1,2 @@
+id,device_id,user_id,timestamp,data
+1,550e8400-e29b-41d4-a716-446655440000,111e8400-e29b-41d4-a716-446655440abc,2025-05-13 12:00:00,"{""temperature"": 72.4, ""humidity"": 55.6, ""moisture"": 48, ""watering"": true, ""duration"": 5000}"

@@ -1,0 +1,3 @@
+I did get the array to look proper!  
+
+I am attaching the latest sketch as a .bak file.  Please make no changes to the sketch at this point.  I am also attaching the current LiveStats.tsx file.  Please update it to reflect the new array structure and to work with this sketch.  Please add code comments as necessary.
