@@ -129,3 +129,5 @@ Do not bypass Supabase with local-only dashboards or mock data
 Do not disable RLS — adjust policies or create views as needed
 
 Do not host frontend inside Express or ESP32 — final hosting is Cloudflare Pages
+
+#letsfkngo!

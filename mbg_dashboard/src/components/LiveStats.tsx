@@ -17,6 +17,8 @@ interface LogEntry {
   };
 }
 
+const WATER_ENDPOINT = import.meta.env.VITE_WATER_ENDPOINT || "http://10.0.0.192/water";
+
 const LiveStats = () => {
   const [latest, setLatest] = useState<LogEntry | null>(null);
   const [sensorLogs, setSensorLogs] = useState<LogEntry[]>([]);
@@ -114,6 +116,27 @@ const LiveStats = () => {
         <div>🚿 <strong>Last Watered:</strong> {lastWateredTime}</div>
         <div>📅 <strong>Log Time:</strong> {new Date(latest.timestamp).toLocaleString()}</div>
         <div>🔄 <strong>Currently Watering:</strong> {watering ? 'Yes' : 'No'}</div>
+      </div>
+
+      <div style={{ marginTop: "2rem", textAlign: "center" }}>
+        <button
+          onClick={async () => {
+            try {
+              const response = await fetch(WATER_ENDPOINT);
+              if (response.ok) {
+                alert("🚿 Manual watering triggered!");
+              } else {
+                alert("⚠️ Watering request failed.");
+              }
+            } catch (err) {
+              console.error("Error triggering water:", err);
+              alert("⚠️ Unable to reach ESP32.");
+            }
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+        >
+          💧 Water Now
+        </button>
       </div>
 
       <div style={{ marginTop: "2rem" }}>
