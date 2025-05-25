@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "echo 'Cloudflare is totally reading THIS package.json' && tsc -b && vite build",
+    "build": "echo 'Cloudflare is reading THIS package.json' && tsc -b tsconfig.json && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
