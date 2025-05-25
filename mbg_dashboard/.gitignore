@@ -36,6 +36,10 @@ include/
 # Frontend build artifacts
 mbg_dashboard/dist/
 
+# Allow build config for Cloudflare
+!mbg_dashboard/package.json
+!mbg_dashboard/package-lock.json
+
 # Backend production frontend files (overwrite by build)
 backend/public/
 
