@@ -48,5 +48,4 @@ backend/public/
 
 # Data files
 *.csv
-*.json
 !package-lock.json
