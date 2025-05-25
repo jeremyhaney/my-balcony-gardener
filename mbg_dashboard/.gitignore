@@ -39,6 +39,9 @@ mbg_dashboard/dist/
 # Allow build config for Cloudflare
 !mbg_dashboard/package.json
 !mbg_dashboard/package-lock.json
+!mbg_dashboard/tsconfig.json
+!mbg_dashboard/tsconfig.app.json
+!mbg_dashboard/tsconfig.node.json
 
 # Backend production frontend files (overwrite by build)
 backend/public/
