@@ -30,7 +30,9 @@ dist-ssr
 
 # PlatformIO (for ESP32)
 .pio/
-lib/
+/lib/
+!mbg_dashboard/src/lib/
+
 include/
 
 # Frontend build artifacts
