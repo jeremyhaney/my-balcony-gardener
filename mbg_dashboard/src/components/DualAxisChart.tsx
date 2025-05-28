@@ -38,7 +38,7 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" />
-          <YAxis yAxisId="left" domain={["auto", "auto"]} label={{ value: "Temp (°F)", angle: -90, position: "insideLeft" }} />
+          <YAxis yAxisId="left" domain={[30, 100]} label={{ value: "Temp (°F)", angle: -90, position: "insideLeft" }} />
           <YAxis yAxisId="right" orientation="right" domain={[0, 100]} label={{ value: "Humidity / Moisture (%)", angle: 90, position: "insideRight" }} />
           <Tooltip />
           <Legend />
