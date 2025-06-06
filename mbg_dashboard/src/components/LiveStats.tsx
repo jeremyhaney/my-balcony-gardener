@@ -6,18 +6,15 @@ import DualAxisChart from './DualAxisChart';
 interface LogEntry {
   id?: string;
   timestamp: string;
-  data: {
-    temperature: number;
-    humidity: number;
-    moisture: number;
-    duration: number;
-    lastWateredTime: string;
-    lastWateringDuration: number;
-    watering: boolean;
-  };
+  temperature: number;
+  humidity: number;
+  moisture: number;
+  watering: boolean;
+  lastWateredTime: string;
+  lastWateringDuration: number;
 }
 
-const WATER_ENDPOINT = import.meta.env.VITE_WATER_ENDPOINT || "http://10.0.0.192/water";
+const WATER_ENDPOINT = import.meta.env.VITE_WATER_ENDPOINT || "http://10.0.0.192/water-now";
 
 const LiveStats = () => {
   const [latest, setLatest] = useState<LogEntry | null>(null);
@@ -28,7 +25,7 @@ const LiveStats = () => {
     try {
       const { data, error } = await supabase
         .from('sensor_logs')
-        .select('id, timestamp, data')
+        .select('*')
         .order('timestamp', { ascending: false })
         .limit(1);
 
@@ -40,7 +37,7 @@ const LiveStats = () => {
         setError('No data available from Supabase.');
       }
     } catch (err: any) {
-      console.warn('Supabase fetch failed. Falling back to /api/latest.', err.message);
+      console.warn('Supabase fetch failed. Falling back to /logs.', err.message);
       fetchFromFallback();
     }
   };
@@ -49,7 +46,7 @@ const LiveStats = () => {
     try {
       const { data, error } = await supabase
         .from('sensor_logs')
-        .select('id, timestamp, data')
+        .select('*')
         .order('timestamp', { ascending: false })
         .limit(100);
 
@@ -64,7 +61,7 @@ const LiveStats = () => {
 
   const fetchFromFallback = async () => {
     try {
-      const response = await fetch('/api/latest');
+      const response = await fetch('/logs');
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const data = await response.json();
       setLatest(data);
@@ -76,27 +73,71 @@ const LiveStats = () => {
   };
 
   useEffect(() => {
-    fetchFromSupabase();
-    fetchLogHistory();
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        await Promise.all([fetchFromSupabase(), fetchLogHistory()]);
+      } catch (err) {
+        if (isMounted) {
+          console.error('Error in initial data fetch:', err);
+          setError('Failed to load initial data. Check console for details.');
+        }
+      }
+    };
+
+    fetchData();
+
     const interval = setInterval(() => {
-      fetchFromSupabase();
-      fetchLogHistory();
+      if (isMounted) {
+        fetchFromSupabase().catch(console.error);
+        fetchLogHistory().catch(console.error);
+      }
     }, 5000);
-    return () => clearInterval(interval);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
-  if (!latest) return <div>Loading live stats...</div>;
+  if (error) {
+    return (
+      <div style={{ 
+        color: 'red', 
+        padding: '1rem',
+        backgroundColor: '#ffebee',
+        borderRadius: '4px',
+        margin: '1rem 0'
+      }}>
+        <strong>Error:</strong> {error}
+      </div>
+    );
+  }
+  
+  if (!latest) {
+    return (
+      <div style={{ 
+        padding: '1rem',
+        backgroundColor: '#e3f2fd',
+        borderRadius: '4px',
+        margin: '1rem 0',
+        textAlign: 'center'
+      }}>
+        Loading live stats...
+      </div>
+    );
+  }
 
+  // Safely destructure with defaults to prevent runtime errors
   const {
-    temperature,
-    humidity,
-    moisture,
-    duration,
-    lastWateredTime,
-    lastWateringDuration,
-    watering,
-  } = latest.data;
+    temperature = 0,
+    humidity = 0,
+    moisture = 0,
+    watering = false,
+    lastWateredTime = 'Never',
+    lastWateringDuration = 0,
+  } = latest || {};
 
   return (
     <>
@@ -111,7 +152,6 @@ const LiveStats = () => {
         <div>🌡️ <strong>Temp:</strong> {temperature.toFixed(1)} °F</div>
         <div>💧 <strong>Humidity:</strong> {humidity.toFixed(1)} %</div>
         <div>🌴 <strong>Soil Moisture:</strong> {moisture.toFixed(1)}%</div>
-        <div>🕒 <strong>Duration:</strong> {(duration / 1000).toFixed(1)}s</div>
         <div>⏱️ <strong>Last Watering Duration:</strong> {lastWateringDuration.toFixed(1)}s</div>
         <div>🚿 <strong>Last Watered:</strong> {lastWateredTime}</div>
         <div>📅 <strong>Log Time:</strong> {new Date(latest.timestamp).toLocaleString()}</div>
@@ -122,7 +162,7 @@ const LiveStats = () => {
         <button
           onClick={async () => {
             try {
-              const response = await fetch(WATER_ENDPOINT);
+              const response = await fetch(WATER_ENDPOINT, { method: 'POST' });
               if (response.ok) {
                 alert("🚿 Manual watering triggered!");
               } else {
@@ -143,10 +183,10 @@ const LiveStats = () => {
         <h3 style={{ textAlign: "center" }}>📈 Sensor Trends</h3>
         <DualAxisChart
           sensorLogs={sensorLogs.map(log => ({
-            timestamp: log.timestamp,
-            temperature: log.data.temperature,
-            humidity: log.data.humidity,
-            moisture: log.data.moisture,
+            timestamp: log?.timestamp || new Date().toISOString(),
+            temperature: log?.temperature || 0,
+            humidity: log?.humidity || 0,
+            moisture: log?.moisture || 0,
           }))}
         />
       </div>

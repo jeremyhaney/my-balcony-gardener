@@ -1,37 +1,80 @@
 @echo off
-title My Balcony Gardener: Production Build + Deploy
+setlocal enabledelayedexpansion
+title My Balcony Gardener: Build and Deploy v1.0.0
+
 echo ====================================================
-echo  Building and Deploying Production Site for MBG
+echo  My Balcony Gardener - Build and Deploy
+  Version 1.0.0
 echo ====================================================
+echo Current directory: %CD%
 echo.
 
-:: Step 1 - Build React frontend
-echo [1/5] Building React app...
-cd "mbg_dashboard"
+:: Check if in project root
+if not exist "mbg_dashboard" (
+    echo Error: 'mbg_dashboard' directory not found in %CD%
+    echo Please run this script from the project root directory.
+    pause
+    exit /b 1
+)
+
+:: Step 1 - Verify Node.js and npm
+echo [1/5] Checking Node.js and npm...
+node --version >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo Error: Node.js is not installed or not in PATH.
+    echo Please install Node.js from https://nodejs.org/
+    pause
+    exit /b 1
+)
+
+npm --version >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo Error: npm is not installed or not in PATH.
+    pause
+    exit /b 1
+)
+
+:: Check for required environment variables
+echo [2/5] Checking environment...
+if not exist "mbg_dashboard\.env" (
+    echo Error: .env file not found in mbg_dashboard directory.
+    echo Please create it from .env.example and set the required variables.
+    pause
+    exit /b 1
+)
+
+:: Install dependencies
+echo [3/5] Installing dependencies...
+cd mbg_dashboard
+call npm ci
+if %ERRORLEVEL% neq 0 (
+    echo Error: Failed to install dependencies.
+    pause
+    exit /b 1
+)
+
+:: Build the project
+echo [4/5] Building the project...
 call npm run build
-cd ..
+if %ERRORLEVEL% neq 0 (
+    echo Error: Build failed.
+    pause
+    exit /b 1
+)
 
-:: Step 2 - Clean backend public folder
-echo [2/5] Cleaning backend/public folder...
-rmdir /s /q "backend\public"
-mkdir "backend\public"
-
-:: Step 3 - Copy build output to backend/public
-echo [3/5] Copying built files to backend/public...
-xcopy /E /I /Y "mbg_dashboard\dist\*" "backend\public"
-
-:: Step 4 - Kill any previous node processes on port 3001 (optional clean-up)
-echo [4/5] Killing any process on port 3001...
-for /f "tokens=5" %%a in ('netstat -aon ^| find ":3001" ^| find "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
-
-:: Step 5 - Start backend and Cloudflare tunnel
-echo [5/5] Starting backend and tunnel...
-start "MBG Backend (Production)" cmd /k "cd backend && node index.js"
-timeout /t 2 /nobreak >nul
-start "Cloudflare Tunnel" cmd /k "cloudflared tunnel run a97e498f-60a8-47f5-b03d-da43dfc488e0"
+:: Deploy to Cloudflare Pages
+echo [5/5] Deploying to Cloudflare Pages...
+npm run deploy
+if %ERRORLEVEL% neq 0 (
+    echo Error: Deployment failed.
+    pause
+    exit /b 1
+)
 
 echo.
-echo ✅ Production site deployed!
-echo    https://mybalconygardener.boileragency.com
+echo ====================================================
+echo  Build and Deployment Complete!
+echo  Your application should be live shortly.
+echo ====================================================
 echo.
 pause

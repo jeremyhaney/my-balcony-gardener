@@ -1,31 +1,73 @@
 @echo off
-title My Balcony Gardener: Full Dev Stack
+setlocal enabledelayedexpansion
+title My Balcony Gardener: Development Environment
+
 echo ====================================================
-echo  Starting FULL DEVELOPMENT STACK for MBG
+echo  My Balcony Gardener - Development Environment
+echo  Version 1.0.0
 echo ====================================================
 echo.
 
-:: Start backend
-echo [1/3] Starting backend server...
-start "MBG Backend" cmd /k "cd backend && node index.js"
+:: Check if in project root
+if not exist "mbg_dashboard" (
+    echo Error: 'mbg_dashboard' directory not found.
+    echo Please run this script from the project root directory.
+    pause
+    exit /b 1
+)
 
-:: Wait a moment to let backend spin up
-timeout /t 2 /nobreak >nul
+:: Check for required environment file
+echo [1/3] Checking environment...
+if not exist "mbg_dashboard\.env.local" (
+    echo Error: .env.local file not found in mbg_dashboard directory.
+    echo Please create it from .env.example and set the required variables.
+    pause
+    exit /b 1
+)
+
+:: Verify required variables are set in .env.local
+findstr /i "VITE_SUPABASE_URL" "mbg_dashboard\.env.local" >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo Error: VITE_SUPABASE_URL is not set in .env.local file
+    pause
+    exit /b 1
+)
+
+findstr /i "VITE_SUPABASE_ANON_KEY" "mbg_dashboard\.env.local" >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo Error: VITE_SUPABASE_ANON_KEY is not set in .env.local file
+    pause
+    exit /b 1
+)
 
 :: Start Vite frontend dev server
-echo [2/3] Starting frontend (Vite) dev server...
-start "MBG Frontend" cmd /k "cd mbg_dashboard && run-dev.bat"
+echo [2/3] Starting Vite development server...
+start "MBG Frontend" cmd /k "cd /d "%CD%\mbg_dashboard" && npm run dev"
 
-:: Wait before tunnel (ensures localhost is ready)
-timeout /t 2 /nobreak >nul
+:: Wait for Vite to start
+timeout /t 5 /nobreak >nul
 
-:: Start Cloudflare tunnel
+:: Start Cloudflare tunnel using existing configuration
 echo [3/3] Starting Cloudflare tunnel...
-start "Cloudflare Tunnel" cmd /k "cloudflared tunnel run a97e498f-60a8-47f5-b03d-da43dfc488e0"
+start "Cloudflare Tunnel" cmd /k "cd /d "%CD%" && cloudflared tunnel run a97e498f-60a8-47f5-b03d-da43dfc488e0"
 
 echo.
-echo ✅ All services launched. You may now access:
-echo    Local Frontend: http://localhost:5173
-echo    Public Website: https://mybalconygardener.boileragency.com
+echo ====================================================
+echo  Development environment is running!
+echo  Local:      http://localhost:5173
+echo  Network:    Check the Cloudflare tunnel window for public URL
 echo.
+echo  Press any key to stop all services...
+echo ====================================================
+
+pause >nul
+
+:: Cleanup
+echo.
+echo Stopping all services...
+taskkill /f /im node.exe >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq Cloudflare Tunnel*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq Vite*" >nul 2>&1
+
+echo All services have been stopped.
 pause

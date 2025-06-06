@@ -1,7 +1,18 @@
 # Changelog
 
 ## v0.0.1 - April 30, 2025
+
 - Project initialized
 - Temperature and humidity logging
 - Basic web server and dashboard
 
+## v1.0.0_refactored - 2025-06-02
+
+- Major refactoring to comply with PRD requirements
+- Removed hardcoded credentials (moved to config.h)
+- Fixed Supabase data structure (removed nested "data" object)
+- Changed endpoint from /water to /water-now
+- Removed legacy files (data/, backup files, backend/)
+- Improved code modularity and separation of concerns
+- Updated frontend to handle flat data structure
+- Added proper error handling and status codes
