@@ -57,17 +57,49 @@ npm run build
 - `GET /logs` - Get current sensor readings
 - `POST /water-now` - Trigger manual watering
 
-## Supabase Schema
+## Data Structure
+
+### JSON Payload Format
+
+Example of the data structure sent to Supabase and used by the frontend:
+
+```json
+{
+  "device_id": "550e8400-e29b-41d4-a716-446655440000",
+  "timestamp": "2025-06-06T18:16:12-04:00",
+  "data": {
+    "temperature": 80.6,
+    "humidity": 53.0,
+    "moisture": 73,
+    "watering": false,
+    "lastWateredTime": "2025-06-06T18:10:00-04:00",
+    "lastWateringDuration": 5
+  }
+}
+```
+
+### Field Descriptions
+
+- **device_id**: Unique identifier for the ESP32 device (UUID v4)
+- **timestamp**: ISO 8601 timestamp when the reading was taken
+- **data.temperature**: Current temperature in Fahrenheit (float, 1 decimal place)
+- **data.humidity**: Current relative humidity percentage (float, 1 decimal place)
+- **data.moisture**: Soil moisture percentage (integer, 0-100%)
+- **data.watering**: Boolean indicating if the system is currently watering
+- **data.lastWateredTime**: ISO 8601 timestamp of the last watering event, or "N/A"
+- **data.lastWateringDuration**: Duration of the last watering event in seconds
+
+### Supabase Schema
 
 Table: `sensor_logs`
-- `device_id` (uuid)
-- `temperature` (float)
-- `humidity` (float)
-- `moisture` (int)
-- `watering` (boolean)
-- `lastWateredTime` (text)
-- `lastWateringDuration` (int)
-- `timestamp` (timestamptz)
+- `id` (uuid, primary key) - Auto-generated UUID
+- `device_id` (text) - References the ESP32 device
+- `data` (jsonb) - Contains all sensor readings and state
+- `timestamp` (timestamptz) - When the record was created (auto-set by Supabase)
+
+### Local API Endpoint
+
+The ESP32's `/logs` endpoint returns the same data structure, making it compatible with both local development and Supabase integration.
 
 ## Hardware
 

@@ -81,22 +81,39 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, bool wa
   client.setInsecure(); // TODO: Use setCACert() for production
   HTTPClient https;
 
-  https.begin(client, SUPABASE_URL);
+  // Make sure the URL ends with /rest/v1/table_name
+  String url = String(SUPABASE_URL);
+  if (!url.endsWith("sensor_logs")) {
+    if (url.endsWith("/")) {
+      url += "rest/v1/sensor_logs";
+    } else {
+      url += "/rest/v1/sensor_logs";
+    }
+  }
+
+  Serial.print("📤 Sending to Supabase URL: ");
+  Serial.println(url);
+
+  https.begin(client, url);
   https.addHeader("apikey", SUPABASE_ANON_KEY);
   https.addHeader("Authorization", "Bearer " + String(SUPABASE_ANON_KEY));
   https.addHeader("Content-Type", "application/json");
   https.addHeader("Prefer", "return=minimal");
 
-  // Build JSON payload according to Supabase schema
+  // Build JSON payload - FIXED to nest values inside "data" object
   String postData = "{";
   postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  postData += "\"data\":{"; // Nest all sensor data inside "data" object
   postData += "\"temperature\":" + String(temperature, 2) + ",";
   postData += "\"humidity\":" + String(humidity, 2) + ",";
   postData += "\"moisture\":" + String(moisture) + ",";
   postData += "\"watering\":" + String(watering ? "true" : "false") + ",";
   postData += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
   postData += "\"lastWateringDuration\":" + String(lastWateringDuration);
+  postData += "}"; // Close data object
   postData += "}";
+
+  Serial.println("📦 Payload: " + postData);
 
   int httpCode = https.POST(postData);
 
@@ -107,10 +124,13 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, bool wa
       Serial.print("⚠️ Supabase response code: ");
       Serial.println(httpCode);
       String response = https.getString();
+      Serial.print("Response: ");
       Serial.println(response);
     }
   } else {
     Serial.println("❌ POST failed");
+    Serial.print("Error: ");
+    Serial.println(https.errorToString(httpCode).c_str());
   }
 
   https.end();
@@ -138,14 +158,18 @@ void handleLogs() {
   float moisture = map(soilValue, 3680, 1230, 0, 100);
   moisture = constrain(moisture, 0, 100);
 
+  // Use the same format as we send to Supabase for consistency
   String response = "{";
+  response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  response += "\"timestamp\":\"" + getFormattedTime() + "\",";
+  response += "\"data\":{";
   response += "\"temperature\":" + String(tempF, 1) + ",";
   response += "\"humidity\":" + String(humidity, 1) + ",";
   response += "\"moisture\":" + String(moisture, 1) + ",";
   response += "\"watering\":" + String(isWatering ? "true" : "false") + ",";
   response += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
-  response += "\"lastWateringDuration\":" + String(lastWateringDuration) + ",";
-  response += "\"timestamp\":\"" + getFormattedTime() + "\"";
+  response += "\"lastWateringDuration\":" + String(lastWateringDuration);
+  response += "}";
   response += "}";
 
   server.send(200, "application/json", response);

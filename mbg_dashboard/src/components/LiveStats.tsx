@@ -5,13 +5,16 @@ import DualAxisChart from './DualAxisChart';
 
 interface LogEntry {
   id?: string;
+  device_id?: string;
   timestamp: string;
-  temperature: number;
-  humidity: number;
-  moisture: number;
-  watering: boolean;
-  lastWateredTime: string;
-  lastWateringDuration: number;
+  data: {
+    temperature: number;
+    humidity: number;
+    moisture: number;
+    watering: boolean;
+    lastWateredTime: string;
+    lastWateringDuration: number;
+  };
 }
 
 const WATER_ENDPOINT = import.meta.env.VITE_WATER_ENDPOINT || "http://10.0.0.192/water-now";
@@ -64,7 +67,21 @@ const LiveStats = () => {
       const response = await fetch('/logs');
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const data = await response.json();
-      setLatest(data);
+      
+      // Transform local API data to match Supabase format if needed
+      const transformedData = {
+        timestamp: data.timestamp || new Date().toISOString(),
+        data: {
+          temperature: data.temperature || 0,
+          humidity: data.humidity || 0,
+          moisture: data.moisture || 0,
+          watering: data.watering || false,
+          lastWateredTime: data.lastWateredTime || 'Never',
+          lastWateringDuration: data.lastWateringDuration || 0
+        }
+      };
+      
+      setLatest(transformedData);
       setError(null);
     } catch (err: any) {
       console.error('Fallback fetch also failed:', err.message);
@@ -131,13 +148,25 @@ const LiveStats = () => {
 
   // Safely destructure with defaults to prevent runtime errors
   const {
+    data: sensorData = {
+      temperature: 0,
+      humidity: 0,
+      moisture: 0,
+      watering: false,
+      lastWateredTime: 'Never',
+      lastWateringDuration: 0,
+    }
+  } = latest || {};
+
+  // Extract values from the nested data structure
+  const {
     temperature = 0,
     humidity = 0,
     moisture = 0,
     watering = false,
     lastWateredTime = 'Never',
     lastWateringDuration = 0,
-  } = latest || {};
+  } = sensorData;
 
   return (
     <>
@@ -184,9 +213,9 @@ const LiveStats = () => {
         <DualAxisChart
           sensorLogs={sensorLogs.map(log => ({
             timestamp: log?.timestamp || new Date().toISOString(),
-            temperature: log?.temperature || 0,
-            humidity: log?.humidity || 0,
-            moisture: log?.moisture || 0,
+            temperature: log?.data?.temperature || 0,
+            humidity: log?.data?.humidity || 0,
+            moisture: log?.data?.moisture || 0,
           }))}
         />
       </div>

@@ -10,9 +10,14 @@
 
 - Major refactoring to comply with PRD requirements
 - Removed hardcoded credentials (moved to config.h)
-- Fixed Supabase data structure (removed nested "data" object)
 - Changed endpoint from /water to /water-now
 - Removed legacy files (data/, backup files, backend/)
 - Improved code modularity and separation of concerns
-- Updated frontend to handle flat data structure
 - Added proper error handling and status codes
+
+## v1.0.1 - 2025-06-06
+
+- Fixed Supabase data structure to use nested "data" object
+- Updated frontend to handle nested data structure
+- Fixed local API endpoint to match Supabase format
+- Updated documentation to reflect current schema

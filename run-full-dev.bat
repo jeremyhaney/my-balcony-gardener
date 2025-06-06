@@ -47,9 +47,9 @@ start "MBG Frontend" cmd /k "cd /d "%CD%\mbg_dashboard" && npm run dev"
 :: Wait for Vite to start
 timeout /t 5 /nobreak >nul
 
-:: Start Cloudflare tunnel using existing configuration
+:: Start Cloudflare tunnel with explicit configuration
 echo [3/3] Starting Cloudflare tunnel...
-start "Cloudflare Tunnel" cmd /k "cd /d "%CD%" && cloudflared tunnel run a97e498f-60a8-47f5-b03d-da43dfc488e0"
+start "Cloudflare Tunnel" cmd /k "cd /d "%CD%" && cloudflared tunnel --url http://localhost:5173 run a97e498f-60a8-47f5-b03d-da43dfc488e0"
 
 echo.
 echo ====================================================
