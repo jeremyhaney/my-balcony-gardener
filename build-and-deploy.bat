@@ -1,80 +1,66 @@
 @echo off
 setlocal enabledelayedexpansion
-title My Balcony Gardener: Build and Deploy v1.0.0
+title My Balcony Gardener: Build and Deploy
 
-echo ====================================================
-echo  My Balcony Gardener - Build and Deploy
-  Version 1.0.0
-echo ====================================================
-echo Current directory: %CD%
-echo.
+:: Change to script directory
+cd /d "%~dp0"
+
+:: Kill any running processes
+taskkill /f /im node.exe >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq Cloudflare Tunnel*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq MBG Frontend*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq Vite*" >nul 2>&1
+timeout /t 2 /nobreak >nul
 
 :: Check if in project root
 if not exist "mbg_dashboard" (
     echo Error: 'mbg_dashboard' directory not found in %CD%
-    echo Please run this script from the project root directory.
-    pause
-    exit /b 1
-)
-
-:: Step 1 - Verify Node.js and npm
-echo [1/5] Checking Node.js and npm...
-node --version >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo Error: Node.js is not installed or not in PATH.
-    echo Please install Node.js from https://nodejs.org/
-    pause
-    exit /b 1
-)
-
-npm --version >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo Error: npm is not installed or not in PATH.
-    pause
-    exit /b 1
-)
-
-:: Check for required environment variables
-echo [2/5] Checking environment...
-if not exist "mbg_dashboard\.env" (
-    echo Error: .env file not found in mbg_dashboard directory.
-    echo Please create it from .env.example and set the required variables.
     pause
     exit /b 1
 )
 
 :: Install dependencies
-echo [3/5] Installing dependencies...
+echo Installing dependencies...
 cd mbg_dashboard
 call npm ci
-if %ERRORLEVEL% neq 0 (
-    echo Error: Failed to install dependencies.
+if errorlevel 1 (
+    echo Error: Failed to install dependencies
     pause
     exit /b 1
 )
 
 :: Build the project
-echo [4/5] Building the project...
+echo Building the project...
 call npm run build
-if %ERRORLEVEL% neq 0 (
-    echo Error: Build failed.
+if errorlevel 1 (
+    echo Error: Build failed
     pause
     exit /b 1
 )
 
-:: Deploy to Cloudflare Pages
-echo [5/5] Deploying to Cloudflare Pages...
-npm run deploy
-if %ERRORLEVEL% neq 0 (
-    echo Error: Deployment failed.
+:: Start Vite preview server on port 5173 for consistency
+echo Starting Vite preview server on port 5173...
+start "Vite Preview" cmd /k "npm run preview -- --port 5173"
+
+echo Waiting for Vite preview server to start (10 seconds)...
+timeout /t 10 /nobreak >nul
+
+:: Verify the preview server is running
+echo Verifying Vite preview server is running...
+curl -s -o nul -w "%%{http_code}" http://localhost:5173 | find "200" >nul
+if errorlevel 1 (
+    echo Error: Vite preview server is not responding on port 5173
     pause
     exit /b 1
 )
+
+:: Start Cloudflare tunnel
+echo Starting Cloudflare tunnel...
+start "Cloudflare Tunnel" cmd /k "cd /d "%CD%\.." && cloudflared tunnel --url http://localhost:5173 run a97e498f-60a8-47f5-b03d-da43dfc488e0"
 
 echo.
-echo ====================================================
-echo  Build and Deployment Complete!
-echo  Your application should be live shortly.
-echo ====================================================
+echo Build and deployment complete!
+echo Vite preview: http://localhost:5173
+echo Cloudflare tunnel should open in a new window
 echo.
 pause
