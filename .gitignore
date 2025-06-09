@@ -1,8 +1,11 @@
 # ESP32/Backend Configuration
 # --------------------------
-
 # Credentials and sensitive configs
 src/config.h
+
+# Cloudflare credentials and configs
+.cloudflared/*
+cloudflare-config.yml
 
 # PlatformIO build files
 .pio/
