@@ -1,22 +1,24 @@
-# .env files
-.env
-.env.local
+# ESP32/Backend Configuration
+# --------------------------
+# Credentials and sensitive configs
+src/config.h
 
-# PlatformIO folders
+# Cloudflare credentials and configs
+.cloudflared/*
+cloudflare-config.yml
+
+# PlatformIO build files
 .pio/
+*.elf
+*.bin
+
+# IDE and editor files
 .vscode/
-.vscode/.browse.c_cpp.db*
-.vscode/c_cpp_properties.json
-.vscode/launch.json
-.vscode/ipch
 
 # System files
 .DS_Store
 Thumbs.db
 
 # Backup or temp files
-*.elf
-*.bin
 *.pyc
-*.swp
 *.bak

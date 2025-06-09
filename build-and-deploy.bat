@@ -1,37 +1,60 @@
 @echo off
-title My Balcony Gardener: Production Build + Deploy
-echo ====================================================
-echo  Building and Deploying Production Site for MBG
-echo ====================================================
-echo.
+setlocal enabledelayedexpansion
+title My Balcony Gardener: Development Setup
 
-:: Step 1 - Build React frontend
-echo [1/5] Building React app...
-cd "mbg_dashboard"
-call npm run build
-cd ..
+:: Change to script directory
+cd /d "%~dp0"
 
-:: Step 2 - Clean backend public folder
-echo [2/5] Cleaning backend/public folder...
-rmdir /s /q "backend\public"
-mkdir "backend\public"
-
-:: Step 3 - Copy build output to backend/public
-echo [3/5] Copying built files to backend/public...
-xcopy /E /I /Y "mbg_dashboard\dist\*" "backend\public"
-
-:: Step 4 - Kill any previous node processes on port 3001 (optional clean-up)
-echo [4/5] Killing any process on port 3001...
-for /f "tokens=5" %%a in ('netstat -aon ^| find ":3001" ^| find "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
-
-:: Step 5 - Start backend and Cloudflare tunnel
-echo [5/5] Starting backend and tunnel...
-start "MBG Backend (Production)" cmd /k "cd backend && node index.js"
+:: Kill any running processes
+echo Stopping any running processes...
+taskkill /f /im node.exe >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq Cloudflare Tunnel*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq MBG Frontend*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq Vite*" >nul 2>&1
 timeout /t 2 /nobreak >nul
-start "Cloudflare Tunnel" cmd /k "cloudflared tunnel run a97e498f-60a8-47f5-b03d-da43dfc488e0"
+
+:: Check if in project root
+if not exist "mbg_dashboard" (
+    echo Error: 'mbg_dashboard' directory not found in %CD%
+    pause
+    exit /b 1
+)
+
+:: Install dependencies
+echo Installing dependencies...
+cd mbg_dashboard
+call npm ci
+if errorlevel 1 (
+    echo Error: Failed to install dependencies
+    pause
+    exit /b 1
+)
+
+:: Start Vite dev server in a new window
+echo Starting Vite development server...
+start "Vite Dev Server" cmd /k "cd /d "%CD%" && npm run dev"
+
+echo Waiting for Vite dev server to start (5 seconds)...
+timeout /t 5 /nobreak >nul
+
+:: Verify the dev server is running
+echo Verifying Vite dev server is running...
+curl -s -o nul -w "%%{http_code}" http://localhost:5173 | find "200" >nul
+if errorlevel 1 (
+    echo Error: Vite dev server is not responding on port 5173
+    pause
+    exit /b 1
+)
+
+:: Start Cloudflare tunnel using the config file from project root
+echo Starting Cloudflare tunnel...
+start "Cloudflare Tunnel" cmd /k "cd /d "%CD%\.." && cloudflared tunnel --config "%CD%\..\cloudflare-config.yml" run"
 
 echo.
-echo ✅ Production site deployed!
-echo    https://mybalconygardener.boileragency.com
+echo ===================================================
+echo Development environment is ready!
+echo Local:      http://localhost:5173
+echo Cloudflare: https://mybalconygardener.boileragency.com
+echo ===================================================
 echo.
 pause

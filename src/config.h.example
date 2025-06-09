@@ -1,0 +1,31 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// WiFi Configuration
+#define WIFI_SSID "your_wifi_ssid"
+#define WIFI_PASSWORD "your_wifi_password"
+
+// Supabase Configuration
+#define SUPABASE_URL "https://your_project.supabase.co/rest/v1/sensor_logs"
+#define SUPABASE_ANON_KEY "your_supabase_anon_key"
+
+// Device Configuration
+#define DEVICE_ID "550e8400-e29b-41d4-a716-446655440000"
+
+// Hardware Pins
+#define DHTPIN 21
+#define DHTTYPE DHT11
+#define SOIL_PIN 34
+#define RELAY_PIN 5
+
+// Timing Configuration
+#define LOG_INTERVAL_MS 5000
+#define WATERING_DURATION_MS 15000
+#define MOISTURE_THRESHOLD 50
+
+// NTP Configuration
+#define NTP_SERVER1 "pool.ntp.org"
+#define NTP_SERVER2 "time.nist.gov"
+#define TIMEZONE "EST5EDT,M3.2.0,M11.1.0"
+
+#endif // CONFIG_H

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "echo 'Cloudflare is reading THIS package.json' && tsc -b tsconfig.json && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --port 5173"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
