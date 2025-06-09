@@ -43,7 +43,36 @@ npm install
 npm run dev
 ```
 
-### 5. Build for Production
+### 5. Set Up Cloudflare Tunnel (Optional)
+
+To access your local development server from the internet:
+
+1. Install Cloudflare Tunnel:
+   ```bash
+   winget install Cloudflare.cloudflared
+   ```
+
+2. Create a tunnel configuration file `cloudflare-config.yml` in your project root:
+   ```yaml
+   tunnel: YOUR_TUNNEL_ID
+   credentials-file: C:/path/to/your/credentials.json
+   ingress:
+     - hostname: your-subdomain.example.com
+       service: http://localhost:5173
+     - service: http_status:404
+   ```
+
+3. Create DNS record (first time only):
+   ```bash
+   cloudflared tunnel route dns YOUR_TUNNEL_ID your-subdomain.example.com
+   ```
+
+4. Run the tunnel:
+   ```bash
+   cloudflared tunnel --config cloudflare-config.yml run
+   ```
+
+### 6. Build for Production
 
 ```bash
 cd mbg_dashboard

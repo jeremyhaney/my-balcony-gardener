@@ -1,11 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
-title My Balcony Gardener: Build and Deploy
+title My Balcony Gardener: Development Setup
 
 :: Change to script directory
 cd /d "%~dp0"
 
 :: Kill any running processes
+echo Stopping any running processes...
 taskkill /f /im node.exe >nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq Cloudflare Tunnel*" >nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq MBG Frontend*" >nul 2>&1
@@ -29,38 +30,31 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Build the project
-echo Building the project...
-call npm run build
-if errorlevel 1 (
-    echo Error: Build failed
-    pause
-    exit /b 1
-)
+:: Start Vite dev server in a new window
+echo Starting Vite development server...
+start "Vite Dev Server" cmd /k "cd /d "%CD%" && npm run dev"
 
-:: Start Vite preview server on port 5173 for consistency
-echo Starting Vite preview server on port 5173...
-start "Vite Preview" cmd /k "npm run preview -- --port 5173"
+echo Waiting for Vite dev server to start (5 seconds)...
+timeout /t 5 /nobreak >nul
 
-echo Waiting for Vite preview server to start (10 seconds)...
-timeout /t 10 /nobreak >nul
-
-:: Verify the preview server is running
-echo Verifying Vite preview server is running...
+:: Verify the dev server is running
+echo Verifying Vite dev server is running...
 curl -s -o nul -w "%%{http_code}" http://localhost:5173 | find "200" >nul
 if errorlevel 1 (
-    echo Error: Vite preview server is not responding on port 5173
+    echo Error: Vite dev server is not responding on port 5173
     pause
     exit /b 1
 )
 
-:: Start Cloudflare tunnel
+:: Start Cloudflare tunnel using the config file from project root
 echo Starting Cloudflare tunnel...
-start "Cloudflare Tunnel" cmd /k "cd /d "%CD%\.." && cloudflared tunnel --url http://localhost:5173 run a97e498f-60a8-47f5-b03d-da43dfc488e0"
+start "Cloudflare Tunnel" cmd /k "cd /d "%CD%\.." && cloudflared tunnel --config "%CD%\..\cloudflare-config.yml" run"
 
 echo.
-echo Build and deployment complete!
-echo Vite preview: http://localhost:5173
-echo Cloudflare tunnel should open in a new window
+echo ===================================================
+echo Development environment is ready!
+echo Local:      http://localhost:5173
+echo Cloudflare: https://mybalconygardener.boileragency.com
+echo ===================================================
 echo.
 pause
