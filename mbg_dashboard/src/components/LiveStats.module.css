@@ -1,0 +1,259 @@
+/* Garden-themed color palette */
+:root {
+  --color-leaf: #4CAF50;
+  --color-soil: #795548;
+  --color-sky: #03A9F4;
+  --color-sun: #FFC107;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-text: #2C3E50;
+  --glass-background: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  --glass-blur: 12px;
+}
+
+.container {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, 
+    rgba(147, 249, 185, 0.4) 0%,
+    rgba(29, 151, 108, 0.3) 100%
+  );
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+.container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><path fill="%234CAF50" d="M500,100c0,0-150,200-150,400s150,400,150,400s150-200,150-400S500,100,500,100z"/><path fill="%234CAF50" d="M300,500c0,0,200-150,400-150s400,150,400,150s-200,150-400,150S300,500,300,500z"/></svg>') center/cover,
+    radial-gradient(circle at 30% 20%, rgba(255, 249, 196, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(200, 230, 201, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(178, 235, 242, 0.2) 0%, transparent 100%);
+  z-index: -1;
+  opacity: 0.4;
+  animation: gardenAmbience 20s ease-in-out infinite;
+}
+
+@keyframes gardenAmbience {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+  perspective: 1000px;
+}
+
+.statCard {
+  background: var(--glass-background);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  transition: all 0.3s ease;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+}
+
+.statCard strong {
+  color: var(--color-soil);
+  margin-left: 0.5rem;
+  margin-right: 0.25rem;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.statCard:hover {
+  transform: translateY(-5px) translateZ(10px);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 15px 25px rgba(0, 0, 0, 0.1);
+}
+
+.chartContainer {
+  background: var(--glass-background);
+  padding: 2.5rem;
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  margin: 2rem 0;
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+}
+
+.chartContainer:hover {
+  transform: translateZ(10px);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 15px 25px rgba(0, 0, 0, 0.1);
+}
+
+.waterButton {
+  background: rgba(76, 175, 80, 0.3);
+  color: white;
+  font-weight: bold;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.waterButton:hover {
+  background: rgba(76, 175, 80, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 15px 25px rgba(0, 0, 0, 0.1);
+}
+
+.waterButton:active {
+  transform: translateY(1px);
+}
+
+/* Live indicator styles */
+.liveIndicator {
+  background: var(--glass-background);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+  transform: translateZ(0);
+  width: 100%;
+  max-width: 600px;
+}
+
+.liveIndicator > div {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lastUpdated {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.liveIndicator:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot.active {
+  background: var(--color-leaf);
+  animation: pulse 2s infinite;
+}
+
+.dot.stale {
+  background: #9E9E9E;
+}
+
+.chartTitle {
+  font-size: 1.25rem;
+  color: var(--color-soil);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Error and loading states */
+.errorContainer {
+  color: #8B0A0A;
+  padding: 1.5rem;
+  background: rgba(255, 235, 238, 0.2);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  margin: 1rem 0;
+  font-weight: 500;
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+}
+
+.loadingContainer {
+  padding: 1.5rem;
+  background: rgba(227, 242, 253, 0.2);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  margin: 1rem 0;
+  text-align: center;
+  color: var(--color-sky);
+  font-weight: 500;
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+}
