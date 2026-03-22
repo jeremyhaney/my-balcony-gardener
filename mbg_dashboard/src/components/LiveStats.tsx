@@ -1,101 +1,123 @@
 // src/components/LiveStats.tsx
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import type { SensorData, SensorLogRow } from '../types/sensorLog';
 import DualAxisChart from './DualAxisChart';
 
-interface LogEntry {
-  id?: string;
-  device_id?: string;
-  timestamp: string;
-  data: {
-    temperature: number;
-    humidity: number;
-    moisture: number;
-    watering: boolean;
-    lastWateredTime: string;
-    lastWateringDuration: number;
-  };
-}
+type FallbackSensorLogRow = Omit<SensorLogRow, 'id'>;
 
-const WATER_ENDPOINT = import.meta.env.VITE_WATER_ENDPOINT || "http://10.0.0.192/water-now";
+const DEFAULT_SENSOR_DATA: SensorData = {
+  temperature: 0,
+  humidity: 0,
+  moisture: 0,
+  watering: false,
+  lastWateredTime: 'Never',
+  lastWateringDuration: 0,
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Unknown error';
+
+const getEsp32BaseUrl = () => {
+  const legacyWaterEndpoint = import.meta.env.VITE_WATER_ENDPOINT;
+  const baseUrl =
+    import.meta.env.VITE_ESP32_URL ||
+    (legacyWaterEndpoint ? legacyWaterEndpoint.replace(/\/water-now\/?$/, '') : undefined) ||
+    'http://10.0.0.192';
+
+  return baseUrl.replace(/\/$/, '');
+};
+
+const WATER_ENDPOINT = `${getEsp32BaseUrl()}/water-now`;
 
 const LiveStats = () => {
-  const [latest, setLatest] = useState<LogEntry | null>(null);
-  const [sensorLogs, setSensorLogs] = useState<LogEntry[]>([]);
+  const [latest, setLatest] = useState<SensorLogRow | null>(null);
+  const [sensorLogs, setSensorLogs] = useState<SensorLogRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchFromSupabase = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sensor_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
-      if (data && data.length > 0) {
-        setLatest(data[0]);
-        setError(null);
-      } else {
-        setError('No data available from Supabase.');
-      }
-    } catch (err: any) {
-      console.warn('Supabase fetch failed. Falling back to /logs.', err.message);
-      fetchFromFallback();
-    }
-  };
-
-  const fetchLogHistory = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sensor_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      if (data && data.length > 0) {
-        setSensorLogs(data.reverse());
-      }
-    } catch (err: any) {
-      console.error('Error fetching log history:', err.message);
-    }
-  };
-
-  const fetchFromFallback = async () => {
-    try {
-      const response = await fetch('/logs');
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      const data = await response.json();
-      
-      // Transform local API data to match Supabase format if needed
-      const transformedData = {
-        timestamp: data.timestamp || new Date().toISOString(),
-        data: {
-          temperature: data.temperature || 0,
-          humidity: data.humidity || 0,
-          moisture: data.moisture || 0,
-          watering: data.watering || false,
-          lastWateredTime: data.lastWateredTime || 'Never',
-          lastWateringDuration: data.lastWateringDuration || 0
-        }
-      };
-      
-      setLatest(transformedData);
-      setError(null);
-    } catch (err: any) {
-      console.error('Fallback fetch also failed:', err.message);
-      setError('Unable to fetch data from Supabase or local API.');
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
 
+    const fetchFromFallback = async () => {
+      try {
+        const response = await fetch('/logs');
+        if (!response.ok) throw new Error(`Status ${response.status}`);
+
+        const data = (await response.json()) as Partial<FallbackSensorLogRow>;
+        const transformedData: SensorLogRow = {
+          device_id: data.device_id ?? '',
+          timestamp: data.timestamp ?? new Date().toISOString(),
+          data: {
+            temperature: data.data?.temperature ?? DEFAULT_SENSOR_DATA.temperature,
+            humidity: data.data?.humidity ?? DEFAULT_SENSOR_DATA.humidity,
+            moisture: data.data?.moisture ?? DEFAULT_SENSOR_DATA.moisture,
+            watering: data.data?.watering ?? DEFAULT_SENSOR_DATA.watering,
+            lastWateredTime: data.data?.lastWateredTime ?? DEFAULT_SENSOR_DATA.lastWateredTime,
+            lastWateringDuration:
+              data.data?.lastWateringDuration ?? DEFAULT_SENSOR_DATA.lastWateringDuration,
+          },
+        };
+
+        if (isMounted) {
+          setLatest(transformedData);
+          setError(null);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          console.error('Fallback fetch also failed:', getErrorMessage(err));
+          setError('Unable to fetch data from Supabase or local API.');
+        }
+      }
+    };
+
+    const fetchFromSupabase = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sensor_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+
+        const rows = (data ?? []) as SensorLogRow[];
+        if (!isMounted) return;
+
+        if (rows.length > 0) {
+          setLatest(rows[0]);
+          setError(null);
+        } else {
+          setError('No data available from Supabase.');
+        }
+      } catch (err: unknown) {
+        console.warn('Supabase fetch failed. Falling back to /logs.', getErrorMessage(err));
+        await fetchFromFallback();
+      }
+    };
+
+    const fetchLogHistory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sensor_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+
+        if (isMounted) {
+          const rows = (data ?? []) as SensorLogRow[];
+          setSensorLogs([...rows].reverse());
+        }
+      } catch (err: unknown) {
+        console.error('Error fetching log history:', getErrorMessage(err));
+      }
+    };
+
     const fetchData = async () => {
       try {
         await Promise.all([fetchFromSupabase(), fetchLogHistory()]);
-      } catch (err) {
+      } catch (err: unknown) {
         if (isMounted) {
           console.error('Error in initial data fetch:', err);
           setError('Failed to load initial data. Check console for details.');
@@ -103,12 +125,12 @@ const LiveStats = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
 
     const interval = setInterval(() => {
       if (isMounted) {
-        fetchFromSupabase().catch(console.error);
-        fetchLogHistory().catch(console.error);
+        void fetchFromSupabase();
+        void fetchLogHistory();
       }
     }, 5000);
 
@@ -146,17 +168,7 @@ const LiveStats = () => {
     );
   }
 
-  // Safely destructure with defaults to prevent runtime errors
-  const {
-    data: sensorData = {
-      temperature: 0,
-      humidity: 0,
-      moisture: 0,
-      watering: false,
-      lastWateredTime: 'Never',
-      lastWateringDuration: 0,
-    }
-  } = latest || {};
+  const sensorData = latest.data ?? DEFAULT_SENSOR_DATA;
 
   // Extract values from the nested data structure
   const {
