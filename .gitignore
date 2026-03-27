@@ -12,6 +12,9 @@ cloudflare-config.yml
 *.elf
 *.bin
 
+# Node dependencies
+node_modules/
+
 # IDE and editor files
 .vscode/
 
