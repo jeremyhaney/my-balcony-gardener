@@ -22,6 +22,14 @@ interface Props {
 }
 
 const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
+  if (sensorLogs.length === 0) {
+    return (
+      <div style={{ width: '100%', padding: '1rem', textAlign: 'center' }}>
+        No chart history available.
+      </div>
+    )
+  }
+
   const data = sensorLogs.map((log) => ({
     time: new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     temperature: log.temperature,
@@ -38,7 +46,7 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" />
-          <YAxis yAxisId="left" domain={[30, 100]} label={{ value: "Temp (°F)", angle: -90, position: "insideLeft" }} />
+          <YAxis yAxisId="left" domain={[30, 100]} label={{ value: "Temp (Â°F)", angle: -90, position: "insideLeft" }} />
           <YAxis yAxisId="right" orientation="right" domain={[0, 100]} label={{ value: "Humidity / Moisture (%)", angle: 90, position: "insideRight" }} />
           <Tooltip />
           <Legend />
