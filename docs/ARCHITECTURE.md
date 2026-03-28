@@ -41,6 +41,36 @@ This document is the stable architecture authority for the repo. Changes to the 
 - The shared sensor log contract remains centralized in [`mbg_dashboard/src/types`](../mbg_dashboard/src/types).
 - The first restoration slice must not introduce package extraction or a broad frontend refactor.
 
+## Canonical Sensor Log Contract
+
+The canonical sensor log contract is authoritative across frontend code, firmware payload handling, and Supabase history work.
+
+```ts
+type SensorLogRow = {
+  id?: string
+  device_id: string
+  timestamp: string
+  data: {
+    temperature: number
+    humidity: number
+    moisture: number
+    watering: boolean
+    lastWateredTime: string
+    lastWateringDuration: number
+  }
+}
+```
+
+- The shared frontend definition in [`mbg_dashboard/src/types/sensorLog.ts`](../mbg_dashboard/src/types/sensorLog.ts) is the canonical in-repo contract.
+- In Supabase, `data` is stored as `jsonb`.
+- For the `jsonb` object, key order is not significant.
+- Field names and value types are significant and must not drift.
+- Contract changes require:
+  - a new ADR
+  - coordinated frontend updates
+  - coordinated firmware updates
+  - coordinated database/query updates
+
 ## Local And Deployment Baseline
 
 - BJ3 is the current working development machine baseline.
