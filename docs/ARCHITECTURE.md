@@ -30,6 +30,17 @@ This document is the stable architecture authority for the repo. Changes to the 
    - `GET /logs`
    - `POST /water-now`
 
+## Approved Frontend Boundary For Deferred Restoration
+
+- Local live path remains separate from deferred history/graph restoration work.
+- The live path must continue to own:
+  - current sensor value display
+  - local ESP32 fallback reads
+  - Manual Water Now behavior
+- Deferred history/graph restoration must use a separate read-only data path in its first pass.
+- The shared sensor log contract remains centralized in [`mbg_dashboard/src/types`](../mbg_dashboard/src/types).
+- The first restoration slice must not introduce package extraction or a broad frontend refactor.
+
 ## Local And Deployment Baseline
 
 - BJ3 is the current working development machine baseline.
