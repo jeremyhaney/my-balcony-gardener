@@ -71,6 +71,11 @@ const LiveStats = () => {
     };
 
     const fetchFromSupabase = async () => {
+      if (!supabase) {
+        await fetchFromFallback();
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('sensor_logs')
@@ -96,6 +101,13 @@ const LiveStats = () => {
     };
 
     const fetchLogHistory = async () => {
+      if (!supabase) {
+        if (isMounted) {
+          setSensorLogs([]);
+        }
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('sensor_logs')
