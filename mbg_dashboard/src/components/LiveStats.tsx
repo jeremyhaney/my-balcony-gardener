@@ -23,7 +23,7 @@ const getEsp32BaseUrl = () => {
   const baseUrl =
     import.meta.env.VITE_ESP32_URL ||
     (legacyWaterEndpoint ? legacyWaterEndpoint.replace(/\/water-now\/?$/, '') : undefined) ||
-    'http://10.0.0.192';
+    'http://10.0.0.200';
 
   return baseUrl.replace(/\/$/, '');
 };
