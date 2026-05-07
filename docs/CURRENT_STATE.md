@@ -27,8 +27,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values so the browser can render them correctly in local time.
 - Read-only Supabase-backed Sensor History / graph display is restored and auto-refreshes every 10 seconds.
+- Supabase `sensor_events` exists as a separate manual operational event log and was validated with manual sample events.
 - The local ESP32 path still owns live/current values.
 - Supabase is not used for remote command/control.
+- No firmware behavior, watering behavior, or logging cadence changed in Phase 5B.
+- No frontend runtime changes were made in Phase 5B.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -56,7 +59,6 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 - Broader deployment polish
 - Optional history UI/statistics improvements
-- Phase 5B sensor events for physical changes, calibration notes, maintenance events, and experiment notes
 - Phase 5C logging cadence changes after current telemetry write validation is complete
 - Any Supabase-first or non-local live/control runtime change, only by ADR
 - Any firmware behavior changes
@@ -72,7 +74,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 1. Continue supervised local prove-out using the working ESP32 local path.
 2. Preserve the separate local live/control path and Supabase history/read path.
-3. Preserve validated Supabase logging and browser-local timestamp display before sensor comparison/calibration work.
+3. Preserve validated Supabase logging, validated manual `sensor_events`, and browser-local timestamp display before sensor comparison/calibration work.
 4. Then proceed with sensor comparison, calibration, and Gage R&R-style analysis.
 5. Route any future runtime/data-flow architecture change through an ADR before implementation.
 

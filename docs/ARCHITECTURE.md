@@ -31,6 +31,8 @@ This document is the stable architecture authority for the repo. Changes to the 
    - `POST /water-now`
 5. The ESP32 also posts telemetry directly to Supabase `sensor_logs` for history storage.
 6. Supabase-backed history remains a separate read path in the frontend and must not replace the local live/control path.
+7. Supabase `sensor_events` is a separate manual operational event log for physical or system changes that help interpret telemetry.
+8. `sensor_events` is not the live/current path, not command/control, and not a replacement for `sensor_logs` telemetry history.
 
 ## Approved Frontend Boundary For Deferred Restoration
 
@@ -41,6 +43,7 @@ This document is the stable architecture authority for the repo. Changes to the 
   - local ESP32 fallback reads
   - Manual Water Now behavior
 - Supabase history must use a separate read path and must not introduce Supabase command/control.
+- Manual operational events may be recorded separately in Supabase `sensor_events`, but this does not change live/control ownership or the telemetry contract.
 - Supabase timestamps for `sensor_logs` must be written by firmware as UTC ISO-8601 values so browser-local rendering stays correct.
 - The Sensor History graph may auto-refresh from Supabase without altering the live/control ownership boundary.
 - The shared sensor log contract remains centralized in [`mbg_dashboard/src/types`](../mbg_dashboard/src/types).
@@ -70,11 +73,22 @@ type SensorLogRow = {
 - In Supabase, `data` is stored as `jsonb`.
 - For the `jsonb` object, key order is not significant.
 - Field names and value types are significant and must not drift.
+- `sensor_events` is intentionally separate and must not be used to reshape or extend the canonical `SensorLogRow`.
 - Contract changes require:
   - a new ADR
   - coordinated frontend updates
   - coordinated firmware updates
   - coordinated database/query updates
+
+## Manual Operational Event Log
+
+Supabase `public.sensor_events` is approved as a separate manual operational event/history table for changes that affect how telemetry should be interpreted.
+
+- It is used for operational notes such as sensor swaps, moves, cleaning, calibration, reference readings, maintenance, plant moves, container changes, and experiment markers.
+- It does not store telemetry payloads and does not replace `sensor_logs`.
+- It does not change firmware ownership of local live values, Manual Water Now, or watering behavior.
+- It does not introduce Supabase command/control.
+- MVP entry is manual through the Supabase Table Editor or SQL Editor under RLS.
 
 ## Local And Deployment Baseline
 
@@ -85,7 +99,6 @@ type SensorLogRow = {
 
 ## Deferred Architecture Areas
 
-- Supabase-backed sensor events for physical changes, calibration notes, maintenance events, and experiment notes
 - Logging cadence changes after current telemetry logging is proven
 - Any shift away from the current local fallback baseline
 - Any broader deployment architecture changes

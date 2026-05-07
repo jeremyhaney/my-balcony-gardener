@@ -15,6 +15,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values.
 - Read-only Supabase-backed Sensor History / graph display is restored and auto-refreshes every 10 seconds.
+- Supabase `sensor_events` is validated as a separate manual operational event log for sensor swaps, moves, cleaning, calibration notes, maintenance, and experiment markers.
 - Supabase history requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in [`mbg_dashboard/.env.local`](./mbg_dashboard/.env.local).
 - Missing Supabase env vars or unavailable Supabase fail gracefully and should not crash the app.
 - MVP v1.0 bench test passed.
@@ -37,8 +38,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 2. The React/Vite frontend in [`mbg_dashboard`](./mbg_dashboard) is the active UI.
 3. Local ESP32 path: live sensor values and Manual Water Now.
 4. Supabase read/history path: current and historical Sensor History graph data only.
-5. Supabase is not the live/current value path and does not replace local ESP32 control.
-6. Supabase is not used for remote command/control.
+5. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
+6. Supabase is not the live/current value path and does not replace local ESP32 control.
+7. Supabase is not used for remote command/control.
 
 ## Common Commands
 
@@ -70,7 +72,6 @@ npm run dev
 - Broader deployment polish
 - Long-term analytics/statistics such as min/max/avg
 - Additional history UI improvements
-- Phase 5B sensor events for physical changes, calibration notes, maintenance events, and experiment notes
 - Phase 5C logging cadence changes after current telemetry write validation is complete
 - Any future architecture change away from local live control, only by ADR
 
@@ -81,6 +82,7 @@ npm run dev
 - The current system is ready for supervised local prove-out and data gathering.
 - Sensors remain installed for v1.0 prove-out and local data visibility.
 - Read-only Supabase history/graph display is restored, and current ESP32 telemetry is now being written to Supabase for validation/history.
+- Supabase `sensor_events` has been manually validated as a separate operational log and does not change firmware, live control, or telemetry cadence.
 - Displayed moisture readings should currently be treated as a relative sensor index, not true volumetric soil moisture.
 - Observed moisture sensor reference readings:
   - Air-dry / wiped sensor: mostly `23%`, lowest observed `22%`
@@ -95,6 +97,7 @@ npm run dev
 
 - Continue supervised local prove-out using the working ESP32 local path
 - Preserve the local live/control path and the separate Supabase history/read path
+- Use `sensor_events` only for manual operational context that helps interpret telemetry without changing `sensor_logs`
 - Preserve validated Supabase logging and browser-local timestamp display while keeping the live/control path local
 - Then swap same-model sensors for comparison, calibration, and Gage R&R-style analysis
 - Keep the frontend and firmware contract aligned with the current payload shape
