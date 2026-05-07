@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const esp32BaseUrl = (
     env.VITE_ESP32_URL ||
     (legacyWaterEndpoint ? legacyWaterEndpoint.replace(/\/water-now\/?$/, '') : undefined) ||
-    'http://10.0.0.192'
+    'http://10.0.0.200'
   ).replace(/\/$/, '')
 
   return {
