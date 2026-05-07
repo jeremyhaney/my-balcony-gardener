@@ -6,17 +6,19 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 - Firmware compiles on BJ3 with PlatformIO.
 - Frontend lints, builds, runs, and loads on BJ3.
-- The local ESP32 fallback path is the active working path today.
+- The local ESP32 path is the active live/control working path today.
 - ESP32 is reachable locally at `10.0.0.200`.
 - `GET /logs` works from BJ3, phone, and other devices on the local network when the ESP32 is powered independently from USB power.
-- Current sensor values display in the UI.
+- Local ESP32 live sensor values display in the UI.
 - Manual Water Now works from the local site.
+- Read-only Supabase-backed Sensor History / graph display is restored.
+- Supabase history requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in [`mbg_dashboard/.env.local`](./mbg_dashboard/.env.local).
+- Missing Supabase env vars or unavailable Supabase fail gracefully and should not crash the app.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
 - Relay-controlled pump activation works from Manual Water Now.
 - Moisture-triggered pump behavior was confirmed during field testing.
-- Supabase-backed graph/history is intentionally deferred for a later pass.
 
 ## Authoritative Repo Areas
 
@@ -30,8 +32,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 1. The ESP32 firmware runs locally on the device and exposes the local endpoints used by the dashboard.
 2. The React/Vite frontend in [`mbg_dashboard`](./mbg_dashboard) is the active UI.
-3. The dashboard currently uses the working local ESP32 path for live sensor values and manual watering.
-4. Supabase history/graph restoration is deferred and is not part of the current working baseline.
+3. Local ESP32 path: live sensor values and Manual Water Now.
+4. Supabase read-only path: historical Sensor History graph.
+5. Supabase is not the live/current value path and does not replace local ESP32 control.
 
 ## Common Commands
 
@@ -60,9 +63,10 @@ npm run dev
 
 ## Deferred For Later
 
-- Supabase-backed history restoration
-- Graph/history UI restoration
-- Broader architecture cleanup beyond the current working local path
+- Broader deployment polish
+- Long-term analytics/statistics such as min/max/avg
+- Additional history UI improvements
+- Any future architecture change away from local live control, only by ADR
 
 ## MVP v1.0 Field Commissioning Notes
 
@@ -70,7 +74,7 @@ npm run dev
 - Heat shrink, grommets, and v1.0 cable/box cleanup are complete.
 - The current system is ready for supervised local prove-out and data gathering.
 - Sensors remain installed for v1.0 prove-out and local data visibility.
-- After Supabase history/graph restoration, the installed sensors will be swapped with same-model spares for data collection, comparison, analysis, and calibration/Gage R&R-style evaluation.
+- Read-only Supabase history/graph display is restored; the next step is to confirm or restore current ESP32-to-Supabase logging so sensor swap, comparison, calibration, and Gage R&R-style evaluation happen after current readings are being saved.
 - Displayed moisture readings should currently be treated as a relative sensor index, not true volumetric soil moisture.
 - Observed moisture sensor reference readings:
   - Air-dry / wiped sensor: mostly `23%`, lowest observed `22%`
@@ -81,7 +85,7 @@ npm run dev
 ## Next Safe Priorities
 
 - Continue supervised local prove-out using the working ESP32 local path
-- Restore the deferred history/graph path without breaking the current local fallback path
-- Swap same-model sensors after history/graph restoration for comparison, calibration, and Gage R&R-style analysis
+- Preserve the local live/control path and the restored read-only history path
+- Confirm current ESP32 readings are recording to Supabase, then swap same-model sensors for comparison, calibration, and Gage R&R-style analysis
 - Keep the frontend and firmware contract aligned with the current payload shape
 - Continue small, reviewable cleanup only after the active local path remains stable
