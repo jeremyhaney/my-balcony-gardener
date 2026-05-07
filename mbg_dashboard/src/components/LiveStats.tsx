@@ -16,6 +16,16 @@ const DEFAULT_SENSOR_DATA: SensorData = {
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Unknown error';
 
+const formatDisplayDateTime = (value: string): string => {
+  if (!value || value.trim() === '' || value === 'Never') {
+    return 'Never';
+  }
+
+  const parsedValue = new Date(value);
+
+  return Number.isNaN(parsedValue.getTime()) ? value : parsedValue.toLocaleString();
+};
+
 const getEsp32BaseUrl = () => {
   const legacyWaterEndpoint = import.meta.env.VITE_WATER_ENDPOINT;
   const baseUrl =
@@ -135,24 +145,24 @@ const LiveStats = () => {
         <div>💧 <strong>Humidity:</strong> {humidity.toFixed(1)} %</div>
         <div>🌴 <strong>Soil Moisture:</strong> {moisture.toFixed(1)}%</div>
         <div>⏱️ <strong>Last Watering Duration:</strong> {lastWateringDuration.toFixed(1)}s</div>
-        <div>🚿 <strong>Last Watered:</strong> {lastWateredTime}</div>
+        <div>🚿 <strong>Last Watered:</strong> {formatDisplayDateTime(lastWateredTime)}</div>
         <div>📅 <strong>Log Time:</strong> {new Date(latest.timestamp).toLocaleString()}</div>
         <div>🔄 <strong>Currently Watering:</strong> {watering ? 'Yes' : 'No'}</div>
       </div>
 
-      <div style={{ marginTop: "2rem", textAlign: "center" }}>
+      <div style={{ marginTop: '2rem', textAlign: 'center' }}>
         <button
           onClick={async () => {
             try {
               const response = await fetch(WATER_ENDPOINT, { method: 'POST' });
               if (response.ok) {
-                alert("🚿 Manual watering triggered!");
+                alert('🚿 Manual watering triggered!');
               } else {
-                alert("⚠️ Watering request failed.");
+                alert('⚠️ Watering request failed.');
               }
             } catch (err) {
-              console.error("Error triggering water:", err);
-              alert("⚠️ Unable to reach ESP32.");
+              console.error('Error triggering water:', err);
+              alert('⚠️ Unable to reach ESP32.');
             }
           }}
           className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"

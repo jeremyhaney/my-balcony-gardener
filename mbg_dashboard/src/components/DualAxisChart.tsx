@@ -38,9 +38,18 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
   }))
 
   return (
-    <div style={{ width: '100%', height: 300 }}>
-      <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 20, right: 50, left: 20, bottom: 5 }}>
+    <div
+      style={{
+        width: '100%',
+        height: 340,
+        backgroundColor: '#ffffff',
+        padding: '1rem',
+        borderRadius: '12px',
+        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.08)',
+      }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 20, right: 70, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" />
           <YAxis
@@ -52,7 +61,13 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
             yAxisId="right"
             orientation="right"
             domain={[0, 100]}
-            label={{ value: 'Humidity / Moisture (%)', angle: 90, position: 'insideRight' }}
+            label={{
+              value: 'Humidity / Moisture (%)',
+              angle: 90,
+              position: 'insideRight',
+              dx: 18,
+              style: { textAnchor: 'middle' },
+            }}
           />
           <Tooltip />
           <Legend />
