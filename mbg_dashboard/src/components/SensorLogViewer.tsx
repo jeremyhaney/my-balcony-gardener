@@ -11,6 +11,8 @@ const sanitizePercent = (value: number): number | null => (isValidPercent(value)
 const hasUsableTimestamp = (timestamp: string): boolean =>
   Number.isFinite(new Date(timestamp).getTime())
 
+const HISTORY_REFRESH_INTERVAL_MS = 10000
+
 const SensorLogViewer = () => {
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
@@ -33,8 +35,13 @@ const SensorLogViewer = () => {
 
     void loadHistory()
 
+    const refreshTimer = window.setInterval(() => {
+      void loadHistory()
+    }, HISTORY_REFRESH_INTERVAL_MS)
+
     return () => {
       isMounted = false
+      window.clearInterval(refreshTimer)
     }
   }, [])
 

@@ -23,7 +23,12 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `GET /logs` works from BJ3, phone, and other devices on the local network when the ESP32 is powered independently from USB power.
 - The UI shows live sensor values through the local ESP32 path.
 - Manual Water Now works from the local site.
-- Read-only Supabase-backed Sensor History / graph display is restored.
+- ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
+- Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
+- Supabase stores firmware timestamps as UTC ISO-8601 values so the browser can render them correctly in local time.
+- Read-only Supabase-backed Sensor History / graph display is restored and auto-refreshes every 10 seconds.
+- The local ESP32 path still owns live/current values.
+- Supabase is not used for remote command/control.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -36,18 +41,23 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Heat shrink, grommets, and v1.0 cable/box cleanup are complete.
 - The current system is ready for supervised local prove-out and data gathering.
 - Sensors remain installed for v1.0 prove-out and local data visibility.
-- Read-only Supabase history/graph display is restored; the next step is to confirm or restore current ESP32-to-Supabase logging so sensor swap, comparison, calibration, and Gage R&R-style evaluation happen after current readings are being saved.
+- Read-only Supabase history/graph display is restored, and current ESP32 telemetry now posts to Supabase for validation/history.
 - Displayed moisture readings should currently be treated as a relative sensor index, not true volumetric soil moisture.
 - Observed moisture sensor reference readings:
   - Air-dry / wiped sensor: mostly `23%`, lowest observed `22%`
   - Tap-water reference: mostly `93%`, highest observed `94%`
   - Moist soil after repeated watering tests: approximately `82%`
-- No moisture scaling, compensation, threshold, or pump-duration change has been made based on these observations.
+- `MOISTURE_THRESHOLD` was lowered from `50` to `35` for MVP installed-system safety before sensor calibration.
+- No moisture scaling, compensation, or pump-duration change has been made based on these observations.
+- Normal deployment cadence has not yet been changed.
+- `5`-second logging remains temporary for Phase 5 validation.
 
 ## Deferred Items
 
 - Broader deployment polish
 - Optional history UI/statistics improvements
+- Phase 5B sensor events for physical changes, calibration notes, maintenance events, and experiment notes
+- Phase 5C logging cadence changes after current telemetry write validation is complete
 - Any Supabase-first or non-local live/control runtime change, only by ADR
 - Any firmware behavior changes
 - Any frontend behavior changes unrelated to preserving or improving the current baseline
@@ -61,8 +71,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 ## Safe Next Priorities
 
 1. Continue supervised local prove-out using the working ESP32 local path.
-2. Preserve the restored local live/control path plus the read-only Supabase history baseline.
-3. Confirm current ESP32-to-Supabase logging before sensor comparison/calibration work.
+2. Preserve the separate local live/control path and Supabase history/read path.
+3. Preserve validated Supabase logging and browser-local timestamp display before sensor comparison/calibration work.
 4. Then proceed with sensor comparison, calibration, and Gage R&R-style analysis.
 5. Route any future runtime/data-flow architecture change through an ADR before implementation.
 

@@ -29,15 +29,20 @@ This document is the stable architecture authority for the repo. Changes to the 
    - `GET /`
    - `GET /logs`
    - `POST /water-now`
+5. The ESP32 also posts telemetry directly to Supabase `sensor_logs` for history storage.
+6. Supabase-backed history remains a separate read path in the frontend and must not replace the local live/control path.
 
 ## Approved Frontend Boundary For Deferred Restoration
 
 - Local live path remains separate from deferred history/graph restoration work.
+- Local live/control path remains separate from the Supabase history/read path after current logging restoration.
 - The live path must continue to own:
   - current sensor value display
   - local ESP32 fallback reads
   - Manual Water Now behavior
-- Deferred history/graph restoration must use a separate read-only data path in its first pass.
+- Supabase history must use a separate read path and must not introduce Supabase command/control.
+- Supabase timestamps for `sensor_logs` must be written by firmware as UTC ISO-8601 values so browser-local rendering stays correct.
+- The Sensor History graph may auto-refresh from Supabase without altering the live/control ownership boundary.
 - The shared sensor log contract remains centralized in [`mbg_dashboard/src/types`](../mbg_dashboard/src/types).
 - The first restoration slice must not introduce package extraction or a broad frontend refactor.
 
@@ -80,8 +85,8 @@ type SensorLogRow = {
 
 ## Deferred Architecture Areas
 
-- Supabase-backed history restoration
-- Graph/history UI restoration
+- Supabase-backed sensor events for physical changes, calibration notes, maintenance events, and experiment notes
+- Logging cadence changes after current telemetry logging is proven
 - Any shift away from the current local fallback baseline
 - Any broader deployment architecture changes
 

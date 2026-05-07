@@ -21,7 +21,7 @@
 // Timing Configuration
 #define LOG_INTERVAL_MS 5000
 #define WATERING_DURATION_MS 15000
-#define MOISTURE_THRESHOLD 50
+#define MOISTURE_THRESHOLD 35
 
 // NTP Configuration
 #define NTP_SERVER1 "pool.ntp.org"

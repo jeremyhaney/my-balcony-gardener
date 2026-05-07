@@ -42,6 +42,24 @@ String getFormattedTime() {
   return String(buffer);
 }
 
+// Get formatted UTC time as an ISO-8601 string for Supabase/Postgres
+String getUtcIsoTimestamp() {
+  time_t now;
+  time(&now);
+
+  if (now < 100000) {
+    Serial.println("⚠️ Failed to obtain UTC time");
+    return "TIME_ERROR";
+  }
+
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+
+  char buffer[30];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+  return String(buffer);
+}
+
 // Connect to Wi-Fi
 void connectToWiFi() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -103,6 +121,7 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, bool wa
   // Build JSON payload - FIXED to nest values inside "data" object
   String postData = "{";
   postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  postData += "\"timestamp\":\"" + getUtcIsoTimestamp() + "\",";
   postData += "\"data\":{"; // Nest all sensor data inside "data" object
   postData += "\"temperature\":" + String(temperature, 2) + ",";
   postData += "\"humidity\":" + String(humidity, 2) + ",";
