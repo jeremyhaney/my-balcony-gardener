@@ -3,6 +3,14 @@ import { fetchHistoryLogs } from '../api'
 import type { SensorLogRow } from '../types/sensorLog'
 import DualAxisChart from './DualAxisChart'
 
+const isValidPercent = (value: number): boolean =>
+  Number.isFinite(value) && value >= 0 && value <= 100
+
+const sanitizePercent = (value: number): number | null => (isValidPercent(value) ? value : null)
+
+const hasUsableTimestamp = (timestamp: string): boolean =>
+  Number.isFinite(new Date(timestamp).getTime())
+
 const SensorLogViewer = () => {
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
@@ -32,12 +40,23 @@ const SensorLogViewer = () => {
 
   const chartLogs = [...logs]
     .reverse()
-    .map((log) => ({
-      timestamp: log.timestamp,
-      temperature: log.data.temperature,
-      humidity: log.data.humidity,
-      moisture: log.data.moisture,
-    }))
+    .map((log) => {
+      const temperature = Number.isFinite(log.data.temperature) ? log.data.temperature : null
+      const humidity = sanitizePercent(log.data.humidity)
+      const moisture = sanitizePercent(log.data.moisture)
+
+      return {
+        timestamp: log.timestamp,
+        temperature,
+        humidity,
+        moisture,
+      }
+    })
+    .filter(
+      (log) =>
+        hasUsableTimestamp(log.timestamp) &&
+        (log.temperature !== null || log.humidity !== null || log.moisture !== null)
+    )
 
   return (
     <div className="p-4">
@@ -53,19 +72,10 @@ const SensorLogViewer = () => {
         <p className="text-sm">Loading history...</p>
       ) : logs.length === 0 ? (
         <p className="text-sm">No history available yet.</p>
+      ) : chartLogs.length === 0 ? (
+        <p className="text-sm">History rows were found, but no valid readings are available to chart yet.</p>
       ) : (
-        <>
-          <DualAxisChart sensorLogs={chartLogs} />
-          <ul className="mt-4 text-sm space-y-1">
-            {logs.map((log) => (
-              <li key={log.id ?? `${log.device_id}-${log.timestamp}`} className="border-b pb-1">
-                Temp: {log.data.temperature}Â°F | Hum: {log.data.humidity}% | Moist:{' '}
-                {log.data.moisture}% | Watering: {log.data.watering ? 'Yes' : 'No'} | Duration:{' '}
-                {log.data.lastWateringDuration} s | Time: {new Date(log.timestamp).toLocaleString()}
-              </li>
-            ))}
-          </ul>
-        </>
+        <DualAxisChart sensorLogs={chartLogs} />
       )}
     </div>
   )
