@@ -10,6 +10,12 @@
 #include "time.h"
 #include "config.h"
 
+// 15-minute post-watering cooldown/soak guard for automatic watering only.
+// Guarded here because src/config.h contains local secrets and is intentionally ignored by Git.
+#ifndef WATERING_COOLDOWN_MS
+#define WATERING_COOLDOWN_MS 900000
+#endif
+
 // Initialize hardware
 DHT dht(DHTPIN, DHTTYPE);
 WebServer server(80);
@@ -17,6 +23,7 @@ WebServer server(80);
 // State management
 bool isWatering = false;
 unsigned long wateringStartTime = 0;
+unsigned long lastWateringEndTime = 0;
 unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
 String lastWateredTime = "N/A";
@@ -198,6 +205,7 @@ void handleLogs() {
 void handleWaterNow() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
 
+  // Manual Water Now is intentionally not blocked by the automatic cooldown.
   if (!isWatering) {
     digitalWrite(RELAY_PIN, HIGH);
     isWatering = true;
@@ -253,8 +261,10 @@ void loop() {
       Serial.printf("📊 T: %.1f°F, H: %.1f%%, M: %.1f%%, Watering: %s\n",
                     tempF, humidity, moisture, isWatering ? "Yes" : "No");
 
-      // Auto-watering logic
-      if (!isWatering && moisture < MOISTURE_THRESHOLD) {
+      // Cooldown prevents repeated automatic cycles before soil/sensor readings stabilize.
+      if (!isWatering &&
+          moisture < MOISTURE_THRESHOLD &&
+          (lastWateringEndTime == 0 || now - lastWateringEndTime >= WATERING_COOLDOWN_MS)) {
         digitalWrite(RELAY_PIN, HIGH);
         isWatering = true;
         wateringStartTime = millis();
@@ -275,6 +285,7 @@ void loop() {
     if (wateringDuration >= WATERING_DURATION_MS) {
       digitalWrite(RELAY_PIN, LOW);
       isWatering = false;
+      lastWateringEndTime = millis();
       lastWateringDuration = wateringDuration / 1000; // Convert to seconds
 
       // Send final update with watering completed
