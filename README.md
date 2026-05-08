@@ -16,6 +16,11 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Supabase stores firmware timestamps as UTC ISO-8601 values.
 - Read-only Supabase-backed Sensor History / graph display is restored and auto-refreshes every 10 seconds.
 - Supabase `sensor_events` is validated as a separate manual operational event log for sensor swaps, moves, cleaning, calibration notes, maintenance, and experiment markers.
+- ADR 0006 is accepted and locks the Phase 5C watering logic and safety philosophy.
+- A `15`-minute automatic watering cooldown guard has been implemented in firmware, uploaded to the ESP32, and field validated.
+- Manual Water Now remains a local/supervised testing and hydraulic-prove-out feature and intentionally bypasses the automatic cooldown.
+- Manual Water Now can still be run again after a completed manual watering cycle.
+- Automatic watering resumes after cooldown if moisture remains below `MOISTURE_THRESHOLD`.
 - Supabase history requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in [`mbg_dashboard/.env.local`](./mbg_dashboard/.env.local).
 - Missing Supabase env vars or unavailable Supabase fail gracefully and should not crash the app.
 - MVP v1.0 bench test passed.
@@ -71,8 +76,11 @@ npm run dev
 
 - Broader deployment polish
 - Long-term analytics/statistics such as min/max/avg
-- Additional history UI improvements
-- Phase 5C logging cadence changes after current telemetry write validation is complete
+- Phase 5D - Telemetry Logging Cadence
+- Phase 5E - Graph Polish / Trend Visualization
+- Phase 5F - Sensor Calibration / Raw ADC Prove-Out
+- Phase 5G - Quiet Hours / Runtime Settings
+- Phase 5H - Watering Duration Prove-Out
 - Any future architecture change away from local live control, only by ADR
 
 ## MVP v1.0 Field Commissioning Notes
@@ -91,7 +99,12 @@ npm run dev
 - `MOISTURE_THRESHOLD` was lowered from `50` to `35` for MVP installed-system safety before sensor calibration.
 - No moisture scaling, compensation, or pump-duration change has been made based on these observations.
 - Normal deployment cadence has not yet been changed.
-- `5`-second logging remains temporary for Phase 5 validation.
+- Automatic watering remains fixed-duration batch watering at `15000` ms / `15` seconds, with a field-validated `15`-minute cooldown guard between automatic cycles.
+- Manual Water Now remains local/supervised and is intentionally not blocked by the automatic cooldown.
+- Soil moisture display/control remains a derived index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
+- Quiet hours are accepted as a future requirement but are not implemented yet.
+- Dry-run protection, leak/failure detection, reservoir-level sensing, flow sensing, and pump-current sensing remain deferred hardware/safety work.
+- `5`-second logging remains temporary and is now deferred to Phase 5D Telemetry Logging Cadence.
 
 ## Next Safe Priorities
 
@@ -99,6 +112,10 @@ npm run dev
 - Preserve the local live/control path and the separate Supabase history/read path
 - Use `sensor_events` only for manual operational context that helps interpret telemetry without changing `sensor_logs`
 - Preserve validated Supabase logging and browser-local timestamp display while keeping the live/control path local
-- Then swap same-model sensors for comparison, calibration, and Gage R&R-style analysis
+- Phase 5D - Telemetry Logging Cadence
+- Phase 5E - Graph Polish / Trend Visualization
+- Phase 5F - Sensor Calibration / Raw ADC Prove-Out
+- Phase 5G - Quiet Hours / Runtime Settings
+- Phase 5H - Watering Duration Prove-Out while keeping current watering at `15` seconds and comparing `30` / `45` / `60` seconds only under appropriate dry-enough conditions
 - Keep the frontend and firmware contract aligned with the current payload shape
 - Continue small, reviewable cleanup only after the active local path remains stable

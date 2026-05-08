@@ -34,6 +34,19 @@ This document is the stable architecture authority for the repo. Changes to the 
 7. Supabase `sensor_events` is a separate manual operational event log for physical or system changes that help interpret telemetry.
 8. `sensor_events` is not the live/current path, not command/control, and not a replacement for `sensor_logs` telemetry history.
 
+## Watering Control Boundary
+
+ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-logic-and-safety.md) locks the current watering-control and safety boundary.
+
+- ESP32 firmware owns watering decisions locally.
+- Supabase is telemetry/history only and must not be used for command/control.
+- Automatic watering remains fixed-duration batch watering.
+- Pump shutoff remains local and does not depend on Supabase.
+- Automatic watering includes a post-watering cooldown guard between automatic cycles.
+- Manual Water Now remains local/supervised and is intentionally not blocked by the automatic cooldown.
+- Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
+- Raw ADC validation and repeated-reading/filtering work remain deferred.
+
 ## Approved Frontend Boundary For Deferred Restoration
 
 - Local live path remains separate from deferred history/graph restoration work.
@@ -99,7 +112,10 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 
 ## Deferred Architecture Areas
 
-- Logging cadence changes after current telemetry logging is proven
+- Phase 5D telemetry logging cadence changes after current telemetry logging is proven
+- Future graph polish / trend visualization
+- Future sensor calibration / raw ADC prove-out
+- Future quiet hours / runtime settings
 - Any shift away from the current local fallback baseline
 - Any broader deployment architecture changes
 

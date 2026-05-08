@@ -30,8 +30,13 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Supabase `sensor_events` exists as a separate manual operational event log and was validated with manual sample events.
 - The local ESP32 path still owns live/current values.
 - Supabase is not used for remote command/control.
-- No firmware behavior, watering behavior, or logging cadence changed in Phase 5B.
-- No frontend runtime changes were made in Phase 5B.
+- ADR 0006 locks the Phase 5C watering logic and safety philosophy.
+- Phase 5C cooldown firmware was uploaded to the ESP32 and field validated.
+- Manual Water Now still works and remains local/supervised.
+- Manual Water Now can still be run again after a completed manual cycle.
+- Pump still stops after `15` seconds.
+- Automatic watering is blocked during the cooldown and resumes after approximately `15` minutes if moisture remains below threshold.
+- No frontend runtime changes were made in Phase 5C.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -53,15 +58,16 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `MOISTURE_THRESHOLD` was lowered from `50` to `35` for MVP installed-system safety before sensor calibration.
 - No moisture scaling, compensation, or pump-duration change has been made based on these observations.
 - Normal deployment cadence has not yet been changed.
-- `5`-second logging remains temporary for Phase 5 validation.
+- `5`-second logging remains temporary and is now deferred to Phase 5D Telemetry Logging Cadence.
+- If pump power is intentionally unplugged during wet/rainy conditions, firmware may still command watering and telemetry may show `watering: true` even though no water physically flows.
 
 ## Deferred Items
 
 - Broader deployment polish
 - Optional history UI/statistics improvements
-- Phase 5C logging cadence changes after current telemetry write validation is complete
+- Phase 5D Telemetry Logging Cadence
 - Any Supabase-first or non-local live/control runtime change, only by ADR
-- Any firmware behavior changes
+- Any additional firmware behavior changes beyond the Phase 5C cooldown guard
 - Any frontend behavior changes unrelated to preserving or improving the current baseline
 
 ## Current Guardrails
