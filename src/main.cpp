@@ -120,6 +120,8 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, bool wa
   Serial.println(url);
 
   https.begin(client, url);
+  // Protect local control responsiveness during telemetry posts.
+  https.setTimeout(3000);
   https.addHeader("apikey", SUPABASE_ANON_KEY);
   https.addHeader("Authorization", "Bearer " + String(SUPABASE_ANON_KEY));
   https.addHeader("Content-Type", "application/json");
@@ -212,6 +214,16 @@ void handleWaterNow() {
     wateringStartTime = millis();
     lastWateredTime = getFormattedTime();
     Serial.println("💧 Manual watering triggered");
+    // Phase 5D: log watering start immediately so short pump cycles are visible.
+    float humidity = dht.readHumidity();
+    float tempC = dht.readTemperature();
+    if (!isnan(humidity) && !isnan(tempC)) {
+      float tempF = (tempC * 1.8) + 32;
+      int soilValue = analogRead(SOIL_PIN);
+      float moisture = map(soilValue, 3680, 1230, 0, 100);
+      moisture = constrain(moisture, 0, 100);
+      sendDataToSupabase(tempF, humidity, moisture, true);
+    }
     server.send(200, "text/plain", "Watering started");
   } else {
     server.send(409, "text/plain", "Already watering");
@@ -269,6 +281,8 @@ void loop() {
         isWatering = true;
         wateringStartTime = millis();
         lastWateredTime = getFormattedTime();
+        // Phase 5D: log watering start immediately using this interval's readings.
+        sendDataToSupabase(tempF, humidity, moisture, true);
         Serial.println("💧 Auto-watering triggered (low moisture)");
       }
     } else {

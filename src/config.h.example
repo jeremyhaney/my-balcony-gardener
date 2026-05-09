@@ -19,7 +19,7 @@
 #define RELAY_PIN 5
 
 // Timing Configuration
-#define LOG_INTERVAL_MS 5000
+#define LOG_INTERVAL_MS 900000
 #define WATERING_DURATION_MS 15000
 #define MOISTURE_THRESHOLD 35
 
