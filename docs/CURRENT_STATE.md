@@ -32,11 +32,19 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Supabase is not used for remote command/control.
 - ADR 0006 locks the Phase 5C watering logic and safety philosophy.
 - Phase 5C cooldown firmware was uploaded to the ESP32 and field validated.
+- Phase 5D telemetry logging cadence firmware was compiled, uploaded, and field validated on feature branch `phase5d-telemetry-logging-cadence`.
 - Manual Water Now still works and remains local/supervised.
 - Manual Water Now can still be run again after a completed manual cycle.
-- Pump still stops after `15` seconds.
+- Pump still stops after approximately `15` seconds, independently from the telemetry cadence.
 - Automatic watering is blocked during the cooldown and resumes after approximately `15` minutes if moisture remains below threshold.
-- No frontend runtime changes were made in Phase 5C.
+- Supabase normal telemetry cadence now posts approximately every `15` minutes (not every 5 seconds).
+- Immediate watering-start telemetry with `data.watering = true` posts to Supabase immediately upon Manual Water Now trigger.
+- Immediate watering-completion telemetry with `data.watering = false` posts to Supabase immediately upon pump shutoff.
+- `lastWateringDuration` is populated with the pump runtime (approximately 15 seconds) in completion telemetry.
+- No frontend runtime changes were made in Phase 5C or Phase 5D.
+- Local dashboard continues to update frequently with live values from the `/logs` endpoint because the frontend polls locally.
+- Supabase telemetry display is sparse at the ~15-minute cadence, with additional rows for immediate watering events.
+- `sensor_events` remains a manual operational log and is unchanged; it is not used by firmware.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -65,9 +73,10 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 - Broader deployment polish
 - Optional history UI/statistics improvements
-- Phase 5D Telemetry Logging Cadence
+- Phase 5D Closeout / Merge (feature branch validated, ready for review and merge to main)
+- Sensor History graph point reordering/replacement polish (deferred to Phase 5E; graph points may reorder as new sparse telemetry rows arrive, but Supabase rows are valid and correctly ordered by timestamp).
 - Any Supabase-first or non-local live/control runtime change, only by ADR
-- Any additional firmware behavior changes beyond the Phase 5C cooldown guard
+- Any additional firmware behavior changes beyond the Phase 5D telemetry cadence
 - Any frontend behavior changes unrelated to preserving or improving the current baseline
 
 ## Current Guardrails

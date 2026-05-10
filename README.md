@@ -21,6 +21,14 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Manual Water Now remains a local/supervised testing and hydraulic-prove-out feature and intentionally bypasses the automatic cooldown.
 - Manual Water Now can still be run again after a completed manual watering cycle.
 - Automatic watering resumes after cooldown if moisture remains below `MOISTURE_THRESHOLD`.
+- Phase 5D telemetry logging cadence has been field validated on the feature branch `phase5d-telemetry-logging-cadence`.
+- Normal Supabase telemetry now posts on approximately a 15-minute cadence (vs. previous 5 seconds).
+- Immediate watering-start and watering-completion telemetry rows post to Supabase outside the normal cadence.
+- `lastWateringDuration` is populated upon watering completion.
+- Local `/logs` endpoint still provides frequent live readings for the local dashboard.
+- Local dashboard updates frequently because the frontend polls the ESP32 `/logs` endpoint directly.
+- Remote command/control (Remote Water Now) is not part of MVP.
+- Supabase remains read-only for telemetry and history; it is not used for command/control.
 - Supabase history requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in [`mbg_dashboard/.env.local`](./mbg_dashboard/.env.local).
 - Missing Supabase env vars or unavailable Supabase fail gracefully and should not crash the app.
 - MVP v1.0 bench test passed.
@@ -76,8 +84,8 @@ npm run dev
 
 - Broader deployment polish
 - Long-term analytics/statistics such as min/max/avg
-- Phase 5D - Telemetry Logging Cadence
-- Phase 5E - Graph Polish / Trend Visualization
+- Phase 5D Closeout / Merge (validated feature branch pending review and merge to main)
+- Phase 5E - History Graph Event Semantics (includes deferred graph point reordering polish)
 - Phase 5F - Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings
 - Phase 5H - Watering Duration Prove-Out
