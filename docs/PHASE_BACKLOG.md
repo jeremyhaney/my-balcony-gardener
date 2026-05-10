@@ -24,26 +24,31 @@ It is a planning guide, not an implementation approval. Each item still requires
 8. Device Settings / Provisioning
 9. Hardware Safety Maturity
 
-## Phase 5D Validation
+## Phase 5D Validation — FIELD VALIDATED
 
-Scope:
+Validation Results (feature branch `phase5d-telemetry-logging-cadence`):
 
-- Upload Phase 5D firmware only when explicitly approved.
-- Validate local `/logs`.
-- Validate Manual Water Now.
-- Validate 15-second pump shutoff.
-- Validate Phase 5C cooldown behavior remains intact.
-- Validate Supabase telemetry still posts.
-- Validate normal 15-minute telemetry cadence.
-- Validate immediate watering-start telemetry with `watering: true`.
-- Validate immediate watering-completion telemetry with `watering: false`.
-- Validate `lastWateringDuration` is populated after completion.
-- Confirm `sensor_logs` shape is unchanged.
-- Confirm `sensor_events` is unchanged.
+- ✅ Firmware compiles and uploaded successfully.
+- ✅ ESP32 restarted successfully after upload.
+- ✅ Local `/logs` endpoint working.
+- ✅ Manual Water Now triggers correctly from local UI.
+- ✅ Pump starts on Manual Water Now trigger.
+- ✅ 15-second pump shutoff validated.
+- ✅ Phase 5C cooldown behavior remains intact.
+- ✅ Supabase telemetry still posts.
+- ✅ Normal 15-minute telemetry cadence validated.
+- ✅ Immediate watering-start telemetry with `data.watering: true` posts to Supabase immediately.
+- ✅ Immediate watering-completion telemetry with `data.watering: false` posts to Supabase immediately.
+- ✅ `lastWateringDuration` populated upon completion (~15 seconds).
+- ✅ `sensor_logs` shape unchanged; contains top-level `device_id`, `timestamp`, nested `data`.
+- ✅ `sensor_events` unchanged and not used by firmware.
+- ✅ Local dashboard updates frequently from live `/logs` polling.
+- ✅ Supabase normal telemetry shows ~15-minute cadence.
+- ✅ Automatic watering tied to 15-minute cadence (pump did not activate immediately with manual threshold probe; consistent with cooldown eligibility).
 
 Out of scope:
 
-- Frontend graph marker polish.
+- Frontend graph marker polish (deferred to Phase 5E).
 - Admin page.
 - Settings page.
 - Supabase schema changes.
@@ -65,7 +70,12 @@ Scope:
 
 - Represent watering events on the history graph as event markers, vertical lines, or event dots.
 - Use `data.watering`, `lastWateredTime`, and `lastWateringDuration` to communicate watering events.
-- De-emphasize or remove any misleading remote/history interpretation of “Currently Watering.”
+- De-emphasize or remove any misleading remote/history interpretation of "Currently Watering."
+- **Deferred observation:** During Phase 5D Sensor History viewing, graph points appeared to replace/reorder unexpectedly as new sparse telemetry rows arrived. Supabase rows themselves were valid and correctly ordered by timestamp. This is a frontend graph event-semantics/point-ordering polish issue and should not be treated as a firmware/cadence failure.
+- Fix graph point reordering/replacement behavior to preserve expected chronological display order.
+- Explore local-vs-remote mode indicator:
+  - **Local Control Mode:** ESP32 local network, fast live readings from frequent polling, Water Now enabled, real-time telemetry visibility.
+  - **Remote Read-Only Mode:** Supabase-only, no Water Now, clear visual mode indicator, sparse ~15-minute telemetry cadence.
 - Preserve the local ESP32 live/control path.
 - Preserve the read-only Supabase history path.
 
@@ -84,6 +94,7 @@ Scope:
 - Evaluate use of last-known-good sensor values for completion telemetry.
 - Clarify timestamp semantics between local `lastWateredTime` and UTC Supabase `timestamp`.
 - Consider whether post-watering stabilization samples are useful.
+- **Cached local sensor sampling concept:** ESP32 samples sensor readings locally on a controlled internal cadence. `/logs` endpoint returns cached latest readings for fast local polling. Supabase telemetry posts validated/cached readings on the ~15-minute cadence. This preserves local responsiveness while reducing Supabase volume and improving telemetry cadence consistency.
 - Preserve the canonical `SensorLogRow` shape unless a new ADR approves a contract change.
 
 Out of scope:
