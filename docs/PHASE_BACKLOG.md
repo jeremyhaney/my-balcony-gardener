@@ -6,17 +6,17 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current branch: `phase5d-telemetry-logging-cadence`
-- Current Phase 5D status: committed and pushed for backup
-- Firmware compile status: passed
-- Firmware upload status: intentionally deferred
-- Main branch status: not merged yet
+- Current branch: `phase5e-history-graph-event-semantics`
+- Current Phase 5E status: validated and ready for documentation closeout review
+- Frontend lint/build status: passed
+- Firmware status: unchanged; no Phase 5E firmware compile/upload required
+- Main branch status: Phase 5E branch not merged yet
 
 ## Recommended Phase Order
 
-1. Phase 5D Validation
-2. Phase 5D Closeout / merge
-3. Phase 5E — History Graph Event Semantics
+1. Phase 5D Validation - complete
+2. Phase 5D Closeout / merge - complete and merged to main
+3. Phase 5E — History Graph Event Semantics - validated/complete
 4. Phase 5F — Telemetry Integrity Hardening
 5. Hosted Read-Only Dashboard
 6. Multi-Device Readiness
@@ -24,7 +24,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 8. Device Settings / Provisioning
 9. Hardware Safety Maturity
 
-## Phase 5D Validation — FIELD VALIDATED
+## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
 Validation Results (feature branch `phase5d-telemetry-logging-cadence`):
 
@@ -54,26 +54,26 @@ Out of scope:
 - Supabase schema changes.
 - Remote command/control.
 
-## Phase 5D Closeout / Merge
+## Phase 5D Closeout / Merge - COMPLETE AND MERGED TO MAIN
 
 Scope:
 
-- Update `README.md` and `docs/CURRENT_STATE.md` only after Phase 5D behavior is field validated.
-- Review final diff.
-- Commit closeout documentation.
-- Merge `phase5d-telemetry-logging-cadence` to `main` only after validation.
-- Push `main`.
+- Phase 5D behavior was field validated.
+- Phase 5D closeout documentation was completed before Phase 5E work.
+- Phase 5D was merged to `main` before Phase 5E began.
 
-## Phase 5E — History Graph Event Semantics
+## Phase 5E — History Graph Event Semantics - VALIDATED / COMPLETE
 
 Scope:
 
-- Represent watering events on the history graph as event markers, vertical lines, or event dots.
-- Use `data.watering`, `lastWateredTime`, and `lastWateringDuration` to communicate watering events.
-- De-emphasize or remove any misleading remote/history interpretation of "Currently Watering."
-- **Deferred observation:** During Phase 5D Sensor History viewing, graph points appeared to replace/reorder unexpectedly as new sparse telemetry rows arrived. Supabase rows themselves were valid and correctly ordered by timestamp. This is a frontend graph event-semantics/point-ordering polish issue and should not be treated as a firmware/cadence failure.
-- Fix graph point reordering/replacement behavior to preserve expected chronological display order.
-- Explore local-vs-remote mode indicator:
+- The apparent point replacement/reordering was determined to be chart label/window interpretation, not a firmware or Supabase cadence failure.
+- The graph now uses explicit chronological timestamp sorting.
+- Watering-start rows are displayed as vertical event markers using `sensor_logs.data.watering = true`.
+- Hover tooltip behavior is preserved.
+- Chart dots remain hidden.
+- The local live/control path and Manual Water Now were preserved.
+- No watering-completion markers were added because the history graph resolution does not justify that complexity.
+- Future UI polish may explore a local-vs-remote mode indicator:
   - **Local Control Mode:** ESP32 local network, fast live readings from frequent polling, Water Now enabled, real-time telemetry visibility.
   - **Remote Read-Only Mode:** Supabase-only, no Water Now, clear visual mode indicator, sparse ~15-minute telemetry cadence.
 - Preserve the local ESP32 live/control path.

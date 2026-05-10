@@ -14,7 +14,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values.
-- Read-only Supabase-backed Sensor History / graph display is restored and auto-refreshes every 10 seconds.
+- Read-only Supabase-backed Sensor History / graph display is restored, auto-refreshes every 10 seconds, and displays watering-start event markers.
 - Supabase `sensor_events` is validated as a separate manual operational event log for sensor swaps, moves, cleaning, calibration notes, maintenance, and experiment markers.
 - ADR 0006 is accepted and locks the Phase 5C watering logic and safety philosophy.
 - A `15`-minute automatic watering cooldown guard has been implemented in firmware, uploaded to the ESP32, and field validated.
@@ -25,6 +25,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Normal Supabase telemetry now posts on approximately a 15-minute cadence (vs. previous 5 seconds).
 - Immediate watering-start and watering-completion telemetry rows post to Supabase outside the normal cadence.
 - `lastWateringDuration` is populated upon watering completion.
+- Sensor History chart rows are explicitly sorted chronologically by timestamp before rendering.
+- Watering-start rows are displayed as vertical history markers using Supabase `sensor_logs.data.watering = true`.
 - Local `/logs` endpoint still provides frequent live readings for the local dashboard.
 - Local dashboard updates frequently because the frontend polls the ESP32 `/logs` endpoint directly.
 - Remote command/control (Remote Water Now) is not part of MVP.
@@ -84,9 +86,9 @@ npm run dev
 
 - Broader deployment polish
 - Long-term analytics/statistics such as min/max/avg
-- Phase 5D Closeout / Merge (validated feature branch pending review and merge to main)
-- Phase 5E - History Graph Event Semantics (includes deferred graph point reordering polish)
-- Phase 5F - Sensor Calibration / Raw ADC Prove-Out
+- Branch closeout / merge review
+- Additional Sensor History UI/statistics polish beyond Phase 5E event markers
+- Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings
 - Phase 5H - Watering Duration Prove-Out
 - Any future architecture change away from local live control, only by ADR
@@ -106,13 +108,12 @@ npm run dev
   - Moist soil after repeated watering tests: approximately `82%`
 - `MOISTURE_THRESHOLD` was lowered from `50` to `35` for MVP installed-system safety before sensor calibration.
 - No moisture scaling, compensation, or pump-duration change has been made based on these observations.
-- Normal deployment cadence has not yet been changed.
+- Normal Supabase telemetry cadence is now approximately `15` minutes, with immediate watering event rows outside that cadence.
 - Automatic watering remains fixed-duration batch watering at `15000` ms / `15` seconds, with a field-validated `15`-minute cooldown guard between automatic cycles.
 - Manual Water Now remains local/supervised and is intentionally not blocked by the automatic cooldown.
 - Soil moisture display/control remains a derived index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
 - Quiet hours are accepted as a future requirement but are not implemented yet.
 - Dry-run protection, leak/failure detection, reservoir-level sensing, flow sensing, and pump-current sensing remain deferred hardware/safety work.
-- `5`-second logging remains temporary and is now deferred to Phase 5D Telemetry Logging Cadence.
 
 ## Next Safe Priorities
 
@@ -120,9 +121,8 @@ npm run dev
 - Preserve the local live/control path and the separate Supabase history/read path
 - Use `sensor_events` only for manual operational context that helps interpret telemetry without changing `sensor_logs`
 - Preserve validated Supabase logging and browser-local timestamp display while keeping the live/control path local
-- Phase 5D - Telemetry Logging Cadence
-- Phase 5E - Graph Polish / Trend Visualization
-- Phase 5F - Sensor Calibration / Raw ADC Prove-Out
+- Phase 5F - Telemetry Integrity Hardening
+- Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings
 - Phase 5H - Watering Duration Prove-Out while keeping current watering at `15` seconds and comparing `30` / `45` / `60` seconds only under appropriate dry-enough conditions
 - Keep the frontend and firmware contract aligned with the current payload shape

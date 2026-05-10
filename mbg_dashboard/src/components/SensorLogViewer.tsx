@@ -46,7 +46,7 @@ const SensorLogViewer = () => {
   }, [])
 
   const chartLogs = [...logs]
-    .reverse()
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     .map((log) => {
       const temperature = Number.isFinite(log.data.temperature) ? log.data.temperature : null
       const humidity = sanitizePercent(log.data.humidity)
@@ -57,6 +57,7 @@ const SensorLogViewer = () => {
         temperature,
         humidity,
         moisture,
+        watering: log.data.watering,
       }
     })
     .filter(

@@ -26,10 +26,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values so the browser can render them correctly in local time.
-- Read-only Supabase-backed Sensor History / graph display is restored and auto-refreshes every 10 seconds.
+- Read-only Supabase-backed Sensor History / graph display is restored, auto-refreshes every 10 seconds, and now displays watering-start event markers.
 - Supabase `sensor_events` exists as a separate manual operational event log and was validated with manual sample events.
 - The local ESP32 path still owns live/current values.
 - Supabase is not used for remote command/control.
+- Phase 5E kept the local ESP32 live/control path unchanged.
 - ADR 0006 locks the Phase 5C watering logic and safety philosophy.
 - Phase 5C cooldown firmware was uploaded to the ESP32 and field validated.
 - Phase 5D telemetry logging cadence firmware was compiled, uploaded, and field validated on feature branch `phase5d-telemetry-logging-cadence`.
@@ -41,7 +42,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Immediate watering-start telemetry with `data.watering = true` posts to Supabase immediately upon Manual Water Now trigger.
 - Immediate watering-completion telemetry with `data.watering = false` posts to Supabase immediately upon pump shutoff.
 - `lastWateringDuration` is populated with the pump runtime (approximately 15 seconds) in completion telemetry.
-- No frontend runtime changes were made in Phase 5C or Phase 5D.
+- Sensor History chart rows now use explicit chronological timestamp sorting before rendering.
+- Watering-start rows are shown as vertical history markers using Supabase `sensor_logs.data.watering = true`.
+- No frontend runtime changes were made in Phase 5C or Phase 5D; Phase 5E only updated Sensor History graph display semantics.
 - Local dashboard continues to update frequently with live values from the `/logs` endpoint because the frontend polls locally.
 - Supabase telemetry display is sparse at the ~15-minute cadence, with additional rows for immediate watering events.
 - `sensor_events` remains a manual operational log and is unchanged; it is not used by firmware.
@@ -65,16 +68,15 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
   - Moist soil after repeated watering tests: approximately `82%`
 - `MOISTURE_THRESHOLD` was lowered from `50` to `35` for MVP installed-system safety before sensor calibration.
 - No moisture scaling, compensation, or pump-duration change has been made based on these observations.
-- Normal deployment cadence has not yet been changed.
-- `5`-second logging remains temporary and is now deferred to Phase 5D Telemetry Logging Cadence.
+- Normal Supabase telemetry cadence is now approximately `15` minutes, with immediate watering event rows outside that cadence.
 - If pump power is intentionally unplugged during wet/rainy conditions, firmware may still command watering and telemetry may show `watering: true` even though no water physically flows.
 
 ## Deferred Items
 
 - Broader deployment polish
 - Optional history UI/statistics improvements
-- Phase 5D Closeout / Merge (feature branch validated, ready for review and merge to main)
-- Sensor History graph point reordering/replacement polish (deferred to Phase 5E; graph points may reorder as new sparse telemetry rows arrive, but Supabase rows are valid and correctly ordered by timestamp).
+- Branch closeout / merge review
+- Additional Sensor History UI/statistics polish beyond Phase 5E event markers
 - Any Supabase-first or non-local live/control runtime change, only by ADR
 - Any additional firmware behavior changes beyond the Phase 5D telemetry cadence
 - Any frontend behavior changes unrelated to preserving or improving the current baseline
