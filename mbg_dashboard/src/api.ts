@@ -22,6 +22,8 @@ const DEFAULT_SENSOR_DATA: SensorData = {
   lastWateringDuration: 0,
 }
 
+const configuredDeviceId = import.meta.env.VITE_MBG_DEVICE_ID?.trim() ?? ''
+
 const mapSensorLogRow = (row: SupabaseSensorLogRow): SensorLogRow => ({
   id: row.id ?? undefined,
   device_id: row.device_id ?? '',
@@ -43,7 +45,10 @@ export async function fetchLogs() {
   return response.json()
 }
 
-export async function fetchHistoryLogs(limit = 20): Promise<HistoryFetchResult> {
+export async function fetchHistoryLogs(
+  limit = 20,
+  selectedDeviceId = '',
+): Promise<HistoryFetchResult> {
   if (!isSupabaseConfigured || !supabase) {
     return {
       rows: [],
@@ -52,11 +57,18 @@ export async function fetchHistoryLogs(limit = 20): Promise<HistoryFetchResult> 
   }
 
   try {
-    const { data, error } = await supabase
+    const effectiveDeviceId = selectedDeviceId.trim() || configuredDeviceId
+    let query = supabase
       .from('sensor_logs')
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(limit)
+
+    if (effectiveDeviceId) {
+      query = query.eq('device_id', effectiveDeviceId)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       throw error
