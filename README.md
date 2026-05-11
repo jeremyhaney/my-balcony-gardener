@@ -32,15 +32,17 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Watering-start rows are displayed as vertical history markers using Supabase `sensor_logs.data.watering = true`.
 - Local `/logs` endpoint still provides frequent live readings for the local dashboard.
 - Local dashboard updates frequently because the frontend polls the ESP32 `/logs` endpoint directly.
-- Phase 6A hosted read-only dashboard preview was validated on branch `phase6a-hosted-readonly-dashboard`.
+- Phase 6A hosted read-only dashboard was merged to `main`.
 - Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
-- Cloudflare Pages project `my-balcony-gardener` is connected to GitHub and preview deployment is working.
-- Validated preview URL: `https://ea5884de.my-balcony-gardener.pages.dev`.
+- Cloudflare Pages project `my-balcony-gardener` is connected to GitHub, and Production deployment from `main` is validated.
+- Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
+- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
+- The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 - Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only mode renders Sensor History from Supabase, filters by `VITE_MBG_DEVICE_ID` when configured, and does not render `LiveStats`, Water Now, local `/logs`, or local `/water-now`.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
-- Production branch remains `main`; production deployment will occur after merge to `main`.
-- Custom domain setup is planned after production validation, likely `mybalconygardener.boileragency.com`, but is not configured yet.
+- Custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
+- Local/default dashboard behavior remains unchanged; Manual Water Now remains available only through the local/default path.
 - Remote command/control (Remote Water Now) is not part of MVP.
 - Supabase remains read-only for telemetry and history; it is not used for command/control.
 - Supabase history requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in [`mbg_dashboard/.env.local`](./mbg_dashboard/.env.local).
@@ -71,8 +73,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 ## Hosted Read-Only Dashboard
 
-- Cloudflare Pages Preview is validated for branch `phase6a-hosted-readonly-dashboard`.
-- Cloudflare Pages Production remains tied to `main` and will deploy after merge to `main`.
+- Cloudflare Pages Production is validated from branch `main`.
+- Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
+- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - Hosted read-only mode uses `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only builds require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; do not document real values.
 - `VITE_MBG_DEVICE_ID` selects the single displayed device for the Phase 6A MVP.
@@ -107,16 +110,14 @@ npm run dev
 
 ## Deferred For Later
 
-- Production deployment after merge to `main`
-- Custom domain setup after production validation
 - Long-term analytics/statistics such as min/max/avg
-- Branch closeout / merge review
 - Additional Sensor History UI/statistics polish beyond Phase 5E event markers
 - Multi-device read-only UI
-- Auth, settings, alerts, and commercial production hardening
+- Auth/login, settings/provisioning, alerts, and commercial production hardening
 - Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings
 - Phase 5H - Watering Duration Prove-Out
+- Hardware Safety Maturity
 - Any future architecture change away from local live control, only by ADR
 
 ## MVP v1.0 Field Commissioning Notes
@@ -146,7 +147,6 @@ npm run dev
 
 - Continue supervised local prove-out using the working ESP32 local path
 - Preserve the local live/control path and the separate Supabase history/read path
-- Merge Phase 6A to `main`, validate Cloudflare Pages Production, then configure the custom domain as a separate follow-up
 - Use `sensor_events` only for manual operational context that helps interpret telemetry without changing `sensor_logs`
 - Preserve validated Supabase logging and browser-local timestamp display while keeping the live/control path local
 - Sensor Calibration / Raw ADC Prove-Out

@@ -133,9 +133,10 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 - Frontend development and build commands are run from [`mbg_dashboard`](../mbg_dashboard).
 - Firmware build and upload commands are run from the repo root PlatformIO project.
 - The local ESP32 fallback path is the approved baseline until a later ADR changes it.
-- Cloudflare Pages project `my-balcony-gardener` has a validated Preview deployment for branch `phase6a-hosted-readonly-dashboard`.
-- Production deployment follows merge to `main`.
-- Custom domain setup remains a follow-up after Production validation.
+- Cloudflare Pages project `my-balcony-gardener` has a validated Production deployment from branch `main`.
+- Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
+- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
+- The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 
 ## Deferred Architecture Areas
 
@@ -143,8 +144,7 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 - Future sensor calibration / raw ADC prove-out
 - Future sensor health / fault detection
 - Future quiet hours / runtime settings
-- Future custom domain setup after Production validation
-- Future auth, alerts, runtime settings, and production hardening
+- Future auth/login, alerts, settings/provisioning, runtime settings, and production hardening
 - Future multi-device read-only UI
 - Any shift away from the current local fallback baseline
 - Any Supabase command/control or Remote Water Now behavior
