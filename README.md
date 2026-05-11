@@ -25,6 +25,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Normal Supabase telemetry now posts on approximately a 15-minute cadence (vs. previous 5 seconds).
 - Immediate watering-start and watering-completion telemetry rows post to Supabase outside the normal cadence.
 - `lastWateringDuration` is populated upon watering completion.
+- Phase 5F telemetry integrity hardening has been compiled, uploaded, and validated on the ESP32.
+- During DHT read failure, firmware may use cached last-known-good DHT temperature/humidity for `/logs` and telemetry continuity after at least one good DHT read.
+- Soil moisture remains a fresh analog read and is not cached because it controls automatic watering behavior.
 - Sensor History chart rows are explicitly sorted chronologically by timestamp before rendering.
 - Watering-start rows are displayed as vertical history markers using Supabase `sensor_logs.data.watering = true`.
 - Local `/logs` endpoint still provides frequent live readings for the local dashboard.
@@ -111,6 +114,7 @@ npm run dev
 - Normal Supabase telemetry cadence is now approximately `15` minutes, with immediate watering event rows outside that cadence.
 - Automatic watering remains fixed-duration batch watering at `15000` ms / `15` seconds, with a field-validated `15`-minute cooldown guard between automatic cycles.
 - Manual Water Now remains local/supervised and is intentionally not blocked by the automatic cooldown.
+- Manual Water Now and approximately `15`-second pump shutoff remain validated after Phase 5F.
 - Soil moisture display/control remains a derived index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
 - Quiet hours are accepted as a future requirement but are not implemented yet.
 - Dry-run protection, leak/failure detection, reservoir-level sensing, flow sensing, and pump-current sensing remain deferred hardware/safety work.
@@ -121,7 +125,6 @@ npm run dev
 - Preserve the local live/control path and the separate Supabase history/read path
 - Use `sensor_events` only for manual operational context that helps interpret telemetry without changing `sensor_logs`
 - Preserve validated Supabase logging and browser-local timestamp display while keeping the live/control path local
-- Phase 5F - Telemetry Integrity Hardening
 - Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings
 - Phase 5H - Watering Duration Prove-Out while keeping current watering at `15` seconds and comparing `30` / `45` / `60` seconds only under appropriate dry-enough conditions

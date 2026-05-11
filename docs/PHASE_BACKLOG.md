@@ -6,23 +6,24 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current branch: `phase5e-history-graph-event-semantics`
-- Current Phase 5E status: validated and ready for documentation closeout review
-- Frontend lint/build status: passed
-- Firmware status: unchanged; no Phase 5E firmware compile/upload required
-- Main branch status: Phase 5E branch not merged yet
+- Current branch: `phase5f-telemetry-integrity-hardening`
+- Current Phase 5F status: firmware validated; documentation updated; ready for final diff review and commit
+- Firmware compile status: passed with `pio run`
+- Firmware upload status: uploaded and validated on ESP32
+- Main branch status: Phase 5F branch not merged yet
 
 ## Recommended Phase Order
 
 1. Phase 5D Validation - complete
 2. Phase 5D Closeout / merge - complete and merged to main
 3. Phase 5E — History Graph Event Semantics - validated/complete
-4. Phase 5F — Telemetry Integrity Hardening
-5. Hosted Read-Only Dashboard
-6. Multi-Device Readiness
-7. Sensor Calibration / Measurement-System Evaluation
-8. Device Settings / Provisioning
-9. Hardware Safety Maturity
+4. Phase 5F — Telemetry Integrity Hardening - validated/complete
+5. Sensor Health / Fault Detection
+6. Hosted Read-Only Dashboard
+7. Multi-Device Readiness
+8. Sensor Calibration / Measurement-System Evaluation
+9. Device Settings / Provisioning
+10. Hardware Safety Maturity
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -90,12 +91,17 @@ Out of scope:
 
 Scope:
 
-- Prevent watering-completion audit gaps when DHT reads fail.
-- Evaluate use of last-known-good sensor values for completion telemetry.
-- Clarify timestamp semantics between local `lastWateredTime` and UTC Supabase `timestamp`.
-- Consider whether post-watering stabilization samples are useful.
-- **Cached local sensor sampling concept:** ESP32 samples sensor readings locally on a controlled internal cadence. `/logs` endpoint returns cached latest readings for fast local polling. Supabase telemetry posts validated/cached readings on the ~15-minute cadence. This preserves local responsiveness while reducing Supabase volume and improving telemetry cadence consistency.
-- Preserve the canonical `SensorLogRow` shape unless a new ADR approves a contract change.
+- Firmware compiled successfully with `pio run`, uploaded to the ESP32, and was validated after upload.
+- ESP32 rebooted cleanly after upload and after repeated USB power disconnect/reconnect cycles.
+- Local dashboard showed the expected unavailable warning while the ESP32 was offline and recovered after the ESP32 returned.
+- `/logs` works with the DHT connected.
+- `/logs` works with the DHT disconnected after at least one good DHT reading has populated the cache.
+- During DHT failure, temperature/humidity use cached last-known-good DHT values.
+- During DHT failure, soil moisture remains a fresh analog read and is not cached.
+- Manual Water Now still works, and the pump still stops after approximately `15` seconds.
+- Supabase watering-start and watering-completion telemetry post immediately during DHT failure using cached DHT values plus fresh moisture.
+- Supabase payload shape remains unchanged with top-level `device_id`, `timestamp`, and nested `data.temperature`, `data.humidity`, `data.moisture`, `data.watering`, `data.lastWateredTime`, and `data.lastWateringDuration`.
+- No frontend changes or Supabase schema changes were made.
 
 Out of scope:
 
@@ -103,6 +109,16 @@ Out of scope:
 - Graph UI polish.
 - Settings UI.
 - Hardware safety sensors.
+
+## Sensor Health / Fault Detection
+
+Deferred future work, not part of Phase 5F:
+
+- Track repeated bad sensor reads.
+- Track repeated low moisture readings after watering.
+- Alert when a sensor appears stuck, disconnected, saturated, or implausible.
+- Possibly require N consecutive low fresh moisture readings before automatic watering.
+- Possibly require a post-watering stabilization period before trusting moisture again.
 
 ## Hosted Read-Only Dashboard
 
