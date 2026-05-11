@@ -27,11 +27,15 @@ unsigned long lastWateringEndTime = 0;
 unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
 String lastWateredTime = "N/A";
+bool hasLastGoodDht = false;
+float lastGoodTempF = 0;
+float lastGoodHumidity = 0;
 
 // Function declarations
 void connectToWiFi();
 void setupTime();
 String getFormattedTime();
+bool readDhtWithFallback(float &temperatureF, float &humidity);
 void sendDataToSupabase(float temperature, float humidity, int moisture, bool watering);
 void handleRoot();
 void handleLogs();
@@ -65,6 +69,32 @@ String getUtcIsoTimestamp() {
   char buffer[30];
   strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
   return String(buffer);
+}
+
+// Only DHT temperature/humidity may fall back to last-known-good values.
+// Soil moisture stays fresh-only because it controls watering decisions.
+bool readDhtWithFallback(float &temperatureF, float &humidity) {
+  float freshHumidity = dht.readHumidity();
+  float tempC = dht.readTemperature();
+
+  if (!isnan(freshHumidity) && !isnan(tempC)) {
+    humidity = freshHumidity;
+    temperatureF = (tempC * 1.8) + 32;
+    lastGoodHumidity = humidity;
+    lastGoodTempF = temperatureF;
+    hasLastGoodDht = true;
+    return true;
+  }
+
+  if (hasLastGoodDht) {
+    temperatureF = lastGoodTempF;
+    humidity = lastGoodHumidity;
+    Serial.println("⚠️ DHT read failed; using cached temperature/humidity only");
+    return true;
+  }
+
+  Serial.println("⚠️ Failed to read DHT sensor and no cached values are available");
+  return false;
 }
 
 // Connect to Wi-Fi
@@ -173,15 +203,13 @@ void handleRoot() {
 void handleLogs() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
 
-  float humidity = dht.readHumidity();
-  float tempC = dht.readTemperature();
-
-  if (isnan(humidity) || isnan(tempC)) {
+  float humidity = 0;
+  float tempF = 0;
+  if (!readDhtWithFallback(tempF, humidity)) {
     server.send(500, "application/json", "{\"error\":\"Sensor read error\"}");
     return;
   }
 
-  float tempF = (tempC * 1.8) + 32;
   int soilValue = analogRead(SOIL_PIN);
   float moisture = map(soilValue, 3680, 1230, 0, 100);
   moisture = constrain(moisture, 0, 100);
@@ -215,10 +243,9 @@ void handleWaterNow() {
     lastWateredTime = getFormattedTime();
     Serial.println("💧 Manual watering triggered");
     // Phase 5D: log watering start immediately so short pump cycles are visible.
-    float humidity = dht.readHumidity();
-    float tempC = dht.readTemperature();
-    if (!isnan(humidity) && !isnan(tempC)) {
-      float tempF = (tempC * 1.8) + 32;
+    float humidity = 0;
+    float tempF = 0;
+    if (readDhtWithFallback(tempF, humidity)) {
       int soilValue = analogRead(SOIL_PIN);
       float moisture = map(soilValue, 3680, 1230, 0, 100);
       moisture = constrain(moisture, 0, 100);
@@ -258,11 +285,10 @@ void loop() {
 
   // Regular sensor logging
   if (now - lastLogTime >= LOG_INTERVAL_MS) {
-    float humidity = dht.readHumidity();
-    float tempC = dht.readTemperature();
+    float humidity = 0;
+    float tempF = 0;
 
-    if (!isnan(humidity) && !isnan(tempC)) {
-      float tempF = (tempC * 1.8) + 32;
+    if (readDhtWithFallback(tempF, humidity)) {
       int soilValue = analogRead(SOIL_PIN);
       float moisture = map(soilValue, 3680, 1230, 0, 100);
       moisture = constrain(moisture, 0, 100);
@@ -286,7 +312,7 @@ void loop() {
         Serial.println("💧 Auto-watering triggered (low moisture)");
       }
     } else {
-      Serial.println("⚠️ Failed to read DHT sensor");
+      Serial.println("⚠️ Skipping telemetry because DHT values are unavailable");
     }
 
     lastLogTime = now;
@@ -303,10 +329,9 @@ void loop() {
       lastWateringDuration = wateringDuration / 1000; // Convert to seconds
 
       // Send final update with watering completed
-      float humidity = dht.readHumidity();
-      float tempC = dht.readTemperature();
-      if (!isnan(humidity) && !isnan(tempC)) {
-        float tempF = (tempC * 1.8) + 32;
+      float humidity = 0;
+      float tempF = 0;
+      if (readDhtWithFallback(tempF, humidity)) {
         int soilValue = analogRead(SOIL_PIN);
         float moisture = map(soilValue, 3680, 1230, 0, 100);
         moisture = constrain(moisture, 0, 100);

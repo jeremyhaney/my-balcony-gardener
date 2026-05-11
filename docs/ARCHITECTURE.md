@@ -47,6 +47,16 @@ ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-l
 - Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
 - Raw ADC validation and repeated-reading/filtering work remain deferred.
 
+## Firmware Telemetry Integrity
+
+ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-telemetry-integrity-hardening.md) locks the Phase 5F telemetry-integrity boundary.
+
+- DHT temperature/humidity may use last-known-good fallback for `/logs` and Supabase telemetry continuity after at least one good DHT read has populated the firmware cache.
+- Soil moisture must remain fresh-only because it controls automatic watering.
+- Pump stop logic remains local and independent of telemetry success or failure.
+- Supabase remains read-only history/telemetry and is not command/control.
+- The canonical `SensorLogRow` shape remains unchanged.
+
 ## Approved Frontend Boundary For Deferred Restoration
 
 - Local live path remains separate from deferred history/graph restoration work.
@@ -115,6 +125,7 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 - Phase 5D telemetry logging cadence changes after current telemetry logging is proven
 - Future graph polish / trend visualization
 - Future sensor calibration / raw ADC prove-out
+- Future sensor health / fault detection
 - Future quiet hours / runtime settings
 - Any shift away from the current local fallback baseline
 - Any broader deployment architecture changes

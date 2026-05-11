@@ -34,6 +34,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - ADR 0006 locks the Phase 5C watering logic and safety philosophy.
 - Phase 5C cooldown firmware was uploaded to the ESP32 and field validated.
 - Phase 5D telemetry logging cadence firmware was compiled, uploaded, and field validated on feature branch `phase5d-telemetry-logging-cadence`.
+- Phase 5F telemetry integrity firmware compiled with `pio run`, uploaded to the ESP32, and was validated after upload.
+- ESP32 rebooted cleanly after upload and after repeated USB power disconnect/reconnect cycles.
+- ESP32 resumed local site reporting immediately after reconnecting to USB power; the local dashboard showed its expected unavailable warning while the ESP32 was offline and recovered after return.
 - Manual Water Now still works and remains local/supervised.
 - Manual Water Now can still be run again after a completed manual cycle.
 - Pump still stops after approximately `15` seconds, independently from the telemetry cadence.
@@ -42,6 +45,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Immediate watering-start telemetry with `data.watering = true` posts to Supabase immediately upon Manual Water Now trigger.
 - Immediate watering-completion telemetry with `data.watering = false` posts to Supabase immediately upon pump shutoff.
 - `lastWateringDuration` is populated with the pump runtime (approximately 15 seconds) in completion telemetry.
+- DHT temperature/humidity may use firmware last-known-good fallback for `/logs` and telemetry rows after at least one good DHT read.
+- Soil moisture remains fresh-only for watering decisions and is not cached.
+- During DHT failure, immediate watering-start and watering-completion telemetry still posts when cached DHT values exist, using cached temperature/humidity plus fresh moisture.
 - Sensor History chart rows now use explicit chronological timestamp sorting before rendering.
 - Watering-start rows are shown as vertical history markers using Supabase `sensor_logs.data.watering = true`.
 - No frontend runtime changes were made in Phase 5C or Phase 5D; Phase 5E only updated Sensor History graph display semantics.
@@ -52,6 +58,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
 - Relay-controlled pump activation works from Manual Water Now.
+- Manual Water Now and approximately `15`-second pump shutoff remain validated after Phase 5F.
 - Moisture-triggered pump behavior was confirmed during field testing.
 
 ## MVP v1.0 Field Commissioning Notes
@@ -78,7 +85,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Branch closeout / merge review
 - Additional Sensor History UI/statistics polish beyond Phase 5E event markers
 - Any Supabase-first or non-local live/control runtime change, only by ADR
-- Any additional firmware behavior changes beyond the Phase 5D telemetry cadence
+- Any additional firmware behavior changes beyond the validated Phase 5F telemetry-integrity boundary
 - Any frontend behavior changes unrelated to preserving or improving the current baseline
 
 ## Current Guardrails
