@@ -47,6 +47,20 @@ ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-l
 - Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
 - Raw ADC validation and repeated-reading/filtering work remain deferred.
 
+## Hosted Read-Only Dashboard Boundary
+
+ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-readonly-dashboard.md) locks the Phase 6A hosted read-only dashboard boundary.
+
+- Local Control Mode uses the local ESP32 endpoints, `LiveStats`, Manual Water Now, and frequent `/logs` polling.
+- Hosted Read-Only Mode is a Cloudflare Pages static frontend mode controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
+- Hosted Read-Only Mode renders Supabase `sensor_logs` history only and may filter by `VITE_MBG_DEVICE_ID`.
+- Hosted Read-Only Mode must not render `LiveStats`, show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
+- Hosted Read-Only Mode must not bundle local control code in the production artifact.
+- Sensor History remains rendered in both modes.
+- The local ESP32 live/control path and Supabase history/read path remain separate.
+- Supabase remains telemetry/history only and must not be used for command/control.
+- Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
+
 ## Firmware Telemetry Integrity
 
 ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-telemetry-integrity-hardening.md) locks the Phase 5F telemetry-integrity boundary.
@@ -119,16 +133,21 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 - Frontend development and build commands are run from [`mbg_dashboard`](../mbg_dashboard).
 - Firmware build and upload commands are run from the repo root PlatformIO project.
 - The local ESP32 fallback path is the approved baseline until a later ADR changes it.
+- Cloudflare Pages project `my-balcony-gardener` has a validated Preview deployment for branch `phase6a-hosted-readonly-dashboard`.
+- Production deployment follows merge to `main`.
+- Custom domain setup remains a follow-up after Production validation.
 
 ## Deferred Architecture Areas
 
-- Phase 5D telemetry logging cadence changes after current telemetry logging is proven
 - Future graph polish / trend visualization
 - Future sensor calibration / raw ADC prove-out
 - Future sensor health / fault detection
 - Future quiet hours / runtime settings
+- Future custom domain setup after Production validation
+- Future auth, alerts, runtime settings, and production hardening
+- Future multi-device read-only UI
 - Any shift away from the current local fallback baseline
-- Any broader deployment architecture changes
+- Any Supabase command/control or Remote Water Now behavior
 
 ## Change Control Rule
 

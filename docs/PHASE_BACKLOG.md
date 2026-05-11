@@ -6,24 +6,27 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current branch: `phase5f-telemetry-integrity-hardening`
-- Current Phase 5F status: firmware validated; documentation updated; ready for final diff review and commit
-- Firmware compile status: passed with `pio run`
-- Firmware upload status: uploaded and validated on ESP32
-- Main branch status: Phase 5F branch not merged yet
+- Current branch: `phase6a-hosted-readonly-dashboard`
+- Current Phase 6A status: hosted read-only dashboard Preview validated on Cloudflare Pages
+- Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
+- Validated Preview URL: `https://ea5884de.my-balcony-gardener.pages.dev`
+- Production branch status: `main` remains Production; Production deployment follows merge to `main`
+- Custom domain status: planned after Production validation, likely `mybalconygardener.boileragency.com`, not configured yet
 
 ## Recommended Phase Order
 
 1. Phase 5D Validation - complete
 2. Phase 5D Closeout / merge - complete and merged to main
 3. Phase 5E — History Graph Event Semantics - validated/complete
-4. Phase 5F — Telemetry Integrity Hardening - validated/complete
-5. Sensor Health / Fault Detection
-6. Hosted Read-Only Dashboard
+4. Phase 5F — Telemetry Integrity Hardening - complete and merged to main
+5. Phase 6A - Hosted Read-Only Dashboard MVP - Preview validated
+6. Sensor Health / Fault Detection
 7. Multi-Device Readiness
 8. Sensor Calibration / Measurement-System Evaluation
 9. Device Settings / Provisioning
 10. Hardware Safety Maturity
+
+Phase 5F is complete and merged to `main`; Phase 6A is the current hosted read-only dashboard branch.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -87,7 +90,7 @@ Out of scope:
 - Schema changes unless separately approved.
 - Admin page.
 
-## Phase 5F — Telemetry Integrity Hardening
+## Phase 5F — Telemetry Integrity Hardening - COMPLETE AND MERGED TO MAIN
 
 Scope:
 
@@ -110,9 +113,39 @@ Out of scope:
 - Settings UI.
 - Hardware safety sensors.
 
+## Phase 6A - Hosted Read-Only Dashboard MVP - PREVIEW VALIDATED
+
+Scope:
+
+- Cloudflare Pages project `my-balcony-gardener` is GitHub-connected.
+- Branch `phase6a-hosted-readonly-dashboard` has a validated Preview deployment.
+- Validated Preview URL: `https://ea5884de.my-balcony-gardener.pages.dev`.
+- Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
+- Hosted read-only build requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+- The single displayed device is controlled by `VITE_MBG_DEVICE_ID`.
+- Hosted read-only mode renders Sensor History from Supabase.
+- Hosted read-only Supabase history requests filter by `device_id` when `VITE_MBG_DEVICE_ID` is configured.
+- Hosted read-only mode does not render `LiveStats`.
+- Hosted read-only mode does not show Water Now.
+- Hosted read-only mode does not call local `/logs` or `/water-now`.
+- Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
+- Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
+- The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
+- Supabase remains telemetry/history only and is not command/control.
+- Production deployment will occur after merge to `main`.
+
+Out of scope:
+
+- Remote Water Now.
+- Supabase command/control.
+- Multi-device UI.
+- Admin or Settings behavior.
+- Supabase schema changes.
+- Custom domain setup before Production validation.
+
 ## Sensor Health / Fault Detection
 
-Deferred future work, not part of Phase 5F:
+Deferred future work, not part of Phase 6A:
 
 - Track repeated bad sensor reads.
 - Track repeated low moisture readings after watering.
@@ -120,21 +153,21 @@ Deferred future work, not part of Phase 5F:
 - Possibly require N consecutive low fresh moisture readings before automatic watering.
 - Possibly require a post-watering stabilization period before trusting moisture again.
 
-## Hosted Read-Only Dashboard
+## Hosted Read-Only Dashboard Follow-Up
 
 Scope:
 
-- Deploy a read-only dashboard outside the local development environment.
-- Monitor a selected `device_id`.
-- Show current or near-current status from approved data sources.
+- Merge Phase 6A to `main`.
+- Validate Cloudflare Pages Production after merge.
+- Configure custom domain after Production validation.
 - Keep remote dashboard read-only.
-- Do not add remote pump control.
 
 Out of scope:
 
 - Remote Water Now.
-- Multi-device management beyond basic device filtering.
-- Admin control features.
+- Supabase command/control.
+- Multi-device UI unless separately approved.
+- Admin or Settings behavior.
 
 ## Multi-Device Readiness
 
@@ -238,5 +271,8 @@ Out of scope:
 - Supabase command/control.
 - Using `sensor_events` for every telemetry row.
 - Admin page for `sensor_events`.
+- Multi-device read-only UI.
+- Auth, settings, alerts, and commercial production hardening.
+- Custom domain production polish until after Production validation.
 - Full production provisioning.
 - Full commercial multi-device fleet management.

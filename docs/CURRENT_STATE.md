@@ -54,6 +54,19 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Local dashboard continues to update frequently with live values from the `/logs` endpoint because the frontend polls locally.
 - Supabase telemetry display is sparse at the ~15-minute cadence, with additional rows for immediate watering events.
 - `sensor_events` remains a manual operational log and is unchanged; it is not used by firmware.
+- Phase 6A hosted read-only dashboard preview was validated on branch `phase6a-hosted-readonly-dashboard`.
+- Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
+- Cloudflare Pages project `my-balcony-gardener` is connected to GitHub and Preview deployment is working.
+- Validated Preview URL: `https://ea5884de.my-balcony-gardener.pages.dev`.
+- Production branch remains `main`; Production deployment will occur after merge to `main`.
+- Custom domain setup is planned after Production validation, likely `mybalconygardener.boileragency.com`, but is not configured yet.
+- Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
+- Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
+- Hosted read-only mode renders Supabase Sensor History, filters by `device_id` when `VITE_MBG_DEVICE_ID` is configured, and does not render `LiveStats` or Water Now.
+- Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
+- Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
+- Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
+- The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -80,10 +93,13 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 ## Deferred Items
 
-- Broader deployment polish
+- Production deployment after merge to `main`
+- Custom domain setup after Production validation
 - Optional history UI/statistics improvements
 - Branch closeout / merge review
 - Additional Sensor History UI/statistics polish beyond Phase 5E event markers
+- Multi-device read-only UI
+- Auth, settings, alerts, and commercial production hardening
 - Any Supabase-first or non-local live/control runtime change, only by ADR
 - Any additional firmware behavior changes beyond the validated Phase 5F telemetry-integrity boundary
 - Any frontend behavior changes unrelated to preserving or improving the current baseline
@@ -98,9 +114,10 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 1. Continue supervised local prove-out using the working ESP32 local path.
 2. Preserve the separate local live/control path and Supabase history/read path.
-3. Preserve validated Supabase logging, validated manual `sensor_events`, and browser-local timestamp display before sensor comparison/calibration work.
-4. Then proceed with sensor comparison, calibration, and Gage R&R-style analysis.
-5. Route any future runtime/data-flow architecture change through an ADR before implementation.
+3. Merge Phase 6A to `main`, validate Cloudflare Pages Production, then configure the custom domain as a separate follow-up.
+4. Preserve validated Supabase logging, validated manual `sensor_events`, and browser-local timestamp display before sensor comparison/calibration work.
+5. Then proceed with sensor comparison, calibration, and Gage R&R-style analysis.
+6. Route any future runtime/data-flow architecture change through an ADR before implementation.
 
 ## Maintenance Rule
 
