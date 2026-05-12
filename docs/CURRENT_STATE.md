@@ -77,6 +77,19 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `pio run`, `pio run -e balcony-installed`, `pio run -e bench-prototype`, and binary UUID checks passed.
 - No firmware upload occurred during Phase 6C validation.
 - No watering/runtime/frontend behavior changed.
+- Phase 6D bench ESP32 device identity flash validation is complete.
+- Bench ESP32 was flashed using the explicit PlatformIO profile command `pio run -e bench-prototype -t upload --upload-port COM5`; the generic upload command was not used.
+- Bench firmware profile used UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Installed balcony unit UUID remains `550e8400-e29b-41d4-a716-446655440000`.
+- Bench ESP32 booted successfully, connected to Wi-Fi, and was observed at `10.0.0.192`.
+- Bench local `/logs` returned valid data with `device_id` `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Initial Supabase insert failed because the `sensor_logs` RLS insert policy only allowed the installed balcony UUID.
+- Supabase RLS insert policy was updated to allow both known provisioned UUIDs: `550e8400-e29b-41d4-a716-446655440000` and `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- After the RLS policy correction, bench telemetry posted successfully to Supabase `sensor_logs`.
+- Installed balcony unit remained unaffected and continued using its original UUID.
+- Bench unit is now on the BJ1 test bench, powered, and returning good `/logs` data.
+- No pump was connected to the bench unit during identity validation.
+- No firmware behavior changes, frontend behavior changes, or Supabase schema changes were made in Phase 6D.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - MVP v1.0 bench test passed.
