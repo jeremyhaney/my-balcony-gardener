@@ -81,6 +81,11 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - `VITE_MBG_DEVICE_ID` selects the single displayed device for the Phase 6A MVP.
 - Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
 - Hosted read-only builds use `VITE_MBG_DEVICE_ID` to select that UUID or a future unique device UUID.
+- Firmware build profiles provide the Phase 6C prototype/small-batch bridge for intentional device identity.
+- The default firmware build profile is `balcony-installed`.
+- The `bench-prototype` firmware profile uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Tracked `src/device_identity.h` maps `MBG_DEVICE_ID` to the firmware `DEVICE_ID`.
+- Ignored local-only `src/config.h` remains for secrets and is not the repo-owned identity mechanism.
 - Future ESP32 units must not reuse the installed unit UUID.
 - Friendly names are separate labels, not telemetry identity.
 - Hosted read-only mode shows Supabase Sensor History only and keeps local ESP32 controls unavailable.
@@ -92,9 +97,13 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 ### Firmware
 
 ```bash
+# Build only; does not upload firmware
 pio run
-pio run -t upload
+pio run -e balcony-installed
+pio run -e bench-prototype
 ```
+
+Firmware upload is intentionally omitted from the common commands for Phase 6C; upload only after explicit approval using a specific PlatformIO profile.
 
 ### Frontend
 

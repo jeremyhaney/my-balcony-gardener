@@ -9,6 +9,7 @@
 #include <DHT.h>
 #include "time.h"
 #include "config.h"
+#include "device_identity.h"
 
 // 15-minute post-watering cooldown/soak guard for automatic watering only.
 // Guarded here because src/config.h contains local secrets and is intentionally ignored by Git.
