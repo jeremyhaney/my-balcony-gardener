@@ -78,6 +78,7 @@ ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./a
 - `src/config.h` remains ignored/local-only for Wi-Fi and Supabase secrets.
 - This is not the final production provisioning system.
 - Future production provisioning may replace this with programming-station or device-storage assignment without changing `sensor_logs.device_id` or `VITE_MBG_DEVICE_ID` behavior.
+- Supabase `sensor_logs` RLS insert policy must allow provisioned device UUIDs that are expected to post telemetry.
 
 ## Firmware Telemetry Integrity
 

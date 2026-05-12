@@ -86,6 +86,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - The `bench-prototype` firmware profile uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
 - Tracked `src/device_identity.h` maps `MBG_DEVICE_ID` to the firmware `DEVICE_ID`.
 - Ignored local-only `src/config.h` remains for secrets and is not the repo-owned identity mechanism.
+- Phase 6D bench hardware identity validation passed using the explicit PlatformIO `bench-prototype` upload profile.
+- Supabase RLS insert policy now allows both known provisioned device UUIDs: installed balcony unit `550e8400-e29b-41d4-a716-446655440000` and bench prototype `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- The installed balcony unit UUID remains unchanged.
 - Future ESP32 units must not reuse the installed unit UUID.
 - Friendly names are separate labels, not telemetry identity.
 - Hosted read-only mode shows Supabase Sensor History only and keeps local ESP32 controls unavailable.

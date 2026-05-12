@@ -6,10 +6,11 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6C build-profile bridge work on branch `phase6c-device-build-profiles`
+- Current repo context: Phase 6D bench ESP32 device identity flash validation complete on branch `phase6d-bench-device-identity-validation`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
-- Current Phase 6C status: active; PlatformIO device identity build-profile bridge validated
+- Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
+- Current Phase 6D status: complete; bench ESP32 identity flash validation passed
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -23,13 +24,14 @@ It is a planning guide, not an implementation approval. Each item still requires
 4. Phase 5F — Telemetry Integrity Hardening - complete and merged to main
 5. Phase 6A - Hosted Read-Only Dashboard MVP - complete and merged to main
 6. Phase 6B — Device Identity / Bench Unit Readiness - complete
-7. Phase 6C — Prototype Device Identity Build Profiles - current/active
-8. Sensor Health / Fault Detection
-9. Sensor Calibration / Measurement-System Evaluation
-10. Device Settings / Provisioning
-11. Hardware Safety Maturity
+7. Phase 6C — Prototype Device Identity Build Profiles - complete
+8. Phase 6D - Bench ESP32 Device Identity Flash Validation - complete
+9. Sensor Health / Fault Detection
+10. Sensor Calibration / Measurement-System Evaluation
+11. Device Settings / Provisioning
+12. Hardware Safety Maturity
 
-Phase 5F is complete and merged to `main`; Phase 6A is complete and merged to `main`.
+Phase 5F, Phase 6A, Phase 6B, and Phase 6C are complete and merged to `main`; Phase 6D is complete on branch pending review, commit, and merge.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -222,6 +224,36 @@ Out of scope:
 - Hardware safety sensors.
 - Graph duration controls.
 - Broad frontend refactor.
+
+## Phase 6D - Bench ESP32 Device Identity Flash Validation - COMPLETE
+
+Scope:
+
+- Bench ESP32 was flashed using the explicit PlatformIO profile command `pio run -e bench-prototype -t upload --upload-port COM5`.
+- Generic upload command was not used.
+- Bench firmware profile used UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Installed balcony unit UUID remains `550e8400-e29b-41d4-a716-446655440000`.
+- Bench ESP32 booted successfully, connected to Wi-Fi, and was observed at `10.0.0.192`.
+- Bench local `/logs` endpoint returned valid data with `device_id` `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Initial Supabase insert failed because the `sensor_logs` RLS insert policy only allowed the installed balcony UUID.
+- Supabase RLS insert policy was updated to allow both known provisioned UUIDs: `550e8400-e29b-41d4-a716-446655440000` and `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- After the RLS policy correction, bench telemetry posted successfully to Supabase `sensor_logs`.
+- Installed balcony unit remained unaffected and continued using its original UUID.
+- Bench unit is now on the BJ1 test bench, powered, and `/logs` reports good data.
+- No pump was connected to the bench unit during identity validation.
+- No firmware behavior changes were made.
+- No frontend behavior changes were made.
+- No Supabase schema changes were made.
+
+Out of scope:
+
+- Firmware behavior changes.
+- Frontend behavior changes.
+- Supabase schema changes.
+- Watering logic changes.
+- Remote Water Now.
+- Multi-device UI.
+- Device registry.
 
 ## Sensor Calibration / Measurement-System Evaluation
 
