@@ -6,8 +6,9 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: `main` after Phase 6A production/custom-domain validation
+- Current repo context: Phase 6B documentation-only work on branch `phase6b-device-identity-bench-readiness`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
+- Current Phase 6B status: documenting device identity and bench unit readiness convention
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -20,8 +21,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 3. Phase 5E — History Graph Event Semantics - validated/complete
 4. Phase 5F — Telemetry Integrity Hardening - complete and merged to main
 5. Phase 6A - Hosted Read-Only Dashboard MVP - complete and merged to main
-6. Sensor Health / Fault Detection
-7. Multi-Device Readiness
+6. Phase 6B — Device Identity / Bench Unit Readiness
+7. Sensor Health / Fault Detection
 8. Sensor Calibration / Measurement-System Evaluation
 9. Device Settings / Provisioning
 10. Hardware Safety Maturity
@@ -169,19 +170,27 @@ Out of scope:
 - Multi-device UI unless separately approved.
 - Admin or Settings behavior.
 
-## Multi-Device Readiness
+## Phase 6B — Device Identity / Bench Unit Readiness
 
 Scope:
 
-- Add support for testing and viewing more than one device.
-- Confirm device identity handling.
-- Confirm dashboard filtering by `device_id`.
-- Confirm Supabase queries remain efficient enough for multiple devices.
+- Lock device identity convention before adding bench or field units.
+- Keep installed balcony unit UUID `550e8400-e29b-41d4-a716-446655440000` for history continuity.
+- Future ESP32 units require unique, stable, non-null UUIDs before deployment.
+- Friendly names are separate field/user labels.
+- Hosted read-only dashboard uses `VITE_MBG_DEVICE_ID` to select the displayed UUID.
+- No Supabase schema change.
 
 Out of scope:
 
-- Production provisioning.
-- User account system unless separately approved.
+- Multi-device UI.
+- Settings/provisioning UI.
+- Supabase schema changes.
+- SensorLogRow changes.
+- Remote Water Now.
+- Supabase command/control.
+- Sensor calibration.
+- Hardware safety sensors.
 - Commercial fleet management.
 
 ## Sensor Calibration / Measurement-System Evaluation

@@ -66,6 +66,10 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
 - Custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
+- Phase 6B keeps installed balcony unit `device_id` `550e8400-e29b-41d4-a716-446655440000` for history continuity.
+- Future ESP32 units must use unique, stable, non-null UUIDs before deployment.
+- Friendly names remain separate field/user labels and are not telemetry identity.
+- No firmware/frontend behavior changed for this identity decision.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - MVP v1.0 bench test passed.

@@ -61,6 +61,17 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
 
+## Device Identity And Production Traceability
+
+ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./adr/0010-device-identity-and-production-traceability.md) locks the Phase 6B device identity convention.
+
+- The current installed balcony unit keeps UUID `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
+- Firmware `DEVICE_ID` is the telemetry identity used in `sensor_logs.device_id` and local `/logs`.
+- Future ESP32 units must be preloaded/provisioned with unique, stable, non-null UUIDs before deployment.
+- Friendly names are separate user-facing labels and are not the telemetry identity.
+- Hosted read-only dashboard selection uses `VITE_MBG_DEVICE_ID`.
+- No Supabase schema change, `SensorLogRow` change, multi-device UI, or provisioning UI is approved in Phase 6B.
+
 ## Firmware Telemetry Integrity
 
 ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-telemetry-integrity-hardening.md) locks the Phase 5F telemetry-integrity boundary.

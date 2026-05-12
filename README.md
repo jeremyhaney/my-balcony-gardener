@@ -79,6 +79,10 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted read-only mode uses `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only builds require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; do not document real values.
 - `VITE_MBG_DEVICE_ID` selects the single displayed device for the Phase 6A MVP.
+- Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
+- Hosted read-only builds use `VITE_MBG_DEVICE_ID` to select that UUID or a future unique device UUID.
+- Future ESP32 units must not reuse the installed unit UUID.
+- Friendly names are separate labels, not telemetry identity.
 - Hosted read-only mode shows Supabase Sensor History only and keeps local ESP32 controls unavailable.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, and local Manual Water Now.
 - Supabase remains telemetry/history only, not command/control.
