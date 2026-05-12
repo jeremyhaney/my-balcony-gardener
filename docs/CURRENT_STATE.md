@@ -69,7 +69,14 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 6B keeps installed balcony unit `device_id` `550e8400-e29b-41d4-a716-446655440000` for history continuity.
 - Future ESP32 units must use unique, stable, non-null UUIDs before deployment.
 - Friendly names remain separate field/user labels and are not telemetry identity.
-- No firmware/frontend behavior changed for this identity decision.
+- Phase 6B identity decision did not change watering, runtime control, or frontend behavior.
+- Phase 6C adds PlatformIO build profiles for intentional prototype device identity.
+- `balcony-installed` preserves UUID `550e8400-e29b-41d4-a716-446655440000`.
+- `bench-prototype` uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- `src/device_identity.h` is tracked and contains no secrets; `src/config.h` remains ignored/local-only for Wi-Fi and Supabase secrets.
+- `pio run`, `pio run -e balcony-installed`, `pio run -e bench-prototype`, and binary UUID checks passed.
+- No firmware upload occurred during Phase 6C validation.
+- No watering/runtime/frontend behavior changed.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - MVP v1.0 bench test passed.

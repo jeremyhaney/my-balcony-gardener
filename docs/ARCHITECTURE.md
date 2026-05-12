@@ -71,6 +71,13 @@ ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./a
 - Friendly names are separate user-facing labels and are not the telemetry identity.
 - Hosted read-only dashboard selection uses `VITE_MBG_DEVICE_ID`.
 - No Supabase schema change, `SensorLogRow` change, multi-device UI, or provisioning UI is approved in Phase 6B.
+- ADR 0010 remains the identity convention authority.
+- Phase 6C implements a prototype/small-batch bridge using PlatformIO build profiles.
+- `platformio.ini` supplies `MBG_DEVICE_ID` per profile.
+- `src/device_identity.h` maps `MBG_DEVICE_ID` to the existing `DEVICE_ID`.
+- `src/config.h` remains ignored/local-only for Wi-Fi and Supabase secrets.
+- This is not the final production provisioning system.
+- Future production provisioning may replace this with programming-station or device-storage assignment without changing `sensor_logs.device_id` or `VITE_MBG_DEVICE_ID` behavior.
 
 ## Firmware Telemetry Integrity
 

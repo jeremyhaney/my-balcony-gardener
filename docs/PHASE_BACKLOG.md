@@ -6,9 +6,10 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6B documentation-only work on branch `phase6b-device-identity-bench-readiness`
+- Current repo context: Phase 6C build-profile bridge work on branch `phase6c-device-build-profiles`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
-- Current Phase 6B status: documenting device identity and bench unit readiness convention
+- Current Phase 6B status: complete; device identity and bench unit readiness convention documented
+- Current Phase 6C status: active; PlatformIO device identity build-profile bridge validated
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -21,11 +22,12 @@ It is a planning guide, not an implementation approval. Each item still requires
 3. Phase 5E — History Graph Event Semantics - validated/complete
 4. Phase 5F — Telemetry Integrity Hardening - complete and merged to main
 5. Phase 6A - Hosted Read-Only Dashboard MVP - complete and merged to main
-6. Phase 6B — Device Identity / Bench Unit Readiness
-7. Sensor Health / Fault Detection
-8. Sensor Calibration / Measurement-System Evaluation
-9. Device Settings / Provisioning
-10. Hardware Safety Maturity
+6. Phase 6B — Device Identity / Bench Unit Readiness - complete
+7. Phase 6C — Prototype Device Identity Build Profiles - current/active
+8. Sensor Health / Fault Detection
+9. Sensor Calibration / Measurement-System Evaluation
+10. Device Settings / Provisioning
+11. Hardware Safety Maturity
 
 Phase 5F is complete and merged to `main`; Phase 6A is complete and merged to `main`.
 
@@ -192,6 +194,34 @@ Out of scope:
 - Sensor calibration.
 - Hardware safety sensors.
 - Commercial fleet management.
+
+## Phase 6C — Prototype Device Identity Build Profiles
+
+Scope:
+
+- Add PlatformIO build profiles for intentional prototype device identity.
+- Keep `src/config.h` ignored/local-only for secrets.
+- Use tracked `src/device_identity.h` as the no-secrets identity bridge.
+- Preserve installed balcony UUID for `balcony-installed`.
+- Add bench-prototype UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Validate `pio run` and explicit profile builds.
+- Validate built firmware binaries contain only the expected UUID.
+
+Out of scope:
+
+- Firmware upload without explicit approval.
+- Production provisioning database.
+- Device registry table.
+- Supabase schema changes.
+- SensorLogRow changes.
+- Multi-device UI.
+- Settings/provisioning UI.
+- Remote Water Now.
+- Supabase command/control.
+- Sensor calibration.
+- Hardware safety sensors.
+- Graph duration controls.
+- Broad frontend refactor.
 
 ## Sensor Calibration / Measurement-System Evaluation
 
