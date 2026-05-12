@@ -6,11 +6,12 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6D bench ESP32 device identity flash validation complete on branch `phase6d-bench-device-identity-validation`
+- Current repo context: Phase 6E hosted read-only device/window controls validated on branch `phase6e-hosted-device-window-controls`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
 - Current Phase 6D status: complete; bench ESP32 identity flash validation passed
+- Current Phase 6E status: complete; hosted read-only Device and Window selectors validated locally and on the custom domain
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -26,12 +27,13 @@ It is a planning guide, not an implementation approval. Each item still requires
 6. Phase 6B — Device Identity / Bench Unit Readiness - complete
 7. Phase 6C — Prototype Device Identity Build Profiles - complete
 8. Phase 6D - Bench ESP32 Device Identity Flash Validation - complete
-9. Sensor Health / Fault Detection
-10. Sensor Calibration / Measurement-System Evaluation
-11. Device Settings / Provisioning
-12. Hardware Safety Maturity
+9. Phase 6E - Hosted Device/Window Controls - complete
+10. Sensor Health / Fault Detection
+11. Sensor Calibration / Measurement-System Evaluation
+12. Device Settings / Provisioning
+13. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, and Phase 6C are complete and merged to `main`; Phase 6D is complete on branch pending review, commit, and merge.
+Phase 5F, Phase 6A, Phase 6B, and Phase 6C are complete and merged to `main`; Phase 6D and Phase 6E are complete on branch pending review, commit, and merge.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -173,6 +175,49 @@ Out of scope:
 - Supabase command/control.
 - Multi-device UI unless separately approved.
 - Admin or Settings behavior.
+
+## Phase 6E - Hosted Device/Window Controls - VALIDATED / COMPLETE
+
+Scope:
+
+- Hosted read-only dashboard now has Device and Window selectors for Sensor History.
+- Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
+- Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
+- URL query-string state supports valid combinations such as `?device=balcony&window=24h` and `?device=bench&window=7d`.
+- Invalid query values safely fall back to Installed Balcony Unit / `24h`.
+- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
+- Supabase history queries filter server-side by selected `device_id`.
+- Supabase history queries filter by selected timestamp lower bound except for `all`, which applies no lower timestamp bound.
+- Hosted read-only mode still does not render `LiveStats`, show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
+- Supabase remains telemetry/history only and is not command/control.
+- Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
+- Manual Water Now remains local only.
+- Chart X-axis labels adapt by selected history window.
+- Chart tooltip shows full date/time.
+- Local browser validation passed for balcony and bench devices across history windows.
+- Invalid query fallback validation passed.
+- `npm run lint` and `npm run build` passed.
+- Hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
+- Cloudflare/custom-domain production validation passed at `https://mybalconygardener.boileragency.com`.
+- No firmware changes were made.
+- No Supabase schema changes were made.
+- `sensor_events` was unchanged.
+- The canonical `SensorLogRow` shape was unchanged.
+- Watering logic and local Manual Water Now behavior were unchanged.
+
+Out of scope:
+
+- Remote Water Now.
+- Supabase command/control.
+- Supabase schema changes.
+- Firmware changes.
+- Watering logic changes.
+- Sensor Health.
+- Calibration.
+- Alerts.
+- Auth/login.
+- Device registry.
+- Settings/provisioning UI.
 
 ## Phase 6B — Device Identity / Bench Unit Readiness
 
@@ -346,3 +391,4 @@ Out of scope:
 - Auth/login, settings/provisioning, alerts, and commercial production hardening.
 - Full production provisioning.
 - Full commercial multi-device fleet management.
+

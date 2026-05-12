@@ -53,7 +53,8 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 
 - Local Control Mode uses the local ESP32 endpoints, `LiveStats`, Manual Water Now, and frequent `/logs` polling.
 - Hosted Read-Only Mode is a Cloudflare Pages static frontend mode controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
-- Hosted Read-Only Mode renders Supabase `sensor_logs` history only and may filter by `VITE_MBG_DEVICE_ID`.
+- Hosted Read-Only Mode renders Supabase `sensor_logs` history only, supports read-only Device and Window selectors, and keeps `VITE_MBG_DEVICE_ID` as the fallback/default device behavior.
+- Hosted Read-Only Mode filters Supabase history server-side by selected `device_id` and by selected timestamp lower bound except for all-time.
 - Hosted Read-Only Mode must not render `LiveStats`, show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
 - Hosted Read-Only Mode must not bundle local control code in the production artifact.
 - Sensor History remains rendered in both modes.

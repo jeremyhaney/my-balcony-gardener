@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { HistoryWindowKey } from '../historyControls'
 
 interface SensorLog {
   timestamp: string
@@ -21,9 +22,10 @@ interface SensorLog {
 
 interface Props {
   sensorLogs: SensorLog[]
+  historyWindowKey: HistoryWindowKey
 }
 
-const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
+const DualAxisChart: React.FC<Props> = ({ sensorLogs, historyWindowKey }) => {
   if (sensorLogs.length === 0) {
     return (
       <div style={{ width: '100%', padding: '1rem', textAlign: 'center' }}>
@@ -41,12 +43,35 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
     watering: log.watering,
   }))
   const wateringEvents = data.filter((point) => point.watering === true)
-  const formatTime = (timestampMs: number) =>
+  const formatTimeOnly = (timestampMs: number) =>
     new Date(timestampMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const formatMonthDayHour = (timestampMs: number) =>
+    new Date(timestampMs).toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+    })
+  const formatMonthDay = (timestampMs: number) =>
+    new Date(timestampMs).toLocaleDateString([], {
+      month: 'short',
+      day: 'numeric',
+    })
+  const formatXAxisTick = (timestampMs: number) => {
+    if (historyWindowKey === '24h') {
+      return formatTimeOnly(timestampMs)
+    }
+
+    if (historyWindowKey === '7d') {
+      return formatMonthDayHour(timestampMs)
+    }
+
+    return formatMonthDay(timestampMs)
+  }
   const formatDateTime = (timestampMs: number) =>
     new Date(timestampMs).toLocaleString([], {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     })
@@ -70,7 +95,8 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
-            tickFormatter={formatTime}
+            tickFormatter={formatXAxisTick}
+            minTickGap={28}
           />
           <YAxis
             yAxisId="left"
@@ -94,7 +120,10 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs }) => {
               style: { textAnchor: 'middle' },
             }}
           />
-          <Tooltip labelFormatter={(label) => formatDateTime(Number(label))} />
+          <Tooltip
+            labelFormatter={(label) => formatDateTime(Number(label))}
+            labelStyle={{ color: '#111827', fontWeight: 700, marginBottom: '0.25rem' }}
+          />
           <Legend />
           {wateringEvents.map((event) => (
             <ReferenceLine
