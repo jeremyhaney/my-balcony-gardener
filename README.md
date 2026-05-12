@@ -39,8 +39,16 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 - Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
-- Hosted read-only mode renders Sensor History from Supabase, filters by `VITE_MBG_DEVICE_ID` when configured, and does not render `LiveStats`, Water Now, local `/logs`, or local `/water-now`.
+- Phase 6E hosted read-only device/window controls are validated on the custom domain.
+- Hosted read-only mode renders Sensor History from Supabase, supports Device and Window selectors, and does not render `LiveStats`, Water Now, local `/logs`, or local `/water-now`.
+- Hosted read-only Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
+- Hosted read-only Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
+- Hosted read-only URL query state supports links such as `?device=balcony&window=24h` and `?device=bench&window=7d`; invalid values safely fall back to Installed Balcony Unit / `24h`.
+- Hosted read-only Supabase history queries filter server-side by selected `device_id` and by selected timestamp lower bound except for `all`.
+- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
+- Sensor History chart X-axis labels adapt by selected history window, and chart tooltips show full date/time.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
+- Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
 - Custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
 - Local/default dashboard behavior remains unchanged; Manual Water Now remains available only through the local/default path.
 - Remote command/control (Remote Water Now) is not part of MVP.
@@ -78,9 +86,15 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - Hosted read-only mode uses `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only builds require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; do not document real values.
-- `VITE_MBG_DEVICE_ID` selects the single displayed device for the Phase 6A MVP.
+- Hosted read-only builds now expose read-only Device and Window selectors for Supabase Sensor History.
+- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device when no valid `device` query value is present.
 - Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
-- Hosted read-only builds use `VITE_MBG_DEVICE_ID` to select that UUID or a future unique device UUID.
+- Hosted Device selector currently supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
+- Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
+- Hosted query-string state supports `?device=balcony&window=24h`, `?device=bench&window=7d`, and similar valid combinations.
+- Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
+- Hosted Supabase history reads filter server-side by selected `device_id`.
+- Hosted Supabase history reads apply a selected timestamp lower bound except for `all`, which applies no lower timestamp bound.
 - Firmware build profiles provide the Phase 6C prototype/small-batch bridge for intentional device identity.
 - The default firmware build profile is `balcony-installed`.
 - The `bench-prototype` firmware profile uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
@@ -92,6 +106,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Future ESP32 units must not reuse the installed unit UUID.
 - Friendly names are separate labels, not telemetry identity.
 - Hosted read-only mode shows Supabase Sensor History only and keeps local ESP32 controls unavailable.
+- Hosted read-only mode has no Water Now and does not call local ESP32 `/logs` or `/water-now`.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, and local Manual Water Now.
 - Supabase remains telemetry/history only, not command/control.
 
@@ -127,8 +142,8 @@ npm run dev
 ## Deferred For Later
 
 - Long-term analytics/statistics such as min/max/avg
-- Additional Sensor History UI/statistics polish beyond Phase 5E event markers
-- Multi-device read-only UI
+- Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
+- Additional multi-device read-only UI beyond the current hosted Device selector
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings

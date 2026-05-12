@@ -1,5 +1,15 @@
-import { useEffect, useState } from 'react'
+import { type ChangeEvent, useEffect, useState } from 'react'
 import { fetchHistoryLogs } from '../api'
+import {
+  getHistoryControlStateFromUrl,
+  getHistoryDeviceOption,
+  getHistoryWindowOption,
+  HISTORY_DEVICE_OPTIONS,
+  HISTORY_WINDOW_OPTIONS,
+  type HistoryDeviceOption,
+  type HistoryWindowOption,
+  updateHistoryControlUrl,
+} from '../historyControls'
 import type { SensorLogRow } from '../types/sensorLog'
 import DualAxisChart from './DualAxisChart'
 
@@ -17,12 +27,23 @@ const SensorLogViewer = () => {
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
+    () => getHistoryControlStateFromUrl().device,
+  )
+  const [selectedWindow, setSelectedWindow] = useState<HistoryWindowOption>(
+    () => getHistoryControlStateFromUrl().window,
+  )
 
   useEffect(() => {
     let isMounted = true
 
     const loadHistory = async () => {
-      const { rows, error } = await fetchHistoryLogs(20)
+      const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
+      const { rows, error } = await fetchHistoryLogs(
+        selectedWindow.limit,
+        selectedDevice.deviceId,
+        lowerBoundIso,
+      )
 
       if (!isMounted) {
         return
@@ -43,7 +64,43 @@ const SensorLogViewer = () => {
       isMounted = false
       window.clearInterval(refreshTimer)
     }
+  }, [selectedDevice, selectedWindow])
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextControlState = getHistoryControlStateFromUrl()
+      setSelectedDevice(nextControlState.device)
+      setSelectedWindow(nextControlState.window)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
+
+  const handleDeviceChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextDevice = getHistoryDeviceOption(event.target.value)
+
+    if (!nextDevice) {
+      return
+    }
+
+    setSelectedDevice(nextDevice)
+    updateHistoryControlUrl(nextDevice.key, selectedWindow.key)
+  }
+
+  const handleWindowChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextWindow = getHistoryWindowOption(event.target.value)
+
+    if (!nextWindow) {
+      return
+    }
+
+    setSelectedWindow(nextWindow)
+    updateHistoryControlUrl(selectedDevice.key, nextWindow.key)
+  }
 
   const chartLogs = [...logs]
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
@@ -70,6 +127,51 @@ const SensorLogViewer = () => {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-2">Sensor History</h2>
 
+      <div
+        aria-label="Sensor history controls"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          alignItems: 'flex-end',
+          marginBottom: '1rem',
+        }}
+      >
+        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.9rem' }}>
+          <span>Device</span>
+          <select
+            value={selectedDevice.key}
+            onChange={handleDeviceChange}
+            style={{ minWidth: '220px', padding: '0.4rem' }}
+          >
+            {HISTORY_DEVICE_OPTIONS.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.9rem' }}>
+          <span>Window</span>
+          <select
+            value={selectedWindow.key}
+            onChange={handleWindowChange}
+            style={{ minWidth: '160px', padding: '0.4rem' }}
+          >
+            {HISTORY_WINDOW_OPTIONS.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <p className="mb-3 text-sm">
+        Showing {selectedDevice.label} for {selectedWindow.label}.
+      </p>
+
       {historyError ? (
         <p className="mb-3 text-sm" style={{ color: '#7f1d1d' }}>
           {historyError}
@@ -83,7 +185,7 @@ const SensorLogViewer = () => {
       ) : chartLogs.length === 0 ? (
         <p className="text-sm">History rows were found, but no valid readings are available to chart yet.</p>
       ) : (
-        <DualAxisChart sensorLogs={chartLogs} />
+        <DualAxisChart sensorLogs={chartLogs} historyWindowKey={selectedWindow.key} />
       )}
     </div>
   )

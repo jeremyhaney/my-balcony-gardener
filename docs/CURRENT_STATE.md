@@ -62,9 +62,19 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 - Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
-- Hosted read-only mode renders Supabase Sensor History, filters by `device_id` when `VITE_MBG_DEVICE_ID` is configured, and does not render `LiveStats` or Water Now.
+- Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
+- Hosted read-only mode renders Supabase Sensor History with Device and Window selectors and does not render `LiveStats` or Water Now.
+- Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
+- Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
+- Hosted URL query state supports valid combinations such as `?device=balcony&window=24h` and `?device=bench&window=7d`.
+- Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
+- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
+- Hosted Supabase history queries filter server-side by selected `device_id`.
+- Hosted Supabase history queries filter by selected timestamp lower bound except for `all`, which does not apply a lower timestamp bound.
+- Sensor History chart X-axis labels adapt by selected history window, and chart tooltips show full date/time.
 - Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
+- Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
 - Custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
 - Phase 6B keeps installed balcony unit `device_id` `550e8400-e29b-41d4-a716-446655440000` for history continuity.
 - Future ESP32 units must use unique, stable, non-null UUIDs before deployment.
@@ -92,6 +102,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - No firmware behavior changes, frontend behavior changes, or Supabase schema changes were made in Phase 6D.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
+- Supabase remains read-only telemetry/history only and is not used for command/control.
+- Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -119,8 +131,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 ## Deferred Items
 
 - Optional history UI/statistics improvements
-- Additional Sensor History UI/statistics polish beyond Phase 5E event markers
-- Multi-device read-only UI
+- Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
+- Additional multi-device read-only UI beyond the current hosted Device selector
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - Sensor Calibration / Measurement-System Evaluation
 - Hardware Safety Maturity
