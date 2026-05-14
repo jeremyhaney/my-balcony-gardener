@@ -116,6 +116,12 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Bench unit is now on the BJ1 test bench, powered, and returning good `/logs` data.
 - No pump was connected to the bench unit during identity validation.
 - No firmware behavior changes, frontend behavior changes, or Supabase schema changes were made in Phase 6D.
+- Phase 6H adds raw soil ADC visibility to local `/logs` and Supabase telemetry.
+- Existing moisture mapping is unchanged.
+- Existing watering logic is unchanged.
+- `data.moisture` remains a derived moisture index, not a calibrated soil-moisture percentage.
+- `data.soilRawAdc` is optional for older history rows.
+- Future additional sensors should be handled through a SenML-inspired measurement-list or measurement-table architecture before expanding the fixed contract repeatedly.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - Supabase remains read-only telemetry/history only and is not used for command/control.

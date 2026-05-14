@@ -49,6 +49,10 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Firmware can continue local automatic watering logic when Wi-Fi, internet, or Supabase is unavailable.
 - Firmware no longer restarts solely because Wi-Fi is unavailable during boot.
 - Pump shutoff is prioritized before client/server/network/telemetry work.
+- `soilRawAdc` exists in local `/logs` and Supabase telemetry for diagnostic visibility.
+- Moisture remains the existing derived index, not a calibrated soil-moisture percentage.
+- Watering behavior did not change.
+- Future sensors should move toward a measurement-list/table model before adding more fixed fields.
 - Hosted read-only mode renders Sensor History and read-only Device Status from Supabase, supports Device and Window selectors, and does not render `LiveStats`, Water Now, local `/logs`, or local `/water-now`.
 - Hosted read-only Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
 - Hosted read-only Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.

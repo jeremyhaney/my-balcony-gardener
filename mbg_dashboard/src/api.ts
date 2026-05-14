@@ -23,6 +23,9 @@ const DEFAULT_SENSOR_DATA: SensorData = {
   lastWateringDuration: 0,
 }
 
+const finiteNumberOrUndefined = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined
+
 const mapSensorLogRow = (row: SupabaseSensorLogRow): SensorLogRow => ({
   id: row.id ?? undefined,
   device_id: row.device_id ?? '',
@@ -31,6 +34,7 @@ const mapSensorLogRow = (row: SupabaseSensorLogRow): SensorLogRow => ({
     temperature: row.data?.temperature ?? DEFAULT_SENSOR_DATA.temperature,
     humidity: row.data?.humidity ?? DEFAULT_SENSOR_DATA.humidity,
     moisture: row.data?.moisture ?? DEFAULT_SENSOR_DATA.moisture,
+    soilRawAdc: finiteNumberOrUndefined(row.data?.soilRawAdc),
     watering: row.data?.watering ?? DEFAULT_SENSOR_DATA.watering,
     lastWateredTime: row.data?.lastWateredTime ?? DEFAULT_SENSOR_DATA.lastWateredTime,
     lastWateringDuration:

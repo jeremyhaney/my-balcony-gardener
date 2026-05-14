@@ -45,7 +45,8 @@ ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-l
 - Automatic watering includes a post-watering cooldown guard between automatic cycles.
 - Manual Water Now remains local/supervised and is intentionally not blocked by the automatic cooldown.
 - Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
-- Raw ADC validation and repeated-reading/filtering work remain deferred.
+- Phase 6H approves raw soil ADC visibility in telemetry for diagnosis.
+- Repeated-reading validation, filtering, calibration, and automatic-watering invalid-read rejection remain deferred.
 
 ## Offline Autonomy And Network Failure Boundary
 
@@ -136,6 +137,7 @@ type SensorLogRow = {
     temperature: number
     humidity: number
     moisture: number
+    soilRawAdc?: number
     watering: boolean
     lastWateredTime: string
     lastWateringDuration: number
@@ -147,6 +149,11 @@ type SensorLogRow = {
 - In Supabase, `data` is stored as `jsonb`.
 - For the `jsonb` object, key order is not significant.
 - Field names and value types are significant and must not drift.
+- `data.moisture` is the current derived moisture index.
+- `data.soilRawAdc` is the raw ESP32 ADC count from `analogRead(SOIL_PIN)`, when available.
+- `soilRawAdc` is optional because older rows do not contain it.
+- ADR 0012 approves this contract change.
+- Future added sensors should move toward a SenML-inspired measurement-list or measurement-table model before adding several more fixed fields.
 - `sensor_events` is intentionally separate and must not be used to reshape or extend the canonical `SensorLogRow`.
 - Contract changes require:
   - a new ADR
@@ -178,7 +185,7 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 ## Deferred Architecture Areas
 
 - Future graph polish / trend visualization
-- Future sensor calibration / raw ADC prove-out
+- Future sensor calibration, repeated-reading validation, filtering, and invalid-reading rejection
 - Future advanced sensor health / fault detection, calibration, alerts, and diagnosis
 - Future quiet hours / runtime settings
 - Future auth/login, alerts, settings/provisioning, runtime settings, and production hardening
