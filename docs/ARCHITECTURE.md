@@ -47,6 +47,20 @@ ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-l
 - Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
 - Raw ADC validation and repeated-reading/filtering work remain deferred.
 
+## Offline Autonomy And Network Failure Boundary
+
+ADR 0011 in [`docs/adr/0011-offline-autonomy-and-wifi-recovery.md`](./adr/0011-offline-autonomy-and-wifi-recovery.md) locks the Phase 6G offline autonomy and Wi-Fi recovery boundary.
+
+- Local firmware owns watering decisions and pump shutoff.
+- Wi-Fi, internet, and Supabase are not required for local automatic watering logic.
+- Wi-Fi is best-effort; unavailable Wi-Fi must not keep the ESP32 from entering local-control/offline mode.
+- Pump shutoff must be checked before client/server/network/telemetry work.
+- Supabase remains read-only telemetry/history for frontend use and must not control watering.
+- Hosted dashboard must remain read-only and must not expose Water Now.
+- Hosted dashboard may show stale or no recent data when telemetry stops.
+- No AP/captive portal provisioning is implemented yet.
+- No-Wi-Fi operation is autonomous/headless for now; local dashboard/manual control require reachable network access.
+
 ## Hosted Read-Only Dashboard Boundary
 
 ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-readonly-dashboard.md) locks the Phase 6A hosted read-only dashboard boundary.

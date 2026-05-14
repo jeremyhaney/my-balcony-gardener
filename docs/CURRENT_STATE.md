@@ -63,7 +63,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
-- Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally and on Cloudflare preview.
+- Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
 - Hosted read-only mode renders Supabase Sensor History plus Device Status with Device and Window selectors and does not render `LiveStats` or Water Now.
 - Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
 - Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
@@ -80,8 +80,18 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
 - Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
 - Phase 6F hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
-- Cloudflare preview deployment validated Phase 6F behavior; production/custom-domain validation will occur after merge to `main`.
+- Cloudflare preview and production/custom-domain deployments validated Phase 6F behavior after merge to `main`.
 - Phase 6E custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
+- Phase 6G bench profile built successfully.
+- Phase 6G bench profile flashed successfully.
+- Phase 6G bench unit booted successfully on normal Wi-Fi.
+- Phase 6G bench unit served valid `/logs`.
+- Phase 6G offline/no-Wi-Fi behavior is code-hardened and static-inspected, but not physically no-Wi-Fi tested in this phase because Wi-Fi/router disruption was not available.
+- Firmware no longer restarts solely because Wi-Fi is unavailable during boot.
+- Firmware continues into local-control/offline mode when Wi-Fi is unavailable.
+- Firmware retries Wi-Fi periodically without blocking local watering control.
+- Pump shutoff is prioritized before client/server/network/telemetry work.
+- Pump relay shutoff still occurs before watering-completion telemetry.
 - Phase 6B keeps installed balcony unit `device_id` `550e8400-e29b-41d4-a716-446655440000` for history continuity.
 - Future ESP32 units must use unique, stable, non-null UUIDs before deployment.
 - Friendly names remain separate field/user labels and are not telemetry identity.
@@ -142,6 +152,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
 - Additional multi-device read-only UI beyond the current hosted Device selector
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
+- No-Wi-Fi operation is currently autonomous/headless; AP/captive portal provisioning and installer/customer setup mode are deferred.
 - Hardware Safety Maturity
 - Any Supabase-first or non-local live/control runtime change, only by ADR
 - Any additional firmware behavior changes beyond the validated Phase 5F telemetry-integrity boundary
