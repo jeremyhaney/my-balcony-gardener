@@ -1,0 +1,108 @@
+.sensor-health-panel {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  width: min(320px, calc(100vw - 2rem));
+  color: var(--sensor-health-color);
+}
+
+.sensor-health-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 185px;
+  margin-left: auto;
+  border: 1px solid var(--sensor-health-border);
+  border-radius: 999px;
+  background: var(--sensor-health-background);
+  box-shadow: var(--sensor-health-shadow);
+  cursor: pointer;
+  list-style: none;
+  padding: 0.55rem 0.8rem;
+  text-align: center;
+}
+
+.sensor-health-summary-healthy {
+  padding: 0.45rem 0.7rem;
+}
+
+.sensor-health-summary::-webkit-details-marker {
+  display: none;
+}
+
+.sensor-health-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sensor-health-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--sensor-health-dot);
+  flex: 0 0 auto;
+}
+
+.sensor-health-message {
+  width: 100%;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.sensor-health-details {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 100%;
+  border: 1px solid var(--sensor-health-border);
+  border-radius: 8px;
+  background: var(--sensor-health-background);
+  box-shadow: var(--sensor-health-shadow);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.sensor-health-list {
+  display: grid;
+  gap: 0.4rem 1rem;
+  grid-template-columns: max-content 1fr;
+  margin: 0.65rem 0 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .sensor-health-panel {
+    position: static;
+    width: 100%;
+    margin: 0 0 1rem;
+  }
+
+  .sensor-health-summary {
+    width: min(185px, 100%);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .sensor-health-details {
+    position: static;
+    width: 100%;
+    margin-top: 0.5rem;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 420px) {
+  .sensor-health-list {
+    grid-template-columns: 1fr;
+  }
+}
