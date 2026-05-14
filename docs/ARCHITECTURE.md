@@ -53,8 +53,11 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 
 - Local Control Mode uses the local ESP32 endpoints, `LiveStats`, Manual Water Now, and frequent `/logs` polling.
 - Hosted Read-Only Mode is a Cloudflare Pages static frontend mode controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
-- Hosted Read-Only Mode renders Supabase `sensor_logs` history only, supports read-only Device and Window selectors, and keeps `VITE_MBG_DEVICE_ID` as the fallback/default device behavior.
+- Hosted Read-Only Mode renders Supabase `sensor_logs` history and read-only Device Status / telemetry-quality information, supports read-only Device and Window selectors, and keeps `VITE_MBG_DEVICE_ID` as the fallback/default device behavior.
 - Hosted Read-Only Mode filters Supabase history server-side by selected `device_id` and by selected timestamp lower bound except for all-time.
+- Device Status is computed in the frontend from already-fetched `sensor_logs` rows for the selected device/window.
+- Device Status must remain read-only and must not introduce Supabase command/control or local ESP32 endpoint calls.
+- Supabase `data.watering` may be shown only as watering history markers, not as live currently-watering status.
 - Hosted Read-Only Mode must not render `LiveStats`, show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
 - Hosted Read-Only Mode must not bundle local control code in the production artifact.
 - Sensor History remains rendered in both modes.
@@ -162,7 +165,7 @@ Supabase `public.sensor_events` is approved as a separate manual operational eve
 
 - Future graph polish / trend visualization
 - Future sensor calibration / raw ADC prove-out
-- Future sensor health / fault detection
+- Future advanced sensor health / fault detection, calibration, alerts, and diagnosis
 - Future quiet hours / runtime settings
 - Future auth/login, alerts, settings/provisioning, runtime settings, and production hardening
 - Future multi-device read-only UI

@@ -6,12 +6,13 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6E hosted read-only device/window controls validated on branch `phase6e-hosted-device-window-controls`
+- Current repo context: Phase 6F hosted read-only Device Status / telemetry quality validated on branch `phase6f-hosted-telemetry-health`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
 - Current Phase 6D status: complete; bench ESP32 identity flash validation passed
 - Current Phase 6E status: complete; hosted read-only Device and Window selectors validated locally and on the custom domain
+- Current Phase 6F status: local hosted-readonly validation and Cloudflare preview validation passed; production/custom-domain validation pending merge to `main`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -28,12 +29,13 @@ It is a planning guide, not an implementation approval. Each item still requires
 7. Phase 6C — Prototype Device Identity Build Profiles - complete
 8. Phase 6D - Bench ESP32 Device Identity Flash Validation - complete
 9. Phase 6E - Hosted Device/Window Controls - complete
-10. Sensor Health / Fault Detection
-11. Sensor Calibration / Measurement-System Evaluation
-12. Device Settings / Provisioning
-13. Hardware Safety Maturity
+10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - validated on branch, pending merge
+11. Advanced Sensor Health / Fault Detection
+12. Sensor Calibration / Measurement-System Evaluation
+13. Device Settings / Provisioning
+14. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, and Phase 6C are complete and merged to `main`; Phase 6D and Phase 6E are complete on branch pending review, commit, and merge.
+Phase 5F, Phase 6A, Phase 6B, and Phase 6C are complete and merged to `main`; Phase 6D and Phase 6E are complete, and Phase 6F is validated on branch pending review, commit, merge, and production/custom-domain validation.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -152,15 +154,16 @@ Out of scope:
 - Admin or Settings behavior.
 - Supabase schema changes.
 
-## Sensor Health / Fault Detection
+## Advanced Sensor Health / Fault Detection
 
-Deferred future work, not part of Phase 6A:
+Deferred future work, not part of Phase 6F Device Status:
 
 - Track repeated bad sensor reads.
 - Track repeated low moisture readings after watering.
 - Alert when a sensor appears stuck, disconnected, saturated, or implausible.
 - Possibly require N consecutive low fresh moisture readings before automatic watering.
 - Possibly require a post-watering stabilization period before trusting moisture again.
+- Phase 6F Device Status is a basic read-only data-quality indicator and does not perform fault diagnosis.
 
 ## Hosted Read-Only Dashboard Follow-Up
 
@@ -212,12 +215,44 @@ Out of scope:
 - Supabase schema changes.
 - Firmware changes.
 - Watering logic changes.
-- Sensor Health.
+- Advanced sensor health / fault detection.
 - Calibration.
 - Alerts.
 - Auth/login.
 - Device registry.
 - Settings/provisioning UI.
+
+## Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - VALIDATED ON BRANCH
+
+Scope:
+
+- Added pure helper `mbg_dashboard/src/telemetryHealth.ts`.
+- Added presentational `mbg_dashboard/src/components/SensorHealthPanel.tsx`.
+- Added component CSS `mbg_dashboard/src/components/SensorHealthPanel.css`.
+- Wired Device Status into `SensorLogViewer.tsx` using already-fetched rows only.
+- No second Supabase query.
+- No firmware changes.
+- No Supabase schema changes.
+- No `SensorLogRow` shape changes.
+- No `sensor_events` changes.
+- No Water Now / Remote Water Now.
+- No local live/control behavior changes.
+- Device Status evaluates latest report age, row count, expected row count, coverage, largest gap, broad latest-reading plausibility, and watering history marker count.
+- User-facing indicator is "Device Status" with green/yellow/red behavior.
+- Hosted-readonly guardrail scan passed.
+- Local hosted-readonly browser validation passed.
+- Cloudflare preview validation passed.
+- Production/custom-domain validation pending merge to `main`.
+
+Out of scope:
+
+- Sensor calibration.
+- Plant diagnosis.
+- Fault diagnosis beyond basic data-quality status.
+- Alerts/notifications.
+- Responsive hosted dashboard polish.
+- Firmware changes.
+- Supabase command/control.
 
 ## Phase 6B — Device Identity / Bench Unit Readiness
 

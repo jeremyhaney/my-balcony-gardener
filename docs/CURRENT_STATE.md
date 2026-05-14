@@ -63,7 +63,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
-- Hosted read-only mode renders Supabase Sensor History with Device and Window selectors and does not render `LiveStats` or Water Now.
+- Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally and on Cloudflare preview.
+- Hosted read-only mode renders Supabase Sensor History plus Device Status with Device and Window selectors and does not render `LiveStats` or Water Now.
 - Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
 - Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
 - Hosted URL query state supports valid combinations such as `?device=balcony&window=24h` and `?device=bench&window=7d`.
@@ -71,11 +72,16 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
 - Hosted Supabase history queries filter server-side by selected `device_id`.
 - Hosted Supabase history queries filter by selected timestamp lower bound except for `all`, which does not apply a lower timestamp bound.
+- Device Status uses already-fetched Supabase `sensor_logs` rows for the selected device/window.
+- Device Status checks latest report age, row count, expected row count, coverage, largest gap, broad latest-reading plausibility, and watering history marker count.
+- Device Status is informational only and does not perform calibration, plant diagnosis, fault diagnosis, alerts, or command/control.
 - Sensor History chart X-axis labels adapt by selected history window, and chart tooltips show full date/time.
 - Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
 - Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
-- Custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
+- Phase 6F hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
+- Cloudflare preview deployment validated Phase 6F behavior; production/custom-domain validation will occur after merge to `main`.
+- Phase 6E custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
 - Phase 6B keeps installed balcony unit `device_id` `550e8400-e29b-41d4-a716-446655440000` for history continuity.
 - Future ESP32 units must use unique, stable, non-null UUIDs before deployment.
 - Friendly names remain separate field/user labels and are not telemetry identity.
@@ -130,11 +136,12 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 ## Deferred Items
 
-- Optional history UI/statistics improvements
+- Responsive hosted dashboard polish
+- Advanced sensor health / fault detection
+- Sensor Calibration / Measurement-System Evaluation
 - Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
 - Additional multi-device read-only UI beyond the current hosted Device selector
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
-- Sensor Calibration / Measurement-System Evaluation
 - Hardware Safety Maturity
 - Any Supabase-first or non-local live/control runtime change, only by ADR
 - Any additional firmware behavior changes beyond the validated Phase 5F telemetry-integrity boundary

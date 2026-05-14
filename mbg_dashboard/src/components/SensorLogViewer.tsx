@@ -10,8 +10,10 @@ import {
   type HistoryWindowOption,
   updateHistoryControlUrl,
 } from '../historyControls'
+import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { SensorLogRow } from '../types/sensorLog'
 import DualAxisChart from './DualAxisChart'
+import SensorHealthPanel from './SensorHealthPanel'
 
 const isValidPercent = (value: number): boolean =>
   Number.isFinite(value) && value >= 0 && value <= 100
@@ -123,6 +125,8 @@ const SensorLogViewer = () => {
         (log.temperature !== null || log.humidity !== null || log.moisture !== null)
     )
 
+  const telemetryHealth = isLoading ? null : calculateTelemetryHealth(logs, selectedWindow.key)
+
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-2">Sensor History</h2>
@@ -177,6 +181,8 @@ const SensorLogViewer = () => {
           {historyError}
         </p>
       ) : null}
+
+      {telemetryHealth ? <SensorHealthPanel health={telemetryHealth} /> : null}
 
       {isLoading ? (
         <p className="text-sm">Loading history...</p>
