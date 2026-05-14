@@ -117,10 +117,23 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - No pump was connected to the bench unit during identity validation.
 - No firmware behavior changes, frontend behavior changes, or Supabase schema changes were made in Phase 6D.
 - Phase 6H adds raw soil ADC visibility to local `/logs` and Supabase telemetry.
+- Phase 6H raw soil ADC visibility was implemented in commit `8157e66 Add raw soil ADC diagnostic telemetry` and validated.
+- Phase 6H validation passed `pio run`, frontend lint, and frontend build.
+- Local bench `/logs` showed `data.soilRawAdc`, and Supabase `sensor_logs.data` received `soilRawAdc`.
+- Before correcting the moisture signal wire, bench Supabase telemetry for device `318fab98-89ad-4f36-9100-3134a04e0be5` at `2026-05-14T19:52:12Z` showed moisture index `100` with `soilRawAdc: 0`; this specific mapped `100` was caused by raw ADC `0`, but it does not prove all mapped `100` values are raw ADC `0`.
+- After moving the bench moisture signal wire to the firmware-defined `SOIL_PIN`, local `/logs` at `2026-05-14 16:01:51` showed moisture index `30` with `soilRawAdc: 2925`, moving from a pinned `0` condition to a plausible analog value.
+- A later Supabase row after pin correction at `2026-05-14T20:07:12Z` showed moisture index `30` with `soilRawAdc: 2921`.
+- The sensor sitting on the bench, not in soil or water, triggered automatic relay logic because mapped moisture was below `MOISTURE_THRESHOLD`.
+- Moist bench soil later showed local `/logs` at `2026-05-14 16:09:25` with moisture index `73` and `soilRawAdc: 1889`.
+- The local dashboard was run against the bench unit and displayed Raw Soil ADC successfully.
+- Sensor History for the bench unit showed usable data across the 7-day window with a few DHT dropouts visible.
+- `sensor_events` was used manually to record the raw ADC validation, pin correction, clarification that one reading was not in soil, sensor placement into moist bench soil, and moist-soil reference reading.
 - Existing moisture mapping is unchanged.
 - Existing watering logic is unchanged.
 - `data.moisture` remains a derived moisture index, not a calibrated soil-moisture percentage.
+- `data.soilRawAdc` is diagnostic raw ESP32 ADC evidence.
 - `data.soilRawAdc` is optional for older history rows.
+- Phase 6H does not implement calibration, filtering, repeated-reading validation, invalid-reading rejection, quiet hours, or hardware safety.
 - Future additional sensors should be handled through a SenML-inspired measurement-list or measurement-table architecture before expanding the fixed contract repeatedly.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
@@ -153,8 +166,12 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 ## Deferred Items
 
 - Responsive hosted dashboard polish
-- Advanced sensor health / fault detection
+- Advanced sensor health / fault detection, including control-quality validation before automatic watering uses suspicious readings
 - Sensor Calibration / Measurement-System Evaluation
+- Repeated-reading validation
+- DHT quality/fallback metadata
+- SenML-inspired measurement-list or measurement-table model before adding additional sensors
+- Sensor-only device roles before installing additional balcony sensor units
 - Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
 - Additional multi-device read-only UI beyond the current hosted Device selector
 - Auth/login, settings/provisioning, alerts, and commercial production hardening

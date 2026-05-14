@@ -6,14 +6,15 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6G offline autonomy / Wi-Fi recovery on branch `phase6g-offline-autonomy-reliability`
+- Current repo context: Phase 6H sensor fault detection / raw ADC visibility on branch `phase6h-sensor-fault-detection-raw-adc`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
 - Current Phase 6D status: complete; bench ESP32 identity flash validation passed
 - Current Phase 6E status: complete; hosted read-only Device and Window selectors validated locally and on the custom domain
 - Current Phase 6F status: complete, merged to `main`, deployed, and validated on the hosted custom domain
-- Current Phase 6G status: complete on branch; bench build/flash and normal Wi-Fi boot validation passed, and offline/no-Wi-Fi behavior is code-hardened and static-inspected
+- Current Phase 6G status: complete, merged to `main`; bench build/flash and normal Wi-Fi boot validation passed, and offline/no-Wi-Fi behavior is code-hardened and static-inspected
+- Current Phase 6H status: complete; raw soil ADC visibility implemented in commit `8157e66 Add raw soil ADC diagnostic telemetry` and validated on the bench and Supabase history path
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -31,13 +32,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 8. Phase 6D - Bench ESP32 Device Identity Flash Validation - complete
 9. Phase 6E - Hosted Device/Window Controls - complete
 10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - complete and merged to `main`
-11. Phase 6G - Offline Autonomy / Wi-Fi Recovery - complete on branch
-12. Advanced Sensor Health / Fault Detection
-13. Sensor Calibration / Measurement-System Evaluation
-14. Device Settings / Provisioning
-15. Hardware Safety Maturity
+11. Phase 6G - Offline Autonomy / Wi-Fi Recovery - complete and merged to `main`
+12. Phase 6H - Sensor Fault Detection / Raw ADC Visibility - complete on branch
+13. Device Roles / Sensor-Only Telemetry Unit
+14. Sensor Calibration / Measurement-System Evaluation
+15. Sensor Fault Detection / Control-Quality Validation
+16. Future SenML-Inspired Measurement Model
+17. Device Settings / Provisioning
+18. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, and Phase 6F are complete and merged to `main`; Phase 6G is complete on branch pending review, commit, merge, and post-merge validation.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -283,6 +287,71 @@ Out of scope:
 - Hardware safety changes.
 - Supabase schema changes.
 - Frontend runtime changes.
+
+## Phase 6H - Sensor Fault Detection / Raw ADC Visibility - COMPLETE ON BRANCH
+
+Scope:
+
+- Raw soil ADC visibility was implemented and validated in commit `8157e66 Add raw soil ADC diagnostic telemetry`.
+- Firmware build passed with `pio run`.
+- Frontend lint passed.
+- Frontend build passed.
+- Local bench `/logs` showed `data.soilRawAdc`.
+- Supabase `sensor_logs.data` received `soilRawAdc`.
+- Before correcting the moisture signal wire, bench Supabase telemetry for device `318fab98-89ad-4f36-9100-3134a04e0be5` at `2026-05-14T19:52:12Z` showed moisture index `100` with `soilRawAdc: 0`; this specific mapped `100` was caused by raw ADC `0`, but it does not prove all mapped `100` values are raw ADC `0`.
+- After moving the bench moisture signal wire to the firmware-defined `SOIL_PIN`, local `/logs` at `2026-05-14 16:01:51` showed moisture index `30` with `soilRawAdc: 2925`, moving from a pinned `0` condition to a plausible analog value.
+- A later Supabase row after pin correction at `2026-05-14T20:07:12Z` showed moisture index `30` with `soilRawAdc: 2921`.
+- The sensor sitting on the bench, not in soil or water, triggered automatic relay logic because mapped moisture was below `MOISTURE_THRESHOLD`.
+- Moist bench soil later showed local `/logs` at `2026-05-14 16:09:25` with moisture index `73` and `soilRawAdc: 1889`.
+- Local dashboard was run against the bench unit and displayed Raw Soil ADC successfully.
+- Sensor History for the bench unit showed usable data across the 7-day window with a few DHT dropouts visible.
+- `sensor_events` was used manually to record the raw ADC validation, pin correction, clarification that one reading was not in soil, sensor placement into moist bench soil, and moist-soil reference reading.
+- `data.moisture` remains a derived moisture index, not a calibrated soil-moisture percentage.
+- `data.soilRawAdc` is diagnostic raw ESP32 ADC evidence.
+- Moisture mapping, thresholds, watering duration, cooldown, pump shutoff behavior, and Manual Water Now behavior were unchanged.
+
+Out of scope:
+
+- Calibration.
+- Filtering.
+- Repeated-reading validation.
+- Invalid-reading rejection.
+- Quiet hours.
+- Hardware safety.
+- Supabase command/control.
+- Remote Water Now.
+
+## Device Roles / Sensor-Only Telemetry Unit
+
+Scope:
+
+- Evaluate sensor-only device roles before installing additional balcony sensor units.
+- Decide how non-actuating units should identify themselves and report telemetry.
+- Preserve the boundary that only properly equipped local firmware owns watering control.
+
+## Sensor Fault Detection / Control-Quality Validation
+
+Scope:
+
+- Evaluate control-quality sensor validation before automatic watering uses suspicious readings.
+- Evaluate repeated-reading validation for soil moisture.
+- Decide how invalid, pinned, saturated, disconnected, or implausible readings should affect automatic watering.
+- Add DHT quality/fallback metadata before using DHT behavior for stronger status conclusions.
+
+Out of scope:
+
+- Changing watering behavior without explicit validation and ADR coverage.
+
+## Future SenML-Inspired Measurement Model
+
+Scope:
+
+- Evaluate a SenML-inspired measurement-list or measurement-table model before adding more fixed fields for additional sensors.
+- Consider future light, pressure, flow, water level, and additional moisture sensors.
+
+Out of scope:
+
+- Immediate schema migration without a concrete need.
 
 ## Phase 6B — Device Identity / Bench Unit Readiness
 

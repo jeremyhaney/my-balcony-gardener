@@ -50,6 +50,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Firmware no longer restarts solely because Wi-Fi is unavailable during boot.
 - Pump shutoff is prioritized before client/server/network/telemetry work.
 - `soilRawAdc` exists in local `/logs` and Supabase telemetry for diagnostic visibility.
+- Phase 6H raw soil ADC visibility was validated on the bench local `/logs`, local dashboard, and Supabase `sensor_logs.data` paths.
 - Moisture remains the existing derived index, not a calibrated soil-moisture percentage.
 - Watering behavior did not change.
 - Future sensors should move toward a measurement-list/table model before adding more fixed fields.
