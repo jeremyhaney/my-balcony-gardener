@@ -6,13 +6,14 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6F hosted read-only Device Status / telemetry quality validated on branch `phase6f-hosted-telemetry-health`
+- Current repo context: Phase 6G offline autonomy / Wi-Fi recovery on branch `phase6g-offline-autonomy-reliability`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
 - Current Phase 6D status: complete; bench ESP32 identity flash validation passed
 - Current Phase 6E status: complete; hosted read-only Device and Window selectors validated locally and on the custom domain
-- Current Phase 6F status: local hosted-readonly validation and Cloudflare preview validation passed; production/custom-domain validation pending merge to `main`
+- Current Phase 6F status: complete, merged to `main`, deployed, and validated on the hosted custom domain
+- Current Phase 6G status: complete on branch; bench build/flash and normal Wi-Fi boot validation passed, and offline/no-Wi-Fi behavior is code-hardened and static-inspected
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -29,13 +30,14 @@ It is a planning guide, not an implementation approval. Each item still requires
 7. Phase 6C — Prototype Device Identity Build Profiles - complete
 8. Phase 6D - Bench ESP32 Device Identity Flash Validation - complete
 9. Phase 6E - Hosted Device/Window Controls - complete
-10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - validated on branch, pending merge
-11. Advanced Sensor Health / Fault Detection
-12. Sensor Calibration / Measurement-System Evaluation
-13. Device Settings / Provisioning
-14. Hardware Safety Maturity
+10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - complete and merged to `main`
+11. Phase 6G - Offline Autonomy / Wi-Fi Recovery - complete on branch
+12. Advanced Sensor Health / Fault Detection
+13. Sensor Calibration / Measurement-System Evaluation
+14. Device Settings / Provisioning
+15. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, and Phase 6C are complete and merged to `main`; Phase 6D and Phase 6E are complete, and Phase 6F is validated on branch pending review, commit, merge, and production/custom-domain validation.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, and Phase 6F are complete and merged to `main`; Phase 6G is complete on branch pending review, commit, merge, and post-merge validation.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -222,7 +224,7 @@ Out of scope:
 - Device registry.
 - Settings/provisioning UI.
 
-## Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - VALIDATED ON BRANCH
+## Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - COMPLETE AND MERGED TO MAIN
 
 Scope:
 
@@ -242,7 +244,7 @@ Scope:
 - Hosted-readonly guardrail scan passed.
 - Local hosted-readonly browser validation passed.
 - Cloudflare preview validation passed.
-- Production/custom-domain validation pending merge to `main`.
+- Production/custom-domain validation passed after merge to `main`.
 
 Out of scope:
 
@@ -253,6 +255,34 @@ Out of scope:
 - Responsive hosted dashboard polish.
 - Firmware changes.
 - Supabase command/control.
+
+## Phase 6G - Offline Autonomy / Wi-Fi Recovery - COMPLETE ON BRANCH
+
+Scope:
+
+- Firmware no longer restarts solely because Wi-Fi is unavailable during boot.
+- ESP32 continues into local-control/offline mode when Wi-Fi is unavailable.
+- Wi-Fi reconnect is retried periodically without blocking local control.
+- Pump shutoff is checked before client/server/network/telemetry work.
+- Relay shutoff remains local and occurs before watering-completion telemetry.
+- Supabase remains telemetry/history only and is not command/control.
+- Hosted read-only dashboard may show stale or no recent data when telemetry stops.
+- Bench profile built successfully.
+- Bench profile flashed successfully.
+- Bench unit booted successfully on normal Wi-Fi.
+- Bench unit served valid `/logs`.
+- Offline/no-Wi-Fi behavior is code-hardened and static-inspected, but not physically no-Wi-Fi tested in this phase because Wi-Fi/router disruption was not available.
+
+Out of scope:
+
+- AP/captive portal provisioning.
+- Stored customer credentials.
+- Setup/reset mode.
+- Status indication.
+- Offline log buffering.
+- Hardware safety changes.
+- Supabase schema changes.
+- Frontend runtime changes.
 
 ## Phase 6B — Device Identity / Bench Unit Readiness
 
@@ -393,6 +423,11 @@ Scope:
   - telemetry cadence
   - device nickname/location
 - Evaluate Wi-Fi provisioning for end users.
+- Evaluate AP/captive portal fallback for Wi-Fi setup.
+- Evaluate stored customer credentials.
+- Evaluate setup/reset mode.
+- Evaluate clear setup/connectivity status indication.
+- Evaluate optional offline log buffering for telemetry gaps.
 - Decide whether the product needs both an Admin page and a User Settings page.
 
 Out of scope:

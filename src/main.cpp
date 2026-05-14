@@ -17,6 +17,10 @@
 #define WATERING_COOLDOWN_MS 900000
 #endif
 
+#ifndef WIFI_RECONNECT_INTERVAL_MS
+#define WIFI_RECONNECT_INTERVAL_MS 30000
+#endif
+
 // Initialize hardware
 DHT dht(DHTPIN, DHTTYPE);
 WebServer server(80);
@@ -27,6 +31,7 @@ unsigned long wateringStartTime = 0;
 unsigned long lastWateringEndTime = 0;
 unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
+unsigned long lastWiFiReconnectAttemptTime = 0;
 String lastWateredTime = "N/A";
 bool hasLastGoodDht = false;
 float lastGoodTempF = 0;
@@ -34,6 +39,7 @@ float lastGoodHumidity = 0;
 
 // Function declarations
 void connectToWiFi();
+void maintainWiFiConnection();
 void setupTime();
 String getFormattedTime();
 bool readDhtWithFallback(float &temperatureF, float &humidity);
@@ -100,6 +106,8 @@ bool readDhtWithFallback(float &temperatureF, float &humidity) {
 
 // Connect to Wi-Fi
 void connectToWiFi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("📡 Connecting to Wi-Fi: ");
   int attempts = 0;
@@ -113,10 +121,30 @@ void connectToWiFi() {
     Serial.print("🔗 IP: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\n❌ Failed to connect to Wi-Fi. Rebooting...");
-    delay(3000);
-    ESP.restart();
+    lastWiFiReconnectAttemptTime = millis();
+    Serial.println("\nWi-Fi unavailable; continuing in local-control/offline mode.");
   }
+}
+
+// Wi-Fi is best-effort and must not prevent local sensor reads or watering control.
+void maintainWiFiConnection() {
+  wl_status_t wifiStatus = WiFi.status();
+  if (wifiStatus == WL_CONNECTED) {
+    return;
+  }
+
+  if (wifiStatus == WL_IDLE_STATUS) {
+    return;
+  }
+
+  unsigned long now = millis();
+  if (now - lastWiFiReconnectAttemptTime < WIFI_RECONNECT_INTERVAL_MS) {
+    return;
+  }
+
+  lastWiFiReconnectAttemptTime = now;
+  Serial.println("Wi-Fi disconnected; requesting reconnect without blocking local control.");
+  WiFi.reconnect();
 }
 
 // Setup NTP time
@@ -281,8 +309,34 @@ void setup() {
 }
 
 void loop() {
-  server.handleClient();
   unsigned long now = millis();
+
+  // Pump shutoff has priority over client/server, network, and telemetry work.
+  if (isWatering) {
+    unsigned long wateringDuration = now - wateringStartTime;
+
+    if (wateringDuration >= WATERING_DURATION_MS) {
+      digitalWrite(RELAY_PIN, LOW);
+      isWatering = false;
+      lastWateringEndTime = millis();
+      lastWateringDuration = wateringDuration / 1000; // Convert to seconds
+
+      // Send final update with watering completed
+      float humidity = 0;
+      float tempF = 0;
+      if (readDhtWithFallback(tempF, humidity)) {
+        int soilValue = analogRead(SOIL_PIN);
+        float moisture = map(soilValue, 3680, 1230, 0, 100);
+        moisture = constrain(moisture, 0, 100);
+        sendDataToSupabase(tempF, humidity, moisture, false);
+      }
+
+      Serial.printf("✅ Watering complete. Duration: %lu seconds\n", lastWateringDuration);
+    }
+  }
+
+  maintainWiFiConnection();
+  server.handleClient();
 
   // Regular sensor logging
   if (now - lastLogTime >= LOG_INTERVAL_MS) {
@@ -319,27 +373,4 @@ void loop() {
     lastLogTime = now;
   }
 
-  // Handle watering duration
-  if (isWatering) {
-    unsigned long wateringDuration = millis() - wateringStartTime;
-
-    if (wateringDuration >= WATERING_DURATION_MS) {
-      digitalWrite(RELAY_PIN, LOW);
-      isWatering = false;
-      lastWateringEndTime = millis();
-      lastWateringDuration = wateringDuration / 1000; // Convert to seconds
-
-      // Send final update with watering completed
-      float humidity = 0;
-      float tempF = 0;
-      if (readDhtWithFallback(tempF, humidity)) {
-        int soilValue = analogRead(SOIL_PIN);
-        float moisture = map(soilValue, 3680, 1230, 0, 100);
-        moisture = constrain(moisture, 0, 100);
-        sendDataToSupabase(tempF, humidity, moisture, false);
-      }
-
-      Serial.printf("✅ Watering complete. Duration: %lu seconds\n", lastWateringDuration);
-    }
-  }
 }

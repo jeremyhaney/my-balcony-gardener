@@ -40,7 +40,15 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 - Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Phase 6E hosted read-only device/window controls are validated on the custom domain.
-- Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally and on Cloudflare preview.
+- Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
+- Phase 6G bench profile built successfully.
+- Phase 6G bench profile flashed successfully.
+- Phase 6G bench unit booted successfully on normal Wi-Fi.
+- Phase 6G bench unit served valid `/logs`.
+- Phase 6G offline/no-Wi-Fi behavior is code-hardened and static-inspected, but not physically no-Wi-Fi tested in this phase because Wi-Fi/router disruption was not available.
+- Firmware can continue local automatic watering logic when Wi-Fi, internet, or Supabase is unavailable.
+- Firmware no longer restarts solely because Wi-Fi is unavailable during boot.
+- Pump shutoff is prioritized before client/server/network/telemetry work.
 - Hosted read-only mode renders Sensor History and read-only Device Status from Supabase, supports Device and Window selectors, and does not render `LiveStats`, Water Now, local `/logs`, or local `/water-now`.
 - Hosted read-only Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
 - Hosted read-only Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
@@ -57,6 +65,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Local/default dashboard behavior remains unchanged; Manual Water Now remains available only through the local/default path.
 - Remote command/control (Remote Water Now) is not part of MVP.
 - Supabase remains read-only for telemetry and history; it is not used for command/control.
+- Supabase outages may interrupt hosted history/Device Status freshness, but must not prevent local watering logic.
 - Supabase history requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in [`mbg_dashboard/.env.local`](./mbg_dashboard/.env.local).
 - Missing Supabase env vars or unavailable Supabase fail gracefully and should not crash the app.
 - MVP v1.0 bench test passed.
@@ -82,6 +91,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 5. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
 6. Supabase is not the live/current value path and does not replace local ESP32 control.
 7. Supabase is not used for remote command/control.
+8. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
 
 ## Hosted Read-Only Dashboard
 
@@ -117,6 +127,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted read-only mode has no Water Now and does not call local ESP32 `/logs` or `/water-now`.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, and local Manual Water Now.
 - Supabase remains telemetry/history only, not command/control.
+- No-Wi-Fi operation is autonomous/headless for now; installer/customer AP or captive-portal provisioning is deferred.
 
 ## Common Commands
 
