@@ -43,7 +43,7 @@ void maintainWiFiConnection();
 void setupTime();
 String getFormattedTime();
 bool readDhtWithFallback(float &temperatureF, float &humidity);
-void sendDataToSupabase(float temperature, float humidity, int moisture, bool watering);
+void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
 void handleRoot();
 void handleLogs();
 void handleWaterNow();
@@ -155,7 +155,7 @@ void setupTime() {
 }
 
 // Send sensor data to Supabase
-void sendDataToSupabase(float temperature, float humidity, int moisture, bool watering) {
+void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("❌ WiFi not connected");
     return;
@@ -194,6 +194,7 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, bool wa
   postData += "\"temperature\":" + String(temperature, 2) + ",";
   postData += "\"humidity\":" + String(humidity, 2) + ",";
   postData += "\"moisture\":" + String(moisture) + ",";
+  postData += "\"soilRawAdc\":" + String(soilRawAdc) + ",";
   postData += "\"watering\":" + String(watering ? "true" : "false") + ",";
   postData += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
   postData += "\"lastWateringDuration\":" + String(lastWateringDuration);
@@ -251,6 +252,7 @@ void handleLogs() {
   response += "\"temperature\":" + String(tempF, 1) + ",";
   response += "\"humidity\":" + String(humidity, 1) + ",";
   response += "\"moisture\":" + String(moisture, 1) + ",";
+  response += "\"soilRawAdc\":" + String(soilValue) + ",";
   response += "\"watering\":" + String(isWatering ? "true" : "false") + ",";
   response += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
   response += "\"lastWateringDuration\":" + String(lastWateringDuration);
@@ -278,7 +280,7 @@ void handleWaterNow() {
       int soilValue = analogRead(SOIL_PIN);
       float moisture = map(soilValue, 3680, 1230, 0, 100);
       moisture = constrain(moisture, 0, 100);
-      sendDataToSupabase(tempF, humidity, moisture, true);
+      sendDataToSupabase(tempF, humidity, moisture, soilValue, true);
     }
     server.send(200, "text/plain", "Watering started");
   } else {
@@ -328,7 +330,7 @@ void loop() {
         int soilValue = analogRead(SOIL_PIN);
         float moisture = map(soilValue, 3680, 1230, 0, 100);
         moisture = constrain(moisture, 0, 100);
-        sendDataToSupabase(tempF, humidity, moisture, false);
+        sendDataToSupabase(tempF, humidity, moisture, soilValue, false);
       }
 
       Serial.printf("✅ Watering complete. Duration: %lu seconds\n", lastWateringDuration);
@@ -349,7 +351,7 @@ void loop() {
       moisture = constrain(moisture, 0, 100);
 
       // Send data to Supabase
-      sendDataToSupabase(tempF, humidity, moisture, isWatering);
+      sendDataToSupabase(tempF, humidity, moisture, soilValue, isWatering);
 
       Serial.printf("📊 T: %.1f°F, H: %.1f%%, M: %.1f%%, Watering: %s\n",
                     tempF, humidity, moisture, isWatering ? "Yes" : "No");
@@ -363,7 +365,7 @@ void loop() {
         wateringStartTime = millis();
         lastWateredTime = getFormattedTime();
         // Phase 5D: log watering start immediately using this interval's readings.
-        sendDataToSupabase(tempF, humidity, moisture, true);
+        sendDataToSupabase(tempF, humidity, moisture, soilValue, true);
         Serial.println("💧 Auto-watering triggered (low moisture)");
       }
     } else {

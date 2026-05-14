@@ -16,6 +16,9 @@ const DEFAULT_SENSOR_DATA: SensorData = {
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Unknown error';
 
+const finiteNumberOrUndefined = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
 const formatDisplayDateTime = (value: string): string => {
   if (!value || value.trim() === '' || value === 'Never') {
     return 'Never';
@@ -58,6 +61,7 @@ const LiveStats = () => {
             temperature: data.data?.temperature ?? DEFAULT_SENSOR_DATA.temperature,
             humidity: data.data?.humidity ?? DEFAULT_SENSOR_DATA.humidity,
             moisture: data.data?.moisture ?? DEFAULT_SENSOR_DATA.moisture,
+            soilRawAdc: finiteNumberOrUndefined(data.data?.soilRawAdc),
             watering: data.data?.watering ?? DEFAULT_SENSOR_DATA.watering,
             lastWateredTime: data.data?.lastWateredTime ?? DEFAULT_SENSOR_DATA.lastWateredTime,
             lastWateringDuration:
@@ -126,6 +130,7 @@ const LiveStats = () => {
     temperature = 0,
     humidity = 0,
     moisture = 0,
+    soilRawAdc,
     watering = false,
     lastWateredTime = 'Never',
     lastWateringDuration = 0,
@@ -144,6 +149,9 @@ const LiveStats = () => {
         <div>🌡️ <strong>Temp:</strong> {temperature.toFixed(1)} °F</div>
         <div>💧 <strong>Humidity:</strong> {humidity.toFixed(1)} %</div>
         <div>🌴 <strong>Soil Moisture:</strong> {moisture.toFixed(1)}%</div>
+        {Number.isFinite(soilRawAdc) && (
+          <div><strong>Raw Soil ADC:</strong> {soilRawAdc}</div>
+        )}
         <div>⏱️ <strong>Last Watering Duration:</strong> {lastWateringDuration.toFixed(1)}s</div>
         <div>🚿 <strong>Last Watered:</strong> {formatDisplayDateTime(lastWateredTime)}</div>
         <div>📅 <strong>Log Time:</strong> {new Date(latest.timestamp).toLocaleString()}</div>

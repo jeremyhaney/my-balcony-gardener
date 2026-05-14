@@ -2,6 +2,7 @@ export interface SensorData {
   temperature: number;
   humidity: number;
   moisture: number;
+  soilRawAdc?: number;
   watering: boolean;
   lastWateredTime: string;
   lastWateringDuration: number;
