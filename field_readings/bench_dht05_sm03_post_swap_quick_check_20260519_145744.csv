@@ -1,0 +1,13 @@
+sample_number,observed_at_local,device_name,ip,device_id,dht_sensor_id,moisture_sensor_id,device_timestamp,temperature_f,humidity_percent,moisture_index,soil_raw_adc,watering,note,error
+1,5/19/2026 14:57,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 14:57,82.2,44,52,2385,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+2,5/19/2026 14:58,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 14:58,81,44,52,2391,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+3,5/19/2026 14:59,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 14:59,81.3,44,52,2397,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+4,5/19/2026 15:00,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:00,82,44,52,2400,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+5,5/19/2026 15:01,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:01,81.5,43,51,2416,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+6,5/19/2026 15:02,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:02,78.8,43,51,2410,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+7,5/19/2026 15:03,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:03,80.4,43,52,2399,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+8,5/19/2026 15:04,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:04,79.3,43,51,2418,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+9,5/19/2026 15:05,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:05,79,43,52,2396,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+10,5/19/2026 15:06,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:06,78.8,43,52,2400,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+11,5/19/2026 15:07,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:07,78.8,43,51,2414,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
+12,5/19/2026 15:08,bench-prototype,10.0.0.192,318fab98-89ad-4f36-9100-3134a04e0be5,DHT05,SM03,5/19/2026 15:08,79.9,43,52,2397,FALSE,DHT05 post-swap quick check; DHT03 removed as suspect,
