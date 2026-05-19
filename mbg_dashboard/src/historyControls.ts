@@ -1,10 +1,14 @@
-export type HistoryDeviceKey = 'balcony' | 'bench'
+import { DEVICE_REGISTRY, type DeviceKey } from './deviceRegistry'
+
+export type HistoryDeviceKey = DeviceKey
 export type HistoryWindowKey = '24h' | '7d' | '1m' | '3m' | '6m' | '1y' | 'all'
 
 export type HistoryDeviceOption = {
   key: HistoryDeviceKey
   label: string
   deviceId: string
+  role: string
+  description: string
 }
 
 export type HistoryWindowOption = {
@@ -14,18 +18,13 @@ export type HistoryWindowOption = {
   getLowerBoundIso: (now: Date) => string | undefined
 }
 
-export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = [
-  {
-    key: 'balcony',
-    label: 'Installed Balcony Unit',
-    deviceId: '550e8400-e29b-41d4-a716-446655440000',
-  },
-  {
-    key: 'bench',
-    label: 'Bench Prototype Unit',
-    deviceId: '318fab98-89ad-4f36-9100-3134a04e0be5',
-  },
-]
+export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = DEVICE_REGISTRY.map((device) => ({
+  key: device.key,
+  label: device.label,
+  deviceId: device.deviceId,
+  role: device.role,
+  description: device.description,
+}))
 
 export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
   {

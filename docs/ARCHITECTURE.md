@@ -80,6 +80,20 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
 
+## Multi-Unit Visibility And Local Control Target Safety
+
+ADR 0013 in [`docs/adr/0013-multi-unit-visibility-and-local-control-target-safety.md`](./adr/0013-multi-unit-visibility-and-local-control-target-safety.md) locks the Phase 6J.0 multi-unit visibility and local target safety boundary.
+
+- The local/default dashboard can select known local targets.
+- Local target selection affects live `/logs` polling and the local manual action endpoint.
+- Manual action is gated by selected device role and a live `/logs` `device_id` match.
+- The installed balcony controller may expose Water Now only when the selected target identity is verified.
+- The bench unit may expose relay-test wording only, not plant-watering wording, and only when identity is verified.
+- The sensor scout has no manual relay or pump command authority.
+- History Device selection is the read-only Supabase history target and remains separate from Local Control Target selection.
+- Hosted-readonly mode remains read-only and must not import local control metadata or expose local endpoints.
+- Supabase remains telemetry/history only and must not be used for command/control.
+
 ## Device Identity And Production Traceability
 
 ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./adr/0010-device-identity-and-production-traceability.md) locks the Phase 6B device identity convention.

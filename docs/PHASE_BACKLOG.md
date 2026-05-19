@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6H sensor fault detection / raw ADC visibility on branch `phase6h-sensor-fault-detection-raw-adc`
+- Current repo context: Phase 6J.0 multi-unit visibility / local control target safety on branch `phase6j0-multi-unit-visibility-local-control-safety`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -15,6 +15,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6F status: complete, merged to `main`, deployed, and validated on the hosted custom domain
 - Current Phase 6G status: complete, merged to `main`; bench build/flash and normal Wi-Fi boot validation passed, and offline/no-Wi-Fi behavior is code-hardened and static-inspected
 - Current Phase 6H status: complete; raw soil ADC visibility implemented in commit `8157e66 Add raw soil ADC diagnostic telemetry` and validated on the bench and Supabase history path
+- Current Phase 6J.0 status: complete/current closeout; frontend multi-unit visibility and local control target safety implemented and documented
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -34,14 +35,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - complete and merged to `main`
 11. Phase 6G - Offline Autonomy / Wi-Fi Recovery - complete and merged to `main`
 12. Phase 6H - Sensor Fault Detection / Raw ADC Visibility - complete on branch
-13. Device Roles / Sensor-Only Telemetry Unit
-14. Sensor Calibration / Measurement-System Evaluation
-15. Sensor Fault Detection / Control-Quality Validation
-16. Future SenML-Inspired Measurement Model
-17. Device Settings / Provisioning
-18. Hardware Safety Maturity
+13. Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - complete/current closeout
+14. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+15. Device Roles / Sensor-Only Telemetry Unit
+16. Sensor Calibration / Measurement-System Evaluation
+17. Sensor Fault Detection / Control-Quality Validation
+18. Future SenML-Inspired Measurement Model
+19. Device Settings / Provisioning
+20. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0 is complete/current closeout on its feature branch.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -320,6 +323,45 @@ Out of scope:
 - Hardware safety.
 - Supabase command/control.
 - Remote Water Now.
+
+## Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - COMPLETE / CURRENT CLOSEOUT
+
+Scope:
+
+- Hosted-safe frontend device registry now covers Installed Balcony Unit, Bench Prototype Unit, and Balcony Sensor Scout 01.
+- Local-only control target metadata keeps local IP/manual-action information out of hosted history code.
+- Hosted/history Device selector includes scout01 and remains read-only.
+- Local/default dashboard has a distinct Local Control Target selector.
+- Local live polling can switch between known ESP32 units from one local Vite site.
+- Manual action is gated by selected target and live `/logs` `device_id` match.
+- Installed Balcony Unit uses Water Now wording only when identity is verified.
+- Bench Prototype Unit uses relay-test wording only when identity is verified.
+- Balcony Sensor Scout 01 remains manual-action disabled.
+- Supabase `sensor_logs` RLS INSERT policy was manually updated to allow scout01 telemetry.
+- A near-live scout01 Sensor History row was observed after the RLS update.
+- No firmware, Supabase schema, `SensorLogRow`, watering duration, threshold, cooldown, or sensor logic changes were made.
+
+Out of scope:
+
+- Remote Water Now.
+- Supabase command/control.
+- Supabase schema migration.
+- Firmware behavior changes.
+- Production provisioning database.
+
+## Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+
+Deferred future work, not part of Phase 6J.0:
+
+- Replace the hardcoded `sensor_logs` RLS UUID allowlist with a table-driven registry.
+- Candidate fields may include `device_id`, `key`, `friendly_name`, `role`, `telemetry_insert_enabled`, `active`, `created_at`, and `notes`.
+- Keep Supabase telemetry/history only.
+
+Out of scope:
+
+- Remote Water Now.
+- Supabase command/control.
+- Firmware behavior changes unless separately approved.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 
