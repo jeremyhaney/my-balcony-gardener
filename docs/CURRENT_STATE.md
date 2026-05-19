@@ -65,7 +65,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
 - Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
 - Hosted read-only mode renders Supabase Sensor History plus Device Status with Device and Window selectors and does not render `LiveStats` or Water Now.
-- Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
+- Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
 - Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
 - Hosted URL query state supports valid combinations such as `?device=balcony&window=24h` and `?device=bench&window=7d`.
 - Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
@@ -135,6 +135,18 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `data.soilRawAdc` is optional for older history rows.
 - Phase 6H does not implement calibration, filtering, repeated-reading validation, invalid-reading rejection, quiet hours, or hardware safety.
 - Future additional sensors should be handled through a SenML-inspired measurement-list or measurement-table architecture before expanding the fixed contract repeatedly.
+- Phase 6J.0 adds multi-unit visibility and local control target safety.
+- Known devices now include Installed Balcony Unit (`550e8400-e29b-41d4-a716-446655440000`, `10.0.0.200`, `controller`), Bench Prototype Unit (`318fab98-89ad-4f36-9100-3134a04e0be5`, `10.0.0.192`, `bench`), and Balcony Sensor Scout 01 (`28f4e6e3-5979-4af4-9753-34e185d8e47e`, `10.0.0.180`, `sensor-scout`).
+- Hosted/history Device selector includes scout01.
+- Local/default dashboard includes a Local Control Target selector.
+- Local live polling can switch among known local units.
+- Manual action safety gating is in place and requires the selected target identity to match live `/logs` `device_id`.
+- Balcony controller Water Now is enabled only when selected target and `/logs` identity match.
+- Bench relay-test action is allowed only as bench relay testing and requires identity match.
+- Scout manual action remains disabled.
+- Supabase `sensor_logs` RLS INSERT policy now allows scout01.
+- A first near-live scout01 Sensor History row was observed after the RLS update.
+- Phase 6J.0 made no firmware changes, no `SensorLogRow` changes, no Supabase schema changes, and no watering threshold/duration/cooldown/sensor logic changes.
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - Supabase remains read-only telemetry/history only and is not used for command/control.

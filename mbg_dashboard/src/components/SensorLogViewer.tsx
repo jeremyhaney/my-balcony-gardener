@@ -142,7 +142,7 @@ const SensorLogViewer = () => {
         }}
       >
         <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.9rem' }}>
-          <span>Device</span>
+          <span>History Device</span>
           <select
             value={selectedDevice.key}
             onChange={handleDeviceChange}
@@ -173,7 +173,8 @@ const SensorLogViewer = () => {
       </div>
 
       <p className="mb-3 text-sm">
-        Showing {selectedDevice.label} for {selectedWindow.label}.
+        Showing history for {selectedDevice.label} ({selectedDevice.role}) for{' '}
+        {selectedWindow.label}. {selectedDevice.description}
       </p>
 
       {historyError ? (

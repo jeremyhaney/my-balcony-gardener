@@ -108,7 +108,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted read-only builds now expose read-only Device and Window selectors for Supabase Sensor History.
 - `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device when no valid `device` query value is present.
 - Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
-- Hosted Device selector currently supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
+- Hosted Device selector currently supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
 - Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
 - Hosted query-string state supports `?device=balcony&window=24h`, `?device=bench&window=7d`, and similar valid combinations.
 - Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
@@ -124,13 +124,16 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Tracked `src/device_identity.h` maps `MBG_DEVICE_ID` to the firmware `DEVICE_ID`.
 - Ignored local-only `src/config.h` remains for secrets and is not the repo-owned identity mechanism.
 - Phase 6D bench hardware identity validation passed using the explicit PlatformIO `bench-prototype` upload profile.
-- Supabase RLS insert policy now allows both known provisioned device UUIDs: installed balcony unit `550e8400-e29b-41d4-a716-446655440000` and bench prototype `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Supabase RLS insert policy now allows known provisioned device UUIDs for the installed balcony unit, bench prototype, and scout01.
 - The installed balcony unit UUID remains unchanged.
 - Future ESP32 units must not reuse the installed unit UUID.
 - Friendly names are separate labels, not telemetry identity.
 - Hosted read-only mode shows Supabase Sensor History and read-only Device Status and keeps local ESP32 controls unavailable.
 - Hosted read-only mode has no Water Now and does not call local ESP32 `/logs` or `/water-now`.
-- Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, and local Manual Water Now.
+- Local/default dashboard mode supports multi-unit Local Control Target selection for known ESP32 units.
+- Known local targets are Installed Balcony Unit (`controller`, `10.0.0.200`), Bench Prototype Unit (`bench`, `10.0.0.192`), and Balcony Sensor Scout 01 (`sensor-scout`, `10.0.0.180`).
+- Local/default dashboard mode still renders `LiveStats`, selected-target `/logs` polling, and local manual action controls.
+- Local manual action is identity-gated by the selected target and live `/logs` `device_id`; balcony uses Water Now wording, bench uses relay-test wording, and scout has no manual command authority.
 - Supabase remains telemetry/history only, not command/control.
 - No-Wi-Fi operation is autonomous/headless for now; installer/customer AP or captive-portal provisioning is deferred.
 
