@@ -525,6 +525,7 @@ Out of scope:
 Scope:
 
 - Evaluate moving user-adjustable behavior values out of compile-time-only local config.
+- Specifically move watering duration out of ignored `src/config.h` into a safe device-local Settings/provisioning mechanism before productization.
 - Consider ESP32 Preferences/NVS for persistent device-local settings.
 - Separate private/local secrets from product behavior defaults and user settings.
 - Evaluate safe user-adjustable values:
