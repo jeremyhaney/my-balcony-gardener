@@ -162,6 +162,16 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 6J.3 SQL Editor validation proves the table, constraints, indexes, and owner/admin insert path; it does not fully prove anon REST/RLS insert behavior because SQL Editor usually runs with elevated privileges.
 - Anon insert validation is deferred until firmware heartbeat posting or a dedicated REST test is approved.
 - No firmware heartbeat posting exists yet, no hosted diagnostics display exists yet, and no Supabase command/control was introduced.
+- Phase 6J.4 added firmware heartbeat posting to Supabase `public.device_heartbeats`.
+- Phase 6J.4 added `HEARTBEAT_INTERVAL_MS` default `900000`, `lastHeartbeatPostTime`, `DEVICE_ROLE` through `MBG_DEVICE_ROLE`, and `MBG_DEVICE_ROLE` build flags for `balcony-installed` (`controller`), `bench-prototype` (`bench`), and `balcony-sensor-scout-01` (`sensor-scout`).
+- Phase 6J.4 adds periodic-only `sendDeviceHeartbeatToSupabase("periodic")`; no boot heartbeat, Wi-Fi reconnect heartbeat, cloud recovery heartbeat, offline buffering, or aggressive retry was added.
+- Phase 6J.4 heartbeat posting runs after pump shutoff priority, after `maintainWiFiConnection()`, after `server.handleClient()`, and after the regular sensor logging / automatic watering eligibility block; existing `sendDataToSupabase()` remains unchanged.
+- Phase 6J.4 validation passed all PlatformIO builds, bench profile upload succeeded, and no upload was performed to `balcony-installed` or `balcony-sensor-scout-01` because those units are collecting field data.
+- After the Phase 6J.4 bench upload, bench `/status` and `/logs` still worked.
+- Bench firmware inserted a new `public.device_heartbeats` row for `device_id` `318fab98-89ad-4f36-9100-3134a04e0be5`, `device_role` `bench`, `heartbeat_reason` `periodic`, `uptime_seconds` `901`, `wifi_connected` `true`, `wifi_rssi` `-52`, `free_heap` `238348`, `min_free_heap` `190036`, `currently_watering` `false`, `last_watering_duration` `0`, and `details` `{"phase":"6J.4","source":"firmware"}`.
+- The successful Phase 6J.4 firmware heartbeat validates anon REST/RLS insert behavior for the bench device.
+- Phase 6J.4 introduced no Supabase command/control; hosted diagnostics display does not exist yet.
+- Phase 6J.4 made no `SensorLogRow`, `/logs`, `/water-now`, watering behavior, pin, sensor, threshold, duration, cooldown, or moisture mapping changes.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.

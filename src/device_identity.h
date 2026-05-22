@@ -12,8 +12,18 @@
 #define MBG_DEVICE_ID "550e8400-e29b-41d4-a716-446655440000"
 #endif
 
+#ifndef MBG_DEVICE_ROLE
+#define MBG_DEVICE_ROLE "controller"
+#endif
+
 #ifdef DEVICE_ID
 #undef DEVICE_ID
 #endif
 
 #define DEVICE_ID MBG_DEVICE_ID
+
+#ifdef DEVICE_ROLE
+#undef DEVICE_ROLE
+#endif
+
+#define DEVICE_ROLE MBG_DEVICE_ROLE

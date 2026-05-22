@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.3 Supabase `device_heartbeats` SQL/RLS MVP on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
+- Current repo context: Phase 6J.4 Firmware Heartbeat Posting MVP on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -19,6 +19,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.1 status: complete; design/ADR documentation pass with no firmware, SQL, frontend runtime, `SensorLogRow`, watering, or local control behavior changes
 - Current Phase 6J.2 status: bench validated / complete; local read-only `GET /status` endpoint implemented in `src/main.cpp`
 - Current Phase 6J.3 status: SQL/RLS MVP complete / manually validated; `docs/sql/phase6j3-device-heartbeats.sql` creates `public.device_heartbeats`
+- Current Phase 6J.4 status: bench validated / complete; firmware periodic heartbeats post to `public.device_heartbeats`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -37,12 +38,12 @@ It is a planning guide, not an implementation approval. Each item still requires
 9. Phase 6E - Hosted Device/Window Controls - complete
 10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - complete and merged to `main`
 11. Phase 6G - Offline Autonomy / Wi-Fi Recovery - complete and merged to `main`
-12. Phase 6H - Sensor Fault Detection / Raw ADC Visibility - complete on branch
+12. Phase 6H - Sensor Fault Detection / Raw ADC Visibility - complete
 13. Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - complete
 14. Phase 6J.1 - Device Diagnostics / Heartbeats / Reliability Evidence - DESIGN / ADR
 15. Phase 6J.2 - Local Read-Only `/status` Endpoint MVP - bench validated / complete
 16. Phase 6J.3 - Supabase `device_heartbeats` SQL/RLS MVP - manually validated / complete
-17. Phase 6J.4 - Firmware Heartbeat Posting MVP
+17. Phase 6J.4 - Firmware Heartbeat Posting MVP - bench validated / complete
 18. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
 19. Device Roles / Sensor-Only Telemetry Unit
 20. Sensor Calibration / Measurement-System Evaluation
@@ -51,7 +52,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 23. Device Settings / Provisioning
 24. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0, Phase 6J.1, Phase 6J.2, and Phase 6J.3 are complete.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, and Phase 6J.4 are complete.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -298,7 +299,7 @@ Out of scope:
 - Supabase schema changes.
 - Frontend runtime changes.
 
-## Phase 6H - Sensor Fault Detection / Raw ADC Visibility - COMPLETE ON BRANCH
+## Phase 6H - Sensor Fault Detection / Raw ADC Visibility - COMPLETE
 
 Scope:
 
@@ -471,26 +472,51 @@ Out of scope:
 - Supabase command/control.
 - Remote Water Now.
 
-## Phase 6J.4 - Firmware Heartbeat Posting MVP
+## Phase 6J.4 - Firmware Heartbeat Posting MVP - BENCH VALIDATED / COMPLETE
 
-Planned follow-up scope:
+Scope:
 
-- Add firmware posting from local diagnostics state to `public.device_heartbeats`.
-- Validate anon REST/RLS insert behavior for known provisioned device IDs.
-- Preserve `/status`, `/logs`, `/water-now`, watering behavior, and pump shutoff priority.
-- Keep Supabase as diagnostics/history storage only, not command/control.
+- Added firmware posting from local diagnostics state to `public.device_heartbeats`.
+- Added `HEARTBEAT_INTERVAL_MS` default `900000`.
+- Added `lastHeartbeatPostTime`.
+- Added `DEVICE_ROLE` through `MBG_DEVICE_ROLE` in `src/device_identity.h`.
+- Added `MBG_DEVICE_ROLE` build flags in `platformio.ini`: `balcony-installed` is `controller`, `bench-prototype` is `bench`, and `balcony-sensor-scout-01` is `sensor-scout`.
+- Added periodic-only `sendDeviceHeartbeatToSupabase("periodic")`.
+- Heartbeat posting occurs after pump shutoff priority, after `maintainWiFiConnection()`, after `server.handleClient()`, and after the regular sensor logging / automatic watering eligibility block.
+- Existing `sendDataToSupabase()` remains unchanged.
+- No boot heartbeat was added.
+- No Wi-Fi reconnect heartbeat was added.
+- No cloud recovery heartbeat was added.
+- No offline buffering or aggressive retry was added.
+- All PlatformIO builds passed.
+- Bench profile upload succeeded.
+- No upload was performed to `balcony-installed` or `balcony-sensor-scout-01` because those units are collecting field data.
+- Bench `/status` still worked after upload.
+- Bench `/logs` still worked after upload.
+- Bench firmware inserted a new row into `public.device_heartbeats`.
+- Firmware heartbeat row used `device_id` `318fab98-89ad-4f36-9100-3134a04e0be5`, `device_role` `bench`, `heartbeat_reason` `periodic`, `uptime_seconds` `901`, `wifi_connected` `true`, `wifi_rssi` `-52`, `free_heap` `238348`, `min_free_heap` `190036`, `currently_watering` `false`, `last_watering_duration` `0`, and `details` `{"phase":"6J.4","source":"firmware"}`.
+- The successful firmware heartbeat validates anon REST/RLS insert behavior for the bench device.
+- No Supabase command/control was introduced.
 
-Out of scope until separately approved:
+Follow-up implementation slices, requiring separate approval:
 
 - Hosted diagnostics display.
 - Latest-status `device_status_current` table/view.
 - Supabase device registry / table-driven provisioned device allowlist.
+
+Out of scope:
+
+- Frontend runtime changes.
+- Hosted dashboard behavior changes.
+- `SensorLogRow` changes.
+- `/status`, `/logs`, or `/water-now` behavior changes.
+- Watering duration, threshold, cooldown, moisture mapping, pin, sensor, or automatic watering logic changes.
+- Supabase command/control.
 - Remote Water Now.
-- Any local control behavior change.
 
 ## Supabase Device Registry / Table-Driven Provisioned Device Allowlist
 
-Deferred future work, after the heartbeat MVP unless explicitly reprioritized:
+Deferred future work unless explicitly reprioritized:
 
 - Replace the hardcoded `sensor_logs` RLS UUID allowlist with a table-driven registry.
 - Candidate fields may include `device_id`, `key`, `friendly_name`, `role`, `telemetry_insert_enabled`, `active`, `created_at`, and `notes`.
