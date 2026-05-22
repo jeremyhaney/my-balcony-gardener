@@ -172,6 +172,18 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The successful Phase 6J.4 firmware heartbeat validates anon REST/RLS insert behavior for the bench device.
 - Phase 6J.4 introduced no Supabase command/control; hosted diagnostics display does not exist yet.
 - Phase 6J.4 made no `SensorLogRow`, `/logs`, `/water-now`, watering behavior, pin, sensor, threshold, duration, cooldown, or moisture mapping changes.
+- Phase 6J.5 Supabase Device Registry / Table-Driven Provisioned Device Allowlist is manually validated / complete.
+- ADR 0015 has been added to define `public.device_registry` as the Supabase provisioned-device registry.
+- Phase 6J.5 adds SQL artifact `docs/sql/phase6j5-device-registry.sql` to create and seed `public.device_registry`, add registry-backed helper functions, and replace anon/public INSERT allowlists for `sensor_logs` and `device_heartbeats` with registry-backed checks.
+- Supabase validation confirmed `public.device_registry` exists with active rows for Installed Balcony Unit (`balcony`, `controller`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `sensor-scout`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
+- All three registry rows have `telemetry_insert_enabled`, `heartbeat_insert_enabled`, and `hosted_visible` set to `true`.
+- Supabase validation confirmed `sensor_logs` INSERT and `device_heartbeats` INSERT policies are registry-backed, the existing public/anon `sensor_logs` SELECT policy remains, and `device_registry` has no anon SELECT policy.
+- Helper function validation passed: bench telemetry and heartbeat checks returned `true`, while fake telemetry and heartbeat checks returned `false`.
+- After registry-backed RLS, `device_heartbeats` continued receiving firmware heartbeat rows and `sensor_logs` continued receiving rows from known provisioned devices.
+- The Phase 6J.5 registry flags authorize telemetry and heartbeat inserts only; they are not command/control.
+- Base `public.device_registry` anon read is not approved in Phase 6J.5.
+- No Supabase command/control or Remote Water Now was introduced in Phase 6J.5.
+- Phase 6J.5 makes no firmware, frontend runtime, hosted dashboard, `SensorLogRow`, `/status`, `/logs`, `/water-now`, watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, or local control behavior changes.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.

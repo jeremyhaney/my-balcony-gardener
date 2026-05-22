@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.4 Firmware Heartbeat Posting MVP on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
+- Current repo context: Phase 6J.5 Supabase Device Registry / Table-Driven Provisioned Device Allowlist on branch `phase6j5-supabase-device-registry-allowlist`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -20,6 +20,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.2 status: bench validated / complete; local read-only `GET /status` endpoint implemented in `src/main.cpp`
 - Current Phase 6J.3 status: SQL/RLS MVP complete / manually validated; `docs/sql/phase6j3-device-heartbeats.sql` creates `public.device_heartbeats`
 - Current Phase 6J.4 status: bench validated / complete; firmware periodic heartbeats post to `public.device_heartbeats`
+- Current Phase 6J.5 status: manually validated / complete; `public.device_registry` centralizes provisioned-device insert allowlists
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -44,15 +45,15 @@ It is a planning guide, not an implementation approval. Each item still requires
 15. Phase 6J.2 - Local Read-Only `/status` Endpoint MVP - bench validated / complete
 16. Phase 6J.3 - Supabase `device_heartbeats` SQL/RLS MVP - manually validated / complete
 17. Phase 6J.4 - Firmware Heartbeat Posting MVP - bench validated / complete
-18. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+18. Phase 6J.5 - Supabase Device Registry / Table-Driven Provisioned Device Allowlist - manually validated / complete
 19. Device Roles / Sensor-Only Telemetry Unit
-20. Sensor Calibration / Measurement-System Evaluation
+20. Phase 6K - Sensor Calibration / Measurement-System Evaluation
 21. Sensor Fault Detection / Control-Quality Validation
 22. Future SenML-Inspired Measurement Model
 23. Device Settings / Provisioning
 24. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, and Phase 6J.4 are complete.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, and Phase 6J.5 are complete.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -514,19 +515,50 @@ Out of scope:
 - Supabase command/control.
 - Remote Water Now.
 
-## Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+## Phase 6J.5 - Supabase Device Registry / Table-Driven Provisioned Device Allowlist - MANUALLY VALIDATED / COMPLETE
 
-Deferred future work unless explicitly reprioritized:
+Scope:
 
-- Replace the hardcoded `sensor_logs` RLS UUID allowlist with a table-driven registry.
-- Candidate fields may include `device_id`, `key`, `friendly_name`, `role`, `telemetry_insert_enabled`, `active`, `created_at`, and `notes`.
-- Keep Supabase telemetry/history only.
+- ADR 0015 defines `public.device_registry` as the Supabase provisioned-device registry.
+- SQL artifact `docs/sql/phase6j5-device-registry.sql` creates and seeds the registry for Installed Balcony Unit, Bench Prototype Unit, and Balcony Sensor Scout 01.
+- Registry-backed RLS replaces repeated hardcoded UUID allowlists for device-originated inserts.
+- `sensor_logs` INSERT is allowed only when the registry row is active and `telemetry_insert_enabled`.
+- `device_heartbeats` INSERT is allowed only when the registry row is active and `heartbeat_insert_enabled`.
+- `public.device_registry` has no anon SELECT, INSERT, UPDATE, or DELETE policy in this phase.
+- SECURITY DEFINER helper functions allow RLS policies to check registry state without granting broad registry read access.
+- Policy replacement is intentionally scoped to anon/public INSERT policies on `sensor_logs` and `device_heartbeats`; SELECT, UPDATE, DELETE, and authenticated-only policies are not targeted.
+- Registry flags authorize telemetry and heartbeat inserts only and are not command/control.
+- Hosted diagnostics display remains deferred.
+- Limited read-only registry view remains deferred.
+- Latest-status `device_status_current` table/view remains deferred.
+- Sensor Calibration remains Phase 6K and is not part of this device-registry phase.
+- Supabase validation confirmed `public.device_registry` exists.
+- Registry rows exist for Installed Balcony Unit (`balcony`, `controller`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `sensor-scout`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
+- All three registry rows are active with `telemetry_insert_enabled`, `heartbeat_insert_enabled`, and `hosted_visible` set to `true`.
+- Supabase validation confirmed `sensor_logs` INSERT policy is registry-backed.
+- Supabase validation confirmed `device_heartbeats` INSERT policy is registry-backed.
+- The existing public/anon `sensor_logs` SELECT policy remains.
+- `device_registry` has no anon SELECT policy.
+- Helper function validation passed: bench telemetry allowed is `true`, bench heartbeat allowed is `true`, fake telemetry allowed is `false`, and fake heartbeat allowed is `false`.
+- After registry-backed RLS, `device_heartbeats` continued receiving firmware heartbeat rows.
+- After registry-backed RLS, `sensor_logs` continued receiving rows from known provisioned devices.
+- No Supabase command/control or Remote Water Now was introduced.
+
+Follow-up validation and implementation slices, requiring separate approval:
+
+- Hosted diagnostics display.
+- Add a limited read-only device registry view later only if hosted/frontend labels need Supabase-backed registry reads.
 
 Out of scope:
 
 - Remote Water Now.
 - Supabase command/control.
-- Firmware behavior changes unless separately approved.
+- Hosted diagnostics display.
+- Firmware behavior changes.
+- Frontend runtime changes.
+- `SensorLogRow` changes.
+- `/status`, `/logs`, or `/water-now` changes.
+- Watering duration, threshold, cooldown, moisture mapping, pin, sensor, or automatic watering logic changes.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 
