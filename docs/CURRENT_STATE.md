@@ -153,6 +153,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 6J.1 is currently documentation/design only for Device Diagnostics / Heartbeats / Reliability Evidence.
 - ADR 0014 has been added to define the future separate diagnostics path using append-only `device_heartbeats` evidence and a proposed read-only local `GET /status` endpoint.
 - No firmware, frontend runtime, SQL schema, `SensorLogRow`, watering behavior, or local control behavior changed in the Phase 6J.1 documentation pass.
+- Phase 6J.2 added a local read-only `GET /status` diagnostics endpoint in `src/main.cpp`.
+- Phase 6J.2 bench validation passed on Bench Prototype Unit `318fab98-89ad-4f36-9100-3134a04e0be5` at `10.0.0.192`; `/status` returned valid JSON with `wifi_connected: true`, `wifi_rssi: -45`, `hasLastGoodDht: true`, `free_heap: 235028`, `min_free_heap: 186292`, and `currently_watering: false`.
+- Phase 6J.2 added no Supabase `device_heartbeats` table, no Supabase heartbeat posting, no frontend runtime changes, no `SensorLogRow` change, no intentional `/logs` behavior change, no `/water-now` behavior change, and no watering duration, threshold, cooldown, moisture mapping, pin, or sensor logic changes.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.

@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.1 Device Diagnostics / Heartbeats / Reliability Evidence on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
+- Current repo context: Phase 6J.2 Local Read-Only `/status` Endpoint MVP on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -16,7 +16,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6G status: complete, merged to `main`; bench build/flash and normal Wi-Fi boot validation passed, and offline/no-Wi-Fi behavior is code-hardened and static-inspected
 - Current Phase 6H status: complete; raw soil ADC visibility implemented in commit `8157e66 Add raw soil ADC diagnostic telemetry` and validated on the bench and Supabase history path
 - Current Phase 6J.0 status: complete; frontend multi-unit visibility and local control target safety implemented and documented
-- Current Phase 6J.1 status: design/ADR documentation pass; no firmware, SQL, frontend runtime, `SensorLogRow`, watering, or local control behavior changes
+- Current Phase 6J.1 status: complete; design/ADR documentation pass with no firmware, SQL, frontend runtime, `SensorLogRow`, watering, or local control behavior changes
+- Current Phase 6J.2 status: bench validated / complete; local read-only `GET /status` endpoint implemented in `src/main.cpp`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -38,15 +39,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 12. Phase 6H - Sensor Fault Detection / Raw ADC Visibility - complete on branch
 13. Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - complete
 14. Phase 6J.1 - Device Diagnostics / Heartbeats / Reliability Evidence - DESIGN / ADR
-15. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
-16. Device Roles / Sensor-Only Telemetry Unit
-17. Sensor Calibration / Measurement-System Evaluation
-18. Sensor Fault Detection / Control-Quality Validation
-19. Future SenML-Inspired Measurement Model
-20. Device Settings / Provisioning
-21. Hardware Safety Maturity
+15. Phase 6J.2 - Local Read-Only `/status` Endpoint MVP - bench validated / complete
+16. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+17. Device Roles / Sensor-Only Telemetry Unit
+18. Sensor Calibration / Measurement-System Evaluation
+19. Sensor Fault Detection / Control-Quality Validation
+20. Future SenML-Inspired Measurement Model
+21. Device Settings / Provisioning
+22. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0 is complete. Phase 6J.1 is currently a design/ADR documentation pass.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0, Phase 6J.1, and Phase 6J.2 are complete.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -368,7 +370,6 @@ Scope:
 
 Follow-up implementation slices, requiring separate approval:
 
-- Implement read-only local `GET /status`.
 - Add `device_heartbeats` SQL/RLS migration.
 - Add firmware heartbeat posting.
 - Add hosted read-only diagnostics display after the diagnostics path is proven.
@@ -385,9 +386,50 @@ Out of scope:
 - `SensorLogRow` changes.
 - Hosted-readonly control boundary changes.
 
+## Phase 6J.2 - Local Read-Only `/status` Endpoint MVP - BENCH VALIDATED / COMPLETE
+
+Scope:
+
+- Implemented local read-only `GET /status` diagnostics endpoint in `src/main.cpp`.
+- `/status` reports existing runtime state and lightweight ESP32/Wi-Fi diagnostics.
+- `/status` does not read DHT or soil sensors.
+- `/status` is local diagnostics only and does not post to Supabase.
+- Bench validation passed on Bench Prototype Unit UUID `318fab98-89ad-4f36-9100-3134a04e0be5` at IP `10.0.0.192`.
+- `/status` returned valid JSON.
+- `/status` reported `wifi_connected: true`.
+- `/status` reported `wifi_rssi: -45`.
+- `/status` reported `hasLastGoodDht: true`.
+- `/status` reported `free_heap: 235028` and `min_free_heap: 186292`.
+- `/status` reported `currently_watering: false`.
+- No Supabase `device_heartbeats` table was added.
+- No Supabase heartbeat posting was added.
+- No frontend runtime behavior changed.
+- No `SensorLogRow` change was made.
+- No intentional `/logs` behavior change was made.
+- No `/water-now` behavior change was made.
+- No watering duration, threshold, cooldown, moisture mapping, pin, or sensor logic changed.
+
+Follow-up implementation slices, requiring separate approval:
+
+- Add `device_heartbeats` SQL/RLS migration.
+- Add firmware heartbeat posting.
+- Add hosted read-only diagnostics display after the diagnostics path is proven.
+- Add latest-status `device_status_current` table/view if append-only evidence proves useful.
+
+Out of scope:
+
+- Supabase command/control.
+- Remote Water Now.
+- SQL migrations.
+- Firmware heartbeat posting.
+- Frontend runtime changes.
+- Hosted dashboard behavior changes.
+- `SensorLogRow` changes.
+- Watering behavior changes.
+
 ## Supabase Device Registry / Table-Driven Provisioned Device Allowlist
 
-Deferred future work, after Phase 6J.1 design:
+Deferred future work, after Phase 6J.2:
 
 - Replace the hardcoded `sensor_logs` RLS UUID allowlist with a table-driven registry.
 - Candidate fields may include `device_id`, `key`, `friendly_name`, `role`, `telemetry_insert_enabled`, `active`, `created_at`, and `notes`.

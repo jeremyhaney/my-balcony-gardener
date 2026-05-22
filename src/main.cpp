@@ -46,6 +46,7 @@ bool readDhtWithFallback(float &temperatureF, float &humidity);
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
 void handleRoot();
 void handleLogs();
+void handleStatus();
 void handleWaterNow();
 
 // Get formatted local time as a string
@@ -229,6 +230,32 @@ void handleRoot() {
   server.send(200, "text/plain", "My Balcony Gardener ESP32 - Alive!");
 }
 
+// Status endpoint handler - returns read-only device diagnostics without sensor reads
+void handleStatus() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  bool wifiConnected = WiFi.status() == WL_CONNECTED;
+
+  String response = "{";
+  response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  response += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
+  response += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
+  response += "\"wifi_rssi\":";
+  response += wifiConnected ? String(WiFi.RSSI()) : "null";
+  response += ",";
+  response += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
+  response += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
+  response += "\"lastWateringDuration\":" + String(lastWateringDuration) + ",";
+  response += "\"hasLastGoodDht\":" + String(hasLastGoodDht ? "true" : "false") + ",";
+  response += "\"free_heap\":" + String(ESP.getFreeHeap()) + ",";
+  response += "\"min_free_heap\":" + String(ESP.getMinFreeHeap()) + ",";
+  response += "\"ip_address\":\"" + String(wifiConnected ? WiFi.localIP().toString() : "0.0.0.0") + "\",";
+  response += "\"mac_address\":\"" + WiFi.macAddress() + "\"";
+  response += "}";
+
+  server.send(200, "application/json", response);
+}
+
 // Logs endpoint handler - returns latest sensor data
 void handleLogs() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -304,6 +331,7 @@ void setup() {
   // Setup web server endpoints
   server.on("/", HTTP_GET, handleRoot);
   server.on("/logs", HTTP_GET, handleLogs);
+  server.on("/status", HTTP_GET, handleStatus);
   server.on("/water-now", HTTP_POST, handleWaterNow);
 
   server.begin();
