@@ -106,6 +106,18 @@ ADR 0014 in [`docs/adr/0014-device-diagnostics-heartbeats-and-reliability-eviden
 - Supabase may store telemetry/history/diagnostics evidence only and must not become command/control.
 - Hosted dashboard diagnostics display is deferred until `/status` and `device_heartbeats` are proven, and hosted-readonly mode must remain read-only.
 
+## Device Registry / Provisioned Device Allowlist
+
+ADR 0015 in [`docs/adr/0015-supabase-device-registry-and-table-driven-allowlist.md`](./adr/0015-supabase-device-registry-and-table-driven-allowlist.md) defines the Phase 6J.5 Supabase device registry and table-driven insert allowlist.
+
+- `public.device_registry` is the provisioned-device registry for known MBG ESP32 units.
+- Registry-backed RLS replaces repeated hardcoded UUID allowlists for device-originated inserts.
+- Registry flags authorize `sensor_logs` telemetry inserts and `device_heartbeats` diagnostics inserts only.
+- Registry flags are not command/control and must not grant watering authority.
+- Supabase remains telemetry/history/diagnostics storage only and must not expose Remote Water Now.
+- Base `device_registry` anonymous read access is not approved in Phase 6J.5.
+- Hosted/frontend registry display remains deferred; if public labels are needed later, prefer a limited read-only view in a separately approved phase.
+
 ## Device Identity And Production Traceability
 
 ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./adr/0010-device-identity-and-production-traceability.md) locks the Phase 6B device identity convention.
