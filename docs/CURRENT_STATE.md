@@ -150,6 +150,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
 - The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
 - Supabase remains read-only telemetry/history only and is not used for command/control.
+- Phase 6J.1 is currently documentation/design only for Device Diagnostics / Heartbeats / Reliability Evidence.
+- ADR 0014 has been added to define the future separate diagnostics path using append-only `device_heartbeats` evidence and a proposed read-only local `GET /status` endpoint.
+- No firmware, frontend runtime, SQL schema, `SensorLogRow`, watering behavior, or local control behavior changed in the Phase 6J.1 documentation pass.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.

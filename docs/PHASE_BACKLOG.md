@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.0 multi-unit visibility / local control target safety on branch `phase6j0-multi-unit-visibility-local-control-safety`
+- Current repo context: Phase 6J.1 Device Diagnostics / Heartbeats / Reliability Evidence on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -15,7 +15,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6F status: complete, merged to `main`, deployed, and validated on the hosted custom domain
 - Current Phase 6G status: complete, merged to `main`; bench build/flash and normal Wi-Fi boot validation passed, and offline/no-Wi-Fi behavior is code-hardened and static-inspected
 - Current Phase 6H status: complete; raw soil ADC visibility implemented in commit `8157e66 Add raw soil ADC diagnostic telemetry` and validated on the bench and Supabase history path
-- Current Phase 6J.0 status: complete/current closeout; frontend multi-unit visibility and local control target safety implemented and documented
+- Current Phase 6J.0 status: complete; frontend multi-unit visibility and local control target safety implemented and documented
+- Current Phase 6J.1 status: design/ADR documentation pass; no firmware, SQL, frontend runtime, `SensorLogRow`, watering, or local control behavior changes
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -35,16 +36,17 @@ It is a planning guide, not an implementation approval. Each item still requires
 10. Phase 6F - Hosted Read-Only Device Status / Telemetry Quality - complete and merged to `main`
 11. Phase 6G - Offline Autonomy / Wi-Fi Recovery - complete and merged to `main`
 12. Phase 6H - Sensor Fault Detection / Raw ADC Visibility - complete on branch
-13. Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - complete/current closeout
-14. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
-15. Device Roles / Sensor-Only Telemetry Unit
-16. Sensor Calibration / Measurement-System Evaluation
-17. Sensor Fault Detection / Control-Quality Validation
-18. Future SenML-Inspired Measurement Model
-19. Device Settings / Provisioning
-20. Hardware Safety Maturity
+13. Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - complete
+14. Phase 6J.1 - Device Diagnostics / Heartbeats / Reliability Evidence - DESIGN / ADR
+15. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+16. Device Roles / Sensor-Only Telemetry Unit
+17. Sensor Calibration / Measurement-System Evaluation
+18. Sensor Fault Detection / Control-Quality Validation
+19. Future SenML-Inspired Measurement Model
+20. Device Settings / Provisioning
+21. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0 is complete/current closeout on its feature branch.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0 is complete. Phase 6J.1 is currently a design/ADR documentation pass.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -349,9 +351,43 @@ Out of scope:
 - Firmware behavior changes.
 - Production provisioning database.
 
+## Phase 6J.1 - Device Diagnostics / Heartbeats / Reliability Evidence - DESIGN / ADR
+
+Scope:
+
+- ADR 0014 defines a separate diagnostics/heartbeat architecture for ESP32 device-health evidence.
+- `device_heartbeats` is the recommended future append-only historical heartbeat/evidence table.
+- `device_heartbeats` remains separate from `sensor_logs` plant/environment telemetry and `sensor_events` manual operational context.
+- Future `GET /status` is recommended as a read-only local diagnostics endpoint.
+- Diagnostics should exist on every deployed unit, including controller, sensor-only/scout, and bench units.
+- Recommended diagnostic fields cover identity/configuration, runtime, Wi-Fi, Supabase/cloud posting, sensor read health, watering/control safety, local-only diagnostics, and deferred/future fields.
+- Recommended MVP heartbeat cadence is boot when Wi-Fi/time allows plus periodic 15-minute heartbeats.
+- Future event-triggered heartbeats after Wi-Fi reconnect and cloud recovery are deferred.
+- Hosted dashboard diagnostics display is deferred until `/status` and `device_heartbeats` are proven.
+- No firmware, frontend runtime, SQL schema, `SensorLogRow`, watering duration, threshold, cooldown, pin, sensor, moisture mapping, or local control behavior changes are included in this design pass.
+
+Follow-up implementation slices, requiring separate approval:
+
+- Implement read-only local `GET /status`.
+- Add `device_heartbeats` SQL/RLS migration.
+- Add firmware heartbeat posting.
+- Add hosted read-only diagnostics display after the diagnostics path is proven.
+- Add latest-status `device_status_current` table/view if append-only evidence proves useful.
+
+Out of scope:
+
+- Remote Water Now.
+- Supabase command/control.
+- Anonymous update/delete policies.
+- Firmware behavior changes.
+- SQL migrations.
+- Frontend runtime changes.
+- `SensorLogRow` changes.
+- Hosted-readonly control boundary changes.
+
 ## Supabase Device Registry / Table-Driven Provisioned Device Allowlist
 
-Deferred future work, not part of Phase 6J.0:
+Deferred future work, after Phase 6J.1 design:
 
 - Replace the hardcoded `sensor_logs` RLS UUID allowlist with a table-driven registry.
 - Candidate fields may include `device_id`, `key`, `friendly_name`, `role`, `telemetry_insert_enabled`, `active`, `created_at`, and `notes`.
