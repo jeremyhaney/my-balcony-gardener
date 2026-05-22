@@ -94,6 +94,18 @@ ADR 0013 in [`docs/adr/0013-multi-unit-visibility-and-local-control-target-safet
 - Hosted-readonly mode remains read-only and must not import local control metadata or expose local endpoints.
 - Supabase remains telemetry/history only and must not be used for command/control.
 
+## Device Diagnostics / Heartbeats
+
+ADR 0014 in [`docs/adr/0014-device-diagnostics-heartbeats-and-reliability-evidence.md`](./adr/0014-device-diagnostics-heartbeats-and-reliability-evidence.md) defines the Phase 6J.1 diagnostics/heartbeat architecture.
+
+- `device_heartbeats` is the recommended future append-only machine/device health evidence table.
+- `device_heartbeats` is separate from `sensor_logs` plant/environment telemetry and `sensor_events` manual operational context.
+- `GET /status` is the proposed future read-only local diagnostics endpoint.
+- `/status` must be diagnostic-only and must not control watering, alter runtime state, or expose command authority.
+- Diagnostics should exist on every deployed ESP32 unit, including controller, sensor-only/scout, and bench units.
+- Supabase may store telemetry/history/diagnostics evidence only and must not become command/control.
+- Hosted dashboard diagnostics display is deferred until `/status` and `device_heartbeats` are proven, and hosted-readonly mode must remain read-only.
+
 ## Device Identity And Production Traceability
 
 ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./adr/0010-device-identity-and-production-traceability.md) locks the Phase 6B device identity convention.

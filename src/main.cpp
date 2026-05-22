@@ -21,6 +21,10 @@
 #define WIFI_RECONNECT_INTERVAL_MS 30000
 #endif
 
+#ifndef HEARTBEAT_INTERVAL_MS
+#define HEARTBEAT_INTERVAL_MS 900000
+#endif
+
 // Initialize hardware
 DHT dht(DHTPIN, DHTTYPE);
 WebServer server(80);
@@ -32,6 +36,7 @@ unsigned long lastWateringEndTime = 0;
 unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
 unsigned long lastWiFiReconnectAttemptTime = 0;
+unsigned long lastHeartbeatPostTime = 0;
 String lastWateredTime = "N/A";
 bool hasLastGoodDht = false;
 float lastGoodTempF = 0;
@@ -44,8 +49,10 @@ void setupTime();
 String getFormattedTime();
 bool readDhtWithFallback(float &temperatureF, float &humidity);
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
+void sendDeviceHeartbeatToSupabase(String heartbeatReason);
 void handleRoot();
 void handleLogs();
+void handleStatus();
 void handleWaterNow();
 
 // Get formatted local time as a string
@@ -224,9 +231,108 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, int soi
   https.end();
 }
 
+// Send read-only device diagnostics heartbeat to Supabase
+void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
+  bool wifiConnected = WiFi.status() == WL_CONNECTED;
+  if (!wifiConnected) {
+    Serial.println("Device heartbeat skipped: WiFi not connected");
+    return;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure(); // TODO: Use setCACert() for production
+  HTTPClient https;
+
+  String url = String(SUPABASE_URL);
+  if (url.endsWith("device_heartbeats")) {
+    // Use configured diagnostics endpoint as-is.
+  } else if (url.endsWith("sensor_logs")) {
+    url = url.substring(0, url.length() - String("sensor_logs").length()) + "device_heartbeats";
+  } else if (url.endsWith("/")) {
+    url += "rest/v1/device_heartbeats";
+  } else {
+    url += "/rest/v1/device_heartbeats";
+  }
+
+  Serial.print("Sending device heartbeat to Supabase URL: ");
+  Serial.println(url);
+
+  https.begin(client, url);
+  // Protect local control responsiveness during diagnostics posts.
+  https.setTimeout(3000);
+  https.addHeader("apikey", SUPABASE_ANON_KEY);
+  https.addHeader("Authorization", "Bearer " + String(SUPABASE_ANON_KEY));
+  https.addHeader("Content-Type", "application/json");
+  https.addHeader("Prefer", "return=minimal");
+
+  String postData = "{";
+  postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  postData += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  postData += "\"heartbeat_reason\":\"" + heartbeatReason + "\",";
+  postData += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
+  postData += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
+  postData += "\"wifi_rssi\":";
+  postData += wifiConnected ? String(WiFi.RSSI()) : "null";
+  postData += ",";
+  postData += "\"free_heap\":" + String(ESP.getFreeHeap()) + ",";
+  postData += "\"min_free_heap\":" + String(ESP.getMinFreeHeap()) + ",";
+  postData += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
+  postData += "\"last_watering_duration\":" + String(lastWateringDuration) + ",";
+  postData += "\"details\":{\"phase\":\"6J.4\",\"source\":\"firmware\"}";
+  postData += "}";
+
+  Serial.println("Device heartbeat payload: " + postData);
+
+  int httpCode = https.POST(postData);
+
+  if (httpCode > 0) {
+    if (httpCode == 201) {
+      Serial.println("Device heartbeat sent to Supabase");
+    } else {
+      Serial.print("Device heartbeat Supabase response code: ");
+      Serial.println(httpCode);
+      String response = https.getString();
+      Serial.print("Response: ");
+      Serial.println(response);
+    }
+  } else {
+    Serial.println("Device heartbeat POST failed");
+    Serial.print("Error: ");
+    Serial.println(https.errorToString(httpCode).c_str());
+  }
+
+  https.end();
+}
+
 // Root endpoint handler
 void handleRoot() {
   server.send(200, "text/plain", "My Balcony Gardener ESP32 - Alive!");
+}
+
+// Status endpoint handler - returns read-only device diagnostics without sensor reads
+void handleStatus() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  bool wifiConnected = WiFi.status() == WL_CONNECTED;
+
+  String response = "{";
+  response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  response += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
+  response += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
+  response += "\"wifi_rssi\":";
+  response += wifiConnected ? String(WiFi.RSSI()) : "null";
+  response += ",";
+  response += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
+  response += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
+  response += "\"lastWateringDuration\":" + String(lastWateringDuration) + ",";
+  response += "\"hasLastGoodDht\":" + String(hasLastGoodDht ? "true" : "false") + ",";
+  response += "\"free_heap\":" + String(ESP.getFreeHeap()) + ",";
+  response += "\"min_free_heap\":" + String(ESP.getMinFreeHeap()) + ",";
+  response += "\"ip_address\":\"" + String(wifiConnected ? WiFi.localIP().toString() : "0.0.0.0") + "\",";
+  response += "\"mac_address\":\"" + WiFi.macAddress() + "\"";
+  response += "}";
+
+  server.send(200, "application/json", response);
 }
 
 // Logs endpoint handler - returns latest sensor data
@@ -304,6 +410,7 @@ void setup() {
   // Setup web server endpoints
   server.on("/", HTTP_GET, handleRoot);
   server.on("/logs", HTTP_GET, handleLogs);
+  server.on("/status", HTTP_GET, handleStatus);
   server.on("/water-now", HTTP_POST, handleWaterNow);
 
   server.begin();
@@ -373,6 +480,11 @@ void loop() {
     }
 
     lastLogTime = now;
+  }
+
+  if (now - lastHeartbeatPostTime >= HEARTBEAT_INTERVAL_MS) {
+    sendDeviceHeartbeatToSupabase("periodic");
+    lastHeartbeatPostTime = now;
   }
 
 }
