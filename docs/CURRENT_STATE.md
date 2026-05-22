@@ -156,6 +156,12 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 6J.2 added a local read-only `GET /status` diagnostics endpoint in `src/main.cpp`.
 - Phase 6J.2 bench validation passed on Bench Prototype Unit `318fab98-89ad-4f36-9100-3134a04e0be5` at `10.0.0.192`; `/status` returned valid JSON with `wifi_connected: true`, `wifi_rssi: -45`, `hasLastGoodDht: true`, `free_heap: 235028`, `min_free_heap: 186292`, and `currently_watering: false`.
 - Phase 6J.2 added no Supabase `device_heartbeats` table, no Supabase heartbeat posting, no frontend runtime changes, no `SensorLogRow` change, no intentional `/logs` behavior change, no `/water-now` behavior change, and no watering duration, threshold, cooldown, moisture mapping, pin, or sensor logic changes.
+- Phase 6J.3 added SQL artifact `docs/sql/phase6j3-device-heartbeats.sql` for the Supabase `public.device_heartbeats` append-only diagnostics/evidence table.
+- The Phase 6J.3 SQL enables RLS, adds anon INSERT policy only for known provisioned device IDs, adds no anon SELECT policy, no UPDATE policy, and no DELETE policy, and includes constraints, indexes, and a commented manual validation SQL block.
+- Phase 6J.3 was manually validated in the Supabase SQL Editor: `public.device_heartbeats` was created successfully, a manual validation insert succeeded for Bench Prototype Unit `318fab98-89ad-4f36-9100-3134a04e0be5` with `device_label` `Bench Prototype Unit`, `device_role` `bench`, and `heartbeat_reason` `manual_sql_validation`, and a descending `heartbeat_at` select returned the validation row.
+- Phase 6J.3 SQL Editor validation proves the table, constraints, indexes, and owner/admin insert path; it does not fully prove anon REST/RLS insert behavior because SQL Editor usually runs with elevated privileges.
+- Anon insert validation is deferred until firmware heartbeat posting or a dedicated REST test is approved.
+- No firmware heartbeat posting exists yet, no hosted diagnostics display exists yet, and no Supabase command/control was introduced.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.

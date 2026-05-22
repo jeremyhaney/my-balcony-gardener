@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.2 Local Read-Only `/status` Endpoint MVP on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
+- Current repo context: Phase 6J.3 Supabase `device_heartbeats` SQL/RLS MVP on branch `phase6j-device-diagnostics-heartbeats-reliability-evidence`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -18,6 +18,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.0 status: complete; frontend multi-unit visibility and local control target safety implemented and documented
 - Current Phase 6J.1 status: complete; design/ADR documentation pass with no firmware, SQL, frontend runtime, `SensorLogRow`, watering, or local control behavior changes
 - Current Phase 6J.2 status: bench validated / complete; local read-only `GET /status` endpoint implemented in `src/main.cpp`
+- Current Phase 6J.3 status: SQL/RLS MVP complete / manually validated; `docs/sql/phase6j3-device-heartbeats.sql` creates `public.device_heartbeats`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -40,15 +41,17 @@ It is a planning guide, not an implementation approval. Each item still requires
 13. Phase 6J.0 - Multi-Unit Visibility / Local Control Target Safety - complete
 14. Phase 6J.1 - Device Diagnostics / Heartbeats / Reliability Evidence - DESIGN / ADR
 15. Phase 6J.2 - Local Read-Only `/status` Endpoint MVP - bench validated / complete
-16. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
-17. Device Roles / Sensor-Only Telemetry Unit
-18. Sensor Calibration / Measurement-System Evaluation
-19. Sensor Fault Detection / Control-Quality Validation
-20. Future SenML-Inspired Measurement Model
-21. Device Settings / Provisioning
-22. Hardware Safety Maturity
+16. Phase 6J.3 - Supabase `device_heartbeats` SQL/RLS MVP - manually validated / complete
+17. Phase 6J.4 - Firmware Heartbeat Posting MVP
+18. Supabase Device Registry / Table-Driven Provisioned Device Allowlist
+19. Device Roles / Sensor-Only Telemetry Unit
+20. Sensor Calibration / Measurement-System Evaluation
+21. Sensor Fault Detection / Control-Quality Validation
+22. Future SenML-Inspired Measurement Model
+23. Device Settings / Provisioning
+24. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0, Phase 6J.1, and Phase 6J.2 are complete.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete on branch pending review, merge, and post-merge validation. Phase 6J.0, Phase 6J.1, Phase 6J.2, and Phase 6J.3 are complete.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -370,7 +373,6 @@ Scope:
 
 Follow-up implementation slices, requiring separate approval:
 
-- Add `device_heartbeats` SQL/RLS migration.
 - Add firmware heartbeat posting.
 - Add hosted read-only diagnostics display after the diagnostics path is proven.
 - Add latest-status `device_status_current` table/view if append-only evidence proves useful.
@@ -411,7 +413,6 @@ Scope:
 
 Follow-up implementation slices, requiring separate approval:
 
-- Add `device_heartbeats` SQL/RLS migration.
 - Add firmware heartbeat posting.
 - Add hosted read-only diagnostics display after the diagnostics path is proven.
 - Add latest-status `device_status_current` table/view if append-only evidence proves useful.
@@ -427,9 +428,69 @@ Out of scope:
 - `SensorLogRow` changes.
 - Watering behavior changes.
 
+## Phase 6J.3 - Supabase `device_heartbeats` SQL/RLS MVP - MANUALLY VALIDATED / COMPLETE
+
+Scope:
+
+- Added SQL artifact `docs/sql/phase6j3-device-heartbeats.sql`.
+- The SQL artifact defines `public.device_heartbeats` as an append-only diagnostics/evidence table.
+- RLS is enabled.
+- Anon INSERT policy is limited to known provisioned device IDs.
+- No anon SELECT policy is included in Phase 6J.3.
+- No UPDATE policy is included.
+- No DELETE policy is included.
+- Constraints and indexes are included.
+- Manual validation SQL is kept as a commented block in the SQL artifact.
+- Supabase validation was performed manually in the SQL Editor.
+- `public.device_heartbeats` was created successfully.
+- Manual validation insert succeeded for Bench Prototype Unit.
+- Validation row used bench `device_id` `318fab98-89ad-4f36-9100-3134a04e0be5`, `device_label` `Bench Prototype Unit`, `device_role` `bench`, and `heartbeat_reason` `manual_sql_validation`.
+- `select` from `public.device_heartbeats` ordered by `heartbeat_at desc` returned the validation row.
+- SQL Editor validation proves the table, constraints, indexes, and owner/admin insert path.
+- SQL Editor validation does not fully prove anon REST/RLS insert behavior because SQL Editor usually runs with elevated privileges.
+- Anon insert validation is deferred until firmware heartbeat posting or a dedicated REST test is approved.
+- No firmware heartbeat posting was added.
+- No hosted diagnostics display was added.
+- No Supabase command/control was introduced.
+
+Follow-up implementation slices, requiring separate approval:
+
+- Phase 6J.4 firmware heartbeat posting MVP.
+- Dedicated anon REST/RLS insert validation if not covered by firmware heartbeat validation.
+- Hosted read-only diagnostics display after the diagnostics path is proven.
+- Latest-status `device_status_current` table/view if append-only evidence proves useful.
+
+Out of scope:
+
+- Firmware changes.
+- Frontend runtime changes.
+- Hosted dashboard diagnostics display.
+- `SensorLogRow` changes.
+- `/status`, `/logs`, or `/water-now` changes.
+- Watering behavior changes.
+- Supabase command/control.
+- Remote Water Now.
+
+## Phase 6J.4 - Firmware Heartbeat Posting MVP
+
+Planned follow-up scope:
+
+- Add firmware posting from local diagnostics state to `public.device_heartbeats`.
+- Validate anon REST/RLS insert behavior for known provisioned device IDs.
+- Preserve `/status`, `/logs`, `/water-now`, watering behavior, and pump shutoff priority.
+- Keep Supabase as diagnostics/history storage only, not command/control.
+
+Out of scope until separately approved:
+
+- Hosted diagnostics display.
+- Latest-status `device_status_current` table/view.
+- Supabase device registry / table-driven provisioned device allowlist.
+- Remote Water Now.
+- Any local control behavior change.
+
 ## Supabase Device Registry / Table-Driven Provisioned Device Allowlist
 
-Deferred future work, after Phase 6J.2:
+Deferred future work, after the heartbeat MVP unless explicitly reprioritized:
 
 - Replace the hardcoded `sensor_logs` RLS UUID allowlist with a table-driven registry.
 - Candidate fields may include `device_id`, `key`, `friendly_name`, `role`, `telemetry_insert_enabled`, `active`, `created_at`, and `notes`.
