@@ -7,6 +7,29 @@ type HistoryFetchResult = {
   error: string | null
 }
 
+export type DeviceDiagnostics = {
+  device_id: string
+  device_key: string
+  device_label: string
+  device_role: string
+  hosted_visible: boolean
+  last_heartbeat_at: string | null
+  heartbeat_age_seconds: number | null
+  heartbeat_reason: string | null
+  uptime_seconds: number | null
+  wifi_connected: boolean | null
+  wifi_rssi: number | null
+  free_heap: number | null
+  min_free_heap: number | null
+  currently_watering: boolean | null
+  last_watering_duration: number | null
+}
+
+type DeviceDiagnosticsFetchResult = {
+  diagnostics: DeviceDiagnostics | null
+  error: string | null
+}
+
 type SupabaseSensorLogRow = {
   id?: string | null
   device_id?: string | null
@@ -88,6 +111,53 @@ export async function fetchHistoryLogs(
     return {
       rows: [],
       error: 'Supabase history is currently unavailable.',
+    }
+  }
+}
+
+export async function fetchDeviceDiagnostics(
+  selectedDeviceId = '',
+): Promise<DeviceDiagnosticsFetchResult> {
+  if (!isSupabaseConfigured || !supabase) {
+    return {
+      diagnostics: null,
+      error: 'Supabase diagnostics are not configured.',
+    }
+  }
+
+  try {
+    const effectiveDeviceId = selectedDeviceId.trim() || getConfiguredDeviceId()
+
+    if (!effectiveDeviceId) {
+      return {
+        diagnostics: null,
+        error: null,
+      }
+    }
+
+    const query = supabase
+      .from('hosted_device_diagnostics')
+      .select(
+        'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, free_heap, min_free_heap, currently_watering, last_watering_duration',
+      )
+      .eq('device_id', effectiveDeviceId)
+
+    const { data, error } = await query.maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      diagnostics: (data as DeviceDiagnostics | null) ?? null,
+      error: null,
+    }
+  } catch (error) {
+    console.warn('Read-only diagnostics fetch failed:', error)
+
+    return {
+      diagnostics: null,
+      error: 'Supabase diagnostics are currently unavailable.',
     }
   }
 }

@@ -1,5 +1,5 @@
 import { type ChangeEvent, useEffect, useState } from 'react'
-import { fetchHistoryLogs } from '../api'
+import { fetchDeviceDiagnostics, fetchHistoryLogs, type DeviceDiagnostics } from '../api'
 import {
   getHistoryControlStateFromUrl,
   getHistoryDeviceOption,
@@ -12,6 +12,7 @@ import {
 } from '../historyControls'
 import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { SensorLogRow } from '../types/sensorLog'
+import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
 import DualAxisChart from './DualAxisChart'
 import SensorHealthPanel from './SensorHealthPanel'
 
@@ -28,6 +29,8 @@ const HISTORY_REFRESH_INTERVAL_MS = 10000
 const SensorLogViewer = () => {
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
+  const [diagnostics, setDiagnostics] = useState<DeviceDiagnostics | null>(null)
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
     () => getHistoryControlStateFromUrl().device,
@@ -41,18 +44,23 @@ const SensorLogViewer = () => {
 
     const loadHistory = async () => {
       const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
-      const { rows, error } = await fetchHistoryLogs(
-        selectedWindow.limit,
-        selectedDevice.deviceId,
-        lowerBoundIso,
-      )
+      const [historyResult, diagnosticsResult] = await Promise.all([
+        fetchHistoryLogs(
+          selectedWindow.limit,
+          selectedDevice.deviceId,
+          lowerBoundIso,
+        ),
+        fetchDeviceDiagnostics(selectedDevice.deviceId),
+      ])
 
       if (!isMounted) {
         return
       }
 
-      setLogs(rows)
-      setHistoryError(error)
+      setLogs(historyResult.rows)
+      setHistoryError(historyResult.error)
+      setDiagnostics(diagnosticsResult.diagnostics)
+      setDiagnosticsError(diagnosticsResult.error)
       setIsLoading(false)
     }
 
@@ -184,6 +192,12 @@ const SensorLogViewer = () => {
       ) : null}
 
       {telemetryHealth ? <SensorHealthPanel health={telemetryHealth} /> : null}
+
+      <DeviceDiagnosticsPanel
+        diagnostics={diagnostics}
+        error={diagnosticsError}
+        fallbackDeviceLabel={selectedDevice.label}
+      />
 
       {isLoading ? (
         <p className="text-sm">Loading history...</p>

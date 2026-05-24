@@ -184,6 +184,15 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Base `public.device_registry` anon read is not approved in Phase 6J.5.
 - No Supabase command/control or Remote Water Now was introduced in Phase 6J.5.
 - Phase 6J.5 makes no firmware, frontend runtime, hosted dashboard, `SensorLogRow`, `/status`, `/logs`, `/water-now`, watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, or local control behavior changes.
+- Phase 6J.6 implements the Hosted Read-Only Diagnostics Display MVP.
+- Phase 6J.6 adds SQL artifact `docs/sql/phase6j6-hosted-device-diagnostics-view.sql` for limited view `public.hosted_device_diagnostics`.
+- `public.hosted_device_diagnostics` joins active, hosted-visible registry rows to the latest `public.device_heartbeats` row per device and grants SELECT on the view to `anon` and `authenticated`.
+- The hosted diagnostics view exposes only safe hosted diagnostics fields and does not expose local IP, MAC, SSID, notes, base registry admin fields, heartbeat `details`, or command/control fields.
+- Base `public.device_registry` anon SELECT remains unapproved and unchanged.
+- Hosted Sensor History now fetches diagnostics for the selected device from `public.hosted_device_diagnostics` using the read-only Supabase path.
+- The Device Diagnostics panel shows Diagnostics Fresh, Diagnostics Stale, or No Diagnostics Yet using the named `35` minute heartbeat warning threshold.
+- The panel presents heartbeat evidence only, including latest heartbeat watering evidence, and does not diagnose plant health, sensor calibration, root cause, or live pump state.
+- Phase 6J.6 makes no firmware, `SensorLogRow`, `/status`, `/logs`, `/water-now`, watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, LiveStats, DualAxisChart, or local control behavior changes.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
@@ -220,6 +229,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Sensor-only device roles before installing additional balcony sensor units
 - Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
 - Additional multi-device read-only UI beyond the current hosted Device selector
+- Additional hosted diagnostics beyond the latest safe heartbeat evidence panel
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - No-Wi-Fi operation is currently autonomous/headless; AP/captive portal provisioning and installer/customer setup mode are deferred.
 - Hardware Safety Maturity

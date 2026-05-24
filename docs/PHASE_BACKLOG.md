@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.5 Supabase Device Registry / Table-Driven Provisioned Device Allowlist on branch `phase6j5-supabase-device-registry-allowlist`
+- Current repo context: Phase 6J.6 Hosted Read-Only Diagnostics Display MVP on branch `phase6j6-hosted-readonly-diagnostics-display`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -21,6 +21,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.3 status: SQL/RLS MVP complete / manually validated; `docs/sql/phase6j3-device-heartbeats.sql` creates `public.device_heartbeats`
 - Current Phase 6J.4 status: bench validated / complete; firmware periodic heartbeats post to `public.device_heartbeats`
 - Current Phase 6J.5 status: manually validated / complete; `public.device_registry` centralizes provisioned-device insert allowlists
+- Current Phase 6J.6 status: implemented pending validation; hosted read-only diagnostics display uses limited view `public.hosted_device_diagnostics`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -46,14 +47,15 @@ It is a planning guide, not an implementation approval. Each item still requires
 16. Phase 6J.3 - Supabase `device_heartbeats` SQL/RLS MVP - manually validated / complete
 17. Phase 6J.4 - Firmware Heartbeat Posting MVP - bench validated / complete
 18. Phase 6J.5 - Supabase Device Registry / Table-Driven Provisioned Device Allowlist - manually validated / complete
-19. Device Roles / Sensor-Only Telemetry Unit
-20. Phase 6K - Sensor Calibration / Measurement-System Evaluation
-21. Sensor Fault Detection / Control-Quality Validation
-22. Future SenML-Inspired Measurement Model
-23. Device Settings / Provisioning
-24. Hardware Safety Maturity
+19. Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - implemented pending validation
+20. Device Roles / Sensor-Only Telemetry Unit
+21. Phase 6K - Sensor Calibration / Measurement-System Evaluation
+22. Sensor Fault Detection / Control-Quality Validation
+23. Future SenML-Inspired Measurement Model
+24. Device Settings / Provisioning
+25. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, and Phase 6J.5 are complete.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, and Phase 6J.5 are complete. Phase 6J.6 is implemented pending validation.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -559,6 +561,34 @@ Out of scope:
 - `SensorLogRow` changes.
 - `/status`, `/logs`, or `/water-now` changes.
 - Watering duration, threshold, cooldown, moisture mapping, pin, sensor, or automatic watering logic changes.
+
+## Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - IMPLEMENTED PENDING VALIDATION
+
+Scope:
+
+- Add SQL artifact `docs/sql/phase6j6-hosted-device-diagnostics-view.sql`.
+- Create limited read-only view `public.hosted_device_diagnostics`.
+- Join active, hosted-visible `public.device_registry` rows to the latest `public.device_heartbeats` row per device.
+- Expose only safe hosted diagnostics fields: device identity label/key/role, hosted visibility, latest heartbeat time/age/reason, uptime, Wi-Fi connected/RSSI, heap evidence, latest heartbeat watering evidence, and last watering duration.
+- Grant SELECT on the view to `anon` and `authenticated`.
+- Keep base `public.device_registry` anon SELECT unapproved.
+- Add frontend `fetchDeviceDiagnostics(selectedDeviceId = '')` using `public.hosted_device_diagnostics`, selected `device_id` filtering, and `maybeSingle()`.
+- Add read-only `DeviceDiagnosticsPanel` near Sensor History / Device Status.
+- Show Diagnostics Fresh, Diagnostics Stale, or No Diagnostics Yet using `DIAGNOSTIC_HEARTBEAT_WARNING_THRESHOLD_SECONDS = 35 * 60`.
+- Phrase watering as latest heartbeat evidence only, not guaranteed live pump state.
+- Wire diagnostics fetching into `SensorLogViewer` without changing existing Sensor History, selectors, `SensorHealthPanel`, or `DualAxisChart` behavior.
+
+Out of scope:
+
+- Firmware changes.
+- `SensorLogRow` changes.
+- `/status`, `/logs`, or `/water-now` changes.
+- Watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, `LiveStats`, `DualAxisChart`, or `SensorLogRow` changes.
+- Base registry anon read.
+- INSERT policy weakening.
+- UPDATE or DELETE policies.
+- Supabase command/control or Remote Water Now.
+- Plant health diagnosis, sensor calibration diagnosis, root-cause diagnosis, alerts, or live pump-state guarantees.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 
