@@ -118,6 +118,17 @@ ADR 0015 in [`docs/adr/0015-supabase-device-registry-and-table-driven-allowlist.
 - Base `device_registry` anonymous read access is not approved in Phase 6J.5.
 - Hosted/frontend registry display remains deferred; if public labels are needed later, prefer a limited read-only view in a separately approved phase.
 
+## Hosted Read-Only Device Diagnostics
+
+Phase 6J.6 adds a limited hosted diagnostics read path through `public.hosted_device_diagnostics`.
+
+- `public.hosted_device_diagnostics` joins active, hosted-visible `public.device_registry` rows to the latest `public.device_heartbeats` row per device.
+- The view exposes only hosted-safe diagnostics fields for the selected device: identity label/key/role, latest heartbeat time/age/reason, uptime, Wi-Fi connected/RSSI, heap evidence, latest heartbeat watering evidence, and last watering duration.
+- The view does not expose local IP, MAC, SSID, notes, registry administrative flags other than `hosted_visible`, registry administration timestamps, heartbeat `details`, or command/control fields.
+- `anon` and `authenticated` may select from the limited view.
+- Base `public.device_registry` anonymous read access remains unapproved.
+- Hosted diagnostics display is read-only evidence. It must not call local ESP32 endpoints, expose Water Now, diagnose plant health, diagnose sensor calibration/root cause, or introduce Supabase command/control.
+
 ## Device Identity And Production Traceability
 
 ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./adr/0010-device-identity-and-production-traceability.md) locks the Phase 6B device identity convention.
