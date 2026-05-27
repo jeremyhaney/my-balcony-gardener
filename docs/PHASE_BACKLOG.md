@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: `main`, ready for Phase 7A Gen2 Modular Sensor Architecture Lock
+- Current repo context: `phase7a-gen2-modular-sensor-architecture`, active Phase 7A Gen2 Modular Sensor Architecture Lock branch
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -22,7 +22,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.4 status: bench validated / complete; firmware periodic heartbeats post to `public.device_heartbeats`
 - Current Phase 6J.5 status: manually validated / complete; `public.device_registry` centralizes provisioned-device insert allowlists
 - Current Phase 6J.6 status: complete and merged to `main`; hosted read-only diagnostics display uses limited view `public.hosted_device_diagnostics`
-- Current Phase 7A status: next documentation/design phase; Gen2 Modular Sensor Architecture Lock
+- Phase 7A status: active documentation/design phase
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -49,15 +49,20 @@ It is a planning guide, not an implementation approval. Each item still requires
 17. Phase 6J.4 - Firmware Heartbeat Posting MVP - bench validated / complete
 18. Phase 6J.5 - Supabase Device Registry / Table-Driven Provisioned Device Allowlist - manually validated / complete
 19. Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - complete and merged to `main`
-20. Phase 7A - Gen2 Modular Sensor Architecture Lock - documentation/design
-21. Device Roles / Sensor-Only Telemetry Unit
-22. Phase 6K - Sensor Calibration / Measurement-System Evaluation
-23. Sensor Fault Detection / Control-Quality Validation
-24. Future SenML-Inspired Measurement Model
-25. Device Settings / Provisioning
-26. Hardware Safety Maturity
+20. Phase 7A — Gen2 Modular Sensor Architecture Lock
+21. Phase 7B — Gen2 Bench Platform Bring-Up
+22. Phase 7C — Gen2 Measurement Storage MVP
+23. Phase 7D — Gen2 Local Measurements Display
+24. Phase 7E — Gen2 Hosted Read-Only Measurements
+25. Phase 7F — Gen2 Calibration / Control Eligibility Evaluation
+26. Device Roles / Sensor-Only Telemetry Unit
+27. Phase 6K — Sensor Calibration / Measurement-System Evaluation
+28. Sensor Fault Detection / Control-Quality Validation
+29. Future SenML-Inspired Measurement Model
+30. Device Settings / Provisioning
+31. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is the next documentation/design phase.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is the active documentation/design phase. Device Roles / Sensor-Only Telemetry Unit and Phase 6K calibration remain in the backlog after the Gen2 architecture lock.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -591,6 +596,44 @@ Out of scope:
 - UPDATE or DELETE policies.
 - Supabase command/control or Remote Water Now.
 - Plant health diagnosis, sensor calibration diagnosis, root-cause diagnosis, alerts, or live pump-state guarantees.
+
+## Phase 7A - Gen2 Modular Sensor Architecture Lock - ACTIVE DESIGN
+
+Scope:
+
+- Create ADR 0016 to define Gen2 as a modular grow-environment platform where sensors, capabilities, and control authority are independently discoverable, optional, and replaceable.
+- Preserve Gen1/current compatibility through the existing `SensorLogRow` / `sensor_logs` telemetry history contract.
+- Keep expanded Gen2 measurements separate from legacy `SensorLogRow`, likely through a future `public.sensor_measurements` measurement-list/table path.
+- Define sensor modules as independent software components with their own detection, read timing, validity, quality, reason, and control eligibility reporting.
+- Define the standard Gen2 measurement record fields: `device_id`, `measured_at`, `sensor_key`, `sensor_type`, `measurement_name`, `measurement_value`, `measurement_unit`, `valid`, `quality`, `reason`, `control_eligible`, and `details`.
+- Clarify that valid for display is not the same as valid for control.
+- Require watering control to use only measurements explicitly marked `control_eligible`.
+- Retire GPIO5 from future Gen2 relay/pump control designs without changing the installed balcony unit in this phase.
+- Approve I2C SDA/SCL as a short-range local sensor-module bus.
+- Defer long-distance sensing to separate ESP32 sensor nodes or a future deliberate fieldbus design, such as RS-485/Modbus, after separate evaluation.
+- Keep local ESP32 firmware as the owner of watering decisions and pump shutoff.
+- Keep Supabase as telemetry/history/diagnostics storage only, with no command/control or Remote Water Now.
+
+Follow-up placeholders, requiring separate approval:
+
+- Phase 7B — Gen2 Bench Platform Bring-Up
+- Phase 7C — Gen2 Measurement Storage MVP
+- Phase 7D — Gen2 Local Measurements Display
+- Phase 7E — Gen2 Hosted Read-Only Measurements
+- Phase 7F — Gen2 Calibration / Control Eligibility Evaluation
+- Device Roles / Sensor-Only Telemetry Unit
+- Phase 6K — Sensor Calibration / Measurement-System Evaluation
+
+Out of scope:
+
+- Firmware code changes.
+- Firmware upload.
+- Frontend runtime behavior changes.
+- Supabase SQL changes.
+- Creating `sensor_measurements`.
+- Adding BME280, DS18B20, VEML6030, light, pressure, soil temperature, reservoir level, flow, PAR, or extra moisture readings into `SensorLogRow.data`.
+- Changing watering duration, watering threshold, cooldown, moisture mapping, automatic watering logic, Manual Water Now behavior, hosted-readonly boundary, Supabase command/control boundary, or existing Gen1 local control safety.
+- Changing the installed balcony unit's relay/pump control design in this phase.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 

@@ -118,6 +118,20 @@ ADR 0015 in [`docs/adr/0015-supabase-device-registry-and-table-driven-allowlist.
 - Base `device_registry` anonymous read access is not approved in Phase 6J.5.
 - Hosted/frontend registry display remains deferred; if public labels are needed later, prefer a limited read-only view in a separately approved phase.
 
+## Gen2 Modular Sensor Architecture
+
+ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen2-modular-sensor-architecture.md) defines Gen2 as a modular grow-environment platform where sensors, capabilities, and control authority are independently discoverable, optional, and replaceable.
+
+- `SensorLogRow` remains the Gen1/current compatibility contract for the existing `sensor_logs` telemetry history path.
+- Gen2 expanded measurements belong in a separate measurement-list/table path, likely future `public.sensor_measurements`.
+- `SensorLogRow.data` must not keep expanding with fixed fields for every future sensor.
+- Gen2 optional sensors may be present, missing, disabled, failed, or not installed without breaking device operation.
+- Valid for display is not the same as valid for control; watering control may only use measurements explicitly marked `control_eligible`.
+- GPIO5 is retired from future Gen2 relay/pump control designs, without changing the installed balcony unit in this phase.
+- I2C SDA/SCL is approved as a short-range local sensor-module bus, not the long-distance field wiring strategy.
+- Local ESP32 firmware remains the owner of watering decisions and pump shutoff.
+- Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
+
 ## Hosted Read-Only Device Diagnostics
 
 Phase 6J.6 adds a limited hosted diagnostics read path through `public.hosted_device_diagnostics`.
