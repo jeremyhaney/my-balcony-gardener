@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 6J.6 Hosted Read-Only Diagnostics Display MVP on branch `phase6j6-hosted-readonly-diagnostics-display`
+- Current repo context: `main`, ready for Phase 7A Gen2 Modular Sensor Architecture Lock
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -21,7 +21,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.3 status: SQL/RLS MVP complete / manually validated; `docs/sql/phase6j3-device-heartbeats.sql` creates `public.device_heartbeats`
 - Current Phase 6J.4 status: bench validated / complete; firmware periodic heartbeats post to `public.device_heartbeats`
 - Current Phase 6J.5 status: manually validated / complete; `public.device_registry` centralizes provisioned-device insert allowlists
-- Current Phase 6J.6 status: implemented pending validation; hosted read-only diagnostics display uses limited view `public.hosted_device_diagnostics`
+- Current Phase 6J.6 status: complete and merged to `main`; hosted read-only diagnostics display uses limited view `public.hosted_device_diagnostics`
+- Current Phase 7A status: next documentation/design phase; Gen2 Modular Sensor Architecture Lock
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -47,15 +48,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 16. Phase 6J.3 - Supabase `device_heartbeats` SQL/RLS MVP - manually validated / complete
 17. Phase 6J.4 - Firmware Heartbeat Posting MVP - bench validated / complete
 18. Phase 6J.5 - Supabase Device Registry / Table-Driven Provisioned Device Allowlist - manually validated / complete
-19. Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - implemented pending validation
-20. Device Roles / Sensor-Only Telemetry Unit
-21. Phase 6K - Sensor Calibration / Measurement-System Evaluation
-22. Sensor Fault Detection / Control-Quality Validation
-23. Future SenML-Inspired Measurement Model
-24. Device Settings / Provisioning
-25. Hardware Safety Maturity
+19. Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - complete and merged to `main`
+20. Phase 7A - Gen2 Modular Sensor Architecture Lock - documentation/design
+21. Device Roles / Sensor-Only Telemetry Unit
+22. Phase 6K - Sensor Calibration / Measurement-System Evaluation
+23. Sensor Fault Detection / Control-Quality Validation
+24. Future SenML-Inspired Measurement Model
+25. Device Settings / Provisioning
+26. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, and Phase 6J.5 are complete. Phase 6J.6 is implemented pending validation.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is the next documentation/design phase.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -562,7 +564,7 @@ Out of scope:
 - `/status`, `/logs`, or `/water-now` changes.
 - Watering duration, threshold, cooldown, moisture mapping, pin, sensor, or automatic watering logic changes.
 
-## Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - IMPLEMENTED PENDING VALIDATION
+## Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - COMPLETE AND MERGED TO MAIN
 
 Scope:
 
