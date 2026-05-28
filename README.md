@@ -85,6 +85,17 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - `/logs` remains a Gen1 compatibility endpoint and is intentionally not registered for `bench-proto-gen2`.
 - On `bench-proto-gen2`, `/water-now` remains the simulated production watering endpoint and toggles the GPIO25 bench output through `RELAY_PIN`; no pump is attached.
 - Phase 7B Gen2 measurements are local-only; no `SensorLogRow`, Supabase SQL, hosted dashboard, or frontend runtime changes were made.
+- Phase 7C Live Measurements Local Frontend MVP is implemented and runtime validated.
+- Local/default dashboard mode now includes a local-only `Live Measurements` view.
+- `Live Measurements` reads the modular bench endpoints `GET /status`, `GET /capabilities`, and `GET /measurements`.
+- `Live Measurements` does not use `/logs`.
+- Existing `LiveStats` / `/logs` remains as the Gen1/local compatibility path for now.
+- Runtime validation against `bench-proto-gen2` at `10.0.0.192` rendered BME280 `air_temperature`, BME280 `relative_humidity`, BME280 `barometric_pressure`, DS18B20 `temperature`, VEML6030 `ambient_light`, analog soil moisture `moisture_index`, and analog soil moisture `raw_adc`.
+- The default `Live Measurements` view is compact and gardener-facing, with advanced technical diagnostics collapsed by default.
+- `control_eligible:false` is presented as display/diagnostic only and not controlling watering yet.
+- `Water Now` remains available for `bench-proto-gen2` as a simulated production watering action through `/water-now`, with no pump attached.
+- Phase 7C hosted-readonly guardrail scan passed: the hosted build did not bundle `LiveMeasurements`, the bench IP, local endpoint strings, `/logs`, or `/water-now`.
+- Phase 7C made no firmware, Supabase SQL, `SensorLogRow`, hosted-readonly behavior, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, or `/water-now` firmware semantics changes.
 
 ## Authoritative Repo Areas
 
@@ -98,12 +109,14 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 1. The ESP32 firmware runs locally on the device and exposes the local endpoints used by the dashboard.
 2. The React/Vite frontend in [`mbg_dashboard`](./mbg_dashboard) is the active UI.
-3. Local ESP32 path: live sensor values and Manual Water Now.
-4. Supabase read/history path: current and historical Sensor History graph data only.
-5. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
-6. Supabase is not the live/current value path and does not replace local ESP32 control.
-7. Supabase is not used for remote command/control.
-8. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
+3. Gen1/current compatibility path: `LiveStats` polls `/logs` for live sensor values and keeps the existing local/manual behavior.
+4. Modular local measurements path: `Live Measurements` reads `/status`, `/capabilities`, and `/measurements` for the modular bench measurement model.
+5. Local ESP32 path: live sensor values and Manual Water Now.
+6. Supabase read/history path: current and historical Sensor History graph data only.
+7. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
+8. Supabase is not the live/current value path and does not replace local ESP32 control.
+9. Supabase is not used for remote command/control.
+10. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
 
 ## Hosted Read-Only Dashboard
 
@@ -175,12 +188,16 @@ npm run dev
 
 ## Current Local Endpoints
 
+Gen1/current compatibility path:
+
+- `LiveStats`
 - `GET /` - health/basic device response
-- `GET /logs` - current sensor payload used by the local fallback path
-- `POST /water-now` - manual watering trigger
+- `GET /logs` - current sensor payload used by the Gen1/current compatibility path
+- `POST /water-now` - existing local/manual behavior
 
-For `bench-proto-gen2`, Gen2 measurement validation uses:
+Modular local measurements path:
 
+- `Live Measurements`
 - `GET /status` - read-only local diagnostics
 - `GET /capabilities` - Gen2 module/capability and I2C scan diagnostics
 - `GET /measurements` - authoritative Gen2 measurement-list payload

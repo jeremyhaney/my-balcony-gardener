@@ -21,6 +21,21 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path
         },
+        '/status': {
+          target: esp32BaseUrl,
+          changeOrigin: true,
+          rewrite: (path) => path
+        },
+        '/capabilities': {
+          target: esp32BaseUrl,
+          changeOrigin: true,
+          rewrite: (path) => path
+        },
+        '/measurements': {
+          target: esp32BaseUrl,
+          changeOrigin: true,
+          rewrite: (path) => path
+        },
         '/water-now': {
           target: esp32BaseUrl,
           changeOrigin: true,

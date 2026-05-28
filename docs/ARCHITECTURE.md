@@ -137,6 +137,12 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Phase 7B `bench-proto-gen2` uses GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
 - GPIO5 remains retired for future Gen2 relay/pump control designs.
 - Gen2 measurements remain local-only until a future approved measurement storage phase; no `public.sensor_measurements` table exists yet.
+- Phase 7C adds a local/default frontend `Live Measurements` view for modular bench measurements.
+- `Live Measurements` uses `/status`, `/capabilities`, and `/measurements`.
+- `/logs` remains Gen1/current compatibility and is not part of the modular bench measurement contract.
+- Gen2 measurements remain local-only in Phase 7C; measurement storage remains deferred and `public.sensor_measurements` does not exist.
+- Hosted-readonly remains Supabase-only/read-only and does not bundle local `Live Measurements` or local endpoint/control strings.
+- Supabase command/control remains prohibited.
 
 ## Hosted Read-Only Device Diagnostics
 

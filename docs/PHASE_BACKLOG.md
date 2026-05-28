@@ -24,6 +24,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.6 status: complete and merged to `main`; hosted read-only diagnostics display uses limited view `public.hosted_device_diagnostics`
 - Phase 7A status: accepted documentation/design phase
 - Phase 7B status: runtime validated / complete on `bench-proto-gen2`
+- Phase 7C status: runtime validated / complete; Live Measurements Local Frontend MVP
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -52,8 +53,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 19. Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - complete and merged to `main`
 20. Phase 7A — Gen2 Modular Sensor Architecture Lock
 21. Phase 7B — Gen2 Bench Platform Bring-Up
-22. Phase 7C — Gen2 Measurement Storage MVP
-23. Phase 7D — Gen2 Local Measurements Display
+22. Phase 7C — Live Measurements Local Frontend MVP
+23. Phase 7D — Gen2 Measurement Storage MVP
 24. Phase 7E — Gen2 Hosted Read-Only Measurements
 25. Phase 7F — Gen2 Calibration / Control Eligibility Evaluation
 26. Device Roles / Sensor-Only Telemetry Unit
@@ -63,7 +64,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 30. Device Settings / Provisioning
 31. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C measurement storage, Device Roles / Sensor-Only Telemetry Unit, and Phase 6K calibration remain in the backlog.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D measurement storage, Device Roles / Sensor-Only Telemetry Unit, and Phase 6K calibration remain in the backlog.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -618,8 +619,8 @@ Scope:
 Follow-up placeholders, requiring separate approval:
 
 - Phase 7B — Gen2 Bench Platform Bring-Up
-- Phase 7C — Gen2 Measurement Storage MVP
-- Phase 7D — Gen2 Local Measurements Display
+- Phase 7C — Live Measurements Local Frontend MVP
+- Phase 7D — Gen2 Measurement Storage MVP
 - Phase 7E — Gen2 Hosted Read-Only Measurements
 - Phase 7F — Gen2 Calibration / Control Eligibility Evaluation
 - Device Roles / Sensor-Only Telemetry Unit
@@ -682,6 +683,38 @@ Out of scope:
 - Installed balcony controller upload.
 - Scout upload.
 - Adding Gen2 measurement values to `SensorLogRow.data`.
+
+## Phase 7C - Live Measurements Local Frontend MVP - RUNTIME VALIDATED / COMPLETE
+
+Scope:
+
+- Added local-only `LiveMeasurements` frontend component with user-facing title `Live Measurements`.
+- Added local-only types/API helpers for `/status`, `/capabilities`, and `/measurements`.
+- Added local default-mode rendering only.
+- Preserved existing `LiveStats` `/logs` path.
+- Preserved hosted-readonly guardrails.
+- Moved technical diagnostics, module details, and raw records behind collapsed advanced sections after visual review.
+- Kept `Water Now` wording and `/water-now` semantics for bench simulation with no pump attached.
+
+Validation:
+
+- Runtime validation passed against `bench-proto-gen2` at `10.0.0.192`.
+- Rendered BME280 `air_temperature`, BME280 `relative_humidity`, and BME280 `barometric_pressure`.
+- Rendered DS18B20 `temperature`.
+- Rendered VEML6030 `ambient_light`.
+- Rendered analog soil moisture `moisture_index` and `raw_adc`.
+- Hosted-readonly production bundle guardrail scan passed and did not bundle local Live Measurements, bench IP, local endpoint strings, `/logs`, or `/water-now`.
+
+Out of scope:
+
+- No measurement storage was created.
+- No `public.sensor_measurements`.
+- No `SensorLogRow` change.
+- No SQL change.
+- No firmware change.
+- No hosted-readonly behavior change.
+- No watering behavior change.
+- Protected CSV remained untouched.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 
