@@ -131,6 +131,12 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - I2C SDA/SCL is approved as a short-range local sensor-module bus, not the long-distance field wiring strategy.
 - Local ESP32 firmware remains the owner of watering decisions and pump shutoff.
 - Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
+- Phase 7B implements the Gen2 bench profile as `bench-proto-gen2`; the retained `bench-prototype` profile remains Gen1 fallback/reference.
+- Gen1/current compatibility uses `/logs`; Gen2 bench uses `/capabilities` and `/measurements`.
+- `/logs` is not part of the Gen2 bench measurement contract.
+- Phase 7B `bench-proto-gen2` uses GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
+- GPIO5 remains retired for future Gen2 relay/pump control designs.
+- Gen2 measurements remain local-only until a future approved measurement storage phase; no `public.sensor_measurements` table exists yet.
 
 ## Hosted Read-Only Device Diagnostics
 

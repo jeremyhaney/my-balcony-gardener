@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: `phase7a-gen2-modular-sensor-architecture`, active Phase 7A Gen2 Modular Sensor Architecture Lock branch
+- Current repo context: `phase7b-gen2-bench-platform-bring-up`, Phase 7B Gen2 Bench Platform Bring-Up branch
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -22,7 +22,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Current Phase 6J.4 status: bench validated / complete; firmware periodic heartbeats post to `public.device_heartbeats`
 - Current Phase 6J.5 status: manually validated / complete; `public.device_registry` centralizes provisioned-device insert allowlists
 - Current Phase 6J.6 status: complete and merged to `main`; hosted read-only diagnostics display uses limited view `public.hosted_device_diagnostics`
-- Phase 7A status: active documentation/design phase
+- Phase 7A status: accepted documentation/design phase
+- Phase 7B status: runtime validated / complete on `bench-proto-gen2`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -62,7 +63,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 30. Device Settings / Provisioning
 31. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is the active documentation/design phase. Device Roles / Sensor-Only Telemetry Unit and Phase 6K calibration remain in the backlog after the Gen2 architecture lock.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C measurement storage, Device Roles / Sensor-Only Telemetry Unit, and Phase 6K calibration remain in the backlog.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -597,7 +598,7 @@ Out of scope:
 - Supabase command/control or Remote Water Now.
 - Plant health diagnosis, sensor calibration diagnosis, root-cause diagnosis, alerts, or live pump-state guarantees.
 
-## Phase 7A - Gen2 Modular Sensor Architecture Lock - ACTIVE DESIGN
+## Phase 7A - Gen2 Modular Sensor Architecture Lock - ACCEPTED
 
 Scope:
 
@@ -634,6 +635,53 @@ Out of scope:
 - Adding BME280, DS18B20, VEML6030, light, pressure, soil temperature, reservoir level, flow, PAR, or extra moisture readings into `SensorLogRow.data`.
 - Changing watering duration, watering threshold, cooldown, moisture mapping, automatic watering logic, Manual Water Now behavior, hosted-readonly boundary, Supabase command/control boundary, or existing Gen1 local control safety.
 - Changing the installed balcony unit's relay/pump control design in this phase.
+
+## Phase 7B - Gen2 Bench Platform Bring-Up - RUNTIME VALIDATED / COMPLETE
+
+Scope:
+
+- Added `bench-proto-gen2` as the Gen2 bench PlatformIO profile.
+- Kept `bench-prototype` as the retained Gen1 fallback/reference PlatformIO profile.
+- The physical bench ESP32 UUID remains `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- The physical bench ESP32 is now acting as the Gen2 mule after Gen2 rewire and `bench-proto-gen2` flash.
+- Added local Gen2 `/capabilities` and `/measurements` endpoints.
+- For Gen2, `/measurements` is authoritative for measurement data.
+- `/logs` remains a Gen1 compatibility endpoint and is intentionally not registered for `bench-proto-gen2`; it returns `404` on the Gen2 bench.
+- Added Gen2 not-found observability that identified external legacy `/logs` polling after old tabs/Vite were closed.
+- Added modular Gen2 support for BME280, DS18B20, VEML6030, and analog soil moisture.
+- BME280 emits `air_temperature`, `relative_humidity`, and `barometric_pressure`.
+- DS18B20 emits `temperature`.
+- VEML6030 emits `ambient_light`.
+- Analog soil moisture emits `moisture_index` and `raw_adc`.
+- Gen2 I2C scan reports `0x48` and `0x76`.
+- All Gen2 measurement records are `control_eligible:false`.
+- Phase 7B Gen2 measurements are local-only.
+- No `public.sensor_measurements` table exists yet.
+- Gen2 no longer runs the legacy DHT / `sensor_logs` / automatic-watering interval block.
+- Device heartbeats continue posting with `details.phase = "7B"`.
+- On `bench-proto-gen2`, `/water-now` remains the simulated production watering endpoint and toggles the GPIO25 bench output through `RELAY_PIN`; no pump is attached.
+- Earlier Phase 6J relay-test wording remains historical Gen1 bench safety language. Phase 7B intentionally keeps watering terminology for `bench-proto-gen2` because the bench now simulates the production watering function while remaining physically pump-free.
+- The protected untracked CSV `field_readings/phase6k1_b3e1_vs_b6e2_60s_watering_response_20260521_180127.csv` remains untouched.
+
+Validation:
+
+- `/status` works.
+- `/capabilities` works.
+- `/measurements` works.
+- `/logs` returns `404` because it is not registered for Gen2.
+- BME280, DS18B20, VEML6030, analog soil moisture, and I2C scan diagnostics were runtime validated on the Gen2 bench mule.
+
+Out of scope:
+
+- `SensorLogRow` changes.
+- Supabase SQL changes.
+- Creating `public.sensor_measurements`.
+- Hosted dashboard changes.
+- Frontend runtime changes.
+- Supabase command/control or Remote Water Now.
+- Installed balcony controller upload.
+- Scout upload.
+- Adding Gen2 measurement values to `SensorLogRow.data`.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 

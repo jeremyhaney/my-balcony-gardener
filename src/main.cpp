@@ -9,7 +9,12 @@
 #include <DHT.h>
 #include "time.h"
 #include "config.h"
+#include "profile_overrides.h"
 #include "device_identity.h"
+
+#ifdef MBG_GEN2_ENABLED
+#include "gen2_measurements.h"
+#endif
 
 // 15-minute post-watering cooldown/soak guard for automatic watering only.
 // Guarded here because src/config.h contains local secrets and is intentionally ignored by Git.
@@ -53,6 +58,11 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason);
 void handleRoot();
 void handleLogs();
 void handleStatus();
+#ifdef MBG_GEN2_ENABLED
+void handleCapabilities();
+void handleMeasurements();
+void handleNotFound();
+#endif
 void handleWaterNow();
 
 // Get formatted local time as a string
@@ -88,6 +98,10 @@ String getUtcIsoTimestamp() {
 // Only DHT temperature/humidity may fall back to last-known-good values.
 // Soil moisture stays fresh-only because it controls watering decisions.
 bool readDhtWithFallback(float &temperatureF, float &humidity) {
+#if defined(MBG_GEN2_ENABLED) && !MBG_HAS_DHT11
+  Serial.println("Gen2 DHT11 module disabled; legacy DHT read skipped");
+  return false;
+#else
   float freshHumidity = dht.readHumidity();
   float tempC = dht.readTemperature();
 
@@ -109,6 +123,7 @@ bool readDhtWithFallback(float &temperatureF, float &humidity) {
 
   Serial.println("⚠️ Failed to read DHT sensor and no cached values are available");
   return false;
+#endif
 }
 
 // Connect to Wi-Fi
@@ -278,7 +293,7 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
   postData += "\"min_free_heap\":" + String(ESP.getMinFreeHeap()) + ",";
   postData += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
   postData += "\"last_watering_duration\":" + String(lastWateringDuration) + ",";
-  postData += "\"details\":{\"phase\":\"6J.4\",\"source\":\"firmware\"}";
+  postData += "\"details\":{\"phase\":\"7B\",\"source\":\"firmware\"}";
   postData += "}";
 
   Serial.println("Device heartbeat payload: " + postData);
@@ -335,6 +350,46 @@ void handleStatus() {
   server.send(200, "application/json", response);
 }
 
+#ifdef MBG_GEN2_ENABLED
+// Capabilities endpoint handler - returns local Gen2 module configuration and detection state
+void handleCapabilities() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", gen2CapabilitiesJson(String(DEVICE_ID)));
+}
+
+// Measurements endpoint handler - returns local Gen2 measurement-list records
+void handleMeasurements() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", gen2MeasurementsJson(String(DEVICE_ID), getUtcIsoTimestamp()));
+}
+
+void handleNotFound() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  String method = "UNKNOWN";
+  switch (server.method()) {
+    case HTTP_GET:
+      method = "GET";
+      break;
+    case HTTP_POST:
+      method = "POST";
+      break;
+    case HTTP_PUT:
+      method = "PUT";
+      break;
+    case HTTP_DELETE:
+      method = "DELETE";
+      break;
+    default:
+      break;
+  }
+
+  String uri = server.uri();
+  Serial.println("Not found: " + method + " " + uri);
+  server.send(404, "text/plain", "Not found: " + uri);
+}
+#endif
+
 // Logs endpoint handler - returns latest sensor data
 void handleLogs() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -379,6 +434,7 @@ void handleWaterNow() {
     wateringStartTime = millis();
     lastWateredTime = getFormattedTime();
     Serial.println("💧 Manual watering triggered");
+#ifndef MBG_GEN2_ENABLED
     // Phase 5D: log watering start immediately so short pump cycles are visible.
     float humidity = 0;
     float tempF = 0;
@@ -388,6 +444,7 @@ void handleWaterNow() {
       moisture = constrain(moisture, 0, 100);
       sendDataToSupabase(tempF, humidity, moisture, soilValue, true);
     }
+#endif
     server.send(200, "text/plain", "Watering started");
   } else {
     server.send(409, "text/plain", "Already watering");
@@ -399,7 +456,12 @@ void setup() {
   Serial.println("\n🌱 My Balcony Gardener Starting...");
 
   // Initialize hardware
+#if !defined(MBG_GEN2_ENABLED) || MBG_HAS_DHT11
   dht.begin();
+#endif
+#ifdef MBG_GEN2_ENABLED
+  gen2Begin();
+#endif
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
 
@@ -409,8 +471,15 @@ void setup() {
 
   // Setup web server endpoints
   server.on("/", HTTP_GET, handleRoot);
+#ifndef MBG_GEN2_ENABLED
   server.on("/logs", HTTP_GET, handleLogs);
+#endif
   server.on("/status", HTTP_GET, handleStatus);
+#ifdef MBG_GEN2_ENABLED
+  server.on("/capabilities", HTTP_GET, handleCapabilities);
+  server.on("/measurements", HTTP_GET, handleMeasurements);
+  server.onNotFound(handleNotFound);
+#endif
   server.on("/water-now", HTTP_POST, handleWaterNow);
 
   server.begin();
@@ -431,6 +500,7 @@ void loop() {
       lastWateringDuration = wateringDuration / 1000; // Convert to seconds
 
       // Send final update with watering completed
+#ifndef MBG_GEN2_ENABLED
       float humidity = 0;
       float tempF = 0;
       if (readDhtWithFallback(tempF, humidity)) {
@@ -439,6 +509,7 @@ void loop() {
         moisture = constrain(moisture, 0, 100);
         sendDataToSupabase(tempF, humidity, moisture, soilValue, false);
       }
+#endif
 
       Serial.printf("✅ Watering complete. Duration: %lu seconds\n", lastWateringDuration);
     }
@@ -447,6 +518,7 @@ void loop() {
   maintainWiFiConnection();
   server.handleClient();
 
+#ifndef MBG_GEN2_ENABLED
   // Regular sensor logging
   if (now - lastLogTime >= LOG_INTERVAL_MS) {
     float humidity = 0;
@@ -481,6 +553,7 @@ void loop() {
 
     lastLogTime = now;
   }
+#endif
 
   if (now - lastHeartbeatPostTime >= HEARTBEAT_INTERVAL_MS) {
     sendDeviceHeartbeatToSupabase("periodic");
