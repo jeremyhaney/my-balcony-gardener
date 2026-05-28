@@ -194,6 +194,29 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The panel presents heartbeat evidence only, including latest heartbeat watering evidence, and does not diagnose plant health, sensor calibration, root cause, or live pump state.
 - Phase 6J.6 makes no firmware, `SensorLogRow`, `/status`, `/logs`, `/water-now`, watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, LiveStats, DualAxisChart, or local control behavior changes.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
+- Phase 7B Gen2 bench runtime validation is complete.
+- `bench-proto-gen2` is the Gen2 bench PlatformIO profile.
+- `bench-prototype` remains the retained Gen1 fallback/reference PlatformIO profile.
+- The physical bench ESP32 UUID remains `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- The physical bench ESP32 is now acting as the Gen2 mule after Gen2 rewire and `bench-proto-gen2` flash.
+- Gen2 bench `/status`, `/capabilities`, and `/measurements` work.
+- For Gen2, `/measurements` is authoritative for measurement data.
+- `/logs` remains a Gen1 compatibility endpoint and is intentionally not registered for `bench-proto-gen2`; it returns `404` on the Gen2 bench.
+- BME280 emits `air_temperature`, `relative_humidity`, and `barometric_pressure`.
+- DS18B20 emits `temperature`.
+- VEML6030 emits `ambient_light`.
+- Analog soil moisture emits `moisture_index` and `raw_adc`.
+- Gen2 I2C scan reports `0x48` and `0x76`.
+- All Gen2 measurement records are `control_eligible:false`.
+- On `bench-proto-gen2`, `/water-now` remains the simulated production watering endpoint and toggles the GPIO25 bench output through `RELAY_PIN`; no pump is attached.
+- Earlier Phase 6J relay-test wording remains historical Gen1 bench safety language. Phase 7B intentionally keeps watering terminology for `bench-proto-gen2` because the bench now simulates the production watering function while remaining physically pump-free.
+- Gen2 no longer runs the legacy DHT / `sensor_logs` / automatic-watering interval block.
+- Device heartbeats continue posting with `details.phase = "7B"`.
+- Phase 7B Gen2 measurements are local-only.
+- No `public.sensor_measurements` table exists yet.
+- No `SensorLogRow`, Supabase SQL, hosted dashboard, or frontend runtime changes were made in Phase 7B.
+- External legacy `/logs` polling was identified through the Gen2 not-found handler after old tabs/Vite were closed.
+- The protected untracked CSV `field_readings/phase6k1_b3e1_vs_b6e2_60s_watering_response_20260521_180127.csv` remains untouched.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.

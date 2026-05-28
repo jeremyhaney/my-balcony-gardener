@@ -78,6 +78,13 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - MVP v1.0 physical install is complete.
 - Relay-controlled pump activation works from Manual Water Now.
 - Moisture-triggered pump behavior was confirmed during field testing.
+- Phase 7B Gen2 bench runtime validation is complete.
+- `bench-proto-gen2` is the Gen2 bench PlatformIO profile; `bench-prototype` remains the retained Gen1 fallback/reference profile.
+- The physical bench ESP32 UUID remains `318fab98-89ad-4f36-9100-3134a04e0be5`, and the physical bench ESP32 is now acting as the Gen2 mule after rewire/flash.
+- Gen2 validation uses `/capabilities` and `/measurements`; `/measurements` is authoritative for Gen2 measurement data.
+- `/logs` remains a Gen1 compatibility endpoint and is intentionally not registered for `bench-proto-gen2`.
+- On `bench-proto-gen2`, `/water-now` remains the simulated production watering endpoint and toggles the GPIO25 bench output through `RELAY_PIN`; no pump is attached.
+- Phase 7B Gen2 measurements are local-only; no `SensorLogRow`, Supabase SQL, hosted dashboard, or frontend runtime changes were made.
 
 ## Authoritative Repo Areas
 
@@ -146,9 +153,15 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 pio run
 pio run -e balcony-installed
 pio run -e bench-prototype
+pio run -e bench-proto-gen2
 ```
 
-Firmware upload is intentionally omitted from the common commands for Phase 6C; upload only after explicit approval using a specific PlatformIO profile.
+- `bench-prototype` is retained Gen1 fallback/reference.
+- `bench-proto-gen2` is the Gen2 bench profile.
+- Do not upload without an explicit environment and confirmed port.
+- Use `/capabilities` and `/measurements` for Gen2 bench validation.
+
+Firmware upload is intentionally omitted from the common commands; upload only after explicit approval using a specific PlatformIO profile and confirmed port.
 
 ### Frontend
 
@@ -165,6 +178,14 @@ npm run dev
 - `GET /` - health/basic device response
 - `GET /logs` - current sensor payload used by the local fallback path
 - `POST /water-now` - manual watering trigger
+
+For `bench-proto-gen2`, Gen2 measurement validation uses:
+
+- `GET /status` - read-only local diagnostics
+- `GET /capabilities` - Gen2 module/capability and I2C scan diagnostics
+- `GET /measurements` - authoritative Gen2 measurement-list payload
+
+`GET /logs` remains a Gen1 compatibility endpoint and is intentionally absent on `bench-proto-gen2`.
 
 ## Deferred For Later
 
