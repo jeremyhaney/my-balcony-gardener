@@ -136,13 +136,23 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - `/logs` is not part of the Gen2 bench measurement contract.
 - Phase 7B `bench-proto-gen2` uses GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
 - GPIO5 remains retired for future Gen2 relay/pump control designs.
-- Gen2 measurements remain local-only until a future approved measurement storage phase; no `public.sensor_measurements` table exists yet.
 - Phase 7C adds a local/default frontend `Live Measurements` view for modular bench measurements.
 - `Live Measurements` uses `/status`, `/capabilities`, and `/measurements`.
 - `/logs` remains Gen1/current compatibility and is not part of the modular bench measurement contract.
-- Gen2 measurements remain local-only in Phase 7C; measurement storage remains deferred and `public.sensor_measurements` does not exist.
 - Hosted-readonly remains Supabase-only/read-only and does not bundle local `Live Measurements` or local endpoint/control strings.
 - Supabase command/control remains prohibited.
+- ADR 0017 in [`docs/adr/0017-gen2-measurement-batch-storage.md`](./adr/0017-gen2-measurement-batch-storage.md) defines Gen2 measurement storage as one append-only raw batch row per complete device `/measurements` package.
+- Phase 7D stores raw Gen2 packages in `public.sensor_measurement_batches`; one database row equals one complete Gen2 `/measurements` package from one device at one measured time.
+- The full Gen2 `records[]` array is stored as `jsonb` on the raw batch row.
+- `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]` for charting, diagnostics, filtering, unit conversion, and future control-quality evaluation.
+- Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
+- Registry-backed RLS for Gen2 measurement batch inserts uses `public.is_device_telemetry_insert_enabled(device_id)`.
+- Phase 7D adds no anon SELECT, UPDATE, or DELETE policies for the batch table or flat view.
+- Hosted read-only Gen2 measurement display remains deferred to Phase 7E.
+- JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
+- Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
+- `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
+- Phase 7D preserves `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, watering behavior, and `control_eligible:false` on current Gen2 records.
 
 ## Hosted Read-Only Device Diagnostics
 

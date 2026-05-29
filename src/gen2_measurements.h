@@ -7,6 +7,7 @@
 
 void gen2Begin();
 String gen2CapabilitiesJson(const String &deviceId);
+String gen2MeasurementRecordsJson(const String &deviceId, const String &measuredAt);
 String gen2MeasurementsJson(const String &deviceId, const String &measuredAt);
 
 #endif

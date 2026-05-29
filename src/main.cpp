@@ -30,6 +30,14 @@
 #define HEARTBEAT_INTERVAL_MS 900000
 #endif
 
+#ifdef MBG_GEN2_ENABLED
+// Phase 7D validation used a deliberate 15-second override for short prove-out.
+// Committed default is 15 minutes; future short validation must opt in.
+#ifndef GEN2_MEASUREMENT_POST_INTERVAL_MS
+#define GEN2_MEASUREMENT_POST_INTERVAL_MS 900000
+#endif
+#endif
+
 // Initialize hardware
 DHT dht(DHTPIN, DHTTYPE);
 WebServer server(80);
@@ -42,6 +50,9 @@ unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
 unsigned long lastWiFiReconnectAttemptTime = 0;
 unsigned long lastHeartbeatPostTime = 0;
+#ifdef MBG_GEN2_ENABLED
+unsigned long lastGen2MeasurementPostTime = 0;
+#endif
 String lastWateredTime = "N/A";
 bool hasLastGoodDht = false;
 float lastGoodTempF = 0;
@@ -55,6 +66,9 @@ String getFormattedTime();
 bool readDhtWithFallback(float &temperatureF, float &humidity);
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
 void sendDeviceHeartbeatToSupabase(String heartbeatReason);
+#ifdef MBG_GEN2_ENABLED
+void sendGen2MeasurementsToSupabase();
+#endif
 void handleRoot();
 void handleLogs();
 void handleStatus();
@@ -319,6 +333,132 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
   https.end();
 }
 
+#ifdef MBG_GEN2_ENABLED
+int countJsonArrayRecords(const String &jsonArray) {
+  if (jsonArray == "[]") {
+    return 0;
+  }
+
+  int count = 0;
+  int depth = 0;
+  bool inString = false;
+  bool escaped = false;
+
+  for (unsigned int i = 0; i < jsonArray.length(); i++) {
+    char current = jsonArray.charAt(i);
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (current == '\\' && inString) {
+      escaped = true;
+      continue;
+    }
+
+    if (current == '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (current == '{') {
+      if (depth == 0) {
+        count++;
+      }
+      depth++;
+    } else if (current == '}' && depth > 0) {
+      depth--;
+    }
+  }
+
+  return count;
+}
+
+// Send Gen2 modular measurement package to Supabase
+void sendGen2MeasurementsToSupabase() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Gen2 measurement batch post skipped: WiFi not connected");
+    return;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure(); // TODO: Use setCACert() for production
+  HTTPClient https;
+
+  String url = String(SUPABASE_URL);
+  if (url.endsWith("sensor_measurement_batches")) {
+    // Use configured measurement batch endpoint as-is.
+  } else if (url.endsWith("sensor_logs")) {
+    url = url.substring(0, url.length() - String("sensor_logs").length()) + "sensor_measurement_batches";
+  } else if (url.endsWith("device_heartbeats")) {
+    url = url.substring(0, url.length() - String("device_heartbeats").length()) + "sensor_measurement_batches";
+  } else if (url.endsWith("sensor_measurements")) {
+    url = url.substring(0, url.length() - String("sensor_measurements").length()) + "sensor_measurement_batches";
+  } else if (url.endsWith("/")) {
+    url += "rest/v1/sensor_measurement_batches";
+  } else {
+    url += "/rest/v1/sensor_measurement_batches";
+  }
+
+  Serial.print("Sending Gen2 measurement batch to Supabase URL: ");
+  Serial.println(url);
+
+  https.begin(client, url);
+  // Protect local control responsiveness during measurement posts.
+  https.setTimeout(3000);
+  https.addHeader("apikey", SUPABASE_ANON_KEY);
+  https.addHeader("Authorization", "Bearer " + String(SUPABASE_ANON_KEY));
+  https.addHeader("Content-Type", "application/json");
+  https.addHeader("Prefer", "return=minimal");
+
+  String measuredAt = getUtcIsoTimestamp();
+  String records = gen2MeasurementRecordsJson(String(DEVICE_ID), measuredAt);
+  int recordCount = countJsonArrayRecords(records);
+
+  String postData = "{";
+  postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  postData += "\"measured_at\":\"" + measuredAt + "\",";
+  postData += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  postData += "\"schema_version\":1,";
+  postData += "\"record_count\":" + String(recordCount) + ",";
+  postData += "\"records\":" + records + ",";
+  postData += "\"source_endpoint\":\"/measurements\",";
+  postData += "\"batch_details\":{";
+  postData += "\"phase\":\"7D\",";
+  postData += "\"source\":\"firmware\",";
+  postData += "\"post_cadence_ms\":" + String(GEN2_MEASUREMENT_POST_INTERVAL_MS);
+  postData += "}";
+  postData += "}";
+
+  Serial.println("Gen2 measurement batch payload: " + postData);
+
+  int httpCode = https.POST(postData);
+
+  if (httpCode > 0) {
+    if (httpCode == 201) {
+      Serial.println("Gen2 measurement batch sent to Supabase");
+    } else {
+      Serial.print("Gen2 measurement batch Supabase response code: ");
+      Serial.println(httpCode);
+      String response = https.getString();
+      Serial.print("Response: ");
+      Serial.println(response);
+    }
+  } else {
+    Serial.println("Gen2 measurement batch POST failed");
+    Serial.print("Error: ");
+    Serial.println(https.errorToString(httpCode).c_str());
+  }
+
+  https.end();
+}
+#endif
+
 // Root endpoint handler
 void handleRoot() {
   server.send(200, "text/plain", "My Balcony Gardener ESP32 - Alive!");
@@ -552,6 +692,13 @@ void loop() {
     }
 
     lastLogTime = now;
+  }
+#endif
+
+#ifdef MBG_GEN2_ENABLED
+  if (now - lastGen2MeasurementPostTime >= GEN2_MEASUREMENT_POST_INTERVAL_MS) {
+    sendGen2MeasurementsToSupabase();
+    lastGen2MeasurementPostTime = now;
   }
 #endif
 

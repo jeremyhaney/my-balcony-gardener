@@ -76,16 +76,13 @@ String gen2CapabilitiesJson(const String &deviceId) {
   return response;
 }
 
-String gen2MeasurementsJson(const String &deviceId, const String &measuredAt) {
+String gen2MeasurementRecordsJson(const String &deviceId, const String &measuredAt) {
   String bme = gen2Bme280MeasurementsJson(deviceId, measuredAt);
   String ds18b20 = gen2Ds18b20MeasurementsJson(deviceId, measuredAt);
   String veml6030 = gen2Veml6030MeasurementsJson(deviceId, measuredAt);
   String soil = gen2SoilMoistureMeasurementsJson(deviceId, measuredAt);
 
-  String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
-  response += "\"records\":[";
+  String response = "[";
 
   bool hasAny = false;
   if (bme.length() > 2) {
@@ -114,6 +111,15 @@ String gen2MeasurementsJson(const String &deviceId, const String &measuredAt) {
   }
 
   response += "]";
+  return response;
+}
+
+String gen2MeasurementsJson(const String &deviceId, const String &measuredAt) {
+  String response = "{";
+  response += "\"device_id\":\"" + deviceId + "\",";
+  response += "\"measured_at\":\"" + measuredAt + "\",";
+  response += "\"records\":";
+  response += gen2MeasurementRecordsJson(deviceId, measuredAt);
   response += "}";
   return response;
 }

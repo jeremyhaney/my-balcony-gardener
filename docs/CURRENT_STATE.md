@@ -229,6 +229,24 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Existing `LiveStats` / `/logs` Gen1 local path remains in place.
 - Phase 7C hosted-readonly guardrail scan passed and did not bundle local Live Measurements or local endpoint/control strings.
 - Phase 7C made no firmware, Supabase SQL, `SensorLogRow`, hosted-readonly behavior, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, or `/water-now` firmware semantics changes.
+- Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete pending commit.
+- ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
+- Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.
+- `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
+- Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
+- Registry-backed RLS uses `public.is_device_telemetry_insert_enabled(device_id)` for batch inserts.
+- Phase 7D adds no anon SELECT, UPDATE, or DELETE policies; hosted read-only Gen2 measurement display remains deferred to Phase 7E.
+- JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
+- Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
+- `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
+- Phase 7D validation passed on `bench-proto-gen2` with UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- The validated firmware batch had `record_count = 7`, `device_role = bench`, `source_endpoint = /measurements`, and `batch_details` `{"phase":"7D","source":"firmware","post_cadence_ms":900000}`.
+- Phase 7D validated measurement names `air_temperature`, `relative_humidity`, `barometric_pressure`, `temperature`, `ambient_light`, `moisture_index`, and `raw_adc`.
+- All current Gen2 records remain `control_eligible:false`.
+- Initial Phase 7D runtime boot Wi-Fi timed out and firmware continued in local-control/offline mode; Wi-Fi later recovered because the Supabase measurement batch POST and heartbeat POST succeeded.
+- Codex/workstation HTTP checks to `10.0.0.192:80` failed during Phase 7D validation even though browser/serial evidence showed Gen2 runtime activity.
+- Serial showed an unexpected external `Manual watering triggered` event during Phase 7D validation, likely from an open local UI or other local client still targeting the bench; no pump is attached to the bench, and this is not a Phase 7D blocker.
+- Phase 7D introduced no Supabase command/control or Remote Water Now, no new sensor controls watering, and `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, and control eligibility behavior remain unchanged.
 - The protected untracked CSV `field_readings/phase6k1_b3e1_vs_b6e2_60s_watering_response_20260521_180127.csv` remains untouched.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.

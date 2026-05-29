@@ -96,6 +96,17 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - `Water Now` remains available for `bench-proto-gen2` as a simulated production watering action through `/water-now`, with no pump attached.
 - Phase 7C hosted-readonly guardrail scan passed: the hosted build did not bundle `LiveMeasurements`, the bench IP, local endpoint strings, `/logs`, or `/water-now`.
 - Phase 7C made no firmware, Supabase SQL, `SensorLogRow`, hosted-readonly behavior, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, or `/water-now` firmware semantics changes.
+- Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete pending commit.
+- Gen2 raw measurement storage uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time.
+- The full Gen2 `records[]` array is stored as `jsonb`; `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
+- Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
+- Registry-backed RLS uses `public.is_device_telemetry_insert_enabled(device_id)`, with no anon SELECT, UPDATE, or DELETE policies added in Phase 7D.
+- Hosted read-only Gen2 measurement display remains deferred to Phase 7E.
+- JSONB/GIN indexing on `records` and unique physical sensor inventory / assignment tracking are deferred.
+- `sensor_events` remains an operational note log, not the source of truth for installed physical sensors.
+- Phase 7D validation against `bench-proto-gen2` UUID `318fab98-89ad-4f36-9100-3134a04e0be5` succeeded with `record_count = 7`, `device_role = bench`, `source_endpoint = /measurements`, and `batch_details` `{"phase":"7D","source":"firmware","post_cadence_ms":900000}`.
+- Phase 7D validated `air_temperature`, `relative_humidity`, `barometric_pressure`, `temperature`, `ambient_light`, `moisture_index`, and `raw_adc`; all current Gen2 records remain `control_eligible:false`.
+- Phase 7D made no `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, hosted-readonly UI, watering behavior, Supabase command/control, or Remote Water Now changes.
 
 ## Authoritative Repo Areas
 
@@ -114,9 +125,10 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 5. Local ESP32 path: live sensor values and Manual Water Now.
 6. Supabase read/history path: current and historical Sensor History graph data only.
 7. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
-8. Supabase is not the live/current value path and does not replace local ESP32 control.
-9. Supabase is not used for remote command/control.
-10. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
+8. Gen2 batch storage path: firmware posts complete `/measurements` packages to `public.sensor_measurement_batches`, and `public.sensor_measurements_flat` derives chart/query rows.
+9. Supabase is not the live/current value path and does not replace local ESP32 control.
+10. Supabase is not used for remote command/control.
+11. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
 
 ## Hosted Read-Only Dashboard
 
