@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: `phase7b-gen2-bench-platform-bring-up`, Phase 7B Gen2 Bench Platform Bring-Up branch
+- Current repo context: `main`, after Phase 7D Gen2 Measurement Batch Storage MVP commit and push (`4a46448 Add Phase 7D Gen2 measurement batch storage`)
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -25,7 +25,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7A status: accepted documentation/design phase
 - Phase 7B status: runtime validated / complete on `bench-proto-gen2`
 - Phase 7C status: runtime validated / complete; Live Measurements Local Frontend MVP
-- Phase 7D status: runtime validated / complete pending commit; Gen2 Measurement Batch Storage MVP
+- Phase 7D status: runtime validated / complete; Gen2 Measurement Batch Storage MVP
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -65,7 +65,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 30. Device Settings / Provisioning
 31. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete pending commit. Device Roles / Sensor-Only Telemetry Unit and Phase 6K calibration remain in the backlog.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Gen2 Hosted Read-Only Measurements, Phase 7F Gen2 Calibration / Control Eligibility Evaluation, Device Roles / Sensor-Only Telemetry Unit, Phase 6K Sensor Calibration / Measurement-System Evaluation, and Sensor Fault Detection / Control-Quality Validation remain future/deferred.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -717,7 +717,7 @@ Out of scope:
 - No watering behavior change.
 - Protected CSV remained untouched.
 
-## Phase 7D - Gen2 Measurement Batch Storage MVP - RUNTIME VALIDATED / COMPLETE PENDING COMMIT
+## Phase 7D - Gen2 Measurement Batch Storage MVP - RUNTIME VALIDATED / COMPLETE
 
 Scope:
 

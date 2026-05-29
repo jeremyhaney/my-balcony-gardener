@@ -229,7 +229,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Existing `LiveStats` / `/logs` Gen1 local path remains in place.
 - Phase 7C hosted-readonly guardrail scan passed and did not bundle local Live Measurements or local endpoint/control strings.
 - Phase 7C made no firmware, Supabase SQL, `SensorLogRow`, hosted-readonly behavior, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, or `/water-now` firmware semantics changes.
-- Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete pending commit.
+- Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.
 - `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.

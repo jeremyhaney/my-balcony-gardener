@@ -96,7 +96,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - `Water Now` remains available for `bench-proto-gen2` as a simulated production watering action through `/water-now`, with no pump attached.
 - Phase 7C hosted-readonly guardrail scan passed: the hosted build did not bundle `LiveMeasurements`, the bench IP, local endpoint strings, `/logs`, or `/water-now`.
 - Phase 7C made no firmware, Supabase SQL, `SensorLogRow`, hosted-readonly behavior, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, or `/water-now` firmware semantics changes.
-- Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete pending commit.
+- Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete.
 - Gen2 raw measurement storage uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time.
 - The full Gen2 `records[]` array is stored as `jsonb`; `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
 - Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
