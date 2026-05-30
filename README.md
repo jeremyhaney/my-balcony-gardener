@@ -101,12 +101,26 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - The full Gen2 `records[]` array is stored as `jsonb`; `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
 - Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
 - Registry-backed RLS uses `public.is_device_telemetry_insert_enabled(device_id)`, with no anon SELECT, UPDATE, or DELETE policies added in Phase 7D.
-- Hosted read-only Gen2 measurement display remains deferred to Phase 7E.
+- Hosted read-only Gen2 measurement display remains deferred to a future frontend phase.
 - JSONB/GIN indexing on `records` and unique physical sensor inventory / assignment tracking are deferred.
 - `sensor_events` remains an operational note log, not the source of truth for installed physical sensors.
 - Phase 7D validation against `bench-proto-gen2` UUID `318fab98-89ad-4f36-9100-3134a04e0be5` succeeded with `record_count = 7`, `device_role = bench`, `source_endpoint = /measurements`, and `batch_details` `{"phase":"7D","source":"firmware","post_cadence_ms":900000}`.
 - Phase 7D validated `air_temperature`, `relative_humidity`, `barometric_pressure`, `temperature`, `ambient_light`, `moisture_index`, and `raw_adc`; all current Gen2 records remain `control_eligible:false`.
 - Phase 7D made no `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, hosted-readonly UI, watering behavior, Supabase command/control, or Remote Water Now changes.
+- Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete pending commit.
+- Standard Gen2 field-unit pins are GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
+- Installed Balcony Unit Gen2 uses UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, build profile `balcony-installed-gen2`, and display label `Balcony01`.
+- Balcony Sensor Scout 01 Gen2 uses UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and display label `Scout01`.
+- Bench Prototype Unit uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and display label `Prototype01`; bench Gen2 remains a richer prototype/reference profile and was not re-uploaded during final field-unit label/provenance validation.
+- `device_label` values are compile-time endpoint readability labels, not user-editable names or database-driven nicknames.
+- Field-unit local endpoints now include `device_label`, `firmware_version`, and `build_profile` on `/status`, `/capabilities`, and `/measurements`; installed/scout Gen2 also retain `/logs` temporarily with added top-level identity fields and unchanged nested `data`.
+- Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`; `batch_details.phase` is now `7E`, and `batch_details.device_label` identifies the short device label.
+- Installed `Balcony01` is watering-capable and has `moisture_index` as the only `control_eligible:true` Gen2 measurement; DHT11 measurements and `raw_adc` are display/diagnostic only.
+- Scout `Scout01` has no watering authority; all scout Gen2 measurements are `control_eligible:false`.
+- Supabase remains telemetry/history/diagnostics storage only. No Supabase command/control or Remote Water Now was introduced, and `/water-now` remains local-only and capability-gated.
+- `/water-now` was not called during final Phase 7E field-unit label/provenance validation.
+- Known deferred wart: startup Gen2 DHT11 reads may briefly show suspicious values around `32.72°F / 0%`; later reads and `/logs` are plausible, and this does not affect watering control because DHT11 records are not control-eligible.
+- A two-device field capture for future watering-response analysis is ongoing and outside the Phase 7E closeout.
 
 ## Authoritative Repo Areas
 
@@ -177,14 +191,18 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 # Build only; does not upload firmware
 pio run
 pio run -e balcony-installed
+pio run -e balcony-installed-gen2
+pio run -e balcony-sensor-scout-01
 pio run -e bench-prototype
 pio run -e bench-proto-gen2
 ```
 
 - `bench-prototype` is retained Gen1 fallback/reference.
 - `bench-proto-gen2` is the Gen2 bench profile.
+- `balcony-installed-gen2` is the Gen2 installed controller field profile.
+- `balcony-sensor-scout-01` is the Gen2 scout field profile.
 - Do not upload without an explicit environment and confirmed port.
-- Use `/capabilities` and `/measurements` for Gen2 bench validation.
+- Use `/status`, `/capabilities`, and `/measurements` for Gen2 validation.
 
 Firmware upload is intentionally omitted from the common commands; upload only after explicit approval using a specific PlatformIO profile and confirmed port.
 
@@ -214,7 +232,9 @@ Modular local measurements path:
 - `GET /capabilities` - Gen2 module/capability and I2C scan diagnostics
 - `GET /measurements` - authoritative Gen2 measurement-list payload
 
-`GET /logs` remains a Gen1 compatibility endpoint and is intentionally absent on `bench-proto-gen2`.
+- Field-unit Gen2 endpoints include compile-time `device_label`, `firmware_version`, and `build_profile` provenance for quick local inspection.
+- Installed/scout Gen2 retain `GET /logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1` to protect current local scripts/UI during migration.
+- `GET /logs` remains intentionally absent on `bench-proto-gen2`; future frontend work should migrate local Gen2 display to `/measurements`.
 
 ## Deferred For Later
 
@@ -223,6 +243,7 @@ Modular local measurements path:
 - Responsive hosted dashboard polish
 - Advanced Sensor Health / Fault Detection
 - Additional multi-device read-only UI beyond the current hosted Device selector
+- Hosted read-only Gen2 measurement display from `sensor_measurement_batches` / `sensor_measurements_flat`
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - Sensor Calibration / Raw ADC Prove-Out
 - Phase 5G - Quiet Hours / Runtime Settings

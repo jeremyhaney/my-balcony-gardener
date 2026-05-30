@@ -127,7 +127,8 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - `SensorLogRow.data` must not keep expanding with fixed fields for every future sensor.
 - Gen2 optional sensors may be present, missing, disabled, failed, or not installed without breaking device operation.
 - Valid for display is not the same as valid for control; watering control may only use measurements explicitly marked `control_eligible`.
-- GPIO5 is retired from future Gen2 relay/pump control designs, without changing the installed balcony unit in this phase.
+- GPIO5 is retired from Gen2 relay/pump control designs.
+- The standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
 - I2C SDA/SCL is approved as a short-range local sensor-module bus, not the long-distance field wiring strategy.
 - Local ESP32 firmware remains the owner of watering decisions and pump shutoff.
 - Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
@@ -148,11 +149,20 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
 - Registry-backed RLS for Gen2 measurement batch inserts uses `public.is_device_telemetry_insert_enabled(device_id)`.
 - Phase 7D adds no anon SELECT, UPDATE, or DELETE policies for the batch table or flat view.
-- Hosted read-only Gen2 measurement display remains deferred to Phase 7E.
+- Hosted read-only Gen2 measurement display remains deferred to a future frontend phase.
 - JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
 - Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
 - `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
 - Phase 7D preserves `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, watering behavior, and `control_eligible:false` on current Gen2 records.
+- Phase 7E moves field units onto the Gen2 compatibility path while preserving the installed controller UUID `550e8400-e29b-41d4-a716-446655440000` and scout UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`.
+- Phase 7E display labels are compile-time endpoint readability labels: `Balcony01`, `Scout01`, and `Prototype01`. They are not user-editable names or database-driven nicknames.
+- Phase 7E local endpoints report firmware provenance with `firmware_version`, `build_profile`, and `device_label` on `/status`, `/capabilities`, and `/measurements`.
+- Installed/scout Gen2 temporarily retain `/logs` through `MBG_GEN2_ENABLE_LEGACY_LOGS=1` for local script/UI compatibility; `bench-proto-gen2` intentionally omits `/logs`.
+- Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`, plus `batch_details.phase = "7E"` and `batch_details.device_label`.
+- Installed `Balcony01` is watering-capable; `Scout01` is not watering-capable. Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
+- `/water-now` remains local-only and capability-gated; Remote Water Now remains prohibited.
+- Installed `Balcony01` may mark `moisture_index` `control_eligible:true`; DHT11 records and `raw_adc` remain `control_eligible:false`. Scout `Scout01` records remain `control_eligible:false`.
+- The known DHT11 startup first-read wart may produce suspicious initial `/measurements` DHT values, but DHT11 records are not watering control inputs.
 
 ## Hosted Read-Only Device Diagnostics
 
