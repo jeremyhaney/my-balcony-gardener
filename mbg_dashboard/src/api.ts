@@ -39,6 +39,7 @@ type SupabaseSensorLogRow = {
 }
 
 const DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT = 1000
+const HOSTED_GEN2_MEASUREMENT_BATCH_SIZE = 1000
 
 const DEFAULT_SENSOR_DATA: SensorData = {
   temperature: 0,
@@ -178,29 +179,42 @@ export async function fetchHostedGen2Measurements(
 
   const effectiveDeviceId = deviceId.trim() || getConfiguredDeviceId()
   const limit = Math.max(1, options.limit ?? DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT)
+  const rows: HostedGen2MeasurementRow[] = []
 
-  let query = supabase
-    .from('hosted_gen2_measurements')
-    .select(
-      'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at',
-    )
-    .order('measured_at', { ascending: false })
-    .order('record_index', { ascending: true })
-    .limit(limit)
+  while (rows.length < limit) {
+    const batchStart = rows.length
+    const batchEnd = Math.min(batchStart + HOSTED_GEN2_MEASUREMENT_BATCH_SIZE, limit) - 1
 
-  if (effectiveDeviceId) {
-    query = query.eq('device_id', effectiveDeviceId)
+    let query = supabase
+      .from('hosted_gen2_measurements')
+      .select(
+        'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at',
+      )
+      .order('measured_at', { ascending: false })
+      .order('record_index', { ascending: true })
+      .range(batchStart, batchEnd)
+
+    if (effectiveDeviceId) {
+      query = query.eq('device_id', effectiveDeviceId)
+    }
+
+    if (options.startTime) {
+      query = query.gte('measured_at', options.startTime)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw error
+    }
+
+    const batchRows = (data ?? []) as HostedGen2MeasurementRow[]
+    rows.push(...batchRows)
+
+    if (batchRows.length < batchEnd - batchStart + 1) {
+      break
+    }
   }
 
-  if (options.startTime) {
-    query = query.gte('measured_at', options.startTime)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    throw error
-  }
-
-  return (data ?? []) as HostedGen2MeasurementRow[]
+  return rows
 }

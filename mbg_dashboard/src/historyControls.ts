@@ -6,6 +6,7 @@ export type HistoryWindowKey = '24h' | '7d' | '1m' | '3m' | '6m' | '1y' | 'all'
 export type HistoryDeviceOption = {
   key: HistoryDeviceKey
   label: string
+  hostedLabel: string
   deviceId: string
   role: string
   description: string
@@ -21,6 +22,7 @@ export type HistoryWindowOption = {
 export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = DEVICE_REGISTRY.map((device) => ({
   key: device.key,
   label: device.label,
+  hostedLabel: device.hostedLabel,
   deviceId: device.deviceId,
   role: device.role,
   description: device.description,

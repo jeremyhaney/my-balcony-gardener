@@ -265,19 +265,25 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `/water-now` remains local-only and capability-gated, and it was not called during final Phase 7E label/provenance validation.
 - Known deferred wart: first Gen2 DHT11 startup reads may show suspicious values around `32.72°F / 0%`; later `/measurements` reads and `/logs` are plausible, and this is not a watering-control blocker because DHT11 records are `control_eligible:false`.
 - A two-device field capture for future watering-response analysis is running outside Phase 7E closeout; no capture CSV data is included in this documentation pass.
-- Phase 7F Hosted Gen2 Read-Only Measurements Display is runtime/browser validated / complete pending commit.
+- Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit.
 - Phase 7F adds SQL artifact `docs/sql/phase7f-hosted-gen2-measurements-view.sql` for limited hosted read-only view `public.hosted_gen2_measurements`.
 - Supabase manual validation confirmed `public.hosted_gen2_measurements` returns Gen2 rows for `Balcony01` and `Scout01`.
 - Phase 7F anon privilege validation returned `true, false, false, false`: anon can select `public.hosted_gen2_measurements`, and anon cannot select `public.sensor_measurement_batches`, `public.sensor_measurements_flat`, or `public.device_registry`.
-- Hosted read-only dashboard now renders hosted-only `Gen2 Measurements` from `public.hosted_gen2_measurements`.
-- Hosted Gen2 display shows latest cards for Air Temperature, Relative Humidity, and Moisture Index; Raw ADC is shown separately as diagnostic evidence; recent grouped Gen2 samples are shown in a table.
-- Browser validation confirmed hosted/read-only mode is visible, `LiveStats`, Water Now, and local ESP32 control UI are hidden, existing Gen1 Sensor History still renders, and Device/Window selectors still work.
-- Browser validation confirmed Gen2 Measurements renders for `Balcony01`, `Scout01`, and Bench Prototype Unit when selected.
+- Hosted read-only dashboard now renders measurement-driven `Live Measurements` from `public.hosted_gen2_measurements`.
+- Hosted Gen2 UI dynamically displays all latest hosted Gen2 measurements returned by the view, with friendly labels including `Air Temperature`, `Relative Humidity`, `Moisture Index`, `Soil Temperature`, `Barometric Pressure`, `Ambient Light`, and diagnostic `Raw ADC`.
+- Phase 7F.1 adds separate Gen2-aware `HostedGen2TrendChart`; existing `DualAxisChart` remains Gen1-only.
+- Hosted Gen2 Trend supports multi-measurement overlay with toggle pills, dynamic Y-axis groups, color-coded axes matching series/legend, and expert overlay mode with multiple right-side axes.
+- Hosted Gen2 Trend uses display domains of `20-100F` for temperature and an environmentally realistic hPa domain for barometric pressure, without transforming measurement data.
+- Hosted Gen2 Trend and Live Measurements retain existing data during routine hosted refresh and do not flash, clear, jump, or rebuild during normal background refresh.
+- Live Measurements cards hide engineering details behind collapsed details, remove the device/unit line and hosted read-only pill from the container, rename `Latest batch` to `Last Reading`, and use gardener-facing full-card status styling for Good, Watch, Check, and Neutral/category states.
+- Duplicate Raw ADC callout, Raw ADC disclaimer/callout, and Recent Gen2 samples table were removed; Raw ADC remains available as a normal diagnostic measurement card.
+- Browser validation confirmed hosted/read-only mode is visible, `LiveStats`, Water Now, and local ESP32 control UI are hidden, existing Gen1 Sensor History still renders, Gen2 Trend renders, Live Measurements renders, and Device/Window selectors still work.
+- Browser validation confirmed Gen2 hosted UI renders for `Balcony01`, `Scout01`, and `Prototype01` when selected.
 - Browser validation confirmed `Balcony01` moisture index shows control eligibility as local firmware evidence only, and `Scout01` shows control eligibility false as local firmware evidence only.
 - Hosted-readonly network guardrail validation observed Supabase REST requests to `hosted_gen2_measurements` and no `/logs`, `/water-now`, or local ESP32 IP calls.
 - Connectivity concern from earlier local preview testing was resolved: `Test-NetConnection nkicadvdjpcjhkoluvwf.supabase.co -Port 443` returned `TcpTestSucceeded: True`, DNS resolved to Supabase/Cloudflare IPs, and `curl.exe -I https://nkicadvdjpcjhkoluvwf.supabase.co` returned an HTTP response.
-- Phase 7F validation passed `npm.cmd run lint`, hosted-readonly build, hosted forbidden bundle scan, and approved hosted view string scan for `hosted_gen2_measurements`.
-- Phase 7F adds no firmware changes, no `SensorLogRow` changes, no `sensor_logs` changes, no `DualAxisChart` changes, no Supabase command/control, no Remote Water Now, and no watering behavior changes.
+- Phase 7F.1 validation passed `npm.cmd run lint`, hosted-readonly build, hosted forbidden bundle scan, and approved hosted view string scan for `hosted_gen2_measurements`.
+- Phase 7F.1 adds no firmware changes, no SQL/RLS changes, no `SensorLogRow` changes, no `sensor_logs.data` expansion, no Gen2 values in `sensor_logs.data`, no `DualAxisChart` behavior changes, no Supabase command/control, no Remote Water Now, and no watering behavior changes.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -314,6 +320,10 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Additional Sensor History UI/statistics polish beyond Phase 6E selectors and chart label/tooltip improvements
 - Additional multi-device read-only UI beyond the current hosted Device selector
 - Additional hosted diagnostics beyond the latest safe heartbeat evidence panel
+- Future calibration/control phases remain separate from Phase 7F.1.
+- Future sensor assignment/location UI remains separate from Phase 7F.1.
+- Future hosted Gen2 chart refinements may include Clean View / Expert View, seasonal axis presets, or a custom axis-label rail if field use justifies them.
+- Future validation/calibration must determine real moisture thresholds and control eligibility before changing control behavior.
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - No-Wi-Fi operation is currently autonomous/headless; AP/captive portal provisioning and installer/customer setup mode are deferred.
 - Hardware Safety Maturity

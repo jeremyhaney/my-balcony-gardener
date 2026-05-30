@@ -4,6 +4,7 @@ export type DeviceRole = 'controller' | 'bench' | 'sensor-scout'
 export type RegisteredDevice = {
   key: DeviceKey
   label: string
+  hostedLabel: string
   deviceId: string
   role: DeviceRole
   description: string
@@ -13,6 +14,7 @@ export const DEVICE_REGISTRY: RegisteredDevice[] = [
   {
     key: 'balcony',
     label: 'Installed Balcony Unit',
+    hostedLabel: 'Balcony01',
     deviceId: '550e8400-e29b-41d4-a716-446655440000',
     role: 'controller',
     description: 'Real installed balcony watering controller.',
@@ -20,6 +22,7 @@ export const DEVICE_REGISTRY: RegisteredDevice[] = [
   {
     key: 'bench',
     label: 'Bench Prototype Unit',
+    hostedLabel: 'Prototype01',
     deviceId: '318fab98-89ad-4f36-9100-3134a04e0be5',
     role: 'bench',
     description: 'Bench test unit. Do not use for real-world plant watering.',
@@ -27,6 +30,7 @@ export const DEVICE_REGISTRY: RegisteredDevice[] = [
   {
     key: 'scout01',
     label: 'Balcony Sensor Scout 01',
+    hostedLabel: 'Scout01',
     deviceId: '28f4e6e3-5979-4af4-9753-34e185d8e47e',
     role: 'sensor-scout',
     description: 'Temporary balcony sensor-only comparison unit.',

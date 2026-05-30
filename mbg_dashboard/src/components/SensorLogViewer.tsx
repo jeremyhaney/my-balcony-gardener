@@ -21,6 +21,7 @@ import type { SensorLogRow } from '../types/sensorLog'
 import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
 import DualAxisChart from './DualAxisChart'
 import HostedGen2Measurements from './HostedGen2Measurements'
+import HostedGen2TrendChart from './HostedGen2TrendChart'
 import SensorHealthPanel from './SensorHealthPanel'
 
 const isValidPercent = (value: number): boolean =>
@@ -32,6 +33,7 @@ const hasUsableTimestamp = (timestamp: string): boolean =>
   Number.isFinite(new Date(timestamp).getTime())
 
 const HISTORY_REFRESH_INTERVAL_MS = 10000
+const HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE = 8
 
 type SensorLogViewerProps = {
   isHostedReadonly?: boolean
@@ -64,7 +66,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
       const hostedGen2Request = isHostedReadonly
         ? fetchHostedGen2Measurements(selectedDevice.deviceId, {
             startTime: lowerBoundIso,
-            limit: Math.max(1000, selectedWindow.limit * 4),
+            limit: Math.max(1000, selectedWindow.limit * HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE),
           })
             .then((rows) => ({ rows, error: null }))
             .catch((error: unknown) => ({
@@ -171,6 +173,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
     )
 
   const telemetryHealth = isLoading ? null : calculateTelemetryHealth(logs, selectedWindow.key)
+  const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
 
   return (
     <div className="p-4">
@@ -195,7 +198,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
           >
             {HISTORY_DEVICE_OPTIONS.map((option) => (
               <option key={option.key} value={option.key}>
-                {option.label}
+                {isHostedReadonly ? option.hostedLabel : option.label}
               </option>
             ))}
           </select>
@@ -218,7 +221,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
       </div>
 
       <p className="mb-3 text-sm">
-        Showing history for {selectedDevice.label} ({selectedDevice.role}) for{' '}
+        Showing history for {selectedDeviceLabel} ({selectedDevice.role}) for{' '}
         {selectedWindow.label}. {selectedDevice.description}
       </p>
 
@@ -233,7 +236,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
       <DeviceDiagnosticsPanel
         diagnostics={diagnostics}
         error={diagnosticsError}
-        fallbackDeviceLabel={selectedDevice.label}
+        fallbackDeviceLabel={selectedDeviceLabel}
       />
 
       {isLoading ? (
@@ -247,12 +250,19 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
       )}
 
       {isHostedReadonly ? (
-        <HostedGen2Measurements
-          rows={hostedGen2Rows}
-          isLoading={isHostedGen2Loading}
-          error={hostedGen2Error}
-          fallbackDeviceLabel={selectedDevice.label}
-        />
+        <>
+          <HostedGen2TrendChart
+            rows={hostedGen2Rows}
+            isLoading={isHostedGen2Loading}
+            error={hostedGen2Error}
+          />
+          <HostedGen2Measurements
+            rows={hostedGen2Rows}
+            isLoading={isHostedGen2Loading}
+            error={hostedGen2Error}
+            fallbackDeviceLabel={selectedDeviceLabel}
+          />
+        </>
       ) : null}
     </div>
   )

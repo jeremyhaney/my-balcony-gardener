@@ -38,16 +38,18 @@
   opacity: 0.88;
 }
 
-.hosted-gen2-measurements-badge {
+.hosted-gen2-measurements-refresh {
   display: inline-flex;
   align-items: center;
-  min-height: 2rem;
-  padding: 0.25rem 0.7rem;
-  border: 1px solid rgba(191, 219, 254, 0.75);
+  justify-content: center;
+  min-width: 5.8rem;
+  min-height: 1.9rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid rgba(203, 213, 225, 0.6);
   border-radius: 999px;
-  background: rgba(30, 64, 175, 0.34);
-  font-size: 0.9rem;
-  font-weight: 700;
+  background: rgba(15, 23, 42, 0.22);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .hosted-gen2-measurements-note,
@@ -69,12 +71,11 @@
 
 .hosted-gen2-measurements-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 0.75rem;
 }
 
-.hosted-gen2-measurements-card,
-.hosted-gen2-measurements-raw {
+.hosted-gen2-measurements-card {
   padding: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 6px;
@@ -82,7 +83,74 @@
 }
 
 .hosted-gen2-measurements-card {
-  min-height: 190px;
+  min-height: 150px;
+  border-color: var(--measurement-status-border);
+  box-shadow:
+    inset 0 0 0 1px var(--measurement-status-inner-border),
+    0 12px 24px rgba(15, 23, 42, 0.18);
+  background:
+    linear-gradient(135deg, var(--measurement-status-background), var(--measurement-status-background-end));
+}
+
+.hosted-gen2-measurements-card.is-good {
+  --measurement-status-background: rgba(22, 163, 74, 0.52);
+  --measurement-status-background-end: rgba(21, 128, 61, 0.34);
+  --measurement-status-border: rgba(134, 239, 172, 0.92);
+  --measurement-status-inner-border: rgba(220, 252, 231, 0.32);
+  --measurement-status-pill-background: rgba(220, 252, 231, 0.95);
+  --measurement-status-pill-color: #14532d;
+}
+
+.hosted-gen2-measurements-card.is-watch {
+  --measurement-status-background: rgba(245, 158, 11, 0.54);
+  --measurement-status-background-end: rgba(180, 83, 9, 0.34);
+  --measurement-status-border: rgba(251, 191, 36, 0.95);
+  --measurement-status-inner-border: rgba(254, 249, 195, 0.36);
+  --measurement-status-pill-background: rgba(254, 249, 195, 0.96);
+  --measurement-status-pill-color: #713f12;
+}
+
+.hosted-gen2-measurements-card.is-check {
+  --measurement-status-background: rgba(239, 68, 68, 0.56);
+  --measurement-status-background-end: rgba(153, 27, 27, 0.38);
+  --measurement-status-border: rgba(252, 165, 165, 0.96);
+  --measurement-status-inner-border: rgba(254, 226, 226, 0.32);
+  --measurement-status-pill-background: rgba(254, 226, 226, 0.96);
+  --measurement-status-pill-color: #7f1d1d;
+}
+
+.hosted-gen2-measurements-card.is-neutral {
+  --measurement-status-background: rgba(100, 116, 139, 0.48);
+  --measurement-status-background-end: rgba(51, 65, 85, 0.34);
+  --measurement-status-border: rgba(203, 213, 225, 0.82);
+  --measurement-status-inner-border: rgba(226, 232, 240, 0.24);
+  --measurement-status-pill-background: rgba(226, 232, 240, 0.96);
+  --measurement-status-pill-color: #334155;
+}
+
+.hosted-gen2-measurements-card.is-diagnostic {
+  border-style: dashed;
+}
+
+.hosted-gen2-measurements-card-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.hosted-gen2-measurements-status-pill {
+  flex: 0 0 auto;
+  max-width: 58%;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: var(--measurement-status-pill-background);
+  color: var(--measurement-status-pill-color);
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .hosted-gen2-measurements-value {
@@ -90,15 +158,43 @@
   font-size: clamp(1.3rem, 2.2vw, 1.75rem);
   font-weight: 800;
   line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.hosted-gen2-measurements-status-reason {
+  margin-bottom: 0.45rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  opacity: 0.86;
+  overflow-wrap: anywhere;
 }
 
 .hosted-gen2-measurements-status {
   display: grid;
-  grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(96px, 0.7fr) minmax(0, 1.3fr);
   gap: 0.3rem 0.65rem;
-  margin: 0;
+  margin: 0.55rem 0 0;
   text-align: left;
   font-size: 0.86rem;
+}
+
+.hosted-gen2-measurements-details {
+  margin-top: 0.2rem;
+}
+
+.hosted-gen2-measurements-details summary {
+  width: fit-content;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.86rem;
+  font-weight: 700;
+  list-style-position: inside;
+}
+
+.hosted-gen2-measurements-details summary:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .hosted-gen2-measurements-status dt {
@@ -110,73 +206,27 @@
   overflow-wrap: anywhere;
 }
 
-.hosted-gen2-measurements-raw {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-.hosted-gen2-measurements-raw h3,
-.hosted-gen2-measurements-raw p {
-  margin-bottom: 0;
-}
-
-.hosted-gen2-measurements-meta {
-  max-width: 42rem;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.hosted-gen2-measurements-table-wrap {
-  margin-top: 0.9rem;
-  overflow-x: auto;
-}
-
-.hosted-gen2-measurements-table {
-  width: 100%;
-  min-width: 760px;
-  border-collapse: collapse;
-  overflow: hidden;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #111827;
-  font-size: 0.9rem;
-}
-
-.hosted-gen2-measurements-table caption {
-  padding: 0 0 0.55rem;
-  color: white;
-  font-weight: 700;
-  text-align: left;
-}
-
-.hosted-gen2-measurements-table th,
-.hosted-gen2-measurements-table td {
-  padding: 0.55rem 0.65rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
-  text-align: left;
-  vertical-align: top;
-}
-
-.hosted-gen2-measurements-table thead th {
-  background: #e0f2fe;
-  color: #0f172a;
-}
-
-.hosted-gen2-measurements-table tbody tr:last-child th,
-.hosted-gen2-measurements-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
 @media (max-width: 640px) {
   .hosted-gen2-measurements {
     padding: 0.85rem;
   }
 
+  .hosted-gen2-measurements-card {
+    min-height: 0;
+  }
+
+  .hosted-gen2-measurements-card-main {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .hosted-gen2-measurements-status-pill {
+    max-width: 100%;
+    width: fit-content;
+  }
+
   .hosted-gen2-measurements-status {
     grid-template-columns: 1fr;
   }
+
 }
