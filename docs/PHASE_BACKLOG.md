@@ -26,6 +26,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7B status: runtime validated / complete on `bench-proto-gen2`
 - Phase 7C status: runtime validated / complete; Live Measurements Local Frontend MVP
 - Phase 7D status: runtime validated / complete; Gen2 Measurement Batch Storage MVP
+- Phase 7E status: runtime validated / complete pending commit; Field Units Gen2 Compatibility Migration
+- Phase 7F status: NEXT; Hosted Gen2 Read-Only Measurements Display
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -52,20 +54,21 @@ It is a planning guide, not an implementation approval. Each item still requires
 17. Phase 6J.4 - Firmware Heartbeat Posting MVP - bench validated / complete
 18. Phase 6J.5 - Supabase Device Registry / Table-Driven Provisioned Device Allowlist - manually validated / complete
 19. Phase 6J.6 - Hosted Read-Only Diagnostics Display MVP - complete and merged to `main`
-20. Phase 7A — Gen2 Modular Sensor Architecture Lock
-21. Phase 7B — Gen2 Bench Platform Bring-Up
-22. Phase 7C — Live Measurements Local Frontend MVP
-23. Phase 7D — Gen2 Measurement Storage MVP
-24. Phase 7E — Gen2 Hosted Read-Only Measurements
-25. Phase 7F — Gen2 Calibration / Control Eligibility Evaluation
-26. Device Roles / Sensor-Only Telemetry Unit
+20. Phase 7A — Gen2 Modular Sensor Architecture Lock - complete
+21. Phase 7B — Gen2 Bench Platform Bring-Up - complete
+22. Phase 7C — Live Measurements Local Frontend MVP - complete
+23. Phase 7D — Gen2 Measurement Storage MVP - complete
+24. Phase 7E — Field Units Gen2 Compatibility Migration - runtime validated / complete pending commit
+25. Phase 7F — Hosted Gen2 Read-Only Measurements Display - NEXT
+26. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation
 27. Phase 6K — Sensor Calibration / Measurement-System Evaluation
 28. Sensor Fault Detection / Control-Quality Validation
-29. Future SenML-Inspired Measurement Model
-30. Device Settings / Provisioning
-31. Hardware Safety Maturity
+29. Device Roles / Sensor-Only Telemetry Unit Hardening
+30. Future SenML-Inspired Measurement Model
+31. Device Settings / Provisioning
+32. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Gen2 Hosted Read-Only Measurements, Phase 7F Gen2 Calibration / Control Eligibility Evaluation, Device Roles / Sensor-Only Telemetry Unit, Phase 6K Sensor Calibration / Measurement-System Evaluation, and Sensor Fault Detection / Control-Quality Validation remain future/deferred.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete pending commit. Phase 7F Hosted Gen2 Read-Only Measurements Display is next. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -622,9 +625,10 @@ Follow-up placeholders, requiring separate approval:
 - Phase 7B — Gen2 Bench Platform Bring-Up
 - Phase 7C — Live Measurements Local Frontend MVP
 - Phase 7D — Gen2 Measurement Storage MVP
-- Phase 7E — Gen2 Hosted Read-Only Measurements
-- Phase 7F — Gen2 Calibration / Control Eligibility Evaluation
-- Device Roles / Sensor-Only Telemetry Unit
+- Phase 7E — Field Units Gen2 Compatibility Migration
+- Phase 7F — Hosted Gen2 Read-Only Measurements Display
+- Phase 7G — Gen2 Calibration / Control Eligibility Evaluation
+- Device Roles / Sensor-Only Telemetry Unit Hardening
 - Phase 6K — Sensor Calibration / Measurement-System Evaluation
 
 Out of scope:
@@ -730,7 +734,7 @@ Scope:
 - Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
 - Registry-backed RLS uses `public.is_device_telemetry_insert_enabled(device_id)`.
 - Phase 7D adds no anon SELECT, UPDATE, or DELETE policies.
-- Hosted read-only measurement display remains deferred to Phase 7E.
+- Hosted read-only measurement display remains deferred to a future frontend phase.
 - JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
 - Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
 - `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
@@ -760,6 +764,58 @@ Out of scope:
 - Making any new sensor control watering.
 - JSONB/GIN indexing on `records`.
 - Unique physical sensor inventory / assignment tracking.
+
+## Phase 7E - Field Units Gen2 Compatibility Migration - RUNTIME VALIDATED / COMPLETE PENDING COMMIT
+
+Scope:
+
+- Added the installed field-controller Gen2 profile `balcony-installed-gen2` while preserving installed UUID `550e8400-e29b-41d4-a716-446655440000` and role `controller`.
+- Moved Balcony Sensor Scout 01 to Gen2 under `balcony-sensor-scout-01`, preserving UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e` and role `sensor-scout`.
+- Aligned Gen2-capable profiles to the standard Gen2 pin map: GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
+- Aligned `bench-proto-gen2` to the standard Gen2 pin map and made `bench-prototype` explicitly declare the relevant standard pins while keeping it non-Gen2.
+- Added Gen2 DHT11 support emitting `air_temperature` in `F` and `relative_humidity` in `%`.
+- Reused the Gen2 analog soil module emitting `moisture_index` and `raw_adc`.
+- Added capability-gated watering authority separate from `MBG_GEN2_ENABLED`.
+- Installed `Balcony01` remains watering-capable; Scout `Scout01` remains non-watering.
+- Added firmware/build provenance: `firmware_version`, `build_profile`, and compile-time `device_label`.
+- Added short display labels `Balcony01`, `Scout01`, and `Prototype01` for endpoint readability only. These are not user-editable names or database-driven nicknames.
+- Added `device_label`, `firmware_version`, and `build_profile` to local endpoint responses where applicable.
+- Gen2 batch posts now include top-level `firmware_version` and `build_profile`, plus `batch_details.phase = "7E"` and `batch_details.device_label`.
+- Installed/scout Gen2 retain `/logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1` to protect current local scripts/UI during migration.
+- `bench-proto-gen2` intentionally keeps `/logs` absent.
+- Hosted Gen2 read-only measurement display remains deferred to a future frontend phase.
+
+Validation:
+
+- Installed / `Balcony01` validated at `10.0.0.200` after upload with UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, build profile `balcony-installed-gen2`, and firmware version `phase7e-gen2-compat`.
+- Installed local endpoints `/`, `/status`, `/capabilities`, `/measurements`, and `/logs` validated.
+- Installed `/measurements` returns `air_temperature`, `relative_humidity`, `moisture_index`, and `raw_adc`.
+- Installed `moisture_index` is the only `control_eligible:true` measurement; DHT11 records and `raw_adc` are `control_eligible:false`.
+- Scout / `Scout01` validated at `10.0.0.180` after upload with UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and firmware version `phase7e-gen2-compat`.
+- Scout local endpoints `/`, `/status`, `/capabilities`, `/measurements`, and `/logs` validated.
+- Scout `/measurements` returns `air_temperature`, `relative_humidity`, `moisture_index`, and `raw_adc`.
+- All scout measurements are `control_eligible:false`.
+- Installed and scout `/logs` retained legacy nested `data` shape with added top-level identity fields.
+- A Gen2 installed-controller firmware batch posted successfully to `public.sensor_measurement_batches`, and the flat-view validation matched record counts.
+- `/water-now` was not called during final label/provenance validation.
+
+Known deferred wart:
+
+- Immediately after reboot, Gen2 DHT11 `/measurements` may show suspicious startup values around `32.72°F / 0%`.
+- Later `/measurements` samples and `/logs` are plausible.
+- DHT11 startup read qualification is deferred and is not a Phase 7E blocker because DHT11 records are not watering control inputs.
+
+Out of scope:
+
+- Frontend changes.
+- Hosted Gen2 read-only display.
+- Supabase SQL changes.
+- `SensorLogRow` changes.
+- `sensor_logs` changes.
+- Supabase command/control or Remote Water Now.
+- Watering duration, threshold, cooldown, moisture mapping, automatic watering semantics, or `/water-now` semantics changes.
+- Runtime provisioning, pump detection, diagnostic watering endpoints, or startup relay tests.
+- The currently running two-device watering-response capture; those CSV results support later calibration/control-quality work and are not Phase 7E closeout evidence.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 

@@ -11,6 +11,7 @@
 #include "config.h"
 #include "profile_overrides.h"
 #include "device_identity.h"
+#include "firmware_identity.h"
 
 #ifdef MBG_GEN2_ENABLED
 #include "gen2_measurements.h"
@@ -64,6 +65,8 @@ void maintainWiFiConnection();
 void setupTime();
 String getFormattedTime();
 bool readDhtWithFallback(float &temperatureF, float &humidity);
+void readSoilMoisture(float &moisture, int &soilRawAdc);
+bool maybeStartAutomaticWatering(float moisture);
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
 void sendDeviceHeartbeatToSupabase(String heartbeatReason);
 #ifdef MBG_GEN2_ENABLED
@@ -138,6 +141,34 @@ bool readDhtWithFallback(float &temperatureF, float &humidity) {
   Serial.println("⚠️ Failed to read DHT sensor and no cached values are available");
   return false;
 #endif
+}
+
+void readSoilMoisture(float &moisture, int &soilRawAdc) {
+  soilRawAdc = analogRead(SOIL_PIN);
+  moisture = map(soilRawAdc, 3680, 1230, 0, 100);
+  moisture = constrain(moisture, 0, 100);
+}
+
+bool maybeStartAutomaticWatering(float moisture) {
+  if (!MBG_PUMP_CONTROL_AVAILABLE || !MBG_DEVICE_CAN_WATER) {
+    return false;
+  }
+
+  unsigned long now = millis();
+
+  // Cooldown prevents repeated automatic cycles before soil/sensor readings stabilize.
+  if (!isWatering &&
+      moisture < MOISTURE_THRESHOLD &&
+      (lastWateringEndTime == 0 || now - lastWateringEndTime >= WATERING_COOLDOWN_MS)) {
+    digitalWrite(RELAY_PIN, HIGH);
+    isWatering = true;
+    wateringStartTime = millis();
+    lastWateredTime = getFormattedTime();
+    Serial.println("💧 Auto-watering triggered (low moisture)");
+    return true;
+  }
+
+  return false;
 }
 
 // Connect to Wi-Fi
@@ -424,14 +455,17 @@ void sendGen2MeasurementsToSupabase() {
   postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
   postData += "\"measured_at\":\"" + measuredAt + "\",";
   postData += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  postData += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
+  postData += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
   postData += "\"schema_version\":1,";
   postData += "\"record_count\":" + String(recordCount) + ",";
   postData += "\"records\":" + records + ",";
   postData += "\"source_endpoint\":\"/measurements\",";
   postData += "\"batch_details\":{";
-  postData += "\"phase\":\"7D\",";
+  postData += "\"phase\":\"7E\",";
   postData += "\"source\":\"firmware\",";
-  postData += "\"post_cadence_ms\":" + String(GEN2_MEASUREMENT_POST_INTERVAL_MS);
+  postData += "\"post_cadence_ms\":" + String(GEN2_MEASUREMENT_POST_INTERVAL_MS) + ",";
+  postData += "\"device_label\":\"" + String(DEVICE_LABEL) + "\"";
   postData += "}";
   postData += "}";
 
@@ -461,7 +495,7 @@ void sendGen2MeasurementsToSupabase() {
 
 // Root endpoint handler
 void handleRoot() {
-  server.send(200, "text/plain", "My Balcony Gardener ESP32 - Alive!");
+  server.send(200, "text/plain", String(DEVICE_LABEL) + " - My Balcony Gardener ESP32 - Alive!");
 }
 
 // Status endpoint handler - returns read-only device diagnostics without sensor reads
@@ -471,13 +505,19 @@ void handleStatus() {
   bool wifiConnected = WiFi.status() == WL_CONNECTED;
 
   String response = "{";
+  response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  response += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
+  response += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
   response += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
   response += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
   response += "\"wifi_rssi\":";
   response += wifiConnected ? String(WiFi.RSSI()) : "null";
   response += ",";
   response += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
+  response += "\"pump_control_available\":" + String(MBG_PUMP_CONTROL_AVAILABLE ? "true" : "false") + ",";
+  response += "\"device_can_water\":" + String(MBG_DEVICE_CAN_WATER ? "true" : "false") + ",";
   response += "\"lastWateredTime\":\"" + lastWateredTime + "\",";
   response += "\"lastWateringDuration\":" + String(lastWateringDuration) + ",";
   response += "\"hasLastGoodDht\":" + String(hasLastGoodDht ? "true" : "false") + ",";
@@ -541,13 +581,15 @@ void handleLogs() {
     return;
   }
 
-  int soilValue = analogRead(SOIL_PIN);
-  float moisture = map(soilValue, 3680, 1230, 0, 100);
-  moisture = constrain(moisture, 0, 100);
+  int soilValue = 0;
+  float moisture = 0;
+  readSoilMoisture(moisture, soilValue);
 
   // Use the same format as we send to Supabase for consistency
   String response = "{";
+  response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
   response += "\"timestamp\":\"" + getFormattedTime() + "\",";
   response += "\"data\":{";
   response += "\"temperature\":" + String(tempF, 1) + ",";
@@ -567,6 +609,11 @@ void handleLogs() {
 void handleWaterNow() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
 
+  if (!MBG_PUMP_CONTROL_AVAILABLE || !MBG_DEVICE_CAN_WATER) {
+    server.send(403, "text/plain", "Watering unavailable");
+    return;
+  }
+
   // Manual Water Now is intentionally not blocked by the automatic cooldown.
   if (!isWatering) {
     digitalWrite(RELAY_PIN, HIGH);
@@ -579,9 +626,9 @@ void handleWaterNow() {
     float humidity = 0;
     float tempF = 0;
     if (readDhtWithFallback(tempF, humidity)) {
-      int soilValue = analogRead(SOIL_PIN);
-      float moisture = map(soilValue, 3680, 1230, 0, 100);
-      moisture = constrain(moisture, 0, 100);
+      int soilValue = 0;
+      float moisture = 0;
+      readSoilMoisture(moisture, soilValue);
       sendDataToSupabase(tempF, humidity, moisture, soilValue, true);
     }
 #endif
@@ -602,8 +649,10 @@ void setup() {
 #ifdef MBG_GEN2_ENABLED
   gen2Begin();
 #endif
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
+  if (MBG_PUMP_CONTROL_AVAILABLE) {
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW);
+  }
 
   // Connect to network and setup time
   connectToWiFi();
@@ -611,7 +660,7 @@ void setup() {
 
   // Setup web server endpoints
   server.on("/", HTTP_GET, handleRoot);
-#ifndef MBG_GEN2_ENABLED
+#if !defined(MBG_GEN2_ENABLED) || MBG_GEN2_ENABLE_LEGACY_LOGS
   server.on("/logs", HTTP_GET, handleLogs);
 #endif
   server.on("/status", HTTP_GET, handleStatus);
@@ -644,9 +693,9 @@ void loop() {
       float humidity = 0;
       float tempF = 0;
       if (readDhtWithFallback(tempF, humidity)) {
-        int soilValue = analogRead(SOIL_PIN);
-        float moisture = map(soilValue, 3680, 1230, 0, 100);
-        moisture = constrain(moisture, 0, 100);
+        int soilValue = 0;
+        float moisture = 0;
+        readSoilMoisture(moisture, soilValue);
         sendDataToSupabase(tempF, humidity, moisture, soilValue, false);
       }
 #endif
@@ -665,9 +714,9 @@ void loop() {
     float tempF = 0;
 
     if (readDhtWithFallback(tempF, humidity)) {
-      int soilValue = analogRead(SOIL_PIN);
-      float moisture = map(soilValue, 3680, 1230, 0, 100);
-      moisture = constrain(moisture, 0, 100);
+      int soilValue = 0;
+      float moisture = 0;
+      readSoilMoisture(moisture, soilValue);
 
       // Send data to Supabase
       sendDataToSupabase(tempF, humidity, moisture, soilValue, isWatering);
@@ -675,22 +724,27 @@ void loop() {
       Serial.printf("📊 T: %.1f°F, H: %.1f%%, M: %.1f%%, Watering: %s\n",
                     tempF, humidity, moisture, isWatering ? "Yes" : "No");
 
-      // Cooldown prevents repeated automatic cycles before soil/sensor readings stabilize.
-      if (!isWatering &&
-          moisture < MOISTURE_THRESHOLD &&
-          (lastWateringEndTime == 0 || now - lastWateringEndTime >= WATERING_COOLDOWN_MS)) {
-        digitalWrite(RELAY_PIN, HIGH);
-        isWatering = true;
-        wateringStartTime = millis();
-        lastWateredTime = getFormattedTime();
+      if (MBG_PUMP_CONTROL_AVAILABLE && MBG_DEVICE_CAN_WATER) {
+        bool autoWateringStarted = maybeStartAutomaticWatering(moisture);
         // Phase 5D: log watering start immediately using this interval's readings.
-        sendDataToSupabase(tempF, humidity, moisture, soilValue, true);
-        Serial.println("💧 Auto-watering triggered (low moisture)");
+        if (autoWateringStarted) {
+          sendDataToSupabase(tempF, humidity, moisture, soilValue, true);
+        }
       }
     } else {
       Serial.println("⚠️ Skipping telemetry because DHT values are unavailable");
     }
 
+    lastLogTime = now;
+  }
+#endif
+
+#if defined(MBG_GEN2_ENABLED) && MBG_DEVICE_CAN_WATER && MBG_PUMP_CONTROL_AVAILABLE && MBG_HAS_SOIL_MOISTURE
+  if (now - lastLogTime >= LOG_INTERVAL_MS) {
+    int soilValue = 0;
+    float moisture = 0;
+    readSoilMoisture(moisture, soilValue);
+    maybeStartAutomaticWatering(moisture);
     lastLogTime = now;
   }
 #endif

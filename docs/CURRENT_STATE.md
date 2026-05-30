@@ -235,7 +235,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
 - Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
 - Registry-backed RLS uses `public.is_device_telemetry_insert_enabled(device_id)` for batch inserts.
-- Phase 7D adds no anon SELECT, UPDATE, or DELETE policies; hosted read-only Gen2 measurement display remains deferred to Phase 7E.
+- Phase 7D adds no anon SELECT, UPDATE, or DELETE policies; hosted read-only Gen2 measurement display remains deferred to a future frontend phase.
 - JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
 - Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
 - `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
@@ -248,6 +248,23 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Serial showed an unexpected external `Manual watering triggered` event during Phase 7D validation, likely from an open local UI or other local client still targeting the bench; no pump is attached to the bench, and this is not a Phase 7D blocker.
 - Phase 7D introduced no Supabase command/control or Remote Water Now, no new sensor controls watering, and `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, and control eligibility behavior remain unchanged.
 - The protected untracked CSV `field_readings/phase6k1_b3e1_vs_b6e2_60s_watering_response_20260521_180127.csv` remains untouched.
+- Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete pending commit.
+- Standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
+- Installed Balcony Unit Gen2 now runs profile `balcony-installed-gen2` with UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, label `Balcony01`, and firmware version `phase7e-gen2-compat`.
+- Balcony Sensor Scout 01 now runs Gen2 profile `balcony-sensor-scout-01` with UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, label `Scout01`, and firmware version `phase7e-gen2-compat`.
+- Bench Prototype Unit remains the prototype/reference hardware with UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and label `Prototype01`; bench Gen2 has richer BME280, DS18B20, VEML6030, and analog soil modules, but it was not re-uploaded during final field-unit validation.
+- Phase 7E added Gen2 DHT11 records for `air_temperature` and `relative_humidity`, plus analog soil `moisture_index` and `raw_adc` records for installed/scout field units.
+- Field-unit local endpoints `/`, `/status`, `/capabilities`, `/measurements`, and `/logs` were validated after label/provenance upload.
+- `/status`, `/capabilities`, and `/measurements` expose `device_label`, `firmware_version`, and `build_profile`; `/logs` has added top-level identity fields while preserving the existing nested `data` shape.
+- Installed/scout Gen2 retain `/logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`; `bench-proto-gen2` intentionally keeps `/logs` absent.
+- Gen2 measurement batch posts include top-level `firmware_version` and `build_profile`; `batch_details.phase` is `7E`, and `batch_details.device_label` identifies `Balcony01`, `Scout01`, or `Prototype01`.
+- Installed `Balcony01` is watering-capable with `pump_control_available:true` and `device_can_water:true`; `moisture_index` is the only `control_eligible:true` installed Gen2 measurement.
+- Scout `Scout01` is non-watering with `pump_control_available:false` and `device_can_water:false`; all scout Gen2 measurements are `control_eligible:false`.
+- DHT11 `air_temperature`, DHT11 `relative_humidity`, and analog `raw_adc` remain display/diagnostic only and are not watering control inputs.
+- Supabase remains telemetry/history/diagnostics storage only; Phase 7E adds no Supabase command/control, no Remote Water Now, no SQL changes, no `SensorLogRow` changes, and no `sensor_logs` changes.
+- `/water-now` remains local-only and capability-gated, and it was not called during final Phase 7E label/provenance validation.
+- Known deferred wart: first Gen2 DHT11 startup reads may show suspicious values around `32.72°F / 0%`; later `/measurements` reads and `/logs` are plausible, and this is not a watering-control blocker because DHT11 records are `control_eligible:false`.
+- A two-device field capture for future watering-response analysis is running outside Phase 7E closeout; no capture CSV data is included in this documentation pass.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -275,6 +292,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 ## Deferred Items
 
 - Responsive hosted dashboard polish
+- Hosted read-only Gen2 measurement display from `sensor_measurement_batches` / `sensor_measurements_flat`
 - Advanced sensor health / fault detection, including control-quality validation before automatic watering uses suspicious readings
 - Sensor Calibration / Measurement-System Evaluation
 - Repeated-reading validation

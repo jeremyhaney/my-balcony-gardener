@@ -29,6 +29,7 @@ String soilMeasurementJson(
   int rawAdc,
   float value
 ) {
+  bool controlEligible = name == "moisture_index" && MBG_DEVICE_CAN_WATER && MBG_PUMP_CONTROL_AVAILABLE;
   String response = "{";
   response += "\"device_id\":\"" + deviceId + "\",";
   response += "\"measured_at\":\"" + measuredAt + "\",";
@@ -42,7 +43,7 @@ String soilMeasurementJson(
   response += "\"valid\":true,";
   response += "\"quality\":\"diagnostic\",";
   response += "\"reason\":\"uncalibrated_legacy_mapping\",";
-  response += "\"control_eligible\":false,";
+  response += "\"control_eligible\":" + String(controlEligible ? "true" : "false") + ",";
   response += "\"details\":" + soilDetailsJson(rawAdc);
   response += "}";
   return response;
@@ -59,7 +60,7 @@ String gen2SoilMoistureCapabilityJson() {
   response += "\"present\":true,";
   response += "\"quality\":\"diagnostic\",";
   response += "\"reason\":\"uncalibrated_legacy_mapping\",";
-  response += "\"control_eligible\":false,";
+  response += "\"control_eligible\":" + String((MBG_DEVICE_CAN_WATER && MBG_PUMP_CONTROL_AVAILABLE) ? "true" : "false") + ",";
   response += "\"details\":" + soilDetailsJson(-1);
   response += "}";
   return response;

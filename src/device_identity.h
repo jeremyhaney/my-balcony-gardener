@@ -16,6 +16,10 @@
 #define MBG_DEVICE_ROLE "controller"
 #endif
 
+#ifndef MBG_DEVICE_LABEL
+#define MBG_DEVICE_LABEL "Unknown MBG Device"
+#endif
+
 #ifdef DEVICE_ID
 #undef DEVICE_ID
 #endif
@@ -27,3 +31,9 @@
 #endif
 
 #define DEVICE_ROLE MBG_DEVICE_ROLE
+
+#ifdef DEVICE_LABEL
+#undef DEVICE_LABEL
+#endif
+
+#define DEVICE_LABEL MBG_DEVICE_LABEL
