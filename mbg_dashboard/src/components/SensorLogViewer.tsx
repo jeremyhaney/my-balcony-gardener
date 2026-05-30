@@ -1,5 +1,10 @@
 import { type ChangeEvent, useEffect, useState } from 'react'
-import { fetchDeviceDiagnostics, fetchHistoryLogs, type DeviceDiagnostics } from '../api'
+import {
+  fetchDeviceDiagnostics,
+  fetchHistoryLogs,
+  fetchHostedGen2Measurements,
+  type DeviceDiagnostics,
+} from '../api'
 import {
   getHistoryControlStateFromUrl,
   getHistoryDeviceOption,
@@ -11,9 +16,11 @@ import {
   updateHistoryControlUrl,
 } from '../historyControls'
 import { calculateTelemetryHealth } from '../telemetryHealth'
+import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import type { SensorLogRow } from '../types/sensorLog'
 import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
 import DualAxisChart from './DualAxisChart'
+import HostedGen2Measurements from './HostedGen2Measurements'
 import SensorHealthPanel from './SensorHealthPanel'
 
 const isValidPercent = (value: number): boolean =>
@@ -26,11 +33,21 @@ const hasUsableTimestamp = (timestamp: string): boolean =>
 
 const HISTORY_REFRESH_INTERVAL_MS = 10000
 
-const SensorLogViewer = () => {
+type SensorLogViewerProps = {
+  isHostedReadonly?: boolean
+}
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : 'Unknown error'
+
+const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => {
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [diagnostics, setDiagnostics] = useState<DeviceDiagnostics | null>(null)
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null)
+  const [hostedGen2Rows, setHostedGen2Rows] = useState<HostedGen2MeasurementRow[]>([])
+  const [hostedGen2Error, setHostedGen2Error] = useState<string | null>(null)
+  const [isHostedGen2Loading, setIsHostedGen2Loading] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
     () => getHistoryControlStateFromUrl().device,
@@ -44,13 +61,30 @@ const SensorLogViewer = () => {
 
     const loadHistory = async () => {
       const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
-      const [historyResult, diagnosticsResult] = await Promise.all([
+      const hostedGen2Request = isHostedReadonly
+        ? fetchHostedGen2Measurements(selectedDevice.deviceId, {
+            startTime: lowerBoundIso,
+            limit: Math.max(1000, selectedWindow.limit * 4),
+          })
+            .then((rows) => ({ rows, error: null }))
+            .catch((error: unknown) => ({
+              rows: [] as HostedGen2MeasurementRow[],
+              error: `Supabase Gen2 measurements are currently unavailable: ${getErrorMessage(error)}`,
+            }))
+        : Promise.resolve({ rows: [] as HostedGen2MeasurementRow[], error: null })
+
+      if (isHostedReadonly) {
+        setIsHostedGen2Loading(true)
+      }
+
+      const [historyResult, diagnosticsResult, hostedGen2Result] = await Promise.all([
         fetchHistoryLogs(
           selectedWindow.limit,
           selectedDevice.deviceId,
           lowerBoundIso,
         ),
         fetchDeviceDiagnostics(selectedDevice.deviceId),
+        hostedGen2Request,
       ])
 
       if (!isMounted) {
@@ -61,6 +95,9 @@ const SensorLogViewer = () => {
       setHistoryError(historyResult.error)
       setDiagnostics(diagnosticsResult.diagnostics)
       setDiagnosticsError(diagnosticsResult.error)
+      setHostedGen2Rows(hostedGen2Result.rows)
+      setHostedGen2Error(hostedGen2Result.error)
+      setIsHostedGen2Loading(false)
       setIsLoading(false)
     }
 
@@ -74,7 +111,7 @@ const SensorLogViewer = () => {
       isMounted = false
       window.clearInterval(refreshTimer)
     }
-  }, [selectedDevice, selectedWindow])
+  }, [isHostedReadonly, selectedDevice, selectedWindow])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -208,6 +245,15 @@ const SensorLogViewer = () => {
       ) : (
         <DualAxisChart sensorLogs={chartLogs} historyWindowKey={selectedWindow.key} />
       )}
+
+      {isHostedReadonly ? (
+        <HostedGen2Measurements
+          rows={hostedGen2Rows}
+          isLoading={isHostedGen2Loading}
+          error={hostedGen2Error}
+          fallbackDeviceLabel={selectedDevice.label}
+        />
+      ) : null}
     </div>
   )
 }

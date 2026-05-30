@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase } from './supabaseClient'
 import type { SensorData, SensorLogRow } from './types/sensorLog'
+import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
 import { getConfiguredDeviceId } from './historyControls'
 
 type HistoryFetchResult = {
@@ -36,6 +37,8 @@ type SupabaseSensorLogRow = {
   timestamp?: string | null
   data?: Partial<SensorData> | null
 }
+
+const DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT = 1000
 
 const DEFAULT_SENSOR_DATA: SensorData = {
   temperature: 0,
@@ -160,4 +163,44 @@ export async function fetchDeviceDiagnostics(
       error: 'Supabase diagnostics are currently unavailable.',
     }
   }
+}
+
+export async function fetchHostedGen2Measurements(
+  deviceId: string,
+  options: {
+    startTime?: string
+    limit?: number
+  } = {},
+): Promise<HostedGen2MeasurementRow[]> {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase Gen2 measurements are not configured.')
+  }
+
+  const effectiveDeviceId = deviceId.trim() || getConfiguredDeviceId()
+  const limit = Math.max(1, options.limit ?? DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT)
+
+  let query = supabase
+    .from('hosted_gen2_measurements')
+    .select(
+      'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at',
+    )
+    .order('measured_at', { ascending: false })
+    .order('record_index', { ascending: true })
+    .limit(limit)
+
+  if (effectiveDeviceId) {
+    query = query.eq('device_id', effectiveDeviceId)
+  }
+
+  if (options.startTime) {
+    query = query.gte('measured_at', options.startTime)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []) as HostedGen2MeasurementRow[]
 }

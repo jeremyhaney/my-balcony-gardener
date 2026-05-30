@@ -248,7 +248,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Serial showed an unexpected external `Manual watering triggered` event during Phase 7D validation, likely from an open local UI or other local client still targeting the bench; no pump is attached to the bench, and this is not a Phase 7D blocker.
 - Phase 7D introduced no Supabase command/control or Remote Water Now, no new sensor controls watering, and `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, and control eligibility behavior remain unchanged.
 - The protected untracked CSV `field_readings/phase6k1_b3e1_vs_b6e2_60s_watering_response_20260521_180127.csv` remains untouched.
-- Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete pending commit.
+- Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main.
 - Standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
 - Installed Balcony Unit Gen2 now runs profile `balcony-installed-gen2` with UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, label `Balcony01`, and firmware version `phase7e-gen2-compat`.
 - Balcony Sensor Scout 01 now runs Gen2 profile `balcony-sensor-scout-01` with UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, label `Scout01`, and firmware version `phase7e-gen2-compat`.
@@ -265,6 +265,19 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `/water-now` remains local-only and capability-gated, and it was not called during final Phase 7E label/provenance validation.
 - Known deferred wart: first Gen2 DHT11 startup reads may show suspicious values around `32.72°F / 0%`; later `/measurements` reads and `/logs` are plausible, and this is not a watering-control blocker because DHT11 records are `control_eligible:false`.
 - A two-device field capture for future watering-response analysis is running outside Phase 7E closeout; no capture CSV data is included in this documentation pass.
+- Phase 7F Hosted Gen2 Read-Only Measurements Display is runtime/browser validated / complete pending commit.
+- Phase 7F adds SQL artifact `docs/sql/phase7f-hosted-gen2-measurements-view.sql` for limited hosted read-only view `public.hosted_gen2_measurements`.
+- Supabase manual validation confirmed `public.hosted_gen2_measurements` returns Gen2 rows for `Balcony01` and `Scout01`.
+- Phase 7F anon privilege validation returned `true, false, false, false`: anon can select `public.hosted_gen2_measurements`, and anon cannot select `public.sensor_measurement_batches`, `public.sensor_measurements_flat`, or `public.device_registry`.
+- Hosted read-only dashboard now renders hosted-only `Gen2 Measurements` from `public.hosted_gen2_measurements`.
+- Hosted Gen2 display shows latest cards for Air Temperature, Relative Humidity, and Moisture Index; Raw ADC is shown separately as diagnostic evidence; recent grouped Gen2 samples are shown in a table.
+- Browser validation confirmed hosted/read-only mode is visible, `LiveStats`, Water Now, and local ESP32 control UI are hidden, existing Gen1 Sensor History still renders, and Device/Window selectors still work.
+- Browser validation confirmed Gen2 Measurements renders for `Balcony01`, `Scout01`, and Bench Prototype Unit when selected.
+- Browser validation confirmed `Balcony01` moisture index shows control eligibility as local firmware evidence only, and `Scout01` shows control eligibility false as local firmware evidence only.
+- Hosted-readonly network guardrail validation observed Supabase REST requests to `hosted_gen2_measurements` and no `/logs`, `/water-now`, or local ESP32 IP calls.
+- Connectivity concern from earlier local preview testing was resolved: `Test-NetConnection nkicadvdjpcjhkoluvwf.supabase.co -Port 443` returned `TcpTestSucceeded: True`, DNS resolved to Supabase/Cloudflare IPs, and `curl.exe -I https://nkicadvdjpcjhkoluvwf.supabase.co` returned an HTTP response.
+- Phase 7F validation passed `npm.cmd run lint`, hosted-readonly build, hosted forbidden bundle scan, and approved hosted view string scan for `hosted_gen2_measurements`.
+- Phase 7F adds no firmware changes, no `SensorLogRow` changes, no `sensor_logs` changes, no `DualAxisChart` changes, no Supabase command/control, no Remote Water Now, and no watering behavior changes.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -292,7 +305,6 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 ## Deferred Items
 
 - Responsive hosted dashboard polish
-- Hosted read-only Gen2 measurement display from `sensor_measurement_batches` / `sensor_measurements_flat`
 - Advanced sensor health / fault detection, including control-quality validation before automatic watering uses suspicious readings
 - Sensor Calibration / Measurement-System Evaluation
 - Repeated-reading validation

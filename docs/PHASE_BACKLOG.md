@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: `main`, after Phase 7D Gen2 Measurement Batch Storage MVP commit and push (`4a46448 Add Phase 7D Gen2 measurement batch storage`)
+- Current repo context: `phase7f-hosted-gen2-measurements-display`, after Phase 7F Hosted Gen2 Read-Only Measurements Display implementation and validation
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -26,8 +26,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7B status: runtime validated / complete on `bench-proto-gen2`
 - Phase 7C status: runtime validated / complete; Live Measurements Local Frontend MVP
 - Phase 7D status: runtime validated / complete; Gen2 Measurement Batch Storage MVP
-- Phase 7E status: runtime validated / complete pending commit; Field Units Gen2 Compatibility Migration
-- Phase 7F status: NEXT; Hosted Gen2 Read-Only Measurements Display
+- Phase 7E status: runtime validated / complete and merged to main; Field Units Gen2 Compatibility Migration
+- Phase 7F status: runtime/browser validated / complete pending commit; Hosted Gen2 Read-Only Measurements Display
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -58,9 +58,9 @@ It is a planning guide, not an implementation approval. Each item still requires
 21. Phase 7B — Gen2 Bench Platform Bring-Up - complete
 22. Phase 7C — Live Measurements Local Frontend MVP - complete
 23. Phase 7D — Gen2 Measurement Storage MVP - complete
-24. Phase 7E — Field Units Gen2 Compatibility Migration - runtime validated / complete pending commit
-25. Phase 7F — Hosted Gen2 Read-Only Measurements Display - NEXT
-26. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation
+24. Phase 7E — Field Units Gen2 Compatibility Migration - runtime validated / complete and merged to main
+25. Phase 7F — Hosted Gen2 Read-Only Measurements Display - runtime/browser validated / complete pending commit
+26. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation - next/future
 27. Phase 6K — Sensor Calibration / Measurement-System Evaluation
 28. Sensor Fault Detection / Control-Quality Validation
 29. Device Roles / Sensor-Only Telemetry Unit Hardening
@@ -68,7 +68,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 31. Device Settings / Provisioning
 32. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete pending commit. Phase 7F Hosted Gen2 Read-Only Measurements Display is next. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F Hosted Gen2 Read-Only Measurements Display is runtime/browser validated / complete pending commit. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -816,6 +816,50 @@ Out of scope:
 - Watering duration, threshold, cooldown, moisture mapping, automatic watering semantics, or `/water-now` semantics changes.
 - Runtime provisioning, pump detection, diagnostic watering endpoints, or startup relay tests.
 - The currently running two-device watering-response capture; those CSV results support later calibration/control-quality work and are not Phase 7E closeout evidence.
+
+## Phase 7F - Hosted Gen2 Read-Only Measurements Display - RUNTIME/BROWSER VALIDATED / COMPLETE PENDING COMMIT
+
+Scope:
+
+- Added SQL artifact `docs/sql/phase7f-hosted-gen2-measurements-view.sql`.
+- Added limited hosted read-only view `public.hosted_gen2_measurements`.
+- Kept hosted Gen2 display on the approved Supabase read path only.
+- Kept anon SELECT unavailable on `public.sensor_measurement_batches`, `public.sensor_measurements_flat`, and `public.device_registry`.
+- Added hosted-only frontend `HostedGen2Measurements`.
+- Displayed latest cards for Air Temperature, Relative Humidity, and Moisture Index.
+- Displayed Raw ADC separately as diagnostic evidence, not as a calibrated moisture value.
+- Displayed recent grouped Gen2 samples in a table.
+- Preserved existing Gen1 Sensor History behavior and `DualAxisChart`.
+
+Validation:
+
+- Supabase manual validation confirmed `public.hosted_gen2_measurements` exists and returns Gen2 rows for `Balcony01` and `Scout01`.
+- Anon privilege validation returned `true, false, false, false`: anon can select `public.hosted_gen2_measurements`, and anon cannot select `public.sensor_measurement_batches`, `public.sensor_measurements_flat`, or `public.device_registry`.
+- Browser validation confirmed hosted/read-only mode is visible.
+- Browser validation confirmed `LiveStats`, Water Now, and local ESP32 control UI are not visible.
+- Browser validation confirmed existing Gen1 Sensor History still renders.
+- Browser validation confirmed Device and Window selectors still work.
+- Browser validation confirmed `Gen2 Measurements` renders for `Balcony01`, `Scout01`, and Bench Prototype Unit when selected.
+- Browser validation confirmed `Balcony01` moisture index shows control eligibility as local firmware evidence only.
+- Browser validation confirmed `Scout01` shows control eligibility false as local firmware evidence only.
+- Network guardrail validation observed Supabase REST requests to `hosted_gen2_measurements`.
+- Network guardrail validation observed no `/logs`, `/water-now`, or local ESP32 IP calls in hosted-readonly mode.
+- Connectivity concern from earlier local preview testing was resolved with successful DNS, TCP 443, and HTTP checks against `nkicadvdjpcjhkoluvwf.supabase.co`.
+- `npm.cmd run lint` passed.
+- Hosted-readonly build passed.
+- Hosted forbidden bundle scan returned no matches.
+- Approved hosted view string `hosted_gen2_measurements` appeared in the hosted bundle as expected.
+
+Out of scope:
+
+- Firmware changes.
+- `SensorLogRow` changes.
+- `sensor_logs` changes.
+- `DualAxisChart` changes.
+- Gen2 calibration or plant-health interpretation.
+- Treating Raw ADC as calibrated moisture.
+- Supabase command/control or Remote Water Now.
+- Watering duration, threshold, cooldown, moisture mapping, automatic watering logic, `/water-now`, or local pump/control behavior changes.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 

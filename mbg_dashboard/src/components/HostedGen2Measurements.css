@@ -1,0 +1,182 @@
+.hosted-gen2-measurements {
+  margin: 1.5rem 0 0;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.18);
+  color: white;
+}
+
+.hosted-gen2-measurements-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hosted-gen2-measurements h2,
+.hosted-gen2-measurements h3,
+.hosted-gen2-measurements p {
+  margin-top: 0;
+}
+
+.hosted-gen2-measurements h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.35rem;
+}
+
+.hosted-gen2-measurements h3 {
+  margin-bottom: 0.45rem;
+  font-size: 1rem;
+}
+
+.hosted-gen2-measurements-updated {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  opacity: 0.88;
+}
+
+.hosted-gen2-measurements-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid rgba(191, 219, 254, 0.75);
+  border-radius: 999px;
+  background: rgba(30, 64, 175, 0.34);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.hosted-gen2-measurements-note,
+.hosted-gen2-measurements-error {
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.hosted-gen2-measurements-note {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.hosted-gen2-measurements-error {
+  border: 1px solid rgba(220, 38, 38, 0.65);
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+.hosted-gen2-measurements-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.hosted-gen2-measurements-card,
+.hosted-gen2-measurements-raw {
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.hosted-gen2-measurements-card {
+  min-height: 190px;
+}
+
+.hosted-gen2-measurements-value {
+  margin-bottom: 0.7rem;
+  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hosted-gen2-measurements-status {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.3rem 0.65rem;
+  margin: 0;
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.hosted-gen2-measurements-status dt {
+  opacity: 0.82;
+}
+
+.hosted-gen2-measurements-status dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.hosted-gen2-measurements-raw {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.hosted-gen2-measurements-raw h3,
+.hosted-gen2-measurements-raw p {
+  margin-bottom: 0;
+}
+
+.hosted-gen2-measurements-meta {
+  max-width: 42rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.hosted-gen2-measurements-table-wrap {
+  margin-top: 0.9rem;
+  overflow-x: auto;
+}
+
+.hosted-gen2-measurements-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.hosted-gen2-measurements-table caption {
+  padding: 0 0 0.55rem;
+  color: white;
+  font-weight: 700;
+  text-align: left;
+}
+
+.hosted-gen2-measurements-table th,
+.hosted-gen2-measurements-table td {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+  text-align: left;
+  vertical-align: top;
+}
+
+.hosted-gen2-measurements-table thead th {
+  background: #e0f2fe;
+  color: #0f172a;
+}
+
+.hosted-gen2-measurements-table tbody tr:last-child th,
+.hosted-gen2-measurements-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .hosted-gen2-measurements {
+    padding: 0.85rem;
+  }
+
+  .hosted-gen2-measurements-status {
+    grid-template-columns: 1fr;
+  }
+}

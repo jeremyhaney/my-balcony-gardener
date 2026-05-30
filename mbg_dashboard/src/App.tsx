@@ -69,7 +69,7 @@ function App() {
       )}
 
       {/* Sensor Logs Component */}
-      <SensorLogViewer />
+      <SensorLogViewer isHostedReadonly={isHostedReadonlyMode} />
 
       {/* Footer Section */}
       <footer
