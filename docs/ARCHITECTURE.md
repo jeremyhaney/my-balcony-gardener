@@ -70,7 +70,7 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 - Hosted Read-Only Mode is a Cloudflare Pages static frontend mode controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted Read-Only Mode renders Supabase `sensor_logs` history, read-only Device Status / telemetry-quality information, and Phase 7F hosted Gen2 measurement display through `public.hosted_gen2_measurements`; it supports read-only Device and Window selectors and keeps `VITE_MBG_DEVICE_ID` as the fallback/default device behavior.
 - Hosted Read-Only Mode filters Supabase history server-side by selected `device_id` and by selected timestamp lower bound except for all-time.
-- Device Status is computed in the frontend from already-fetched `sensor_logs` rows for the selected device/window.
+- Hosted Gen2 Device Status is computed in the frontend from already-fetched `public.hosted_gen2_measurements` rows for the selected device/window. The legacy `sensor_logs` / `SensorLogRow` status assumptions remain available for Gen1/local/history compatibility but are not the hosted Gen2 Device Status source.
 - Device Status must remain read-only and must not introduce Supabase command/control or local ESP32 endpoint calls.
 - Supabase `data.watering` may be shown only as watering history markers, not as live currently-watering status.
 - Hosted Read-Only Mode must not render `LiveStats`, show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
@@ -153,6 +153,7 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - `public.hosted_gen2_measurements` joins active, hosted-visible registry rows to flattened Gen2 measurements and exposes only hosted-safe display columns.
 - Hosted Gen2 display reads `public.hosted_gen2_measurements` only; it does not grant anon SELECT on `public.sensor_measurement_batches`, `public.sensor_measurements_flat`, or `public.device_registry`.
 - Hosted Gen2 display shows measurement history evidence only. It does not calibrate measurements, treat Raw ADC as calibrated moisture, control watering, call local ESP32 endpoints, or introduce Supabase command/control.
+- Hosted Gen2 Device Status freshness and measurement-quality warnings use already-fetched hosted Gen2 rows, unique `measured_at` report samples, and Gen2 metadata such as `valid`, `quality`, `reason`, and displayability. They do not diagnose plant health, diagnose sensor root cause, use `control_eligible` as command/control, or require every optional Gen2 sensor to be present.
 - JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
 - Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
 - `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.

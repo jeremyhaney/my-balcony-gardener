@@ -6,6 +6,10 @@
   color: var(--device-diagnostics-color);
 }
 
+.device-diagnostics-panel[open] {
+  width: min(360px, 100%);
+}
+
 .device-diagnostics-summary {
   display: flex;
   flex-direction: column;
@@ -55,12 +59,13 @@
 }
 
 .device-diagnostics-details {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
   box-sizing: border-box;
-  width: min(320px, calc(100vw - 2rem));
+  width: min(360px, calc(100vw - 2rem));
   max-width: 100%;
+  max-height: min(420px, 60vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin-top: 0.5rem;
   border: 1px solid var(--device-diagnostics-border);
   border-radius: 8px;
   background: var(--device-diagnostics-background);
@@ -105,9 +110,7 @@
   }
 
   .device-diagnostics-details {
-    position: static;
     width: 100%;
-    margin-top: 0.5rem;
   }
 }
 

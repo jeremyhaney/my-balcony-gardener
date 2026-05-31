@@ -72,8 +72,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
 - Hosted Supabase history queries filter server-side by selected `device_id`.
 - Hosted Supabase history queries filter by selected timestamp lower bound except for `all`, which does not apply a lower timestamp bound.
-- Device Status uses already-fetched Supabase `sensor_logs` rows for the selected device/window.
-- Device Status checks latest report age, row count, expected row count, coverage, largest gap, broad latest-reading plausibility, and watering history marker count.
+- Hosted Gen2 Device Status uses already-fetched rows from `public.hosted_gen2_measurements` for the selected device/window. Gen1/Sensor History `sensor_logs` status assumptions remain legacy/local compatibility behavior, not the hosted Gen2 status source.
+- Hosted Gen2 Device Status checks latest Gen2 report sample age, unique `measured_at` sample count, expected sample coverage, largest gap, Gen2 measurement metadata such as `valid`, `quality`, and `reason`, and whether the latest sample has displayable numeric measurements.
 - Device Status is informational only and does not perform calibration, plant diagnosis, fault diagnosis, alerts, or command/control.
 - Sensor History chart X-axis labels adapt by selected history window, and chart tooltips show full date/time.
 - Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
@@ -284,6 +284,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Connectivity concern from earlier local preview testing was resolved: `Test-NetConnection nkicadvdjpcjhkoluvwf.supabase.co -Port 443` returned `TcpTestSucceeded: True`, DNS resolved to Supabase/Cloudflare IPs, and `curl.exe -I https://nkicadvdjpcjhkoluvwf.supabase.co` returned an HTTP response.
 - Phase 7F.1 validation passed `npm.cmd run lint`, hosted-readonly build, hosted forbidden bundle scan, and approved hosted view string scan for `hosted_gen2_measurements`.
 - Phase 7F.1 adds no firmware changes, no SQL/RLS changes, no `SensorLogRow` changes, no `sensor_logs.data` expansion, no Gen2 values in `sensor_logs.data`, no `DualAxisChart` behavior changes, no Supabase command/control, no Remote Water Now, and no watering behavior changes.
+- Phase 7F.3 corrects hosted-readonly Device Status freshness so it uses the already-fetched `hostedGen2Rows` from `public.hosted_gen2_measurements` instead of Gen1 `sensor_logs` rows.
+- Phase 7F.3 adds Gen2 measurement-quality warnings based on Gen2 metadata and displayability; it does not diagnose plant health, diagnose sensor root cause, treat Raw ADC as calibrated moisture, or use `control_eligible` as command/control.
+- Phase 7F.3 adds no firmware changes, no SQL/RLS changes, no `SensorLogRow` changes, no `DualAxisChart` changes, no Supabase command/control, and no Remote Water Now.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.

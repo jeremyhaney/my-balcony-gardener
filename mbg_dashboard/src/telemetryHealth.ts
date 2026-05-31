@@ -1,7 +1,16 @@
 import type { HistoryWindowKey } from './historyControls'
 import type { SensorLogRow } from './types/sensorLog'
+import {
+  buildDeviceStatusHealth,
+  COVERAGE_WARNING_THRESHOLD_PERCENT,
+  FRESHNESS_THRESHOLD_MS,
+  getExpectedRowsForWindow,
+  getLargestGapMsFromTimestamps,
+  type DeviceStatusHealth,
+  type DeviceStatusHealthStatus,
+} from './deviceStatusHealth'
 
-export type TelemetryHealthStatus = 'healthy' | 'warning' | 'no-recent-data' | 'no-data'
+export type TelemetryHealthStatus = DeviceStatusHealthStatus
 
 export type LatestTelemetryReadings = {
   temperature: number | null
@@ -9,41 +18,7 @@ export type LatestTelemetryReadings = {
   moisture: number | null
 }
 
-export type TelemetryHealth = {
-  status: TelemetryHealthStatus
-  statusLabel: string
-  rowsInWindow: number
-  validTimestampRows: number
-  expectedRows: number | null
-  coveragePercent: number | null
-  latestTimestamp: string | null
-  latestAgeMs: number | null
-  largestGapMs: number | null
-  latestReadings: LatestTelemetryReadings | null
-  wateringMarkersInHistory: number
-  notes: string[]
-}
-
-const NORMAL_CADENCE_MINUTES = 15
-const FRESHNESS_THRESHOLD_MS = 45 * 60 * 1000
-const COVERAGE_WARNING_THRESHOLD_PERCENT = 70
-const EXPECTED_ROWS_PER_DAY = (24 * 60) / NORMAL_CADENCE_MINUTES
-
-const EXPECTED_ROWS_BY_WINDOW: Partial<Record<HistoryWindowKey, number>> = {
-  '24h': EXPECTED_ROWS_PER_DAY,
-  '7d': 7 * EXPECTED_ROWS_PER_DAY,
-  '1m': 30 * EXPECTED_ROWS_PER_DAY,
-  '3m': 90 * EXPECTED_ROWS_PER_DAY,
-  '6m': 180 * EXPECTED_ROWS_PER_DAY,
-  '1y': 365 * EXPECTED_ROWS_PER_DAY,
-}
-
-const STATUS_LABELS: Record<TelemetryHealthStatus, string> = {
-  healthy: 'Device Status',
-  warning: 'Device Status',
-  'no-recent-data': 'Device Status',
-  'no-data': 'Device Status',
-}
+export type TelemetryHealth = DeviceStatusHealth<LatestTelemetryReadings>
 
 type TimestampedRow = {
   row: SensorLogRow
@@ -56,7 +31,7 @@ export const calculateTelemetryHealth = (
   now: Date = new Date(),
 ): TelemetryHealth => {
   const rowsInWindow = rows.length
-  const expectedRows = EXPECTED_ROWS_BY_WINDOW[historyWindowKey] ?? null
+  const expectedRows = getExpectedRowsForWindow(historyWindowKey)
   const wateringMarkersInHistory = rows.filter((row) => row.data.watering === true).length
 
   if (rowsInWindow === 0) {
@@ -105,7 +80,9 @@ export const calculateTelemetryHealth = (
 
   const latestRow = rowsWithValidTimestamps[rowsWithValidTimestamps.length - 1]
   const latestAgeMs = now.getTime() - latestRow.timestampMs
-  const largestGapMs = getLargestGapMs(rowsWithValidTimestamps)
+  const largestGapMs = getLargestGapMsFromTimestamps(
+    rowsWithValidTimestamps.map((row) => row.timestampMs),
+  )
   const latestReadings = getLatestReadings(latestRow.row)
   const hasImpossibleLatestReading = !areLatestReadingsPlausible(latestReadings)
   const notes: string[] = []
@@ -157,27 +134,8 @@ export const calculateTelemetryHealth = (
 }
 
 const buildHealth = (health: Omit<TelemetryHealth, 'statusLabel'>): TelemetryHealth => ({
-  ...health,
-  statusLabel: STATUS_LABELS[health.status],
+  ...buildDeviceStatusHealth(health),
 })
-
-const getLargestGapMs = (rowsWithValidTimestamps: TimestampedRow[]): number | null => {
-  if (rowsWithValidTimestamps.length < 2) {
-    return null
-  }
-
-  let largestGapMs = 0
-
-  for (let index = 1; index < rowsWithValidTimestamps.length; index += 1) {
-    const gapMs =
-      rowsWithValidTimestamps[index].timestampMs -
-      rowsWithValidTimestamps[index - 1].timestampMs
-
-    largestGapMs = Math.max(largestGapMs, gapMs)
-  }
-
-  return largestGapMs
-}
 
 const getLatestReadings = (row: SensorLogRow): LatestTelemetryReadings => ({
   temperature: Number.isFinite(row.data.temperature) ? row.data.temperature : null,
