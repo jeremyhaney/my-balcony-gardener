@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -22,6 +22,7 @@ type HostedGen2TrendChartProps = {
   rows: HostedGen2MeasurementRow[]
   isLoading: boolean
   error: string | null
+  controls?: ReactNode
 }
 
 type ChartPoint = {
@@ -95,6 +96,7 @@ const HostedGen2TrendChart = ({
   rows,
   isLoading,
   error,
+  controls,
 }: HostedGen2TrendChartProps) => {
   const numericRows = useMemo(
     () =>
@@ -150,7 +152,6 @@ const HostedGen2TrendChart = ({
   const leftAxisWidth = 52
   const hasUsableRows = rows.length > 0
   const isBlockingLoad = isLoading && !hasUsableRows
-  const isRefreshing = isLoading && hasUsableRows
 
   const handleToggleMeasurement = (measurementName: string) => {
     setSelectedMeasurementNames((currentNames) => {
@@ -164,15 +165,11 @@ const HostedGen2TrendChart = ({
 
   return (
     <section className="hosted-gen2-trend-chart" aria-label="Gen2 Trend Chart">
-      <div className="hosted-gen2-trend-chart-header">
-        <div>
-          <h2>Gen2 Trend</h2>
-          <p>{getSummaryText(selectedMeasurements, selectedAxisGroups)}</p>
+      {controls ? (
+        <div className="hosted-gen2-trend-chart-header">
+          {controls}
         </div>
-        <span className="hosted-gen2-trend-chart-refresh">
-          {isRefreshing ? 'Refreshing' : 'Live'}
-        </span>
-      </div>
+      ) : null}
 
       {error ? <p className="hosted-gen2-trend-chart-error">{error}</p> : null}
 
@@ -403,21 +400,6 @@ const compareAxisGroups = (
 
 const getAxisGroupOrder = (axisGroup: HostedGen2AxisGroup): number =>
   ['temperature', 'humidityMoisture', 'pressure', 'light', 'adc', 'unknown'].indexOf(axisGroup)
-
-const getSummaryText = (
-  selectedMeasurements: string[],
-  selectedAxisGroups: HostedGen2AxisGroup[],
-): string => {
-  if (selectedMeasurements.length === 0) {
-    return 'Select measurements to overlay for the current history window.'
-  }
-
-  const axisLabels = selectedAxisGroups
-    .map((axisGroup) => AXIS_CONFIGS[axisGroup].label)
-    .join(' / ')
-
-  return `${selectedMeasurements.length} selected - ${axisLabels}`
-}
 
 const formatAxisTimestamp = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleString([], {

@@ -13,6 +13,21 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.dashboard-shell {
+  width: min(calc(100% - 48px), 1280px);
+  margin: 0 auto;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -24,8 +39,6 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -52,6 +65,12 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (max-width: 640px) {
+  .dashboard-shell {
+    width: min(calc(100% - 24px), 1280px);
+  }
 }
 
 @media (prefers-color-scheme: light) {

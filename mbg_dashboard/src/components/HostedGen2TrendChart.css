@@ -11,54 +11,31 @@
 .hosted-gen2-trend-chart-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
 }
 
-.hosted-gen2-trend-chart h2,
 .hosted-gen2-trend-chart p {
   margin-top: 0;
 }
 
-.hosted-gen2-trend-chart h2 {
-  margin-bottom: 0.25rem;
-  font-size: 1.35rem;
-}
-
-.hosted-gen2-trend-chart-header p {
-  margin-bottom: 0;
-  font-size: 0.9rem;
-  opacity: 0.88;
-}
-
-.hosted-gen2-trend-chart-refresh {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 5.25rem;
-  min-height: 1.75rem;
-  padding: 0.2rem 0.65rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.18);
-  font-size: 0.78rem;
-  font-weight: 700;
-  opacity: 0.82;
-}
-
-.hosted-gen2-trend-chart-selector {
-  display: grid;
-  gap: 0.3rem;
-  min-width: min(100%, 14rem);
-  font-size: 0.9rem;
-}
-
-.hosted-gen2-trend-chart-selector select {
+.hosted-gen2-trend-chart-header .sensor-history-controls {
   width: 100%;
-  min-height: 2.4rem;
-  padding: 0.35rem 0.45rem;
+  gap: 0.6rem;
+}
+
+.hosted-gen2-trend-chart-header .sensor-history-controls label {
+  flex: 1 1 12rem;
+  max-width: 17rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hosted-gen2-trend-chart-header .sensor-history-controls select {
+  min-height: 2rem;
+  padding: 0.28rem 0.45rem;
   border: 1px solid rgba(148, 163, 184, 0.8);
   border-radius: 6px;
   background: white;
@@ -140,6 +117,10 @@
 @media (max-width: 640px) {
   .hosted-gen2-trend-chart {
     padding: 0.85rem;
+  }
+
+  .hosted-gen2-trend-chart-header .sensor-history-controls label {
+    max-width: none;
   }
 
   .hosted-gen2-trend-chart-frame {
