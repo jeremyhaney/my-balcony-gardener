@@ -175,62 +175,64 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
   const telemetryHealth = isLoading ? null : calculateTelemetryHealth(logs, selectedWindow.key)
   const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
 
-  return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-2">Sensor History</h2>
+  const historyControls = (
+    <div
+      aria-label="Sensor history controls"
+      className="sensor-history-controls"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: isHostedReadonly ? '0.6rem' : '0.75rem',
+        alignItems: 'flex-end',
+        marginBottom: isHostedReadonly ? 0 : '1rem',
+      }}
+    >
+      <label style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}>
+        <span>History Device</span>
+        <select
+          value={selectedDevice.key}
+          onChange={handleDeviceChange}
+          style={{
+            minWidth: isHostedReadonly ? '180px' : '220px',
+            padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
+          }}
+        >
+          {HISTORY_DEVICE_OPTIONS.map((option) => (
+            <option key={option.key} value={option.key}>
+              {isHostedReadonly ? option.hostedLabel : option.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      <div
-        aria-label="Sensor history controls"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'flex-end',
-          marginBottom: '1rem',
-        }}
-      >
-        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.9rem' }}>
-          <span>History Device</span>
-          <select
-            value={selectedDevice.key}
-            onChange={handleDeviceChange}
-            style={{ minWidth: '220px', padding: '0.4rem' }}
-          >
-            {HISTORY_DEVICE_OPTIONS.map((option) => (
-              <option key={option.key} value={option.key}>
-                {isHostedReadonly ? option.hostedLabel : option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <label style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}>
+        <span>Window</span>
+        <select
+          value={selectedWindow.key}
+          onChange={handleWindowChange}
+          style={{
+            minWidth: isHostedReadonly ? '140px' : '160px',
+            padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
+          }}
+        >
+          {HISTORY_WINDOW_OPTIONS.map((option) => (
+            <option key={option.key} value={option.key}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  )
 
-        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.9rem' }}>
-          <span>Window</span>
-          <select
-            value={selectedWindow.key}
-            onChange={handleWindowChange}
-            style={{ minWidth: '160px', padding: '0.4rem' }}
-          >
-            {HISTORY_WINDOW_OPTIONS.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+  const historyErrorMessage = historyError ? (
+    <p className="mb-3 text-sm" style={{ color: '#7f1d1d' }}>
+      {historyError}
+    </p>
+  ) : null
 
-      <p className="mb-3 text-sm">
-        Showing history for {selectedDeviceLabel} ({selectedDevice.role}) for{' '}
-        {selectedWindow.label}. {selectedDevice.description}
-      </p>
-
-      {historyError ? (
-        <p className="mb-3 text-sm" style={{ color: '#7f1d1d' }}>
-          {historyError}
-        </p>
-      ) : null}
-
+  const deviceStatusPanels = (
+    <div className="device-status-panels">
       {telemetryHealth ? <SensorHealthPanel health={telemetryHealth} /> : null}
 
       <DeviceDiagnosticsPanel
@@ -238,32 +240,56 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
         error={diagnosticsError}
         fallbackDeviceLabel={selectedDeviceLabel}
       />
+    </div>
+  )
 
+  const sensorHistoryHeader = (
+    <>
+      <h2 className="text-xl font-bold mb-2">Sensor History</h2>
+      {historyControls}
+      {historyErrorMessage}
+    </>
+  )
+
+  const sensorHistoryChart = (
+    <>
       {isLoading ? (
         <p className="text-sm">Loading history...</p>
       ) : logs.length === 0 ? (
-        <p className="text-sm">No history available yet.</p>
+        <p className="text-sm">No Sensor History rows in this window.</p>
       ) : chartLogs.length === 0 ? (
         <p className="text-sm">History rows were found, but no valid readings are available to chart yet.</p>
       ) : (
         <DualAxisChart sensorLogs={chartLogs} historyWindowKey={selectedWindow.key} />
       )}
+    </>
+  )
 
+  return (
+    <div className="p-4">
       {isHostedReadonly ? (
         <>
-          <HostedGen2TrendChart
-            rows={hostedGen2Rows}
-            isLoading={isHostedGen2Loading}
-            error={hostedGen2Error}
-          />
+          {deviceStatusPanels}
           <HostedGen2Measurements
             rows={hostedGen2Rows}
             isLoading={isHostedGen2Loading}
             error={hostedGen2Error}
             fallbackDeviceLabel={selectedDeviceLabel}
           />
+          <HostedGen2TrendChart
+            rows={hostedGen2Rows}
+            isLoading={isHostedGen2Loading}
+            error={hostedGen2Error}
+            controls={historyControls}
+          />
         </>
-      ) : null}
+      ) : (
+        <>
+          {sensorHistoryHeader}
+          {deviceStatusPanels}
+          {sensorHistoryChart}
+        </>
+      )}
     </div>
   )
 }

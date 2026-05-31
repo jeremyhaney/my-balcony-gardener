@@ -1,10 +1,17 @@
+.device-status-panels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
 .sensor-health-panel {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
+  position: relative;
   box-sizing: border-box;
-  width: min(320px, calc(100vw - 2rem));
+  width: fit-content;
+  max-width: 100%;
   color: var(--sensor-health-color);
 }
 
@@ -14,7 +21,7 @@
   align-items: center;
   gap: 0.25rem;
   width: 185px;
-  margin-left: auto;
+  margin: 0 auto;
   border: 1px solid var(--sensor-health-border);
   border-radius: 999px;
   background: var(--sensor-health-background);
@@ -65,7 +72,8 @@
   top: calc(100% + 0.5rem);
   right: 0;
   box-sizing: border-box;
-  width: 100%;
+  width: min(320px, calc(100vw - 2rem));
+  max-width: 100%;
   border: 1px solid var(--sensor-health-border);
   border-radius: 8px;
   background: var(--sensor-health-background);
@@ -87,6 +95,10 @@
 }
 
 @media (max-width: 760px) {
+  .device-status-panels {
+    justify-content: center;
+  }
+
   .sensor-health-panel {
     position: static;
     width: 100%;

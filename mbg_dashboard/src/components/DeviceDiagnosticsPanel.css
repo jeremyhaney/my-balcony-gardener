@@ -1,9 +1,8 @@
 .device-diagnostics-panel {
-  position: fixed;
-  top: 5.4rem;
-  right: 1rem;
-  z-index: 999;
-  width: min(320px, calc(100vw - 2rem));
+  position: relative;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
   color: var(--device-diagnostics-color);
 }
 
@@ -13,7 +12,7 @@
   align-items: center;
   gap: 0.25rem;
   width: 185px;
-  margin-left: auto;
+  margin: 0 auto;
   border: 1px solid var(--device-diagnostics-border);
   border-radius: 999px;
   background: var(--device-diagnostics-background);
@@ -60,7 +59,8 @@
   top: calc(100% + 0.5rem);
   right: 0;
   box-sizing: border-box;
-  width: 100%;
+  width: min(320px, calc(100vw - 2rem));
+  max-width: 100%;
   border: 1px solid var(--device-diagnostics-border);
   border-radius: 8px;
   background: var(--device-diagnostics-background);
