@@ -1,13 +1,13 @@
 import type { CSSProperties } from 'react'
-import type { TelemetryHealth, TelemetryHealthStatus } from '../telemetryHealth'
+import type { DeviceStatusHealth, DeviceStatusHealthStatus } from '../deviceStatusHealth'
 import './SensorHealthPanel.css'
 
 type SensorHealthPanelProps = {
-  health: TelemetryHealth
+  health: DeviceStatusHealth<unknown>
 }
 
 const statusStyles: Record<
-  TelemetryHealthStatus,
+  DeviceStatusHealthStatus,
   {
     background: string
     border: string
@@ -49,6 +49,10 @@ const statusStyles: Record<
 const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
   const styles = statusStyles[health.status]
   const statusMessage = getStatusMessage(health.status)
+  const rowsInWindowLabel = health.rowsInWindowLabel ?? 'Rows in window'
+  const expectedRowsLabel = health.expectedRowsLabel ?? 'Expected rows'
+  const latestReadingsLabel = health.latestReadingsLabel ?? 'Latest readings'
+  const wateringMarkersLabel = health.wateringMarkersLabel ?? 'Watering history markers'
   const panelStyle = {
     '--sensor-health-background': styles.background,
     '--sensor-health-border': styles.border,
@@ -84,10 +88,10 @@ const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
           <dt>Last report</dt>
           <dd style={{ margin: 0 }}>{formatDuration(health.latestAgeMs)}</dd>
 
-          <dt>Rows in window</dt>
+          <dt>{rowsInWindowLabel}</dt>
           <dd style={{ margin: 0 }}>{health.rowsInWindow}</dd>
 
-          <dt>Expected rows</dt>
+          <dt>{expectedRowsLabel}</dt>
           <dd style={{ margin: 0 }}>{formatNullableNumber(health.expectedRows)}</dd>
 
           <dt>Coverage</dt>
@@ -96,11 +100,11 @@ const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
           <dt>Largest gap</dt>
           <dd style={{ margin: 0 }}>{formatElapsedDuration(health.largestGapMs)}</dd>
 
-          <dt>Latest readings</dt>
+          <dt>{latestReadingsLabel}</dt>
           <dd style={{ margin: 0 }}>{formatLatestReadings(health.latestReadings)}</dd>
 
-          <dt>Watering history markers</dt>
-          <dd style={{ margin: 0 }}>{health.wateringMarkersInHistory}</dd>
+          <dt>{wateringMarkersLabel}</dt>
+          <dd style={{ margin: 0 }}>{formatNullableNumber(health.wateringMarkersInHistory)}</dd>
 
           <dt>Notes</dt>
           <dd style={{ margin: 0 }}>{formatNotes(health.notes)}</dd>
@@ -110,7 +114,7 @@ const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
   )
 }
 
-const getStatusMessage = (status: TelemetryHealthStatus): string | null => {
+const getStatusMessage = (status: DeviceStatusHealthStatus): string | null => {
   if (status === 'warning') {
     return '\u26A0 Check Data'
   }
@@ -181,9 +185,17 @@ const formatElapsedDuration = (durationMs: number | null): string => {
 }
 
 const formatLatestReadings = (
-  readings: TelemetryHealth['latestReadings'],
+  readings: unknown,
 ): string => {
   if (readings === null) {
+    return 'Not available'
+  }
+
+  if (typeof readings === 'string') {
+    return readings
+  }
+
+  if (!isLegacyLatestReadings(readings)) {
     return 'Not available'
   }
 
@@ -199,5 +211,14 @@ const formatReading = (value: number | null, unit: string): string =>
 
 const formatNotes = (notes: string[]): string =>
   notes.length > 0 ? notes.join(' ') : 'No issues found in this history window.'
+
+const isLegacyLatestReadings = (
+  readings: unknown,
+): readings is { temperature: number | null; humidity: number | null; moisture: number | null } =>
+  typeof readings === 'object' &&
+  readings !== null &&
+  'temperature' in readings &&
+  'humidity' in readings &&
+  'moisture' in readings
 
 export default SensorHealthPanel

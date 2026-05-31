@@ -15,6 +15,7 @@ import {
   type HistoryWindowOption,
   updateHistoryControlUrl,
 } from '../historyControls'
+import { calculateHostedGen2Health } from '../hostedGen2Health'
 import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import type { SensorLogRow } from '../types/sensorLog'
@@ -172,7 +173,11 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
         (log.temperature !== null || log.humidity !== null || log.moisture !== null)
     )
 
-  const telemetryHealth = isLoading ? null : calculateTelemetryHealth(logs, selectedWindow.key)
+  const telemetryHealth = isLoading
+    ? null
+    : isHostedReadonly
+      ? calculateHostedGen2Health(hostedGen2Rows, selectedWindow.key)
+      : calculateTelemetryHealth(logs, selectedWindow.key)
   const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
 
   const historyControls = (
