@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap on branch `phase7g0-field-soil-temp-and-scout-bme280-swap`
+- Current repo context: Phase 7G.1 Calibration / Control Validation Baseline on branch `phase7g1-calibration-control-validation-baseline`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -30,6 +30,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7F.1 status: runtime/browser validated / complete pending commit; Hosted Gen2 UI Flexibility and Trend Charting
 - Phase 7F.3 status: validated / complete pending commit; Hosted Device Status Gen2 Freshness Fix
 - Phase 7G.0 status: validated / complete pending commit; Field Gen2 Soil Temperature and Scout BME280 Swap
+- Phase 7G.1 status: documentation/query baseline in progress; no runtime behavior changes
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -950,6 +951,22 @@ Out of scope:
 - Supabase command/control or Remote Water Now.
 - Watering duration, threshold, cooldown, quiet hours, automatic watering logic, relay/pump pins, sensor pins, or `/water-now` behavior changes.
 - New ADR; this remains inside the existing Gen2 modular sensor architecture boundary.
+
+## Phase 7G.1 - Calibration / Control Validation Baseline - DOCUMENTATION/QUERY BASELINE IN PROGRESS
+
+Scope:
+
+- Add a field-test/control-validation protocol document for Gen2 calibration and watering-control evidence.
+- Add a read-only SQL analysis artifact for hosted-safe and owner/admin calibration/control-validation queries.
+- Preserve the existing architecture boundary: local ESP32 firmware owns watering decisions and pump shutoff; Supabase remains telemetry/history/diagnostics storage only.
+
+Out of scope:
+
+- Firmware changes.
+- Frontend runtime changes.
+- SQL schema/RLS changes.
+- Pin, sensor, device ID, watering duration, `MOISTURE_THRESHOLD`, cooldown, moisture mapping, or control eligibility changes.
+- Supabase command/control or Remote Water Now.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 

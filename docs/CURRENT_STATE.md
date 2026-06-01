@@ -288,6 +288,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `/status.reported_at` and `/capabilities.reported_at` are status/capability snapshot generation times; `/measurements.measured_at` remains the measurement package/sample time.
 - Timestamp hygiene did not change watering behavior, sensor behavior, pin mapping, control eligibility, Supabase schema, Supabase command/control boundary, or frontend behavior.
 - A Supabase `sensor_events` marker was uploaded for the Gen2 field-ready baseline before calibration/control validation.
+- Phase 7G.1 Gen2 Calibration and Control Validation Baseline adds planning/query artifacts only: `docs/field_tests/phase7g1-calibration-control-validation-baseline.md` and `docs/sql/phase7g1-control-validation-readonly-queries.sql`.
+- Phase 7G.1 makes no firmware, frontend runtime, SQL schema/RLS, pin, sensor, watering duration, `MOISTURE_THRESHOLD`, cooldown, moisture mapping, control eligibility, Supabase command/control, or Remote Water Now changes.
 - Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit.
 - Phase 7F adds SQL artifact `docs/sql/phase7f-hosted-gen2-measurements-view.sql` for limited hosted read-only view `public.hosted_gen2_measurements`.
 - Supabase manual validation confirmed `public.hosted_gen2_measurements` returns Gen2 rows for `Balcony01` and `Scout01`.
