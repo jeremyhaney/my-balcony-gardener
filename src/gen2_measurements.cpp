@@ -63,13 +63,14 @@ void gen2Begin() {
   gen2Veml6030Begin();
 }
 
-String gen2CapabilitiesJson(const String &deviceId) {
+String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
   String response = "{";
   response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   response += "\"device_id\":\"" + deviceId + "\",";
   response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
   response += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
   response += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
+  response += "\"reported_at\":\"" + reportedAt + "\",";
   response += "\"gen2_enabled\":true,";
   response += "\"pump_control_available\":" + boolString(MBG_PUMP_CONTROL_AVAILABLE != 0) + ",";
   response += "\"device_can_water\":" + boolString(MBG_DEVICE_CAN_WATER != 0) + ",";

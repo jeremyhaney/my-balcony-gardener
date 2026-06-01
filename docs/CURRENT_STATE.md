@@ -249,7 +249,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7D introduced no Supabase command/control or Remote Water Now, no new sensor controls watering, and `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, and control eligibility behavior remain unchanged.
 - The protected untracked CSV `field_readings/phase6k1_b3e1_vs_b6e2_60s_watering_response_20260521_180127.csv` remains untouched.
 - Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main.
-- Standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
+- Standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature.
 - Installed Balcony Unit Gen2 now runs profile `balcony-installed-gen2` with UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, label `Balcony01`, and firmware version `phase7e-gen2-compat`.
 - Balcony Sensor Scout 01 now runs Gen2 profile `balcony-sensor-scout-01` with UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, label `Scout01`, and firmware version `phase7e-gen2-compat`.
 - Bench Prototype Unit remains the prototype/reference hardware with UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and label `Prototype01`; bench Gen2 has richer BME280, DS18B20, VEML6030, and analog soil modules, but it was not re-uploaded during final field-unit validation.
@@ -265,6 +265,29 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `/water-now` remains local-only and capability-gated, and it was not called during final Phase 7E label/provenance validation.
 - Known deferred wart: first Gen2 DHT11 startup reads may show suspicious values around `32.72°F / 0%`; later `/measurements` reads and `/logs` are plausible, and this is not a watering-control blocker because DHT11 records are `control_eligible:false`.
 - A two-device field capture for future watering-response analysis is running outside Phase 7E closeout; no capture CSV data is included in this documentation pass.
+- Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit.
+- `balcony-installed-gen2` keeps DHT11 and analog soil moisture enabled, keeps BME280 disabled, and enables DS18B20 on GPIO27 for soil temperature.
+- `balcony-sensor-scout-01` disables DHT11, enables BME280 on GPIO21/GPIO22, enables DS18B20 on GPIO27, keeps analog soil moisture enabled, and remains non-watering.
+- Scout `/logs` preserves the legacy nested `data.temperature` / `data.humidity` response shape by sourcing those two existing fields from BME280 when DHT11 is disabled and BME280 is enabled; pressure and soil temperature remain out of `/logs`.
+- Scout avoids duplicate Gen2 `air_temperature` and `relative_humidity` records by keeping DHT11 disabled while BME280 is enabled.
+- New DS18B20 `temperature` records and BME280 `air_temperature`, `relative_humidity`, and `barometric_pressure` records remain `control_eligible:false`; installed `Balcony01` keeps only `moisture_index` control-eligible.
+- Phase 7G.0 compile validation passed for `balcony-installed-gen2`, `balcony-sensor-scout-01`, and `bench-proto-gen2`; no firmware upload was performed.
+- Current physical sensor inventory: `Balcony01` has DHT11 sensor ID `DHT01`, soil temperature sensor ID `ST03`, and analog soil moisture; `Scout01` has BME280 sensor ID `BME02`, soil temperature sensor ID `ST02`, and analog soil moisture, with DHT11 sensor ID `DHT02` historical/previous; `Prototype01` has BME280 sensor ID `BME01`, soil temperature sensor ID `ST01`, and the existing prototype Gen2 sensors already documented.
+- Scout01 field validation on 2026-05-31 at `10.0.0.180` used UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, profile `balcony-sensor-scout-01`, firmware `phase7e-gen2-compat`, and role `sensor-scout`.
+- Scout01 I2C was enabled on GPIO21/GPIO22, I2C scan found `0x76`, BME02/BME280 was detected at `0x76`, and ST02/DS18B20 was detected on GPIO27 with `device_count:1`.
+- Scout01 example good readings were BME02 `air_temperature` `76.44°F`, BME02 `relative_humidity` `90.29%`, BME02 `barometric_pressure` `1016.10 hPa`, ST02 soil temperature `77.79°F`, analog `moisture_index` `67`, and `raw_adc` `2031`.
+- Scout01 remains non-watering with `pump_control_available:false`, `device_can_water:false`, and all Scout01 Gen2 records `control_eligible:false`.
+- Hosted dashboard automatically added Soil Temperature and Barometric Pressure to Scout01 Live Measurements / graph selectors after a good Supabase Gen2 measurement batch appeared.
+- Balcony01 field validation on 2026-06-01 at `10.0.0.200` used UUID `550e8400-e29b-41d4-a716-446655440000`, profile `balcony-installed-gen2`, firmware `phase7e-gen2-compat`, and role `controller`.
+- Balcony01 is watering-capable with `pump_control_available:true`, `device_can_water:true`, and relay/pump output GPIO25. DHT01 is enabled on GPIO26, ST03/DS18B20 is enabled on GPIO27 with `device_count:1`, analog soil moisture is enabled on GPIO34, and I2C is disabled because no BME280/I2C sensor is installed on Balcony01.
+- Balcony01 `moisture_index` remains the only `control_eligible:true` measurement; DHT01 records, ST03 soil temperature, and `raw_adc` remain `control_eligible:false`.
+- The first ST03 read after flash had a null/read_failed result despite `device_count:1`, but later settled successfully. Treat the initial ST03 null/read_failed sample as a startup/settling wart similar to the known DHT11 startup behavior, not a hard sensor failure.
+- Balcony01 settled good sample at `2026-06-01T16:29:59Z` included DHT01 `air_temperature` `77.90°F`, DHT01 `relative_humidity` `26.00%`, ST03 soil temperature `72.61°F` with `valid:true`, `quality:good`, `reason:read_ok`, ST03 `device_count:1`, `moisture_index` `79`, and `raw_adc` `1744`.
+- Hosted dashboard automatically added Soil Temperature to Balcony01 Live Measurements / graph selector after a good Supabase Gen2 measurement batch appeared.
+- Timestamp hygiene validation on Balcony01 after reflash confirmed `/status.reported_at` `2026-06-01T16:23:48Z`, `/capabilities.reported_at` `2026-06-01T16:23:48Z`, and `/measurements.measured_at` `2026-06-01T16:23:50Z`.
+- `/status.reported_at` and `/capabilities.reported_at` are status/capability snapshot generation times; `/measurements.measured_at` remains the measurement package/sample time.
+- Timestamp hygiene did not change watering behavior, sensor behavior, pin mapping, control eligibility, Supabase schema, Supabase command/control boundary, or frontend behavior.
+- A Supabase `sensor_events` marker was uploaded for the Gen2 field-ready baseline before calibration/control validation.
 - Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit.
 - Phase 7F adds SQL artifact `docs/sql/phase7f-hosted-gen2-measurements-view.sql` for limited hosted read-only view `public.hosted_gen2_measurements`.
 - Supabase manual validation confirmed `public.hosted_gen2_measurements` returns Gen2 rows for `Balcony01` and `Scout01`.

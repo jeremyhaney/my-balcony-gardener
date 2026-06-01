@@ -107,8 +107,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 7D validation against `bench-proto-gen2` UUID `318fab98-89ad-4f36-9100-3134a04e0be5` succeeded with `record_count = 7`, `device_role = bench`, `source_endpoint = /measurements`, and `batch_details` `{"phase":"7D","source":"firmware","post_cadence_ms":900000}`.
 - Phase 7D validated `air_temperature`, `relative_humidity`, `barometric_pressure`, `temperature`, `ambient_light`, `moisture_index`, and `raw_adc`; all current Gen2 records remain `control_eligible:false`.
 - Phase 7D made no `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, hosted-readonly UI, watering behavior, Supabase command/control, or Remote Water Now changes.
-- Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete pending commit.
-- Standard Gen2 field-unit pins are GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire future soil temperature.
+- Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main.
+- Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is field validated / complete pending commit/documentation closeout.
+- Standard Gen2 field-unit pins are GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature. GPIO27 is actively used for DS18B20 soil temperature on Scout01 and Balcony01.
 - Installed Balcony Unit Gen2 uses UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, build profile `balcony-installed-gen2`, and display label `Balcony01`.
 - Balcony Sensor Scout 01 Gen2 uses UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and display label `Scout01`.
 - Bench Prototype Unit uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and display label `Prototype01`; bench Gen2 remains a richer prototype/reference profile and was not re-uploaded during final field-unit label/provenance validation.
@@ -117,6 +118,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`; `batch_details.phase` is now `7E`, and `batch_details.device_label` identifies the short device label.
 - Installed `Balcony01` is watering-capable and has `moisture_index` as the only `control_eligible:true` Gen2 measurement; DHT11 measurements and `raw_adc` are display/diagnostic only.
 - Scout `Scout01` has no watering authority; all scout Gen2 measurements are `control_eligible:false`.
+- Phase 7G.0 validated Scout01 BME02/BME280 and ST02/DS18B20, Balcony01 DHT01 and ST03/DS18B20, and hosted Gen2 automatic measurement discovery for Soil Temperature and Barometric Pressure without changing watering/control authority.
 - Supabase remains telemetry/history/diagnostics storage only. No Supabase command/control or Remote Water Now was introduced, and `/water-now` remains local-only and capability-gated.
 - `/water-now` was not called during final Phase 7E field-unit label/provenance validation.
 - Known deferred wart: startup Gen2 DHT11 reads may briefly show suspicious values around `32.72°F / 0%`; later reads and `/logs` are plausible, and this does not affect watering control because DHT11 records are not control-eligible.
@@ -233,6 +235,7 @@ Modular local measurements path:
 - `GET /measurements` - authoritative Gen2 measurement-list payload
 
 - Field-unit Gen2 endpoints include compile-time `device_label`, `firmware_version`, and `build_profile` provenance for quick local inspection.
+- Gen2 `/status` and `/capabilities` include top-level `reported_at` for snapshot generation time; `/measurements` includes top-level `measured_at` for measurement package/sample time.
 - Installed/scout Gen2 retain `GET /logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1` to protect current local scripts/UI during migration.
 - `GET /logs` remains intentionally absent on `bench-proto-gen2`; future frontend work should migrate local Gen2 display to `/measurements`.
 

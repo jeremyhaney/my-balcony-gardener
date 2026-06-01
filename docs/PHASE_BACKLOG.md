@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7F.3 Hosted Device Status Gen2 Freshness Fix on branch `phase7f3-hosted-device-status-gen2-freshness`
+- Current repo context: Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap on branch `phase7g0-field-soil-temp-and-scout-bme280-swap`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -29,6 +29,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7E status: runtime validated / complete and merged to main; Field Units Gen2 Compatibility Migration
 - Phase 7F.1 status: runtime/browser validated / complete pending commit; Hosted Gen2 UI Flexibility and Trend Charting
 - Phase 7F.3 status: validated / complete pending commit; Hosted Device Status Gen2 Freshness Fix
+- Phase 7G.0 status: validated / complete pending commit; Field Gen2 Soil Temperature and Scout BME280 Swap
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -62,15 +63,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 24. Phase 7E — Field Units Gen2 Compatibility Migration - runtime validated / complete and merged to main
 25. Phase 7F.1 — Hosted Gen2 UI Flexibility and Trend Charting - runtime/browser validated / complete pending commit
 26. Phase 7F.3 - Hosted Device Status Gen2 Freshness Fix - validated / complete pending commit
-27. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation - next/future
-28. Phase 6K — Sensor Calibration / Measurement-System Evaluation
-29. Sensor Fault Detection / Control-Quality Validation
-30. Device Roles / Sensor-Only Telemetry Unit Hardening
-31. Future SenML-Inspired Measurement Model
-32. Device Settings / Provisioning
-33. Hardware Safety Maturity
+27. Phase 7G.0 - Field Gen2 Soil Temperature and Scout BME280 Swap - validated / complete pending commit
+28. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation - next/future
+29. Phase 6K — Sensor Calibration / Measurement-System Evaluation
+30. Sensor Fault Detection / Control-Quality Validation
+31. Device Roles / Sensor-Only Telemetry Unit Hardening
+32. Future SenML-Inspired Measurement Model
+33. Device Settings / Provisioning
+34. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -909,6 +911,45 @@ Out of scope:
 - `DualAxisChart` changes.
 - Supabase command/control or Remote Water Now.
 - Watering duration, threshold, cooldown, moisture mapping, automatic watering logic, `/water-now`, or local pump/control behavior changes.
+
+## Phase 7G.0 - Field Gen2 Soil Temperature and Scout BME280 Swap - VALIDATED / COMPLETE PENDING COMMIT
+
+Scope:
+
+- `balcony-installed-gen2` keeps DHT11 enabled, keeps BME280 disabled, enables DS18B20 on GPIO27, and keeps analog soil moisture enabled.
+- `balcony-sensor-scout-01` disables DHT11, enables BME280 on GPIO21/GPIO22, enables DS18B20 on GPIO27, and keeps analog soil moisture enabled.
+- Scout remains non-watering with `pump_control_available:false`, `device_can_water:false`, and all Scout Gen2 measurement records `control_eligible:false`.
+- Balcony01 remains watering-capable with existing watering behavior unchanged; installed `moisture_index` remains the only `control_eligible:true` Gen2 measurement.
+- Scout avoids duplicate `air_temperature` and `relative_humidity` records by keeping DHT11 disabled while BME280 is enabled.
+- Scout `/logs` preserves the legacy nested `data.temperature` / `data.humidity` response shape by sourcing those fields from BME280 when DHT11 is disabled and BME280 is enabled.
+- `/logs` does not add pressure or soil temperature, `SensorLogRow` is unchanged, and BME280 pressure plus DS18B20 soil temperature stay on the Gen2 `/measurements` path.
+- Bench `bench-proto-gen2` keeps BME280, DS18B20, VEML6030, soil moisture support, and existing `/water-now` semantics.
+- Field dependencies mirror the existing bench Gen2 library names/versions for the newly enabled BME280/DS18B20 modules.
+
+Validation:
+
+- Firmware compile validation passed for `balcony-installed-gen2`, `balcony-sensor-scout-01`, and `bench-proto-gen2`.
+- Scout01 field validation on 2026-05-31 at `10.0.0.180` confirmed UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, profile `balcony-sensor-scout-01`, firmware `phase7e-gen2-compat`, role `sensor-scout`, I2C enabled on GPIO21/GPIO22, I2C scan `0x76`, BME02/BME280 detected at `0x76`, ST02/DS18B20 detected on GPIO27 with `device_count:1`, analog soil readings present, and all Scout01 records `control_eligible:false`.
+- Scout01 good validation readings included BME02 `air_temperature` `76.44°F`, BME02 `relative_humidity` `90.29%`, BME02 `barometric_pressure` `1016.10 hPa`, ST02 soil temperature `77.79°F`, `moisture_index` `67`, and `raw_adc` `2031`.
+- Balcony01 field validation on 2026-06-01 at `10.0.0.200` confirmed UUID `550e8400-e29b-41d4-a716-446655440000`, profile `balcony-installed-gen2`, firmware `phase7e-gen2-compat`, role `controller`, DHT01 on GPIO26, ST03/DS18B20 on GPIO27 with `device_count:1`, analog soil moisture on GPIO34, pump output GPIO25, `pump_control_available:true`, and `device_can_water:true`.
+- Balcony01 settled good sample at `2026-06-01T16:29:59Z` included DHT01 `air_temperature` `77.90°F`, DHT01 `relative_humidity` `26.00%`, ST03 soil temperature `72.61°F`, `moisture_index` `79`, and `raw_adc` `1744`.
+- The initial Balcony01 ST03 null/read_failed sample after flash is documented as a startup/settling wart similar to the known DHT startup behavior, not a hard sensor failure.
+- Timestamp hygiene validation confirmed `/status.reported_at`, `/capabilities.reported_at`, and `/measurements.measured_at` semantics. Balcony01 validation observed `/status.reported_at` `2026-06-01T16:23:48Z`, `/capabilities.reported_at` `2026-06-01T16:23:48Z`, and `/measurements.measured_at` `2026-06-01T16:23:50Z`.
+- Hosted Gen2 measurement display automatically discovered Scout01 Soil Temperature and Barometric Pressure after a good Gen2 batch and Balcony01 Soil Temperature after a good Gen2 batch.
+- A Supabase `sensor_events` marker was uploaded for the Gen2 field-ready baseline before calibration/control validation.
+- Phase 7G.0 added no watering/control/schema/frontend behavior changes beyond the local endpoint timestamp hygiene API addition.
+
+Out of scope:
+
+- Frontend changes.
+- `DualAxisChart` changes.
+- Supabase SQL/RLS changes.
+- `SensorLogRow` changes.
+- `sensor_logs` shape changes.
+- Pressure or soil temperature in `/logs`.
+- Supabase command/control or Remote Water Now.
+- Watering duration, threshold, cooldown, quiet hours, automatic watering logic, relay/pump pins, sensor pins, or `/water-now` behavior changes.
+- New ADR; this remains inside the existing Gen2 modular sensor architecture boundary.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 

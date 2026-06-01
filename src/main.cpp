@@ -14,6 +14,7 @@
 #include "firmware_identity.h"
 
 #ifdef MBG_GEN2_ENABLED
+#include "gen2_bme280.h"
 #include "gen2_measurements.h"
 #endif
 
@@ -116,8 +117,17 @@ String getUtcIsoTimestamp() {
 // Soil moisture stays fresh-only because it controls watering decisions.
 bool readDhtWithFallback(float &temperatureF, float &humidity) {
 #if defined(MBG_GEN2_ENABLED) && !MBG_HAS_DHT11
+#if MBG_HAS_BME280
+  if (gen2Bme280ReadLegacyAir(temperatureF, humidity)) {
+    return true;
+  }
+
+  Serial.println("Gen2 DHT11 module disabled; BME280 legacy air read unavailable");
+  return false;
+#else
   Serial.println("Gen2 DHT11 module disabled; legacy DHT read skipped");
   return false;
+#endif
 #else
   float freshHumidity = dht.readHumidity();
   float tempC = dht.readTemperature();
@@ -510,6 +520,7 @@ void handleStatus() {
   response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
   response += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
   response += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
+  response += "\"reported_at\":\"" + getUtcIsoTimestamp() + "\",";
   response += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
   response += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
   response += "\"wifi_rssi\":";
@@ -534,7 +545,7 @@ void handleStatus() {
 // Capabilities endpoint handler - returns local Gen2 module configuration and detection state
 void handleCapabilities() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.send(200, "application/json", gen2CapabilitiesJson(String(DEVICE_ID)));
+  server.send(200, "application/json", gen2CapabilitiesJson(String(DEVICE_ID), getUtcIsoTimestamp()));
 }
 
 // Measurements endpoint handler - returns local Gen2 measurement-list records
