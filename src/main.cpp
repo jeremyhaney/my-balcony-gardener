@@ -40,6 +40,15 @@
 #endif
 #endif
 
+// Firmware-local Gen2 automatic-control quality gates.
+// These are automatic watering guardrails only; Manual Water Now remains local/supervised.
+const unsigned long AUTOMATIC_CONTROL_STARTUP_SETTLING_MS = 60000;
+const unsigned long AUTOMATIC_CONTROL_LATEST_SAMPLE_FRESHNESS_MS = 5000;
+const unsigned long AUTOMATIC_CONTROL_POST_WATERING_EXCLUSION_MS = 300000;
+const int AUTOMATIC_CONTROL_STARTUP_QUALIFIED_SAMPLE_COUNT = 3;
+const int AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT = 3;
+const int AUTOMATIC_CONTROL_REQUIRED_LOW_SAMPLES = 2;
+
 // Initialize hardware
 DHT dht(DHTPIN, DHTTYPE);
 WebServer server(80);
@@ -52,6 +61,12 @@ unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
 unsigned long lastWiFiReconnectAttemptTime = 0;
 unsigned long lastHeartbeatPostTime = 0;
+unsigned long automaticControlBootTime = 0;
+unsigned long lastAutomaticControlSampleTime = 0;
+float automaticControlMoistureSamples[AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT] = {0};
+int automaticControlSampleIndex = 0;
+int automaticControlSampleCount = 0;
+int automaticControlQualifiedSampleCount = 0;
 #ifdef MBG_GEN2_ENABLED
 unsigned long lastGen2MeasurementPostTime = 0;
 #endif
@@ -67,6 +82,7 @@ void setupTime();
 String getFormattedTime();
 bool readDhtWithFallback(float &temperatureF, float &humidity);
 void readSoilMoisture(float &moisture, int &soilRawAdc);
+bool automaticControlQualityGatesPass(float moisture, unsigned long sampledAt, unsigned long decisionAt);
 bool maybeStartAutomaticWatering(float moisture);
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
 void sendDeviceHeartbeatToSupabase(String heartbeatReason);
@@ -157,6 +173,104 @@ void readSoilMoisture(float &moisture, int &soilRawAdc) {
   soilRawAdc = analogRead(SOIL_PIN);
   moisture = map(soilRawAdc, 3680, 1230, 0, 100);
   moisture = constrain(moisture, 0, 100);
+}
+
+bool isQualifiedAutomaticControlSample(float moisture) {
+  // Gate: automatic control samples must be in the mapped moisture-index range.
+  // This is a basic structural check, not calibration or trend-believability validation.
+  return moisture >= 0.0 && moisture <= 100.0;
+}
+
+void recordAutomaticControlSample(float moisture, unsigned long sampledAt) {
+  if (!isQualifiedAutomaticControlSample(moisture)) {
+    return;
+  }
+
+  automaticControlMoistureSamples[automaticControlSampleIndex] = moisture;
+  automaticControlSampleIndex = (automaticControlSampleIndex + 1) % AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT;
+
+  if (automaticControlSampleCount < AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT) {
+    automaticControlSampleCount++;
+  }
+
+  automaticControlQualifiedSampleCount++;
+  lastAutomaticControlSampleTime = sampledAt;
+}
+
+bool automaticControlStartupSettled(unsigned long now) {
+  // Gate: block automatic watering during the initial boot/sensor settling period.
+  return now - automaticControlBootTime >= AUTOMATIC_CONTROL_STARTUP_SETTLING_MS;
+}
+
+bool automaticControlHasStartupSamples() {
+  // Gate: block automatic watering until enough qualified local control samples exist.
+  return automaticControlQualifiedSampleCount >= AUTOMATIC_CONTROL_STARTUP_QUALIFIED_SAMPLE_COUNT;
+}
+
+bool automaticControlLatestSampleFresh(unsigned long sampledAt, unsigned long decisionAt) {
+  // Gate: the latest local control sample must be fresh; older ring samples are history only.
+  return decisionAt - sampledAt <= AUTOMATIC_CONTROL_LATEST_SAMPLE_FRESHNESS_MS;
+}
+
+bool automaticControlPostWateringExcluded(unsigned long now) {
+  // Gate: immediate post-watering readings are not trusted for another automatic start.
+  if (lastWateringEndTime == 0) {
+    return false;
+  }
+
+  return now - lastWateringEndTime < AUTOMATIC_CONTROL_POST_WATERING_EXCLUSION_MS;
+}
+
+bool automaticControlRepeatedLowReadingsPass() {
+  // Gate: one low mapped moisture reading is not enough; require 2 of the recent 3.
+  if (automaticControlSampleCount < AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT) {
+    return false;
+  }
+
+  int lowSampleCount = 0;
+  for (int i = 0; i < AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT; i++) {
+    if (automaticControlMoistureSamples[i] < MOISTURE_THRESHOLD) {
+      lowSampleCount++;
+    }
+  }
+
+  return lowSampleCount >= AUTOMATIC_CONTROL_REQUIRED_LOW_SAMPLES;
+}
+
+bool automaticControlQualityGatesPass(float moisture, unsigned long sampledAt, unsigned long decisionAt) {
+  if (!isQualifiedAutomaticControlSample(moisture)) {
+    Serial.println("Auto-watering blocked: moisture sample is not qualified for control");
+    return false;
+  }
+
+  if (automaticControlPostWateringExcluded(decisionAt)) {
+    Serial.println("Auto-watering blocked: post-watering trust window is active");
+    return false;
+  }
+
+  if (!automaticControlLatestSampleFresh(sampledAt, decisionAt)) {
+    Serial.println("Auto-watering blocked: latest local moisture sample is stale");
+    return false;
+  }
+
+  recordAutomaticControlSample(moisture, sampledAt);
+
+  if (!automaticControlStartupSettled(decisionAt)) {
+    Serial.println("Auto-watering blocked: startup settling gate is active");
+    return false;
+  }
+
+  if (!automaticControlHasStartupSamples()) {
+    Serial.println("Auto-watering blocked: waiting for startup control samples");
+    return false;
+  }
+
+  if (!automaticControlRepeatedLowReadingsPass()) {
+    Serial.println("Auto-watering blocked: repeated-reading gate has not passed");
+    return false;
+  }
+
+  return true;
 }
 
 bool maybeStartAutomaticWatering(float moisture) {
@@ -652,6 +766,7 @@ void handleWaterNow() {
 void setup() {
   Serial.begin(115200);
   Serial.println("\n🌱 My Balcony Gardener Starting...");
+  automaticControlBootTime = millis();
 
   // Initialize hardware
 #if !defined(MBG_GEN2_ENABLED) || MBG_HAS_DHT11
@@ -754,8 +869,12 @@ void loop() {
   if (now - lastLogTime >= LOG_INTERVAL_MS) {
     int soilValue = 0;
     float moisture = 0;
+    unsigned long sampledAt = millis();
     readSoilMoisture(moisture, soilValue);
-    maybeStartAutomaticWatering(moisture);
+    unsigned long decisionAt = millis();
+    if (automaticControlQualityGatesPass(moisture, sampledAt, decisionAt)) {
+      maybeStartAutomaticWatering(moisture);
+    }
     lastLogTime = now;
   }
 #endif
