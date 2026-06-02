@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation on branch `phase7g5-gen2-control-quality-gates-runtime-validation`
+- Current repo context: Phase 7H MVP Field Deployment Backlog Rebaseline on branch `phase7h-mvp-field-deployment-backlog-rebaseline`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -34,7 +34,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7G.2 status: complete / committed; Gen2 calibration evidence review
 - Phase 7G.3 status: complete / committed; Gen2 control-quality rule design
 - Phase 7G.4 status: firmware implementation committed / build-validated
-- Phase 7G.5 status: runtime validated / complete pending commit
+- Phase 7G.5 status: complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -73,16 +73,18 @@ It is a planning guide, not an implementation approval. Each item still requires
 29. Phase 7G.2 - Gen2 Calibration Evidence Review - complete / committed
 30. Phase 7G.3 - Gen2 Control-Quality Rule Design - complete / committed
 31. Phase 7G.4 - Gen2 Local Control-Quality Gates Firmware Implementation - committed / build-validated
-32. Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - runtime validated / complete pending commit
-33. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation - future
-34. Phase 6K — Sensor Calibration / Measurement-System Evaluation
-35. Sensor Fault Detection / Control-Quality Validation
-36. Device Roles / Sensor-Only Telemetry Unit Hardening
-37. Future SenML-Inspired Measurement Model
-38. Device Settings / Provisioning
-39. Hardware Safety Maturity
+32. Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - complete and present on `main`
+33. Phase 7H - MVP Field Deployment Backlog Rebaseline - documentation/planning only
+34. Phase 7I - Hosted Measurement Trust & Plausibility Guardrails - future
+35. Phase 7J - Official Pinout, Wiring, and From-To Documentation - future
+36. Phase 7K - Hosted At-a-Glance Measurement Trends - future
+37. Phase 7L - MVP Setup / Provisioning Boundary - future
+38. Phase 7M - Sensor Upgrade Decision Matrix - future
+39. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
+40. Phase 7P - Hardware Safety Maturity - future
+41. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is runtime validated / complete pending commit. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -560,7 +562,7 @@ Scope:
 - Hosted diagnostics display remains deferred.
 - Limited read-only registry view remains deferred.
 - Latest-status `device_status_current` table/view remains deferred.
-- Sensor Calibration remains Phase 6K and is not part of this device-registry phase.
+- Sensor calibration remains deferred and is now tracked in the Phase 7N deployment-readiness roadmap; it is not part of this device-registry phase.
 - Supabase validation confirmed `public.device_registry` exists.
 - Registry rows exist for Installed Balcony Unit (`balcony`, `controller`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `sensor-scout`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
 - All three registry rows are active with `telemetry_insert_enabled`, `heartbeat_insert_enabled`, and `hosted_visible` set to `true`.
@@ -641,9 +643,15 @@ Follow-up placeholders, requiring separate approval:
 - Phase 7D — Gen2 Measurement Storage MVP
 - Phase 7E — Field Units Gen2 Compatibility Migration
 - Phase 7F.1 — Hosted Gen2 UI Flexibility and Trend Charting
-- Phase 7G — Gen2 Calibration / Control Eligibility Evaluation
-- Device Roles / Sensor-Only Telemetry Unit Hardening
-- Phase 6K — Sensor Calibration / Measurement-System Evaluation
+- Phase 7H - MVP Field Deployment Backlog Rebaseline
+- Phase 7I - Hosted Measurement Trust & Plausibility Guardrails
+- Phase 7J - Official Pinout, Wiring, and From-To Documentation
+- Phase 7K - Hosted At-a-Glance Measurement Trends
+- Phase 7L - MVP Setup / Provisioning Boundary
+- Phase 7M - Sensor Upgrade Decision Matrix
+- Phase 7N - Sensor Calibration / Measurement-System Evaluation
+- Phase 7P - Hardware Safety Maturity
+- Phase 7Q - Pilot Deployment Package
 
 Out of scope:
 
@@ -1004,7 +1012,7 @@ Out of scope:
 - `src/config.h` changes.
 - Threshold, watering duration, cooldown, cadence, mapping, pin, sensor, device ID, Gen2 metadata wording, or `control_eligible` changes.
 
-## Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - RUNTIME VALIDATED / COMPLETE PENDING COMMIT
+## Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - COMPLETE AND PRESENT ON MAIN
 
 Scope:
 
@@ -1070,35 +1078,203 @@ Out of scope:
 
 ## Device Roles / Sensor-Only Telemetry Unit
 
+This former future-work heading is superseded by the Phase 7L MVP Setup / Provisioning Boundary and Phase 7Q Pilot Deployment Package sections below. Scout01 remains evidence-only / non-watering, and only properly equipped local firmware may own watering control.
+
+## Phase 7H - MVP Field Deployment Backlog Rebaseline - DOCUMENTATION / PLANNING ONLY
+
+Purpose:
+
+- Rebaseline the future backlog around sellable/pilot field deployment readiness.
+- Answer the deployment question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+- Make clear that the next priority is field deployability, not sensor expansion by inertia.
+
+Rebaseline principles:
+
+- Sellable MVP readiness outranks sensor expansion.
+- Customer-facing trust and dashboard clarity are MVP-critical.
+- Official build/service documentation is MVP-critical.
+- Installer/setup/provisioning workflow is MVP-critical.
+- Sensor upgrade decisions should come before deep calibration.
+- Calibration should happen after the sensor upgrade decision matrix unless Jeremy explicitly chooses to calibrate the current analog sensor for short-term evidence only.
+- Hardware safety maturity is a deployability track, not optional polish.
+- Future product enhancements should be separated from pilot/MVP deployment requirements.
+
+Current evidence and limitations:
+
+- Phase 7G.5 completed the first runtime validation of Gen2 local control-quality gates.
+- The system is safer than it was before Phase 7G.4/7G.5.
+- The system is still not fully proven as unattended commercial hardware.
+- Startup-settling, repeated low-reading, post-watering exclusion, and Manual Water Now separation still have the explicit validation limitations documented in Phase 7G.5.
+- This phase changes documentation/planning only and does not approve firmware, frontend, SQL/RLS, hosted, runtime, sensor, hardware, configuration, or command/control changes.
+
+## Phase 7I - Hosted Measurement Trust & Plausibility Guardrails
+
 Scope:
 
-- Evaluate sensor-only device roles before installing additional balcony sensor units.
-- Decide how non-actuating units should identify themselves and report telemetry.
-- Preserve the boundary that only properly equipped local firmware owns watering control.
-
-## Sensor Fault Detection / Control-Quality Validation
-
-Scope:
-
-- Evaluate control-quality sensor validation before automatic watering uses suspicious readings.
-- Evaluate repeated-reading validation for soil moisture.
-- Decide how invalid, pinned, saturated, disconnected, or implausible readings should affect automatic watering.
-- Add DHT quality/fallback metadata before using DHT behavior for stronger status conclusions.
+- Improve customer-facing hosted measurement trust before making the dashboard more visually authoritative.
+- Suppress known-bad values or mark them with clear warnings.
+- Avoid presenting impossible or implausible readings as normal.
+- Treat Balcony01 DHT01 humidity as a known trust issue.
+- Use Gen2 metadata such as `valid`, `quality`, `reason`, and displayability.
+- Keep hosted status informational only.
+- Do not diagnose plant health.
+- Do not diagnose root cause unless supported by evidence.
+- Do not use `control_eligible` as command/control.
 
 Out of scope:
 
-- Changing watering behavior without explicit validation and ADR coverage.
+- New Supabase queries unless a later implementation phase approves them.
+- Any hosted command/control.
+- Remote Water Now.
+- Local ESP32 endpoint calls from hosted-readonly mode.
+- Treating hosted status as watering authority.
 
-## Future SenML-Inspired Measurement Model
+## Phase 7J - Official Pinout, Wiring, and From-To Documentation
 
 Scope:
 
-- Evaluate a SenML-inspired measurement-list or measurement-table model before adding more fixed fields for additional sensors.
-- Consider future light, pressure, flow, water level, and additional moisture sensors.
+- Create official build/service documentation for MVP field deployment.
+- Document the Gen2 pinout.
+- Document physical sensor-to-controller wiring.
+- Document relay/pump wiring.
+- Document power wiring.
+- Document the short local I2C cable standard.
+- Document OneWire / DS18B20 wiring.
+- Document analog moisture wiring.
+- Create a controller-to-field-device From-To table.
+- Document sensor IDs and physical assignment.
+- Define connector/cable labeling expectations.
+- Add an install/service validation checklist.
+
+The documentation should distinguish:
+
+- Architecture-level pin map.
+- Current physical deployed wiring.
+- Future production wiring standard.
+- Temporary prototype/scout wiring.
+- Retired/deprecated wiring such as GPIO5 for future Gen2 relay/pump control.
 
 Out of scope:
 
-- Immediate schema migration without a concrete need.
+- Changing pins.
+- Changing hardware configuration.
+- Creating the full pinout/from-to document without explicit approval.
+
+## Phase 7K - Hosted At-a-Glance Measurement Trends
+
+Scope:
+
+- Make hosted measurement cards more informative at a glance.
+- Add small trend visuals such as a sparkline per measurement card.
+- Add trend direction context such as rising, falling, flat, or insufficient data.
+- Add short time-window context such as 3h, 12h, or 24h.
+- Pair "last reading" with "recent behavior".
+- Integrate trend context with Good / Watch / Check card states.
+- Avoid presenting known unrealistic values as normal trends.
+
+Out of scope:
+
+- Command/control.
+- Local ESP32 endpoint calls.
+- Making bad or implausible data look more authoritative.
+
+## Phase 7L - MVP Setup / Provisioning Boundary
+
+Scope:
+
+- Define the installer/customer setup boundary needed before MBG can leave Jeremy's bench/balcony.
+- Define device identity assignment expectations.
+- Define friendly name/location assignment expectations.
+- Define the Wi-Fi setup boundary.
+- Preserve local-only control authority.
+- Prevent accidental Scout01 watering authority.
+- Define registry/provisioned-device expectations.
+- Separate compile-time/profile-driven values from field-configurable values.
+- Identify what must wait for a later provisioning system.
+
+Out of scope:
+
+- Supabase command/control.
+- Remote Water Now.
+- Accidental promotion of sensor-only devices to watering authority.
+- Full production fleet management.
+
+## Phase 7M - Sensor Upgrade Decision Matrix
+
+Scope:
+
+- Compare candidate sensors before deep calibration work.
+- Preserve that Jeremy has not yet purchased new sensors.
+- Track likely IP68 DFRobot light sensors as future light-mapping candidates.
+- Track DFRobot SEN0308 as a strong candidate upgrade to the current analog moisture sensors.
+- Track liquid level, flow, leak, pump-current, and other product-safety/serviceability sensors as candidates.
+- Treat candidate sensors as evaluation items, not approved implementation work.
+- Separate plant-insight telemetry from watering safety.
+- Evaluate soil moisture sensor upgrades before deep calibration work.
+- Treat liquid level, flow, leak, and pump-current sensing as product-safety/serviceability candidates.
+
+Out of scope:
+
+- Purchasing or installing sensors by documentation implication.
+- Treating light sensing as watering safety.
+- Approving firmware, hardware, SQL/RLS, or hosted changes.
+
+## Phase 7N - Sensor Calibration / Measurement-System Evaluation
+
+Scope:
+
+- Compare current analog moisture sensors and any approved upgrade candidates.
+- Perform gage R&R or a suitable measurement-system evaluation.
+- Inspect raw ADC behavior.
+- Distinguish display moisture index from validated control input.
+- Determine whether software adjustment, filtering, sensor replacement, or no action is appropriate.
+
+Out of scope:
+
+- Changing `MOISTURE_THRESHOLD` without evidence and explicit approval.
+- Changing moisture scaling without documentation and approval.
+- Bundling watering-duration changes into calibration unless explicitly approved.
+
+## Phase 7P - Hardware Safety Maturity
+
+Scope:
+
+- Treat hardware safety maturity as field deployability and product safety work, not optional polish.
+- Evaluate reservoir low-water / dry-run protection.
+- Evaluate leak detection.
+- Evaluate overflow detection.
+- Evaluate flow sensing.
+- Evaluate pump-current sensing.
+- Evaluate disconnected tubing detection.
+- Evaluate blocked outlet detection.
+- Gather physical failure/serviceability evidence.
+
+Out of scope:
+
+- Treating MVP as fully unattended-safe before hardware protections are validated.
+- Changing watering duration, pins, firmware, or hardware configuration without explicit approval.
+
+## Phase 7Q - Pilot Deployment Package
+
+Scope:
+
+- Assemble the complete pilot deployment bundle.
+- Add an install checklist.
+- Add a service checklist.
+- Add a troubleshooting workflow.
+- Link the pinout/from-to reference once created.
+- Add a provisioning/setup checklist.
+- Define customer-facing dashboard trust rules.
+- Define field validation acceptance criteria.
+- Document known limitations.
+- Define the support workflow.
+- Define what "safe enough for a supervised pilot" means.
+
+Out of scope:
+
+- Claiming unattended commercial readiness before Phase 7I through Phase 7P evidence supports it.
+- Supabase command/control.
+- Remote Water Now.
 
 ## Phase 6B — Device Identity / Bench Unit Readiness
 
@@ -1181,91 +1357,17 @@ Out of scope:
 - Multi-device UI.
 - Device registry.
 
-## Sensor Calibration / Measurement-System Evaluation
+## Deferred Non-Roadmap Notes Superseded By Phase 7H Rebaseline
 
-Scope:
+The older standalone deferred sections for sensor calibration, provisioning/settings, and hardware safety are superseded by the Phase 7H MVP field-deployment roadmap:
 
-- Compare soil moisture sensors.
-- Perform gage R&R or appropriate measurement-system evaluation.
-- Inspect raw ADC behavior.
-- Determine whether software adjustment, filtering, sensor replacement, or no action is appropriate.
-- Evaluate repeated-reading validation before automatic watering.
-- Distinguish display moisture index from validated control input.
+- Sensor upgrade decisions move to Phase 7M.
+- Sensor calibration and measurement-system evaluation move to Phase 7N.
+- Setup/provisioning boundary work moves to Phase 7L.
+- Hardware safety maturity moves to Phase 7P.
+- Pilot packaging and support readiness move to Phase 7Q.
 
-Out of scope:
-
-- Changing `MOISTURE_THRESHOLD` without experimental justification.
-- Changing moisture scaling without documentation.
-- Changing watering duration as part of calibration unless explicitly approved.
-
-## Hydraulic Prove-Out
-
-Scope:
-
-- Test alternate watering durations such as 30, 45, or 60 seconds.
-- Treat duration changes as controlled physical watering experiments.
-- Observe emitter performance, overspray, basket wetting, drainage, and pump behavior.
-
-Out of scope:
-
-- Bundling hydraulic experiments into telemetry or graph phases.
-- Changing duration without field validation.
-
-## Watering Scheduling
-
-Scope:
-
-- Evaluate quiet hours.
-- Review time handling.
-- Decide whether 10:00 PM to 8:00 AM is the correct default quiet-hours window.
-- Decide whether Manual Water Now should continue bypassing quiet hours.
-
-Out of scope:
-
-- Remote command/control.
-- Full settings UI unless this phase is intentionally combined with Device Settings.
-
-## Device Settings / Provisioning
-
-Scope:
-
-- Evaluate moving user-adjustable behavior values out of compile-time-only local config.
-- Consider ESP32 Preferences/NVS for persistent device-local settings.
-- Separate private/local secrets from product behavior defaults and user settings.
-- Evaluate safe user-adjustable values:
-  - moisture threshold
-  - watering duration
-  - cooldown duration
-  - telemetry cadence
-  - device nickname/location
-- Evaluate Wi-Fi provisioning for end users.
-- Evaluate AP/captive portal fallback for Wi-Fi setup.
-- Evaluate stored customer credentials.
-- Evaluate setup/reset mode.
-- Evaluate clear setup/connectivity status indication.
-- Evaluate optional offline log buffering for telemetry gaps.
-- Decide whether the product needs both an Admin page and a User Settings page.
-
-Out of scope:
-
-- Immediate Phase 5D firmware changes.
-- Storing secrets in Git.
-- Changing current local live/control ownership.
-
-## Hardware Safety Maturity
-
-Scope:
-
-- Evaluate reservoir low-water / dry-run protection.
-- Evaluate leak detection.
-- Evaluate overflow detection.
-- Evaluate flow sensing.
-- Evaluate pump-current sensing.
-- Evaluate failure detection for disconnected tubing or blocked outlets.
-
-Out of scope:
-
-- Treating MVP v1.0 as fully unattended-safe before hardware protections are validated.
+Hydraulic prove-out and watering scheduling remain useful future physical/product questions, but they are not approved implementation work in this rebaseline. They must not be bundled into calibration or dashboard phases, and any watering duration, quiet-hours, or scheduling change still requires explicit evidence, approval, and the normal architecture/change-control path.
 
 ## Explicitly Deferred / Not MVP
 
