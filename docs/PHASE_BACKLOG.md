@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation on branch `phase7g4-gen2-local-control-quality-gates`
+- Current repo context: Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation on branch `phase7g5-gen2-control-quality-gates-runtime-validation`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -33,8 +33,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7G.1 status: complete / committed; calibration control validation baseline
 - Phase 7G.2 status: complete / committed; Gen2 calibration evidence review
 - Phase 7G.3 status: complete / committed; Gen2 control-quality rule design
-- Phase 7G.4 status: firmware implementation committed / build-validated; no firmware upload or runtime validation
-- Phase 7G.5 status: next/future; runtime validation
+- Phase 7G.4 status: firmware implementation committed / build-validated
+- Phase 7G.5 status: runtime validated / complete pending commit
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -72,8 +72,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 28. Phase 7G.1 - Calibration / Control Validation Baseline - complete / committed
 29. Phase 7G.2 - Gen2 Calibration Evidence Review - complete / committed
 30. Phase 7G.3 - Gen2 Control-Quality Rule Design - complete / committed
-31. Phase 7G.4 - Gen2 Local Control-Quality Gates Firmware Implementation - committed / build-validated; no upload/runtime validation
-32. Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - next/future
+31. Phase 7G.4 - Gen2 Local Control-Quality Gates Firmware Implementation - committed / build-validated
+32. Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - runtime validated / complete pending commit
 33. Phase 7G — Gen2 Calibration / Control Eligibility Evaluation - future
 34. Phase 6K — Sensor Calibration / Measurement-System Evaluation
 35. Sensor Fault Detection / Control-Quality Validation
@@ -82,7 +82,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 38. Device Settings / Provisioning
 39. Hardware Safety Maturity
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated, but not uploaded or runtime-validated. Phase 7G.5 runtime validation, Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is runtime validated / complete pending commit. Phase 7G Gen2 Calibration / Control Eligibility Evaluation, Phase 6K Sensor Calibration / Measurement-System Evaluation, Sensor Fault Detection / Control-Quality Validation, Device Roles / Sensor-Only Telemetry Unit Hardening, and related production hardening remain future/deferred.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -1003,6 +1003,70 @@ Out of scope:
 - CSV or Support-folder export changes.
 - `src/config.h` changes.
 - Threshold, watering duration, cooldown, cadence, mapping, pin, sensor, device ID, Gen2 metadata wording, or `control_eligible` changes.
+
+## Phase 7G.5 - Gen2 Local Control-Quality Gates Runtime Validation - RUNTIME VALIDATED / COMPLETE PENDING COMMIT
+
+Scope:
+
+- Phase 7G.5 runtime-validated the Phase 7G.4 local Gen2 automatic watering control-quality gate firmware on the field/controller, sensor-scout, and bench-prototype profiles.
+- Branch `phase7g5-gen2-control-quality-gates-runtime-validation` started from a clean `main` baseline at `a8766ef Document Phase 7G.4 firmware implementation closeout`.
+- Build validation passed for `balcony-installed-gen2`, `balcony-sensor-scout-01`, and `bench-proto-gen2`.
+- The reported firmware version string intentionally remains `phase7e-gen2-compat` even though the Phase 7G.4 control-quality-gate code is now uploaded.
+
+Prototype01 smoke/runtime validation:
+
+- Uploaded `bench-proto-gen2` to COM5 successfully as a lower-risk smoke/runtime validation target before Balcony01.
+- Prototype01 returned UUID `318fab98-89ad-4f36-9100-3134a04e0be5`, label `Prototype01`, role `bench`, build profile `bench-proto-gen2`, and IP `10.0.0.192`.
+- `/status`, `/capabilities`, and `/measurements` worked.
+- The bench profile intentionally reports `pump_control_available:true`, `device_can_water:true`, and `watering_simulation_available:true`; it remains pump-free physical bench hardware.
+- Prototype01 `moisture_index` was the only `control_eligible:true` measurement.
+- No `/water-now` call occurred, and no unintended watering or relay activity was observed.
+- Serial gate messages were not captured during the observation window, consistent with the 15-minute cadence and no forced trigger condition.
+
+Balcony01 runtime validation:
+
+- Uploaded `balcony-installed-gen2` successfully.
+- Balcony01 returned UUID `550e8400-e29b-41d4-a716-446655440000`, label `Balcony01`, role `controller`, build profile `balcony-installed-gen2`, and IP `10.0.0.200`.
+- `/status`, `/capabilities`, `/measurements`, and `/logs` worked.
+- Balcony01 reported `pump_control_available:true`, `device_can_water:true`, `currently_watering:false`, `lastWateredTime:"N/A"`, and `lastWateringDuration:0`.
+- Balcony01 `moisture_index` remained the only `control_eligible:true` measurement; DHT01, ST03 soil temperature, and raw ADC remained `control_eligible:false`.
+- ST03 initially had a startup `read_failed` sample, then settled to valid/good/read_ok; settled ST03 evidence included `77.11 F`, `valid:true`, `quality:"good"`, and `reason:"read_ok"`.
+- Passive checks after more than two 15-minute cadence windows showed no unintended automatic watering while moisture index remained high around `79`.
+- No Manual Water Now call occurred.
+
+Scout01 runtime validation:
+
+- Uploaded `balcony-sensor-scout-01` successfully.
+- Scout01 returned UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, label `Scout01`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and IP `10.0.0.180`.
+- `/status`, `/capabilities`, `/measurements`, and `/logs` worked.
+- Scout01 reported `pump_control_available:false`, `device_can_water:false`, and `currently_watering:false`.
+- All Scout01 measurements remained `control_eligible:false`; Scout01 did not gain watering authority.
+- ST02 initially had a startup `read_failed` sample, then settled to valid/good/read_ok; settled ST02 evidence included `77.45 F`, `valid:true`, `quality:"good"`, and `reason:"read_ok"`.
+
+Explicit validation limitations:
+
+- Startup settling gate was not directly observed in serial because the 15-minute cadence means the first automatic-control pass occurs after the 60-second startup-settling window.
+- Freshness gate was validated by static inspection and normal runtime operation, not by artificial delay injection.
+- Repeated low-reading automatic start was not forced because field moisture was high.
+- Post-watering exclusion was not physically exercised because `/water-now` was not called.
+- Manual Water Now separation was validated by code inspection, not by a physical pump event in this phase.
+- No Supabase command/control or Remote Water Now was introduced.
+
+Known continuing observations:
+
+- Balcony01 DHT01 humidity remains implausibly low compared with Scout01 BME280 humidity, supporting the existing view that DHT01 is not trustworthy. This is not a control blocker because DHT01 is not control-eligible.
+- The reported `firmware_version` remains `phase7e-gen2-compat`; do not change metadata wording in this phase.
+
+Out of scope:
+
+- Firmware changes.
+- Frontend changes.
+- SQL/RLS changes.
+- Hosted behavior changes.
+- CSV or Support-folder export changes.
+- `src/config.h` changes.
+- Threshold, watering duration, cooldown, cadence, mapping, pin, sensor, device ID, Gen2 metadata wording, or `control_eligible` changes.
+- `/water-now` behavior changes or Manual Water Now runtime activation.
 
 ## Device Roles / Sensor-Only Telemetry Unit
 
