@@ -81,8 +81,9 @@ It is a planning guide, not an implementation approval. Each item still requires
 37. Phase 7L - MVP Setup / Provisioning Boundary - future
 38. Phase 7M - Sensor Upgrade Decision Matrix - future
 39. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
-40. Phase 7P - Hardware Safety Maturity - future
-41. Phase 7Q - Pilot Deployment Package - future
+40. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
+41. Phase 7P - Hardware Safety Maturity - future
+42. Phase 7Q - Pilot Deployment Package - future
 
 Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
@@ -650,6 +651,7 @@ Follow-up placeholders, requiring separate approval:
 - Phase 7L - MVP Setup / Provisioning Boundary
 - Phase 7M - Sensor Upgrade Decision Matrix
 - Phase 7N - Sensor Calibration / Measurement-System Evaluation
+- Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling
 - Phase 7P - Hardware Safety Maturity
 - Phase 7Q - Pilot Deployment Package
 
@@ -1235,6 +1237,48 @@ Out of scope:
 - Changing moisture scaling without documentation and approval.
 - Bundling watering-duration changes into calibration unless explicitly approved.
 
+## Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - FUTURE
+
+Purpose:
+
+- Decouple local sensor sampling cadence, local control-evaluation cadence, and cloud telemetry posting cadence.
+- Avoid treating one interval such as `LOG_INTERVAL_MS` as the single answer for reading sensors, making control decisions, and posting history.
+- Preserve local firmware ownership of watering decisions and pump shutoff.
+- Preserve Supabase as telemetry/history/diagnostics storage only.
+- Improve field deployability by reducing unnecessary local reads/posts while retaining enough local evidence for trust, control-quality gates, fallback handling, and future alerts.
+
+Candidate future direction:
+
+- Normal local sampling may be slower than the temporary 5-second validation cadence, likely around 30-60 seconds for most environmental readings.
+- Normal cloud posting can remain approximately 15 minutes for customer history and hosted charting.
+- Local control evaluation should be its own decision cadence, probably based on recent local samples rather than every hosted telemetry row.
+- Watering events should still post immediate start/stop evidence.
+- After watering, during validation/debug mode, or when a sensor looks questionable, firmware may temporarily sample faster.
+- Future firmware should consider a small local rolling buffer, such as the latest 6-12 readings per relevant measurement, to support repeated-reading validation, last-good fallback, local rate checks, stuck-sensor detection, and future trend/alert logic without posting every local sample.
+- Future firmware should evaluate a recent last-good fallback window based on local sample age, with honest metadata such as fallback age and reason. Short recent fallback may be acceptable within a defined synchronization tolerance; stale fallback must not be presented as a fresh measurement.
+
+Candidate modes:
+
+- Normal customer mode.
+- Debug/validation mode.
+- Post-watering observation mode.
+- Sensor-suspect confirmation mode.
+
+Out of scope until separately approved:
+
+- Changing current firmware cadence values.
+- Changing `LOG_INTERVAL_MS`.
+- Changing watering threshold, watering duration, cooldown, moisture mapping, pins, sensors, device IDs, or current control eligibility.
+- Posting every local sample to Supabase.
+- Replacing failed/null chart evidence with silent fallback values.
+- Supabase command/control.
+- Remote Water Now.
+- Firmware upload.
+- SQL/RLS/schema changes.
+- Alerts/notifications implementation.
+
+This future phase is not part of Phase 7I implementation except for backlog capture.
+
 ## Phase 7P - Hardware Safety Maturity
 
 Scope:
@@ -1363,6 +1407,7 @@ The older standalone deferred sections for sensor calibration, provisioning/sett
 
 - Sensor upgrade decisions move to Phase 7M.
 - Sensor calibration and measurement-system evaluation move to Phase 7N.
+- Local sampling, control evaluation, and telemetry cadence decoupling move to Phase 7O.
 - Setup/provisioning boundary work moves to Phase 7L.
 - Hardware safety maturity moves to Phase 7P.
 - Pilot packaging and support readiness move to Phase 7Q.

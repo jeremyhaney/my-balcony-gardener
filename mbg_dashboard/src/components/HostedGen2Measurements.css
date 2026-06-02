@@ -119,6 +119,33 @@
   --measurement-status-pill-color: #7f1d1d;
 }
 
+.hosted-gen2-measurements-card.is-failed {
+  --measurement-status-background: rgba(185, 28, 28, 0.58);
+  --measurement-status-background-end: rgba(127, 29, 29, 0.42);
+  --measurement-status-border: rgba(252, 165, 165, 0.98);
+  --measurement-status-inner-border: rgba(254, 226, 226, 0.34);
+  --measurement-status-pill-background: rgba(254, 226, 226, 0.98);
+  --measurement-status-pill-color: #7f1d1d;
+}
+
+.hosted-gen2-measurements-card.is-unavailable {
+  --measurement-status-background: rgba(71, 85, 105, 0.5);
+  --measurement-status-background-end: rgba(30, 41, 59, 0.38);
+  --measurement-status-border: rgba(203, 213, 225, 0.82);
+  --measurement-status-inner-border: rgba(226, 232, 240, 0.24);
+  --measurement-status-pill-background: rgba(226, 232, 240, 0.96);
+  --measurement-status-pill-color: #334155;
+}
+
+.hosted-gen2-measurements-card.is-insufficient-data {
+  --measurement-status-background: rgba(14, 116, 144, 0.52);
+  --measurement-status-background-end: rgba(21, 94, 117, 0.36);
+  --measurement-status-border: rgba(165, 243, 252, 0.92);
+  --measurement-status-inner-border: rgba(207, 250, 254, 0.3);
+  --measurement-status-pill-background: rgba(207, 250, 254, 0.96);
+  --measurement-status-pill-color: #164e63;
+}
+
 .hosted-gen2-measurements-card.is-neutral {
   --measurement-status-background: rgba(100, 116, 139, 0.48);
   --measurement-status-background-end: rgba(51, 65, 85, 0.34);

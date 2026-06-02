@@ -5,6 +5,7 @@ import {
   getHostedGen2MeasurementDisplay,
   getHostedGen2MeasurementStatus,
 } from '../hostedGen2Display'
+import { getHostedMeasurementTrust } from '../hostedMeasurementTrust'
 import './HostedGen2Measurements.css'
 
 type HostedGen2MeasurementsProps = {
@@ -61,6 +62,7 @@ const HostedGen2Measurements = ({
                 key={getMeasurementCardKey(row)}
                 label={formatHostedGen2MeasurementLabel(row.measurement_name)}
                 row={row}
+                rows={rows}
               />
             ))}
           </div>
@@ -73,9 +75,11 @@ const HostedGen2Measurements = ({
 const MeasurementCard = ({
   label,
   row,
+  rows,
 }: {
   label: string
   row: HostedGen2MeasurementRow | undefined
+  rows: HostedGen2MeasurementRow[]
 }) => {
   const display = getHostedGen2MeasurementDisplay(row?.measurement_name)
   const status = getHostedGen2MeasurementStatus({
@@ -83,12 +87,17 @@ const MeasurementCard = ({
     measurementValue: row?.measurement_value,
     valid: row?.valid,
   })
+  const trust = getHostedMeasurementTrust({
+    row,
+    rows,
+    fallbackStatus: status,
+  })
 
   return (
     <article
       className={[
         'hosted-gen2-measurements-card',
-        `is-${status.level}`,
+        `is-${trust.level}`,
         display.diagnostic ? 'is-diagnostic' : '',
       ]
         .filter(Boolean)
@@ -96,15 +105,21 @@ const MeasurementCard = ({
     >
       <div className="hosted-gen2-measurements-card-main">
         <h3>{label}</h3>
-        <span className="hosted-gen2-measurements-status-pill">{status.label}</span>
+        <span className="hosted-gen2-measurements-status-pill">{trust.label}</span>
       </div>
       <p className="hosted-gen2-measurements-value">{formatMeasurementValue(row)}</p>
-      {status.reason ? (
-        <p className="hosted-gen2-measurements-status-reason">{status.reason}</p>
+      {trust.headlineReason ? (
+        <p className="hosted-gen2-measurements-status-reason">{trust.headlineReason}</p>
       ) : null}
       <details className="hosted-gen2-measurements-details">
         <summary>Sensor details</summary>
         <dl className="hosted-gen2-measurements-status">
+          <dt>Display trust</dt>
+          <dd>{trust.detailReason}</dd>
+
+          <dt>Trust flags</dt>
+          <dd>{formatTrustFlags(trust.trustFlags)}</dd>
+
           <dt>Sensor key</dt>
           <dd>{formatNullableText(row?.sensor_key)}</dd>
 
@@ -206,6 +221,9 @@ const formatNullableText = (value: string | null | undefined): string =>
 
 const formatControlEligible = (value: boolean | null | undefined): string =>
   `${formatNullableBoolean(value)} - local firmware evidence only`
+
+const formatTrustFlags = (values: string[]): string =>
+  values.length > 0 ? values.join(', ') : 'None'
 
 const getMeasurementCardKey = (row: HostedGen2MeasurementRow): string =>
   [
