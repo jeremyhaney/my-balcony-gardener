@@ -5,6 +5,7 @@ import {
   getHostedGen2MeasurementDisplay,
   getHostedGen2MeasurementStatus,
 } from '../hostedGen2Display'
+import { getHostedGen2TrendSummary } from '../hostedGen2TrendSummary'
 import { getHostedMeasurementTrust } from '../hostedMeasurementTrust'
 import './HostedGen2Measurements.css'
 
@@ -92,6 +93,7 @@ const MeasurementCard = ({
     rows,
     fallbackStatus: status,
   })
+  const trendSummary = getHostedGen2TrendSummary(row, rows)
 
   return (
     <article
@@ -108,6 +110,16 @@ const MeasurementCard = ({
         <span className="hosted-gen2-measurements-status-pill">{trust.label}</span>
       </div>
       <p className="hosted-gen2-measurements-value">{formatMeasurementValue(row)}</p>
+      <p
+        className={[
+          'hosted-gen2-measurements-trend',
+          `is-${trendSummary.direction.replace(/_/g, '-')}`,
+        ].join(' ')}
+      >
+        <span>Recent trend:</span>{' '}
+        <strong>{trendSummary.label}</strong>
+        {trendSummary.deltaLabel ? <span>, {trendSummary.deltaLabel}</span> : null}
+      </p>
       {trust.headlineReason ? (
         <p className="hosted-gen2-measurements-status-reason">{trust.headlineReason}</p>
       ) : null}

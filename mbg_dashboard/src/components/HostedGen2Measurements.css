@@ -188,6 +188,26 @@
   overflow-wrap: anywhere;
 }
 
+.hosted-gen2-measurements-trend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 100%;
+  margin-bottom: 0.35rem;
+  padding: 0.22rem 0.48rem;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.22);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.76rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.hosted-gen2-measurements-trend strong {
+  font-weight: 850;
+}
+
 .hosted-gen2-measurements-status-reason {
   margin-bottom: 0.3rem;
   font-size: 0.8rem;
