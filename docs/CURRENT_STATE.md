@@ -327,7 +327,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7F.3 corrects hosted-readonly Device Status freshness so it uses the already-fetched `hostedGen2Rows` from `public.hosted_gen2_measurements` instead of Gen1 `sensor_logs` rows.
 - Phase 7F.3 adds Gen2 measurement-quality warnings based on Gen2 metadata and displayability; it does not diagnose plant health, diagnose sensor root cause, treat Raw ADC as calibrated moisture, or use `control_eligible` as command/control.
 - Phase 7F.3 adds no firmware changes, no SQL/RLS changes, no `SensorLogRow` changes, no `DualAxisChart` changes, no Supabase command/control, and no Remote Water Now.
-- Phase 7K Hosted At-a-Glance Measurement Trends is implemented, visually reviewed, and validated on feature branch `phase7k-hosted-at-a-glance-measurement-trends` pending merge.
+- Phase 7K Hosted At-a-Glance Measurement Trends is implemented, visually reviewed, validated, and present on `main`.
 - Phase 7K is hosted-readonly frontend UI only: hosted Gen2 Live Measurements cards now show compact `Trend` capsules using already-fetched hosted Gen2 measurement rows; no new Supabase query was added.
 - Phase 7K trend states include Rising, Falling, Stable, Not enough data, Sparse data, Stale data, and Not trendable.
 - Rising, Falling, and Stable trend states display direction symbols (`↗ Rising`, `↘ Falling`, `→ Stable`), a second-line delta such as `-2.1 F over 24h`, and a compact inline SVG sparkline when trendable data exists.
@@ -338,6 +338,19 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7K validation passed `npm.cmd run lint`, `npm.cmd run build`, hosted-readonly production build, and `git diff --check` with CRLF warnings only; the existing Vite large chunk warning remains unchanged.
 - Phase 7K hosted-readonly forbidden bundle scans returned no hits for `/water-now`, `Water Now`, `/logs`, `LiveStats`, `Currently Watering`, `VITE_ESP32_URL`, `VITE_WATER_ENDPOINT`, `10.0.0.200`, `10.0.0.180`, or `10.0.0.192`; review-only endpoint scans returned no hits for `/status`, `/capabilities`, or `/measurements`.
 - Jeremy visually reviewed the hosted-readonly preview and approved the Phase 7K trend cue appearance.
+- Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is active on branch `phase7k5-esp32-runtime-wifi-recovery-incident-review`.
+- Phase 7K.5 implements runtime Wi-Fi/network recovery diagnostics and conservative Wi-Fi recovery hardening in `src/main.cpp`.
+- Phase 7K.5 adds in-memory Wi-Fi/network and Supabase/cloud-post diagnostics, exposes new local `/status` evidence, and populates existing `device_heartbeats` evidence columns where possible.
+- Phase 7K.5 recovery preserves pump shutoff as first priority in `loop()`, preserves `WiFi.setAutoReconnect(true)`, adds `WiFi.persistent(false)`, adds `WiFi.setSleep(false)`, adds `WiFi.onEvent(...)`, uses bounded `WiFi.reconnect()`, and uses bounded `WiFi.disconnect(false) + WiFi.begin(...)` after sustained failure.
+- Phase 7K.5 intentionally did not add `ESP.restart()` or periodic reboot.
+- Phase 7K.5 changed no watering behavior, thresholds, pins, sensors, device IDs, SQL/RLS, Supabase schema, hosted SQL views, hosted frontend behavior, production wiring docs, moisture mapping, `control_eligible` behavior, or `/water-now` behavior.
+- Prototype01 Phase 7K.5 upload, endpoint validation, and 15-minute cloud-post evidence passed: `/status` and `/measurements` were reachable, `last_supabase_http_status` became `201`, `consecutive_supabase_failures` stayed `0`, `last_successful_telemetry_post_uptime_seconds` populated at `901`, `last_successful_diagnostics_post_uptime_seconds` populated at `903`, and `currently_watering` remained `false`.
+- Balcony01 Phase 7K.5 upload, endpoint validation, and 15-minute cloud-post evidence passed: `/status`, `/capabilities`, and `/measurements` were reachable; Wi-Fi stayed connected with `wifi_rssi:-56`, status codes `3`, no reconnect or begin-recovery attempts, one disconnect event, one got-IP event, `last_network_recovery_action:wifi_got_ip_event`, `last_supabase_http_status:201`, `consecutive_supabase_failures:0`, telemetry and diagnostics success uptimes `901` and `903`, `currently_watering:false`, `pump_control_available:true`, and `device_can_water:true`.
+- Balcony01 Phase 7K.5 measurement evidence included `moisture_index:73.0`, `raw_adc:1877`, valid/good DS18B20 soil temperature, and DHT11 RH remaining known-bad diagnostic evidence that is not control eligible.
+- Scout01 Phase 7K.5 upload, endpoint validation, and 15-minute cloud-post evidence passed: `/status` and `/measurements` were reachable; at `reported_at:2026-06-03T19:54:16Z` and `uptime_seconds:2951`, Wi-Fi stayed connected with `wifi_rssi:-52`, status codes `3`, no reconnect or begin-recovery attempts, one disconnect event, one got-IP event, `last_network_recovery_action:wifi_got_ip_event`, `last_supabase_http_status:201`, `consecutive_supabase_failures:0`, `last_supabase_error_category:none`, telemetry and diagnostics success uptimes `2701` and `2702`, `currently_watering:false`, `pump_control_available:false`, and `device_can_water:false`.
+- Scout01 Phase 7K.5 `/measurements` returned valid JSON with 6 records: BME280 air temperature `78.22 F`, BME280 relative humidity `38.37%`, BME280 pressure `1024.29 hPa`, DS18B20 temperature `70.81 F`, soil moisture index `64.0`, soil raw ADC `2110`, and all records `control_eligible:false`.
+- All three Phase 7K.5 targets, Prototype01, Scout01, and Balcony01, passed upload, endpoint, and 15-minute cloud-post validation; all remained reachable, no unintended watering was reported, Scout01 remained non-watering, and Balcony01 remained not watering during validation.
+- Phase 7K.5 validation proves safe boot, local endpoint availability, cloud-post success, and diagnostic visibility after deployment; no controlled router/AP disruption test was performed, and this does not yet prove recovery from the exact overnight event.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -378,6 +391,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Future sensor assignment/location UI remains separate from Phase 7F.1.
 - Future hosted Gen2 chart refinements may include Clean View / Expert View, seasonal axis presets, or a custom axis-label rail if field use justifies them.
 - Future hosted UX work may explore more creative at-a-glance context badges such as fast change, new low/high, long gap, recovered, or little change; Phase 7K does not add those.
+- Last-resort controlled `ESP.restart()` policy remains deferred unless evidence proves bounded Wi-Fi recovery cannot recover.
+- Hosted diagnostics view expansion for Phase 7K.5 network recovery evidence remains deferred.
+- Controlled router/AP disruption testing requires separate Jeremy approval.
 - Future validation/calibration must determine real moisture thresholds and control eligibility before changing control behavior.
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - No-Wi-Fi operation is currently autonomous/headless; AP/captive portal provisioning and installer/customer setup mode are deferred.

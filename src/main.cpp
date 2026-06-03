@@ -28,6 +28,10 @@
 #define WIFI_RECONNECT_INTERVAL_MS 30000
 #endif
 
+#ifndef WIFI_BEGIN_RECOVERY_INTERVAL_MS
+#define WIFI_BEGIN_RECOVERY_INTERVAL_MS 120000
+#endif
+
 #ifndef HEARTBEAT_INTERVAL_MS
 #define HEARTBEAT_INTERVAL_MS 900000
 #endif
@@ -60,7 +64,28 @@ unsigned long lastWateringEndTime = 0;
 unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
 unsigned long lastWiFiReconnectAttemptTime = 0;
+unsigned long lastWiFiBeginRecoveryAttemptTime = 0;
+unsigned long wifiReconnectAttemptCount = 0;
+unsigned long wifiBeginRecoveryAttemptCount = 0;
+unsigned long wifiDisconnectEventCount = 0;
+unsigned long wifiGotIpEventCount = 0;
+unsigned long lastWiFiDisconnectedMillis = 0;
+unsigned long lastWiFiReconnectedMillis = 0;
+unsigned long lastWiFiDisconnectedUptimeSeconds = 0;
+unsigned long lastWiFiReconnectedUptimeSeconds = 0;
+int lastWiFiStatusCode = WL_IDLE_STATUS;
+int lastWiFiDisconnectReason = -1;
+bool hasWiFiDisconnectedSinceBoot = false;
+String lastNetworkRecoveryAction = "none";
 unsigned long lastHeartbeatPostTime = 0;
+bool hasLastSupabaseHttpStatus = false;
+int lastSupabaseHttpStatus = 0;
+unsigned long consecutiveSupabaseFailures = 0;
+String lastSupabaseErrorCategory = "none";
+String lastSuccessfulTelemetryPostAt = "";
+String lastSuccessfulDiagnosticsPostAt = "";
+unsigned long lastSuccessfulTelemetryPostUptimeSeconds = 0;
+unsigned long lastSuccessfulDiagnosticsPostUptimeSeconds = 0;
 unsigned long automaticControlBootTime = 0;
 unsigned long lastAutomaticControlSampleTime = 0;
 float automaticControlMoistureSamples[AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT] = {0};
@@ -76,6 +101,10 @@ float lastGoodTempF = 0;
 float lastGoodHumidity = 0;
 
 // Function declarations
+void handleWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info);
+void recordSupabasePostSuccess(bool diagnosticsPost, int httpCode);
+void recordSupabasePostFailure(int httpCode, const String &category);
+String jsonStringOrNull(const String &value);
 void connectToWiFi();
 void maintainWiFiConnection();
 void setupTime();
@@ -127,6 +156,88 @@ String getUtcIsoTimestamp() {
   char buffer[30];
   strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
   return String(buffer);
+}
+
+String jsonStringOrNull(const String &value) {
+  if (value.length() == 0 || value == "TIME_ERROR") {
+    return "null";
+  }
+
+  return "\"" + value + "\"";
+}
+
+String supabaseFailureCategoryForHttpCode(int httpCode) {
+  if (httpCode == 401 || httpCode == 403) {
+    return "auth_or_rls";
+  }
+
+  if (httpCode >= 500 && httpCode <= 599) {
+    return "server_error";
+  }
+
+  if (httpCode > 0) {
+    return "http_error";
+  }
+
+  if (httpCode == HTTPC_ERROR_READ_TIMEOUT || httpCode == HTTPC_ERROR_CONNECTION_LOST) {
+    return "timeout";
+  }
+
+  if (httpCode < 0) {
+    return "client_error";
+  }
+
+  return "unknown";
+}
+
+void recordSupabasePostSuccess(bool diagnosticsPost, int httpCode) {
+  hasLastSupabaseHttpStatus = true;
+  lastSupabaseHttpStatus = httpCode;
+  consecutiveSupabaseFailures = 0;
+  lastSupabaseErrorCategory = "none";
+
+  String postedAt = getUtcIsoTimestamp();
+  unsigned long uptimeSeconds = millis() / 1000;
+  if (diagnosticsPost) {
+    lastSuccessfulDiagnosticsPostAt = postedAt == "TIME_ERROR" ? "" : postedAt;
+    lastSuccessfulDiagnosticsPostUptimeSeconds = uptimeSeconds;
+  } else {
+    lastSuccessfulTelemetryPostAt = postedAt == "TIME_ERROR" ? "" : postedAt;
+    lastSuccessfulTelemetryPostUptimeSeconds = uptimeSeconds;
+  }
+}
+
+void recordSupabasePostFailure(int httpCode, const String &category) {
+  hasLastSupabaseHttpStatus = true;
+  lastSupabaseHttpStatus = httpCode;
+  consecutiveSupabaseFailures++;
+  lastSupabaseErrorCategory = category.length() == 0 ? "unknown" : category;
+}
+
+void handleWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+  lastWiFiStatusCode = (int)WiFi.status();
+
+  switch (event) {
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+      lastNetworkRecoveryAction = "wifi_connected_event";
+      break;
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+      wifiGotIpEventCount++;
+      lastWiFiReconnectedMillis = millis();
+      lastWiFiReconnectedUptimeSeconds = millis() / 1000;
+      lastNetworkRecoveryAction = "wifi_got_ip_event";
+      break;
+    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+      wifiDisconnectEventCount++;
+      hasWiFiDisconnectedSinceBoot = true;
+      lastWiFiDisconnectedMillis = millis();
+      lastWiFiDisconnectedUptimeSeconds = millis() / 1000;
+      lastWiFiDisconnectReason = info.wifi_sta_disconnected.reason;
+      lastNetworkRecoveryAction = "wifi_disconnected_event";
+      break;
+    default:
+      break;
+  }
 }
 
 // Only DHT temperature/humidity may fall back to last-known-good values.
@@ -297,8 +408,11 @@ bool maybeStartAutomaticWatering(float moisture) {
 
 // Connect to Wi-Fi
 void connectToWiFi() {
+  WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
+  WiFi.onEvent(handleWiFiEvent);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("📡 Connecting to Wi-Fi: ");
   int attempts = 0;
@@ -320,22 +434,45 @@ void connectToWiFi() {
 // Wi-Fi is best-effort and must not prevent local sensor reads or watering control.
 void maintainWiFiConnection() {
   wl_status_t wifiStatus = WiFi.status();
+  lastWiFiStatusCode = (int)wifiStatus;
   if (wifiStatus == WL_CONNECTED) {
     return;
   }
 
-  if (wifiStatus == WL_IDLE_STATUS) {
-    return;
-  }
-
   unsigned long now = millis();
-  if (now - lastWiFiReconnectAttemptTime < WIFI_RECONNECT_INTERVAL_MS) {
+  if (!hasWiFiDisconnectedSinceBoot) {
+    hasWiFiDisconnectedSinceBoot = true;
+    lastWiFiDisconnectedMillis = now;
+    lastWiFiDisconnectedUptimeSeconds = now / 1000;
+    lastNetworkRecoveryAction = "wifi_not_connected_detected";
+  }
+
+  bool sustainedDisconnect =
+    hasWiFiDisconnectedSinceBoot &&
+    lastWiFiDisconnectedMillis > 0 &&
+    now - lastWiFiDisconnectedMillis >= WIFI_BEGIN_RECOVERY_INTERVAL_MS;
+
+  bool beginRecoveryDue =
+    sustainedDisconnect &&
+    now - lastWiFiBeginRecoveryAttemptTime >= WIFI_BEGIN_RECOVERY_INTERVAL_MS;
+
+  if (beginRecoveryDue) {
+    lastWiFiBeginRecoveryAttemptTime = now;
+    wifiBeginRecoveryAttemptCount++;
+    lastNetworkRecoveryAction = "wifi_disconnect_begin";
+    Serial.println("Wi-Fi sustained disconnect; restarting station association without blocking local control.");
+    WiFi.disconnect(false);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     return;
   }
 
-  lastWiFiReconnectAttemptTime = now;
-  Serial.println("Wi-Fi disconnected; requesting reconnect without blocking local control.");
-  WiFi.reconnect();
+  if (now - lastWiFiReconnectAttemptTime >= WIFI_RECONNECT_INTERVAL_MS) {
+    lastWiFiReconnectAttemptTime = now;
+    wifiReconnectAttemptCount++;
+    lastNetworkRecoveryAction = "wifi_reconnect";
+    Serial.println("Wi-Fi disconnected; requesting reconnect without blocking local control.");
+    WiFi.reconnect();
+  }
 }
 
 // Setup NTP time
@@ -348,6 +485,7 @@ void setupTime() {
 // Send sensor data to Supabase
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering) {
   if (WiFi.status() != WL_CONNECTED) {
+    recordSupabasePostFailure(0, "wifi_unavailable");
     Serial.println("❌ WiFi not connected");
     return;
   }
@@ -398,10 +536,12 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, int soi
 
   if (httpCode > 0) {
     if (httpCode == 201) {
+      recordSupabasePostSuccess(false, httpCode);
       Serial.println("✅ Data sent to Supabase");
     } else {
       Serial.print("⚠️ Supabase response code: ");
       Serial.println(httpCode);
+      recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
       String response = https.getString();
       Serial.print("Response: ");
       Serial.println(response);
@@ -409,6 +549,7 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, int soi
   } else {
     Serial.println("❌ POST failed");
     Serial.print("Error: ");
+    recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
     Serial.println(https.errorToString(httpCode).c_str());
   }
 
@@ -419,6 +560,7 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, int soi
 void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
   bool wifiConnected = WiFi.status() == WL_CONNECTED;
   if (!wifiConnected) {
+    recordSupabasePostFailure(0, "wifi_unavailable");
     Serial.println("Device heartbeat skipped: WiFi not connected");
     return;
   }
@@ -451,18 +593,42 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
 
   String postData = "{";
   postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  postData += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   postData += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  postData += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
+  postData += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
   postData += "\"heartbeat_reason\":\"" + heartbeatReason + "\",";
   postData += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
   postData += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
   postData += "\"wifi_rssi\":";
   postData += wifiConnected ? String(WiFi.RSSI()) : "null";
   postData += ",";
+  postData += "\"wifi_reconnect_attempt_count\":" + String(wifiReconnectAttemptCount) + ",";
+  postData += "\"last_supabase_http_status\":";
+  postData += hasLastSupabaseHttpStatus ? String(lastSupabaseHttpStatus) : "null";
+  postData += ",";
+  postData += "\"consecutive_supabase_failures\":" + String(consecutiveSupabaseFailures) + ",";
+  postData += "\"last_supabase_error_category\":\"" + lastSupabaseErrorCategory + "\",";
+  postData += "\"last_successful_telemetry_post_at\":" + jsonStringOrNull(lastSuccessfulTelemetryPostAt) + ",";
+  postData += "\"last_successful_diagnostics_post_at\":" + jsonStringOrNull(lastSuccessfulDiagnosticsPostAt) + ",";
   postData += "\"free_heap\":" + String(ESP.getFreeHeap()) + ",";
   postData += "\"min_free_heap\":" + String(ESP.getMinFreeHeap()) + ",";
   postData += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
   postData += "\"last_watering_duration\":" + String(lastWateringDuration) + ",";
-  postData += "\"details\":{\"phase\":\"7B\",\"source\":\"firmware\"}";
+  postData += "\"pump_control_available\":" + String(MBG_PUMP_CONTROL_AVAILABLE ? "true" : "false") + ",";
+  postData += "\"device_can_water\":" + String(MBG_DEVICE_CAN_WATER ? "true" : "false") + ",";
+  postData += "\"details\":{";
+  postData += "\"phase\":\"7K.5\",";
+  postData += "\"source\":\"firmware\",";
+  postData += "\"last_wifi_status_code\":" + String(lastWiFiStatusCode) + ",";
+  postData += "\"last_wifi_disconnect_reason\":" + String(lastWiFiDisconnectReason) + ",";
+  postData += "\"wifi_disconnect_event_count\":" + String(wifiDisconnectEventCount) + ",";
+  postData += "\"wifi_got_ip_event_count\":" + String(wifiGotIpEventCount) + ",";
+  postData += "\"wifi_begin_recovery_attempt_count\":" + String(wifiBeginRecoveryAttemptCount) + ",";
+  postData += "\"last_wifi_disconnected_uptime_seconds\":" + String(lastWiFiDisconnectedUptimeSeconds) + ",";
+  postData += "\"last_wifi_reconnected_uptime_seconds\":" + String(lastWiFiReconnectedUptimeSeconds) + ",";
+  postData += "\"last_network_recovery_action\":\"" + lastNetworkRecoveryAction + "\"";
+  postData += "}";
   postData += "}";
 
   Serial.println("Device heartbeat payload: " + postData);
@@ -471,10 +637,12 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
 
   if (httpCode > 0) {
     if (httpCode == 201) {
+      recordSupabasePostSuccess(true, httpCode);
       Serial.println("Device heartbeat sent to Supabase");
     } else {
       Serial.print("Device heartbeat Supabase response code: ");
       Serial.println(httpCode);
+      recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
       String response = https.getString();
       Serial.print("Response: ");
       Serial.println(response);
@@ -482,6 +650,7 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
   } else {
     Serial.println("Device heartbeat POST failed");
     Serial.print("Error: ");
+    recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
     Serial.println(https.errorToString(httpCode).c_str());
   }
 
@@ -537,6 +706,7 @@ int countJsonArrayRecords(const String &jsonArray) {
 // Send Gen2 modular measurement package to Supabase
 void sendGen2MeasurementsToSupabase() {
   if (WiFi.status() != WL_CONNECTED) {
+    recordSupabasePostFailure(0, "wifi_unavailable");
     Serial.println("Gen2 measurement batch post skipped: WiFi not connected");
     return;
   }
@@ -599,10 +769,12 @@ void sendGen2MeasurementsToSupabase() {
 
   if (httpCode > 0) {
     if (httpCode == 201) {
+      recordSupabasePostSuccess(false, httpCode);
       Serial.println("Gen2 measurement batch sent to Supabase");
     } else {
       Serial.print("Gen2 measurement batch Supabase response code: ");
       Serial.println(httpCode);
+      recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
       String response = https.getString();
       Serial.print("Response: ");
       Serial.println(response);
@@ -610,6 +782,7 @@ void sendGen2MeasurementsToSupabase() {
   } else {
     Serial.println("Gen2 measurement batch POST failed");
     Serial.print("Error: ");
+    recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
     Serial.println(https.errorToString(httpCode).c_str());
   }
 
@@ -626,7 +799,9 @@ void handleRoot() {
 void handleStatus() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
 
-  bool wifiConnected = WiFi.status() == WL_CONNECTED;
+  wl_status_t wifiStatus = WiFi.status();
+  bool wifiConnected = wifiStatus == WL_CONNECTED;
+  lastWiFiStatusCode = (int)wifiStatus;
 
   String response = "{";
   response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
@@ -640,6 +815,23 @@ void handleStatus() {
   response += "\"wifi_rssi\":";
   response += wifiConnected ? String(WiFi.RSSI()) : "null";
   response += ",";
+  response += "\"wifi_status_code\":" + String((int)wifiStatus) + ",";
+  response += "\"last_wifi_status_code\":" + String(lastWiFiStatusCode) + ",";
+  response += "\"last_wifi_disconnect_reason\":" + String(lastWiFiDisconnectReason) + ",";
+  response += "\"wifi_reconnect_attempt_count\":" + String(wifiReconnectAttemptCount) + ",";
+  response += "\"wifi_begin_recovery_attempt_count\":" + String(wifiBeginRecoveryAttemptCount) + ",";
+  response += "\"wifi_disconnect_event_count\":" + String(wifiDisconnectEventCount) + ",";
+  response += "\"wifi_got_ip_event_count\":" + String(wifiGotIpEventCount) + ",";
+  response += "\"last_wifi_disconnected_uptime_seconds\":" + String(lastWiFiDisconnectedUptimeSeconds) + ",";
+  response += "\"last_wifi_reconnected_uptime_seconds\":" + String(lastWiFiReconnectedUptimeSeconds) + ",";
+  response += "\"last_network_recovery_action\":\"" + lastNetworkRecoveryAction + "\",";
+  response += "\"last_supabase_http_status\":";
+  response += hasLastSupabaseHttpStatus ? String(lastSupabaseHttpStatus) : "null";
+  response += ",";
+  response += "\"consecutive_supabase_failures\":" + String(consecutiveSupabaseFailures) + ",";
+  response += "\"last_supabase_error_category\":\"" + lastSupabaseErrorCategory + "\",";
+  response += "\"last_successful_telemetry_post_uptime_seconds\":" + String(lastSuccessfulTelemetryPostUptimeSeconds) + ",";
+  response += "\"last_successful_diagnostics_post_uptime_seconds\":" + String(lastSuccessfulDiagnosticsPostUptimeSeconds) + ",";
   response += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
   response += "\"pump_control_available\":" + String(MBG_PUMP_CONTROL_AVAILABLE ? "true" : "false") + ",";
   response += "\"device_can_water\":" + String(MBG_DEVICE_CAN_WATER ? "true" : "false") + ",";

@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7K Hosted At-a-Glance Measurement Trends on branch `phase7k-hosted-at-a-glance-measurement-trends`
+- Current repo context: Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review on branch `phase7k5-esp32-runtime-wifi-recovery-incident-review`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -35,7 +35,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7G.3 status: complete / committed; Gen2 control-quality rule design
 - Phase 7G.4 status: firmware implementation committed / build-validated
 - Phase 7G.5 status: complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`
-- Phase 7K status: validated / complete pending merge; hosted Gen2 Live Measurements cards show display-only at-a-glance trend cues
+- Phase 7K status: complete and present on `main`; hosted Gen2 Live Measurements cards show display-only at-a-glance trend cues
+- Phase 7K.5 status: active / in validation; firmware diagnostics and conservative runtime Wi-Fi recovery hardening are implemented in `src/main.cpp`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -78,15 +79,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 33. Phase 7H - MVP Field Deployment Backlog Rebaseline - documentation/planning only
 34. Phase 7I - Hosted Measurement Trust & Plausibility Guardrails - future
 35. Phase 7J - Official Pinout, Wiring, and From-To Documentation - future
-36. Phase 7K - Hosted At-a-Glance Measurement Trends - validated / complete pending merge
-37. Phase 7L - MVP Setup / Provisioning Boundary - future
-38. Phase 7M - Sensor Upgrade Decision Matrix - future
-39. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
-40. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
-41. Phase 7P - Hardware Safety Maturity - future
-42. Phase 7Q - Pilot Deployment Package - future
+36. Phase 7K - Hosted At-a-Glance Measurement Trends - complete and present on `main`
+37. Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - active / in validation
+38. Phase 7L - MVP Setup / Provisioning Boundary - future
+39. Phase 7M - Sensor Upgrade Decision Matrix - future
+40. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
+41. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
+42. Phase 7P - Hardware Safety Maturity - future
+43. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is validated / complete pending merge. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is active / in validation. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -649,6 +651,7 @@ Follow-up placeholders, requiring separate approval:
 - Phase 7I - Hosted Measurement Trust & Plausibility Guardrails
 - Phase 7J - Official Pinout, Wiring, and From-To Documentation
 - Phase 7K - Hosted At-a-Glance Measurement Trends
+- Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review
 - Phase 7L - MVP Setup / Provisioning Boundary
 - Phase 7M - Sensor Upgrade Decision Matrix
 - Phase 7N - Sensor Calibration / Measurement-System Evaluation
@@ -1199,6 +1202,45 @@ Preserved boundaries:
 Deferred:
 
 - Future hosted UX work may explore more creative at-a-glance context badges such as fast change, new low/high, long gap, recovered, or little change, but Phase 7K does not add those.
+
+## Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - ACTIVE / IN VALIDATION
+
+Scope:
+
+- Document and respond to the 2026-06-03 runtime incident where Prototype01, Scout01, and Balcony01 were powered but locally unreachable until power-cycled.
+- Treat the likely failure class as runtime Wi-Fi/network/server/telemetry recovery after a shared router/AP/Wi-Fi event.
+- Do not claim the incident was confirmed weak Wi-Fi or a simple power outage.
+- Add in-memory Wi-Fi/network and Supabase/cloud-post diagnostics in `src/main.cpp`.
+- Expose new local `/status` diagnostic evidence.
+- Populate existing `device_heartbeats` evidence columns where possible.
+- Add conservative runtime Wi-Fi recovery hardening with `WiFi.setAutoReconnect(true)`, `WiFi.persistent(false)`, `WiFi.setSleep(false)`, `WiFi.onEvent(...)`, bounded `WiFi.reconnect()`, and bounded `WiFi.disconnect(false) + WiFi.begin(...)` after sustained failure.
+- Keep pump shutoff first priority in `loop()`.
+- Do not add `ESP.restart()` in Phase 7K.5.
+- Do not add periodic reboot.
+
+Validation state:
+
+- Prototype01 upload, endpoint validation, and 15-minute cloud-post evidence passed with `last_supabase_http_status:201`, `consecutive_supabase_failures:0`, `last_successful_telemetry_post_uptime_seconds:901`, `last_successful_diagnostics_post_uptime_seconds:903`, and `currently_watering:false`.
+- Balcony01 upload, endpoint validation, and 15-minute cloud-post evidence passed with `/status`, `/capabilities`, and `/measurements` reachable, Wi-Fi connected, no reconnect or begin-recovery attempts, `last_supabase_http_status:201`, `consecutive_supabase_failures:0`, `currently_watering:false`, `pump_control_available:true`, and `device_can_water:true`.
+- Scout01 upload, endpoint validation, and 15-minute cloud-post evidence passed with `/status` and `/measurements` reachable, Wi-Fi connected, no reconnect or begin-recovery attempts, `last_supabase_http_status:201`, `consecutive_supabase_failures:0`, `last_supabase_error_category:none`, telemetry and diagnostics success uptimes `2701` and `2702`, `currently_watering:false`, `pump_control_available:false`, and `device_can_water:false`.
+- Scout01 `/measurements` returned valid JSON with 6 records, BME280 air temperature `78.22 F`, BME280 relative humidity `38.37%`, BME280 pressure `1024.29 hPa`, DS18B20 temperature `70.81 F`, soil moisture index `64.0`, soil raw ADC `2110`, and all records `control_eligible:false`.
+- All three Phase 7K.5 targets, Prototype01, Scout01, and Balcony01, passed upload, endpoint, and 15-minute cloud-post validation; all remained reachable, no unintended watering was reported, Scout01 remained non-watering, and Balcony01 remained not watering during validation.
+- Validation proves safe boot, local endpoint availability, cloud-post success, and diagnostic visibility after deployment; no controlled router/AP disruption test was performed, and this does not yet prove recovery from the exact overnight event.
+
+Preserved boundaries:
+
+- No SQL/RLS, Supabase schema, hosted SQL view, hosted frontend, local dashboard, production wiring doc, pin, sensor, device ID, watering duration, threshold, cooldown, `LOG_INTERVAL_MS`, moisture mapping, `control_eligible`, or `/water-now` behavior change.
+- No Supabase command/control.
+- No hosted calls to local ESP32 endpoints.
+- Manual Water Now remains local-only.
+- Scout01 remains non-watering.
+
+Follow-up items:
+
+- Consider last-resort controlled `ESP.restart()` policy only if evidence proves bounded recovery cannot recover.
+- Consider hosted diagnostics expansion to show new network recovery evidence.
+- Consider controlled network/router/AP disruption testing only with Jeremy approval.
+- Continue longer field soak validation.
 
 ## Phase 7L - MVP Setup / Provisioning Boundary
 
