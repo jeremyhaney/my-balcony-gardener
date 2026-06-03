@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7H MVP Field Deployment Backlog Rebaseline on branch `phase7h-mvp-field-deployment-backlog-rebaseline`
+- Current repo context: Phase 7K Hosted At-a-Glance Measurement Trends on branch `phase7k-hosted-at-a-glance-measurement-trends`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -35,6 +35,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7G.3 status: complete / committed; Gen2 control-quality rule design
 - Phase 7G.4 status: firmware implementation committed / build-validated
 - Phase 7G.5 status: complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`
+- Phase 7K status: validated / complete pending merge; hosted Gen2 Live Measurements cards show display-only at-a-glance trend cues
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -77,7 +78,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 33. Phase 7H - MVP Field Deployment Backlog Rebaseline - documentation/planning only
 34. Phase 7I - Hosted Measurement Trust & Plausibility Guardrails - future
 35. Phase 7J - Official Pinout, Wiring, and From-To Documentation - future
-36. Phase 7K - Hosted At-a-Glance Measurement Trends - future
+36. Phase 7K - Hosted At-a-Glance Measurement Trends - validated / complete pending merge
 37. Phase 7L - MVP Setup / Provisioning Boundary - future
 38. Phase 7M - Sensor Upgrade Decision Matrix - future
 39. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
@@ -85,7 +86,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 41. Phase 7P - Hardware Safety Maturity - future
 42. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is validated / complete pending merge. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -1162,23 +1163,42 @@ Out of scope:
 - Changing hardware configuration.
 - Creating the full pinout/from-to document without explicit approval.
 
-## Phase 7K - Hosted At-a-Glance Measurement Trends
+## Phase 7K - Hosted At-a-Glance Measurement Trends - VALIDATED / COMPLETE PENDING MERGE
 
 Scope:
 
-- Make hosted measurement cards more informative at a glance.
-- Add small trend visuals such as a sparkline per measurement card.
-- Add trend direction context such as rising, falling, flat, or insufficient data.
-- Add short time-window context such as 3h, 12h, or 24h.
-- Pair "last reading" with "recent behavior".
-- Integrate trend context with Good / Watch / Check card states.
-- Avoid presenting known unrealistic values as normal trends.
+- Phase 7K added compact display-only trend cues to hosted Gen2 `Live Measurements` cards in hosted-readonly mode.
+- Trend cues use the already-fetched hosted Gen2 measurement rows for the selected hosted device/window; no new Supabase query was added.
+- Trend states include Rising, Falling, Stable, Not enough data, Sparse data, Stale data, and Not trendable.
+- Rising, Falling, and Stable display direction symbols (`↗ Rising`, `↘ Falling`, `→ Stable`).
+- Delta appears as a deliberate second line, such as `-2.1 F over 24h`; elapsed duration formatting rounds cleanly so `23.9h` displays as `24h`.
+- Trendable cards show a compact inline SVG sparkline on the trend capsule's right side; weak-data states do not show fake sparklines.
+- Routine `Reading is displayable and passed hosted trust checks.` text moved into Sensor details as `Status note`; non-routine warning/check messages remain visible on cards.
+- Jeremy visually reviewed the hosted-readonly preview and approved the trend cue appearance.
 
-Out of scope:
+Validation:
 
-- Command/control.
-- Local ESP32 endpoint calls.
-- Making bad or implausible data look more authoritative.
+- `npm.cmd run lint` passed.
+- `npm.cmd run build` passed.
+- Hosted-readonly production build passed.
+- Existing Vite large chunk warning remains unchanged/existing.
+- `git diff --check` passed with CRLF warnings only.
+- Hosted-readonly forbidden bundle scans returned no hits for `/water-now`, `Water Now`, `/logs`, `LiveStats`, `Currently Watering`, `VITE_ESP32_URL`, `VITE_WATER_ENDPOINT`, `10.0.0.200`, `10.0.0.180`, or `10.0.0.192`.
+- Review-only endpoint scans returned no hits for `/status`, `/capabilities`, or `/measurements`.
+
+Preserved boundaries:
+
+- No firmware changes.
+- No SQL/RLS, Supabase schema, or hosted SQL view changes.
+- No new Supabase query.
+- No watering/control behavior change.
+- No Raw ADC meaning change.
+- No control eligibility behavior change.
+- Device Status, Device Diagnostics, Phase 7I hosted trust/plausibility behavior, and HostedGen2TrendChart behavior were preserved.
+
+Deferred:
+
+- Future hosted UX work may explore more creative at-a-glance context badges such as fast change, new low/high, long gap, recovered, or little change, but Phase 7K does not add those.
 
 ## Phase 7L - MVP Setup / Provisioning Boundary
 

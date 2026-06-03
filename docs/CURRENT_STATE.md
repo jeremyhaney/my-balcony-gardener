@@ -327,6 +327,17 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7F.3 corrects hosted-readonly Device Status freshness so it uses the already-fetched `hostedGen2Rows` from `public.hosted_gen2_measurements` instead of Gen1 `sensor_logs` rows.
 - Phase 7F.3 adds Gen2 measurement-quality warnings based on Gen2 metadata and displayability; it does not diagnose plant health, diagnose sensor root cause, treat Raw ADC as calibrated moisture, or use `control_eligible` as command/control.
 - Phase 7F.3 adds no firmware changes, no SQL/RLS changes, no `SensorLogRow` changes, no `DualAxisChart` changes, no Supabase command/control, and no Remote Water Now.
+- Phase 7K Hosted At-a-Glance Measurement Trends is implemented, visually reviewed, and validated on feature branch `phase7k-hosted-at-a-glance-measurement-trends` pending merge.
+- Phase 7K is hosted-readonly frontend UI only: hosted Gen2 Live Measurements cards now show compact `Trend` capsules using already-fetched hosted Gen2 measurement rows; no new Supabase query was added.
+- Phase 7K trend states include Rising, Falling, Stable, Not enough data, Sparse data, Stale data, and Not trendable.
+- Rising, Falling, and Stable trend states display direction symbols (`↗ Rising`, `↘ Falling`, `→ Stable`), a second-line delta such as `-2.1 F over 24h`, and a compact inline SVG sparkline when trendable data exists.
+- Phase 7K weak-data states do not show fake sparklines, and elapsed duration formatting rounds cleanly so values such as `23.9h` display as `24h`.
+- Phase 7K moved the routine `Reading is displayable and passed hosted trust checks.` text into Sensor details as `Status note`; non-routine warning/check messages remain visible on the card.
+- Phase 7K preserved Device Status, Device Diagnostics, Phase 7I hosted trust/plausibility behavior, HostedGen2TrendChart behavior, Raw ADC meaning, control eligibility behavior, and watering/control behavior.
+- Phase 7K made no firmware, SQL/RLS, Supabase schema/view, production wiring, `SensorLogRow`, or local ESP32 endpoint changes.
+- Phase 7K validation passed `npm.cmd run lint`, `npm.cmd run build`, hosted-readonly production build, and `git diff --check` with CRLF warnings only; the existing Vite large chunk warning remains unchanged.
+- Phase 7K hosted-readonly forbidden bundle scans returned no hits for `/water-now`, `Water Now`, `/logs`, `LiveStats`, `Currently Watering`, `VITE_ESP32_URL`, `VITE_WATER_ENDPOINT`, `10.0.0.200`, `10.0.0.180`, or `10.0.0.192`; review-only endpoint scans returned no hits for `/status`, `/capabilities`, or `/measurements`.
+- Jeremy visually reviewed the hosted-readonly preview and approved the Phase 7K trend cue appearance.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
@@ -366,6 +377,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Future calibration/control phases remain separate from Phase 7F.1.
 - Future sensor assignment/location UI remains separate from Phase 7F.1.
 - Future hosted Gen2 chart refinements may include Clean View / Expert View, seasonal axis presets, or a custom axis-label rail if field use justifies them.
+- Future hosted UX work may explore more creative at-a-glance context badges such as fast change, new low/high, long gap, recovered, or little change; Phase 7K does not add those.
 - Future validation/calibration must determine real moisture thresholds and control eligibility before changing control behavior.
 - Auth/login, settings/provisioning, alerts, and commercial production hardening
 - No-Wi-Fi operation is currently autonomous/headless; AP/captive portal provisioning and installer/customer setup mode are deferred.
