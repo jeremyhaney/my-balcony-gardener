@@ -189,14 +189,17 @@
 }
 
 .hosted-gen2-measurements-trend {
-  display: inline-flex;
-  flex-wrap: wrap;
+  box-sizing: border-box;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  width: 100%;
   max-width: 100%;
   margin-bottom: 0.35rem;
-  padding: 0.22rem 0.48rem;
+  padding: 0.3rem 0.48rem;
   border: 1px solid rgba(255, 255, 255, 0.36);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(15, 23, 42, 0.22);
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.76rem;
@@ -204,8 +207,37 @@
   overflow-wrap: anywhere;
 }
 
+.hosted-gen2-measurements-trend-text {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.hosted-gen2-measurements-trend-label,
+.hosted-gen2-measurements-trend-delta {
+  display: block;
+}
+
 .hosted-gen2-measurements-trend strong {
   font-weight: 850;
+}
+
+.hosted-gen2-measurements-trend-delta {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.72rem;
+}
+
+.hosted-gen2-measurements-sparkline {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hosted-gen2-measurements-sparkline polyline {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .hosted-gen2-measurements-status-reason {

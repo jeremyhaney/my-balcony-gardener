@@ -5,7 +5,11 @@ import {
   getHostedGen2MeasurementDisplay,
   getHostedGen2MeasurementStatus,
 } from '../hostedGen2Display'
-import { getHostedGen2TrendSummary } from '../hostedGen2TrendSummary'
+import {
+  getHostedGen2TrendSummary,
+  type HostedGen2TrendDirection,
+  type HostedGen2SparklinePoint,
+} from '../hostedGen2TrendSummary'
 import { getHostedMeasurementTrust } from '../hostedMeasurementTrust'
 import './HostedGen2Measurements.css'
 
@@ -94,6 +98,7 @@ const MeasurementCard = ({
     fallbackStatus: status,
   })
   const trendSummary = getHostedGen2TrendSummary(row, rows)
+  const shouldShowHeadlineReason = shouldShowTrustHeadlineReason(trust.headlineReason)
 
   return (
     <article
@@ -110,22 +115,39 @@ const MeasurementCard = ({
         <span className="hosted-gen2-measurements-status-pill">{trust.label}</span>
       </div>
       <p className="hosted-gen2-measurements-value">{formatMeasurementValue(row)}</p>
-      <p
+      <div
         className={[
           'hosted-gen2-measurements-trend',
           `is-${trendSummary.direction.replace(/_/g, '-')}`,
         ].join(' ')}
       >
-        <span>Recent trend:</span>{' '}
-        <strong>{trendSummary.label}</strong>
-        {trendSummary.deltaLabel ? <span>, {trendSummary.deltaLabel}</span> : null}
-      </p>
-      {trust.headlineReason ? (
+        <div className="hosted-gen2-measurements-trend-text">
+          <span className="hosted-gen2-measurements-trend-label">
+            Trend: <strong>{formatTrendLabel(trendSummary.direction, trendSummary.label)}</strong>
+          </span>
+          {trendSummary.deltaLabel ? (
+            <span className="hosted-gen2-measurements-trend-delta">
+              {trendSummary.deltaLabel}
+            </span>
+          ) : null}
+        </div>
+        {trendSummary.sparklinePoints ? (
+          <TrendSparkline points={trendSummary.sparklinePoints} />
+        ) : null}
+      </div>
+      {shouldShowHeadlineReason ? (
         <p className="hosted-gen2-measurements-status-reason">{trust.headlineReason}</p>
       ) : null}
       <details className="hosted-gen2-measurements-details">
         <summary>Sensor details</summary>
         <dl className="hosted-gen2-measurements-status">
+          {!shouldShowHeadlineReason && trust.headlineReason ? (
+            <>
+              <dt>Status note</dt>
+              <dd>{trust.headlineReason}</dd>
+            </>
+          ) : null}
+
           <dt>Display trust</dt>
           <dd>{trust.detailReason}</dd>
 
@@ -152,6 +174,34 @@ const MeasurementCard = ({
         </dl>
       </details>
     </article>
+  )
+}
+
+const SPARKLINE_WIDTH = 64
+const SPARKLINE_HEIGHT = 24
+const SPARKLINE_PADDING = 3
+const ROUTINE_TRUST_PASS_REASON = 'Reading is displayable and passed hosted trust checks.'
+
+const TREND_DIRECTION_SYMBOLS: Partial<Record<HostedGen2TrendDirection, string>> = {
+  rising: '↗',
+  falling: '↘',
+  stable: '→',
+}
+
+const TrendSparkline = ({ points }: { points: HostedGen2SparklinePoint[] }) => {
+  const polylinePoints = formatSparklinePolyline(points)
+
+  return (
+    <svg
+      className="hosted-gen2-measurements-sparkline"
+      viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`}
+      width={SPARKLINE_WIDTH}
+      height={SPARKLINE_HEIGHT}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <polyline points={polylinePoints} />
+    </svg>
   )
 }
 
@@ -236,6 +286,38 @@ const formatControlEligible = (value: boolean | null | undefined): string =>
 
 const formatTrustFlags = (values: string[]): string =>
   values.length > 0 ? values.join(', ') : 'None'
+
+const shouldShowTrustHeadlineReason = (value: string): boolean =>
+  value !== ROUTINE_TRUST_PASS_REASON
+
+const formatTrendLabel = (
+  direction: HostedGen2TrendDirection,
+  label: string,
+): string => {
+  const symbol = TREND_DIRECTION_SYMBOLS[direction]
+
+  return symbol ? `${symbol} ${label}` : label
+}
+
+const formatSparklinePolyline = (points: HostedGen2SparklinePoint[]): string => {
+  const innerWidth = SPARKLINE_WIDTH - SPARKLINE_PADDING * 2
+  const innerHeight = SPARKLINE_HEIGHT - SPARKLINE_PADDING * 2
+
+  return points
+    .map((point) => {
+      const x = SPARKLINE_PADDING + point.x * innerWidth
+      const y = SPARKLINE_PADDING + point.y * innerHeight
+
+      return `${formatSvgNumber(x)},${formatSvgNumber(y)}`
+    })
+    .join(' ')
+}
+
+const formatSvgNumber = (value: number): string =>
+  value.toLocaleString('en-US', {
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  })
 
 const getMeasurementCardKey = (row: HostedGen2MeasurementRow): string =>
   [

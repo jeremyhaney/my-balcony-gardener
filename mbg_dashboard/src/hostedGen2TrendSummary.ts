@@ -14,8 +14,14 @@ export type HostedGen2TrendSummary = {
   direction: HostedGen2TrendDirection
   label: string
   deltaLabel?: string
+  sparklinePoints?: HostedGen2SparklinePoint[]
   sampleCount: number
   elapsedMinutes?: number
+}
+
+export type HostedGen2SparklinePoint = {
+  x: number
+  y: number
 }
 
 type UsableTrendSample = {
@@ -26,6 +32,7 @@ type UsableTrendSample = {
 const MIN_USABLE_SAMPLE_COUNT = 3
 const MIN_ELAPSED_MINUTES = 30
 const MIN_ELAPSED_MS = MIN_ELAPSED_MINUTES * 60 * 1000
+const MAX_SPARKLINE_SAMPLE_COUNT = 12
 const UNUSABLE_QUALITY_VALUES = new Set([
   'failed',
   'missing',
@@ -74,6 +81,7 @@ export const getHostedGen2TrendSummary = (
     direction,
     label: TREND_LABELS[direction],
     deltaLabel: formatDeltaLabel(currentRow, delta, elapsedMinutes),
+    sparklinePoints: getSparklinePoints(samples),
     sampleCount: samples.length,
     elapsedMinutes,
   }
@@ -203,22 +211,51 @@ const getDeltaUnit = (row: HostedGen2MeasurementRow): string => {
 
 const formatElapsed = (elapsedMinutes: number): string => {
   if (elapsedMinutes < 60) {
-    return `${Math.max(1, elapsedMinutes)}m`
+    return `${Math.max(1, Math.round(elapsedMinutes))}m`
   }
 
   const elapsedHours = elapsedMinutes / 60
 
   if (elapsedHours < 48) {
-    return `${formatDurationNumber(elapsedHours)}h`
+    return `${Math.max(1, Math.round(elapsedHours))}h`
   }
 
-  return `${formatDurationNumber(elapsedHours / 24)}d`
+  return `${Math.max(2, Math.round(elapsedHours / 24))}d`
 }
 
-const formatDurationNumber = (value: number): string =>
-  Number.isInteger(value)
-    ? value.toLocaleString([], { maximumFractionDigits: 0 })
-    : value.toLocaleString([], { maximumFractionDigits: 1 })
+const getSparklinePoints = (
+  samples: UsableTrendSample[],
+): HostedGen2SparklinePoint[] | undefined => {
+  const sparklineSamples = downsampleSamples(samples)
+
+  if (sparklineSamples.length < MIN_USABLE_SAMPLE_COUNT) {
+    return undefined
+  }
+
+  const values = sparklineSamples.map((sample) => sample.value)
+  const minValue = Math.min(...values)
+  const maxValue = Math.max(...values)
+  const valueRange = maxValue - minValue
+  const maxIndex = sparklineSamples.length - 1
+
+  return sparklineSamples.map((sample, index) => ({
+    x: maxIndex === 0 ? 0.5 : index / maxIndex,
+    y: valueRange === 0 ? 0.5 : 1 - (sample.value - minValue) / valueRange,
+  }))
+}
+
+const downsampleSamples = (samples: UsableTrendSample[]): UsableTrendSample[] => {
+  if (samples.length <= MAX_SPARKLINE_SAMPLE_COUNT) {
+    return samples
+  }
+
+  const lastIndex = samples.length - 1
+
+  return Array.from({ length: MAX_SPARKLINE_SAMPLE_COUNT }, (_, index) => {
+    const sampleIndex = Math.round(index * (lastIndex / (MAX_SPARKLINE_SAMPLE_COUNT - 1)))
+    return samples[sampleIndex]
+  })
+}
 
 const getElapsedMinutes = (
   earliestSample: UsableTrendSample,
