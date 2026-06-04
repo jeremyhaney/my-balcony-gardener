@@ -11,6 +11,10 @@ import {
   type HostedGen2SparklinePoint,
 } from '../hostedGen2TrendSummary'
 import { getHostedMeasurementTrust } from '../hostedMeasurementTrust'
+import {
+  getHostedGen2MeasurementDisplayModels,
+  type HostedGen2MeasurementDisplayModel,
+} from '../hostedGen2RecentValue'
 import './HostedGen2Measurements.css'
 
 type HostedGen2MeasurementsProps = {
@@ -29,9 +33,9 @@ const HostedGen2Measurements = ({
   const hasUsableRows = rows.length > 0
   const isBlockingLoad = isLoading && !hasUsableRows
   const isRefreshing = isLoading && hasUsableRows
-  const latestRows = getLatestSampleRows(sortedRows)
-  const latestMeasurementRows = [...latestRows].sort(compareRowsForDisplay)
-  const latestMeasuredAt = latestRows[0]?.measured_at ?? null
+  const measurementDisplayModels = getHostedGen2MeasurementDisplayModels(sortedRows)
+    .sort(compareDisplayModelsForDisplay)
+  const latestMeasuredAt = sortedRows[0]?.measured_at ?? null
 
   return (
     <section className="hosted-gen2-measurements" aria-label="Live Measurements">
@@ -62,11 +66,11 @@ const HostedGen2Measurements = ({
       {rows.length > 0 ? (
         <>
           <div className="hosted-gen2-measurements-card-grid">
-            {latestMeasurementRows.map((row) => (
+            {measurementDisplayModels.map((model) => (
               <MeasurementCard
-                key={getMeasurementCardKey(row)}
-                label={formatHostedGen2MeasurementLabel(row.measurement_name)}
-                row={row}
+                key={getMeasurementCardKey(model.latestRow)}
+                label={formatHostedGen2MeasurementLabel(model.latestRow.measurement_name)}
+                model={model}
                 rows={rows}
               />
             ))}
@@ -79,25 +83,48 @@ const HostedGen2Measurements = ({
 
 const MeasurementCard = ({
   label,
-  row,
+  model,
   rows,
 }: {
   label: string
-  row: HostedGen2MeasurementRow | undefined
+  model: HostedGen2MeasurementDisplayModel
   rows: HostedGen2MeasurementRow[]
 }) => {
-  const display = getHostedGen2MeasurementDisplay(row?.measurement_name)
-  const status = getHostedGen2MeasurementStatus({
-    measurementName: row?.measurement_name,
-    measurementValue: row?.measurement_value,
-    valid: row?.valid,
-  })
-  const trust = getHostedMeasurementTrust({
-    row,
+  const latestRow = model.latestRow
+  const displayRow = model.displayRow ?? undefined
+  const display = getHostedGen2MeasurementDisplay(latestRow.measurement_name)
+  const status =
+    model.mode === 'unavailable'
+      ? { level: 'check' as const, label: 'Check Sensor', reason: 'Reading unavailable' }
+      : getHostedGen2MeasurementStatus({
+          measurementName: displayRow?.measurement_name,
+          measurementValue: displayRow?.measurement_value,
+          valid: displayRow?.valid,
+        })
+  const baseTrust = getHostedMeasurementTrust({
+    row: displayRow,
     rows,
     fallbackStatus: status,
   })
-  const trendSummary = getHostedGen2TrendSummary(row, rows)
+  const trust =
+    model.mode === 'recent-good'
+      ? {
+          level: 'watch' as const,
+          label: model.labelOverride ?? 'Using Recent Value',
+          headlineReason: model.message ?? '',
+          detailReason: model.detailReason ?? '',
+          trustFlags: model.trustFlags,
+        }
+      : model.mode === 'unavailable'
+        ? {
+            level: 'failed' as const,
+            label: model.labelOverride ?? 'Check Sensor',
+            headlineReason: model.message ?? '',
+            detailReason: model.detailReason ?? '',
+            trustFlags: model.trustFlags,
+          }
+        : baseTrust
+  const trendSummary = getHostedGen2TrendSummary(displayRow, rows)
   const shouldShowHeadlineReason = shouldShowTrustHeadlineReason(trust.headlineReason)
 
   return (
@@ -114,7 +141,7 @@ const MeasurementCard = ({
         <h3>{label}</h3>
         <span className="hosted-gen2-measurements-status-pill">{trust.label}</span>
       </div>
-      <p className="hosted-gen2-measurements-value">{formatMeasurementValue(row)}</p>
+      <p className="hosted-gen2-measurements-value">{formatMeasurementValue(displayRow)}</p>
       <div
         className={[
           'hosted-gen2-measurements-trend',
@@ -154,23 +181,46 @@ const MeasurementCard = ({
           <dt>Trust flags</dt>
           <dd>{formatTrustFlags(trust.trustFlags)}</dd>
 
+          <dt>Display source</dt>
+          <dd>{formatDisplaySource(model.mode)}</dd>
+
+          <dt>Displayed measured at</dt>
+          <dd>{formatTimestamp(displayRow?.measured_at)}</dd>
+
+          {model.recentGoodRow ? (
+            <>
+              <dt>Recent good evidence</dt>
+              <dd>{formatRecentGoodEvidence(model.latestRow, model.recentGoodRow)}</dd>
+            </>
+          ) : null}
+
+          <dt>Latest measured at</dt>
+          <dd>{formatTimestamp(latestRow.measured_at)}</dd>
+
           <dt>Sensor key</dt>
-          <dd>{formatNullableText(row?.sensor_key)}</dd>
+          <dd>{formatNullableText(latestRow.sensor_key)}</dd>
 
           <dt>Sensor type</dt>
-          <dd>{formatNullableText(row?.sensor_type)}</dd>
+          <dd>{formatNullableText(latestRow.sensor_type)}</dd>
 
-          <dt>Valid</dt>
-          <dd>{formatNullableBoolean(row?.valid)}</dd>
+          <dt>Latest valid</dt>
+          <dd>{formatNullableBoolean(latestRow.valid)}</dd>
 
-          <dt>Quality</dt>
-          <dd>{formatNullableText(row?.quality)}</dd>
+          <dt>Latest quality</dt>
+          <dd>{formatNullableText(latestRow.quality)}</dd>
 
-          <dt>Reason</dt>
-          <dd>{formatNullableText(row?.reason)}</dd>
+          <dt>Latest reason</dt>
+          <dd>{formatNullableText(latestRow.reason)}</dd>
 
-          <dt>Control eligible</dt>
-          <dd>{formatControlEligible(row?.control_eligible)}</dd>
+          <dt>Latest control eligible</dt>
+          <dd>{formatControlEligible(latestRow.control_eligible)}</dd>
+
+          {model.mode === 'recent-good' ? (
+            <>
+              <dt>Displayed control eligible</dt>
+              <dd>{formatControlEligible(displayRow?.control_eligible)}</dd>
+            </>
+          ) : null}
         </dl>
       </details>
     </article>
@@ -235,15 +285,10 @@ const compareRowsForDisplay = (
   return left.record_index - right.record_index
 }
 
-const getLatestSampleRows = (sortedRows: HostedGen2MeasurementRow[]) => {
-  const latestMeasuredAt = sortedRows[0]?.measured_at
-
-  if (!latestMeasuredAt) {
-    return []
-  }
-
-  return sortedRows.filter((row) => row.measured_at === latestMeasuredAt)
-}
+const compareDisplayModelsForDisplay = (
+  left: HostedGen2MeasurementDisplayModel,
+  right: HostedGen2MeasurementDisplayModel,
+) => compareRowsForDisplay(left.latestRow, right.latestRow)
 
 const formatTimestamp = (value: string | null | undefined): string => {
   if (!value) {
@@ -286,6 +331,53 @@ const formatControlEligible = (value: boolean | null | undefined): string =>
 
 const formatTrustFlags = (values: string[]): string =>
   values.length > 0 ? values.join(', ') : 'None'
+
+const formatDisplaySource = (mode: HostedGen2MeasurementDisplayModel['mode']): string => {
+  if (mode === 'recent-good') {
+    return 'Using recent good value; latest read evidence remains below.'
+  }
+
+  if (mode === 'unavailable') {
+    return 'Latest read is not displayable and no recent good value was found.'
+  }
+
+  return 'Latest hosted reading.'
+}
+
+const formatRecentGoodEvidence = (
+  latestRow: HostedGen2MeasurementRow,
+  recentGoodRow: HostedGen2MeasurementRow,
+): string => {
+  const value = formatMeasurementValue(recentGoodRow)
+  const measuredAt = formatTimestamp(recentGoodRow.measured_at)
+  const ageFromLatest = formatDurationBetween(recentGoodRow.measured_at, latestRow.measured_at)
+
+  return `${value} at ${measuredAt}; ${ageFromLatest} before latest read.`
+}
+
+const formatDurationBetween = (startValue: string, endValue: string): string => {
+  const startMs = new Date(startValue).getTime()
+  const endMs = new Date(endValue).getTime()
+
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
+    return 'age unavailable'
+  }
+
+  const totalSeconds = Math.round((endMs - startMs) / 1000)
+
+  if (totalSeconds < 60) {
+    return `${totalSeconds} sec`
+  }
+
+  const totalMinutes = Math.round(totalSeconds / 60)
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`
+  }
+
+  const totalHours = Math.round(totalMinutes / 60)
+  return `${totalHours} hr`
+}
 
 const shouldShowTrustHeadlineReason = (value: string): boolean =>
   value !== ROUTINE_TRUST_PASS_REASON

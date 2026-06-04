@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review on branch `phase7k5-esp32-runtime-wifi-recovery-incident-review`
+- Current repo context: Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility on branch `phase7k6-hosted-runtime-diagnostics-plain-english`
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -36,7 +36,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7G.4 status: firmware implementation committed / build-validated
 - Phase 7G.5 status: complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`
 - Phase 7K status: complete and present on `main`; hosted Gen2 Live Measurements cards show display-only at-a-glance trend cues
-- Phase 7K.5 status: active / in validation; firmware diagnostics and conservative runtime Wi-Fi recovery hardening are implemented in `src/main.cpp`
+- Phase 7K.5 status: complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`
+- Phase 7K.6 status: active; hosted-readonly plain-English runtime diagnostics and transient-read recent-good display fallback
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -80,15 +81,30 @@ It is a planning guide, not an implementation approval. Each item still requires
 34. Phase 7I - Hosted Measurement Trust & Plausibility Guardrails - future
 35. Phase 7J - Official Pinout, Wiring, and From-To Documentation - future
 36. Phase 7K - Hosted At-a-Glance Measurement Trends - complete and present on `main`
-37. Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - active / in validation
-38. Phase 7L - MVP Setup / Provisioning Boundary - future
-39. Phase 7M - Sensor Upgrade Decision Matrix - future
-40. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
-41. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
-42. Phase 7P - Hardware Safety Maturity - future
-43. Phase 7Q - Pilot Deployment Package - future
+37. Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - complete and present on `main`
+38. Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - active
+39. Phase 7L - MVP Setup / Provisioning Boundary - future
+40. Phase 7M - Sensor Upgrade Decision Matrix - future
+41. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
+42. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
+43. Phase 7P - Hardware Safety Maturity - future
+44. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is active / in validation. Future work is now rebaselined around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is active. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+
+## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - ACTIVE
+
+Scope:
+
+- Expand the hosted-safe diagnostics view artifact for already-collected runtime heartbeat fields; do not apply SQL until separately approved.
+- Keep hosted diagnostics read-only and explain diagnostics freshness, cloud reporting, connection/recovery state, and watering capability in plain English before raw details.
+- Keep raw heartbeat and Gen2 measurement evidence preserved in advanced/details sections.
+- Add hosted Live Measurements recent-good display fallback for transient failed latest reads using already-fetched `hosted_gen2_measurements` rows.
+- Treat recent-good fallback as presentation only. It does not change raw storage, authorize watering, change `control_eligible`, hide failed evidence, or reinterpret Raw ADC as calibrated moisture.
+
+Out of scope:
+
+- Firmware changes, firmware upload, SQL execution, deploy, Supabase command/control, Remote Water Now, hosted local ESP32 calls, sensor/pin/threshold/duration/cooldown/device-ID changes, plant diagnosis, or sensor-root-cause diagnosis.
 
 ## Phase 5D Validation — FIELD VALIDATED / COMPLETE
 
@@ -1203,7 +1219,7 @@ Deferred:
 
 - Future hosted UX work may explore more creative at-a-glance context badges such as fast change, new low/high, long gap, recovered, or little change, but Phase 7K does not add those.
 
-## Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - ACTIVE / IN VALIDATION
+## Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - COMPLETE
 
 Scope:
 

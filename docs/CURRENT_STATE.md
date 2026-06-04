@@ -351,6 +351,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Scout01 Phase 7K.5 `/measurements` returned valid JSON with 6 records: BME280 air temperature `78.22 F`, BME280 relative humidity `38.37%`, BME280 pressure `1024.29 hPa`, DS18B20 temperature `70.81 F`, soil moisture index `64.0`, soil raw ADC `2110`, and all records `control_eligible:false`.
 - All three Phase 7K.5 targets, Prototype01, Scout01, and Balcony01, passed upload, endpoint, and 15-minute cloud-post validation; all remained reachable, no unintended watering was reported, Scout01 remained non-watering, and Balcony01 remained not watering during validation.
 - Phase 7K.5 validation proves safe boot, local endpoint availability, cloud-post success, and diagnostic visibility after deployment; no controlled router/AP disruption test was performed, and this does not yet prove recovery from the exact overnight event.
+- Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is active on branch `phase7k6-hosted-runtime-diagnostics-plain-english`.
+- Phase 7K.6 is hosted-readonly diagnostics presentation work. It adds a SQL artifact for expanding `public.hosted_device_diagnostics`, but the SQL has not been run or applied.
+- Phase 7K.6 keeps hosted diagnostics read-only and interprets heartbeat evidence in plain English before exposing raw engineering fields in advanced details.
+- Phase 7K.6 recent-good Live Measurements fallback is frontend presentation only: transient failed latest reads can display a recent good same-identity value while preserving the failed latest metadata in Sensor details.
+- Phase 7K.6 recent-good fallback does not change raw storage, does not authorize watering, does not change `control_eligible`, keeps moisture/control evidence strict, and keeps Raw ADC diagnostic only.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.

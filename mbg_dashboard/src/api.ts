@@ -20,10 +20,26 @@ export type DeviceDiagnostics = {
   uptime_seconds: number | null
   wifi_connected: boolean | null
   wifi_rssi: number | null
+  wifi_reconnect_attempt_count: number | null
+  last_supabase_http_status: number | null
+  consecutive_supabase_failures: number | null
+  last_supabase_error_category: string | null
+  last_successful_telemetry_post_at: string | null
+  last_successful_diagnostics_post_at: string | null
   free_heap: number | null
   min_free_heap: number | null
   currently_watering: boolean | null
   last_watering_duration: number | null
+  pump_control_available: boolean | null
+  device_can_water: boolean | null
+  wifi_begin_recovery_attempt_count: number | null
+  wifi_disconnect_event_count: number | null
+  wifi_got_ip_event_count: number | null
+  last_wifi_status_code: number | null
+  last_wifi_disconnect_reason: number | null
+  last_wifi_disconnected_uptime_seconds: number | null
+  last_wifi_reconnected_uptime_seconds: number | null
+  last_network_recovery_action: string | null
 }
 
 type DeviceDiagnosticsFetchResult = {
@@ -142,7 +158,7 @@ export async function fetchDeviceDiagnostics(
     const query = supabase
       .from('hosted_device_diagnostics')
       .select(
-        'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, free_heap, min_free_heap, currently_watering, last_watering_duration',
+        'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_reconnect_attempt_count, last_supabase_http_status, consecutive_supabase_failures, last_supabase_error_category, last_successful_telemetry_post_at, last_successful_diagnostics_post_at, free_heap, min_free_heap, currently_watering, last_watering_duration, pump_control_available, device_can_water, wifi_begin_recovery_attempt_count, wifi_disconnect_event_count, wifi_got_ip_event_count, last_wifi_status_code, last_wifi_disconnect_reason, last_wifi_disconnected_uptime_seconds, last_wifi_reconnected_uptime_seconds, last_network_recovery_action',
       )
       .eq('device_id', effectiveDeviceId)
 
