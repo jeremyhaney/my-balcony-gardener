@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility final UI polish / documentation closeout
+- Current repo context: Phase 7L MVP Customer Setup, Access, and Local-Control Boundary documentation implementation
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -38,6 +38,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7K status: complete and present on `main`; hosted Gen2 Live Measurements cards show display-only at-a-glance trend cues
 - Phase 7K.5 status: complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`
 - Phase 7K.6 status: validated / complete pending final commit/push; hosted-readonly plain-English runtime diagnostics, matched top-panel UI, manually applied hosted diagnostics SQL, and transient-read recent-good display fallback
+- Phase 7L status: documentation/design implementation in progress; MVP customer setup, access, and local-control boundary
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -83,14 +84,14 @@ It is a planning guide, not an implementation approval. Each item still requires
 36. Phase 7K - Hosted At-a-Glance Measurement Trends - complete and present on `main`
 37. Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - complete and present on `main`
 38. Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - validated / complete pending final commit/push
-39. Phase 7L - MVP Setup / Provisioning Boundary - future
+39. Phase 7L - MVP Customer Setup, Access, and Local-Control Boundary - documentation/design implementation in progress
 40. Phase 7M - Sensor Upgrade Decision Matrix - future
 41. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
 42. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
 43. Phase 7P - Hardware Safety Maturity - future
 44. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is documentation/design implementation in progress. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - VALIDATED / COMPLETE PENDING FINAL COMMIT/PUSH
 
@@ -1076,7 +1077,7 @@ Scout01 runtime validation:
 - Scout01 returned UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, label `Scout01`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and IP `10.0.0.180`.
 - `/status`, `/capabilities`, `/measurements`, and `/logs` worked.
 - Scout01 reported `pump_control_available:false`, `device_can_water:false`, and `currently_watering:false`.
-- All Scout01 measurements remained `control_eligible:false`; Scout01 did not gain watering authority.
+- All Scout01 measurements remained `control_eligible:false`; Scout01 remained telemetry-only because it is not physically connected to irrigation hardware.
 - ST02 initially had a startup `read_failed` sample, then settled to valid/good/read_ok; settled ST02 evidence included `77.45 F`, `valid:true`, `quality:"good"`, and `reason:"read_ok"`.
 
 Explicit validation limitations:
@@ -1264,16 +1265,24 @@ Follow-up items:
 - Consider controlled network/router/AP disruption testing only with Jeremy approval.
 - Continue longer field soak validation.
 
-## Phase 7L - MVP Setup / Provisioning Boundary
+## Phase 7L - MVP Customer Setup, Access, and Local-Control Boundary - DOCUMENTATION / DESIGN IMPLEMENTATION IN PROGRESS
 
 Scope:
 
 - Define the installer/customer setup boundary needed before MBG can leave Jeremy's bench/balcony.
+- Define the future customer/site/device logical model: customers, sites/gardens/installations, devices, user-site memberships, and support/admin memberships.
+- Define that customers should eventually see only their own site/device data through authenticated, RLS-filtered hosted views.
+- Clarify that current URL/query device selection is convenience, not security.
+- Clarify that the current device registry is a provisioned-device insert allowlist, not customer/site/auth access control.
+- Define Jeremy support/admin access as explicit site membership instead of customer login sharing.
 - Define device identity assignment expectations.
 - Define friendly name/location assignment expectations.
 - Define the Wi-Fi setup boundary.
 - Preserve local-only control authority.
-- Prevent accidental Scout01 watering authority.
+- Document that sensor-only units are telemetry-only because they are not physically connected to irrigation hardware.
+- Record that app-based Water Now is not part of the customer product path.
+- Record future physical local hold-to-water/test direction with loggable event evidence and firmware failsafe shutoff.
+- Define the local dashboard future as engineering/service/setup, not customer daily-use path.
 - Define registry/provisioned-device expectations.
 - Separate compile-time/profile-driven values from field-configurable values.
 - Identify what must wait for a later provisioning system.
@@ -1282,7 +1291,10 @@ Out of scope:
 
 - Supabase command/control.
 - Remote Water Now.
-- Accidental promotion of sensor-only devices to watering authority.
+- Treating URL/query device selection as customer access security.
+- Treating device registry hosted visibility as customer/site/auth authorization.
+- App-based Water Now in the customer hosted product path.
+- Firmware, frontend runtime, SQL/RLS, provisioning UI, local dashboard removal, or physical button implementation.
 - Full production fleet management.
 
 ## Phase 7M - Sensor Upgrade Decision Matrix

@@ -299,7 +299,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Balcony01 `moisture_index` remained the only `control_eligible:true` measurement; DHT01, ST03 soil temperature, and raw ADC remained `control_eligible:false`; ST03 initially had a startup `read_failed` sample but later settled to `77.11 F`, `valid:true`, `quality:"good"`, and `reason:"read_ok"`.
 - Passive Balcony01 checks after more than two 15-minute cadence windows showed no unintended automatic watering while moisture index remained high around `79`, and no Manual Water Now call occurred.
 - Scout01 was uploaded with `balcony-sensor-scout-01` and validated at `10.0.0.180` with UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, label `Scout01`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and firmware version `phase7e-gen2-compat`.
-- Scout01 `/status`, `/capabilities`, `/measurements`, and `/logs` worked; it reported `pump_control_available:false`, `device_can_water:false`, `currently_watering:false`, and all Scout01 measurements remained `control_eligible:false`; Scout01 did not gain watering authority.
+- Scout01 `/status`, `/capabilities`, `/measurements`, and `/logs` worked; it reported `pump_control_available:false`, `device_can_water:false`, `currently_watering:false`, and all Scout01 measurements remained `control_eligible:false`; Scout01 remained telemetry-only because it is not physically connected to irrigation hardware.
 - Scout01 ST02 initially had a startup `read_failed` sample but later settled to `77.45 F`, `valid:true`, `quality:"good"`, and `reason:"read_ok"`.
 - Phase 7G.5 did not directly observe the startup-settling gate in serial because the 15-minute cadence means the first automatic-control pass occurs after the 60-second startup window; freshness was validated by static inspection and normal runtime operation, repeated low-reading automatic start was not forced because field moisture was high, post-watering exclusion was not physically exercised because `/water-now` was not called, and Manual Water Now separation was validated by code inspection rather than a physical pump event.
 - Phase 7G.5 introduced no Supabase command/control or Remote Water Now, and the reported `firmware_version` remains `phase7e-gen2-compat` even though the Phase 7G.4 control-quality-gate code is now uploaded.
@@ -365,6 +365,16 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7K.6 recent-good Live Measurements fallback is frontend presentation only: transient failed latest reads can display a recent good same-identity value while preserving the failed latest metadata in Sensor details.
 - Phase 7K.6 recent-good fallback does not change raw storage, does not authorize watering, does not change `control_eligible`, keeps moisture/control evidence strict, and keeps Raw ADC diagnostic only.
 - Phase 7K.6 recent-good fallback was code-reviewed and build-validated, but no real sampled latest-failed/recent-good same-identity case was found during validation.
+- Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is documentation/design only.
+- Phase 7L records that the customer product path should use the hosted read-only dashboard, not app-based Water Now.
+- Hosted dashboard remains read-only and introduces no local ESP32 endpoint calls.
+- Supabase remains telemetry/history/diagnostics storage only, not command/control.
+- Current local Manual Water Now behavior is unchanged.
+- Future manual watering/test direction is a physical local hold-to-water action on the controller unit with loggable start/stop event evidence and firmware failsafe shutoff.
+- Future customer access requires authenticated, RLS-filtered hosted views and customer/site/device membership; current URL/query device selection is convenience, not security.
+- The current `public.device_registry` remains a provisioned-device insert allowlist, not customer/site/auth access control.
+- Sensor-only units are telemetry-only because they are not physically connected to irrigation hardware; only a physically equipped controller unit can water locally.
+- Phase 7L made no firmware, frontend runtime, SQL/RLS, deploy, or firmware upload changes.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
