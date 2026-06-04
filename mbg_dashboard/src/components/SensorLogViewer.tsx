@@ -40,6 +40,8 @@ type SensorLogViewerProps = {
   isHostedReadonly?: boolean
 }
 
+type DeviceStatusPanelKey = 'status' | 'diagnostics'
+
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Unknown error'
 
@@ -52,6 +54,8 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
   const [hostedGen2Error, setHostedGen2Error] = useState<string | null>(null)
   const [isHostedGen2Loading, setIsHostedGen2Loading] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [openDeviceStatusPanel, setOpenDeviceStatusPanel] =
+    useState<DeviceStatusPanelKey | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
     () => getHistoryControlStateFromUrl().device,
   )
@@ -238,12 +242,24 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
 
   const deviceStatusPanels = (
     <div className="device-status-panels">
-      {telemetryHealth ? <SensorHealthPanel health={telemetryHealth} /> : null}
+      {telemetryHealth ? (
+        <SensorHealthPanel
+          health={telemetryHealth}
+          isOpen={openDeviceStatusPanel === 'status'}
+          onOpenChange={(isOpen) =>
+            setOpenDeviceStatusPanel(isOpen ? 'status' : null)
+          }
+        />
+      ) : null}
 
       <DeviceDiagnosticsPanel
         diagnostics={diagnostics}
         error={diagnosticsError}
         fallbackDeviceLabel={selectedDeviceLabel}
+        isOpen={openDeviceStatusPanel === 'diagnostics'}
+        onOpenChange={(isOpen) =>
+          setOpenDeviceStatusPanel(isOpen ? 'diagnostics' : null)
+        }
       />
     </div>
   )

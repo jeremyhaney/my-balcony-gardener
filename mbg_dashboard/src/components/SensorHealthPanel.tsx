@@ -4,6 +4,16 @@ import './SensorHealthPanel.css'
 
 type SensorHealthPanelProps = {
   health: DeviceStatusHealth<unknown>
+  isOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
+}
+
+type StatusSummaryTone = 'good' | 'watch' | 'check' | 'neutral'
+
+type StatusSummary = {
+  tone: StatusSummaryTone
+  label: string
+  message: string
 }
 
 const statusStyles: Record<
@@ -46,9 +56,11 @@ const statusStyles: Record<
   },
 }
 
-const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
+const SensorHealthPanel = ({ health, isOpen, onOpenChange }: SensorHealthPanelProps) => {
   const styles = statusStyles[health.status]
   const statusMessage = getStatusMessage(health.status)
+  const statusTone = getStatusTone(health.status)
+  const statusSummaries = getStatusSummaries(health)
   const rowsInWindowLabel = health.rowsInWindowLabel ?? 'Rows in window'
   const expectedRowsLabel = health.expectedRowsLabel ?? 'Expected rows'
   const latestReadingsLabel = health.latestReadingsLabel ?? 'Latest readings'
@@ -62,12 +74,18 @@ const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
   } as CSSProperties
 
   return (
-    <details
+    <div
       aria-label="Device status"
-      className="sensor-health-panel"
+      className={`sensor-health-panel${isOpen ? ' is-open' : ''}`}
       style={panelStyle}
     >
-      <summary className={`sensor-health-summary sensor-health-summary-${health.status}`}>
+      <button
+        aria-controls="device-status-details"
+        aria-expanded={isOpen ?? false}
+        className={`sensor-health-summary sensor-health-summary-${health.status}`}
+        onClick={() => onOpenChange?.(!isOpen)}
+        type="button"
+      >
         <span className="sensor-health-title">
           <span
             aria-hidden="true"
@@ -81,37 +99,181 @@ const SensorHealthPanel = ({ health }: SensorHealthPanelProps) => {
             {statusMessage}
           </span>
         ) : null}
-      </summary>
+      </button>
 
-      <div className="sensor-health-details">
-        <dl className="sensor-health-list">
-          <dt>Last report</dt>
-          <dd style={{ margin: 0 }}>{formatDuration(health.latestAgeMs)}</dd>
+      {isOpen ? (
+        <div className="sensor-health-details" id="device-status-details">
+          <div className="sensor-health-heading">
+            <div>
+              <h2>Device Status</h2>
+              <p>{getStatusSubtitle(health.status)}</p>
+            </div>
+            <span className={`sensor-health-overall is-${statusTone}`}>
+              {getPanelStatusLabel(health.status)}
+            </span>
+          </div>
 
-          <dt>{rowsInWindowLabel}</dt>
-          <dd style={{ margin: 0 }}>{health.rowsInWindow}</dd>
+          <div className="sensor-health-summary-grid">
+            {statusSummaries.map((summary) => (
+              <article
+                key={summary.label}
+                className={`sensor-health-summary-card is-${summary.tone}`}
+              >
+                <h3>{summary.label}</h3>
+                <p>{summary.message}</p>
+              </article>
+            ))}
+          </div>
 
-          <dt>{expectedRowsLabel}</dt>
-          <dd style={{ margin: 0 }}>{formatNullableNumber(health.expectedRows)}</dd>
+          <details className="sensor-health-advanced">
+            <summary>Advanced status evidence</summary>
+            <dl className="sensor-health-list">
+              <dt>Last report</dt>
+              <dd>{formatDuration(health.latestAgeMs)}</dd>
 
-          <dt>Coverage</dt>
-          <dd style={{ margin: 0 }}>{formatNullablePercent(health.coveragePercent)}</dd>
+              <dt>{rowsInWindowLabel}</dt>
+              <dd>{health.rowsInWindow}</dd>
 
-          <dt>Largest gap</dt>
-          <dd style={{ margin: 0 }}>{formatElapsedDuration(health.largestGapMs)}</dd>
+              <dt>{expectedRowsLabel}</dt>
+              <dd>{formatNullableNumber(health.expectedRows)}</dd>
 
-          <dt>{latestReadingsLabel}</dt>
-          <dd style={{ margin: 0 }}>{formatLatestReadings(health.latestReadings)}</dd>
+              <dt>Coverage</dt>
+              <dd>{formatNullablePercent(health.coveragePercent)}</dd>
 
-          <dt>{wateringMarkersLabel}</dt>
-          <dd style={{ margin: 0 }}>{formatNullableNumber(health.wateringMarkersInHistory)}</dd>
+              <dt>Largest gap</dt>
+              <dd>{formatElapsedDuration(health.largestGapMs)}</dd>
 
-          <dt>Notes</dt>
-          <dd style={{ margin: 0 }}>{formatNotes(health.notes)}</dd>
-        </dl>
-      </div>
-    </details>
+              <dt>{latestReadingsLabel}</dt>
+              <dd>{formatLatestReadings(health.latestReadings)}</dd>
+
+              <dt>{wateringMarkersLabel}</dt>
+              <dd>{formatNullableNumber(health.wateringMarkersInHistory)}</dd>
+
+              <dt>Notes</dt>
+              <dd>{formatNotes(health.notes)}</dd>
+            </dl>
+          </details>
+        </div>
+      ) : null}
+    </div>
   )
+}
+
+const getStatusTone = (status: DeviceStatusHealthStatus): StatusSummaryTone => {
+  if (status === 'healthy') {
+    return 'good'
+  }
+
+  if (status === 'warning') {
+    return 'watch'
+  }
+
+  return 'check'
+}
+
+const getPanelStatusLabel = (status: DeviceStatusHealthStatus): string => {
+  if (status === 'healthy') {
+    return 'Healthy'
+  }
+
+  if (status === 'warning') {
+    return 'Check Data'
+  }
+
+  return 'Needs Attention'
+}
+
+const getStatusSubtitle = (status: DeviceStatusHealthStatus): string => {
+  if (status === 'healthy') {
+    return 'Recent hosted measurement history looks healthy.'
+  }
+
+  if (status === 'warning') {
+    return 'Hosted measurement history has evidence to review.'
+  }
+
+  return 'Hosted measurement history is missing or stale.'
+}
+
+const getStatusSummaries = (health: DeviceStatusHealth<unknown>): StatusSummary[] => [
+  getFreshnessSummary(health),
+  getCoverageSummary(health),
+  getLatestSampleSummary(health),
+  getGapAndNotesSummary(health),
+]
+
+const getFreshnessSummary = (health: DeviceStatusHealth<unknown>): StatusSummary => {
+  if (health.latestAgeMs === null || health.latestAgeMs < 0) {
+    return {
+      tone: 'check',
+      label: 'No recent data',
+      message: 'No latest hosted report is available for this window.',
+    }
+  }
+
+  const tone = health.status === 'no-recent-data' ? 'check' : getStatusTone(health.status)
+  const label = tone === 'good' ? 'Fresh data' : 'Freshness needs review'
+
+  return {
+    tone,
+    label,
+    message: `Last report was ${formatDuration(health.latestAgeMs).toLowerCase()}.`,
+  }
+}
+
+const getCoverageSummary = (health: DeviceStatusHealth<unknown>): StatusSummary => {
+  if (health.expectedRows === null || health.coveragePercent === null) {
+    return {
+      tone: 'neutral',
+      label: 'Coverage not evaluated',
+      message: `${health.rowsInWindow.toLocaleString()} reports are present in this window.`,
+    }
+  }
+
+  const tone = health.coveragePercent >= 70 ? 'good' : 'watch'
+  const expectedRows = Math.round(health.expectedRows).toLocaleString()
+
+  return {
+    tone,
+    label: tone === 'good' ? 'Good coverage' : 'Coverage needs review',
+    message: `${health.rowsInWindow.toLocaleString()} of ${expectedRows} expected reports are present.`,
+  }
+}
+
+const getLatestSampleSummary = (health: DeviceStatusHealth<unknown>): StatusSummary => {
+  if (health.latestReadings === null) {
+    return {
+      tone: health.status === 'healthy' ? 'neutral' : 'check',
+      label: 'Latest sample unavailable',
+      message: 'The latest hosted sample does not have displayable reading evidence.',
+    }
+  }
+
+  const tone = health.status === 'healthy' ? 'good' : 'watch'
+
+  return {
+    tone,
+    label: tone === 'good' ? 'Latest sample healthy' : 'Latest sample needs review',
+    message: formatLatestReadings(health.latestReadings),
+  }
+}
+
+const getGapAndNotesSummary = (health: DeviceStatusHealth<unknown>): StatusSummary => {
+  if (health.notes.length === 0) {
+    return {
+      tone: 'good',
+      label: 'No issues found',
+      message: 'No issues found in this history window.',
+    }
+  }
+
+  const tone = health.status === 'healthy' ? 'neutral' : getStatusTone(health.status)
+
+  return {
+    tone,
+    label: tone === 'check' ? 'Needs attention' : 'Review notes',
+    message: health.notes.join(' '),
+  }
 }
 
 const getStatusMessage = (status: DeviceStatusHealthStatus): string | null => {

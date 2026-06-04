@@ -15,12 +15,16 @@ type DeviceDiagnosticsPanelProps = {
   diagnostics: DeviceDiagnostics | null
   error: string | null
   fallbackDeviceLabel?: string
+  isOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 const DeviceDiagnosticsPanel = ({
   diagnostics,
   error,
   fallbackDeviceLabel = 'Selected device',
+  isOpen,
+  onOpenChange,
 }: DeviceDiagnosticsPanelProps) => {
   const summaries = [
     getFreshnessSummary(diagnostics),
@@ -32,46 +36,53 @@ const DeviceDiagnosticsPanel = ({
   const showPillStatus = pillSummary.tone !== 'good'
 
   return (
-    <details
+    <div
       aria-label="Device diagnostics"
       className="device-diagnostics-panel"
     >
-      <summary className={`device-diagnostics-pill is-${pillSummary.tone}`}>
+      <button
+        aria-controls="device-diagnostics-details"
+        aria-expanded={isOpen ?? false}
+        className={`device-diagnostics-pill is-${pillSummary.tone}`}
+        onClick={() => onOpenChange?.(!isOpen)}
+        type="button"
+      >
         <span aria-hidden="true" className="device-diagnostics-dot" />
         <span className="device-diagnostics-pill-title">Device Diagnostics</span>
         {showPillStatus ? (
           <span className="device-diagnostics-pill-status">{pillSummary.label}</span>
         ) : null}
-      </summary>
+      </button>
 
-      <div className="device-diagnostics-popover">
-        <div className="device-diagnostics-heading">
-          <div>
-            <h2>Device Diagnostics</h2>
-            <p>{diagnostics?.device_label ?? fallbackDeviceLabel}</p>
+      {isOpen ? (
+        <div className="device-diagnostics-popover" id="device-diagnostics-details">
+          <div className="device-diagnostics-heading">
+            <div>
+              <h2>Device Diagnostics</h2>
+              <p>{diagnostics?.device_label ?? fallbackDeviceLabel}</p>
+            </div>
+            <span className={`device-diagnostics-overall is-${pillSummary.tone}`}>
+              {pillSummary.label}
+            </span>
           </div>
-          <span className={`device-diagnostics-overall is-${pillSummary.tone}`}>
-            {pillSummary.label}
-          </span>
-        </div>
 
-        {error ? <p className="device-diagnostics-error">{error}</p> : null}
+          {error ? <p className="device-diagnostics-error">{error}</p> : null}
 
-        <div className="device-diagnostics-summary-grid">
-          {summaries.map((summary) => (
-            <article
-              key={summary.label}
-              className={`device-diagnostics-summary-card is-${summary.tone}`}
-            >
-              <h3>{summary.label}</h3>
-              <p>{summary.message}</p>
-            </article>
-          ))}
-        </div>
+          <div className="device-diagnostics-summary-grid">
+            {summaries.map((summary) => (
+              <article
+                key={summary.label}
+                className={`device-diagnostics-summary-card is-${summary.tone}`}
+              >
+                <h3>{summary.label}</h3>
+                <p>{summary.message}</p>
+              </article>
+            ))}
+          </div>
 
-        <details className="device-diagnostics-advanced">
-          <summary>Advanced diagnostics evidence</summary>
-          <dl className="device-diagnostics-list">
+          <details className="device-diagnostics-advanced">
+            <summary>Advanced diagnostics evidence</summary>
+            <dl className="device-diagnostics-list">
             <dt>Device key</dt>
             <dd>{formatNullableText(diagnostics?.device_key)}</dd>
 
@@ -152,7 +163,8 @@ const DeviceDiagnosticsPanel = ({
           </dl>
         </details>
       </div>
-    </details>
+      ) : null}
+    </div>
   )
 }
 

@@ -1,5 +1,5 @@
 .device-diagnostics-panel {
-  position: relative;
+  position: static;
   box-sizing: border-box;
   width: fit-content;
   max-width: 100%;
@@ -11,17 +11,19 @@
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  min-height: 2.35rem;
+  min-width: 185px;
   max-width: 100%;
-  padding: 0.45rem 0.75rem;
+  padding: 0.45rem 0.7rem;
+  appearance: none;
   border: 1px solid var(--diagnostics-tone-border);
   border-radius: 999px;
   background: var(--diagnostics-tone-pill);
   color: var(--diagnostics-tone-text);
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
   cursor: pointer;
-  font-size: 0.86rem;
-  font-weight: 850;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
   line-height: 1.2;
   list-style: none;
   white-space: nowrap;
@@ -42,8 +44,8 @@
 
 .device-diagnostics-dot {
   flex: 0 0 auto;
-  width: 0.62rem;
-  height: 0.62rem;
+  width: 0.65rem;
+  height: 0.65rem;
   border-radius: 999px;
   background: var(--diagnostics-tone-dot);
 }
@@ -56,19 +58,23 @@
 .device-diagnostics-pill-status {
   padding-left: 0.45rem;
   border-left: 1px solid color-mix(in srgb, var(--diagnostics-tone-border), transparent 35%);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .device-diagnostics-popover {
   position: absolute;
-  right: 0;
-  z-index: 20;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
   box-sizing: border-box;
   width: min(760px, calc(100vw - 2rem));
-  max-height: min(620px, calc(100vh - 8rem));
-  overflow: auto;
+  max-width: calc(100vw - 2rem);
+  max-height: min(70vh, 720px);
+  overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
-  margin-top: 0.55rem;
   padding: 0.85rem;
   border: 1px solid rgba(203, 213, 225, 0.86);
   border-radius: 6px;
@@ -152,7 +158,7 @@
 .device-diagnostics-overall.is-good,
 .device-diagnostics-pill.is-good {
   --diagnostics-tone-background: #f0fdf4;
-  --diagnostics-tone-border: #86efac;
+  --diagnostics-tone-border: #16a34a;
   --diagnostics-tone-dot: #16a34a;
   --diagnostics-tone-pill: #f8fafc;
   --diagnostics-tone-text: #14532d;
@@ -256,8 +262,9 @@
 
   .device-diagnostics-popover {
     position: static;
+    transform: none;
     width: 100%;
-    max-height: none;
+    max-height: min(70vh, 720px);
   }
 }
 
