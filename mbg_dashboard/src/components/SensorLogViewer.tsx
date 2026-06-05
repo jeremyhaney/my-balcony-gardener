@@ -21,11 +21,11 @@ import { calculateHostedGen2Health } from '../hostedGen2Health'
 import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import type { SensorLogRow } from '../types/sensorLog'
-import CustomerSiteHeader from './CustomerSiteHeader'
 import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
 import DualAxisChart from './DualAxisChart'
 import HostedGen2Measurements from './HostedGen2Measurements'
 import HostedGen2TrendChart from './HostedGen2TrendChart'
+import HostedSiteHeader from './HostedSiteHeader'
 import SensorHealthPanel from './SensorHealthPanel'
 
 const isValidPercent = (value: number): boolean =>
@@ -302,7 +302,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
       {isHostedReadonly ? (
         <>
           {pilotCustomerSite ? (
-            <CustomerSiteHeader
+            <HostedSiteHeader
               customerSite={pilotCustomerSite}
               assignedDevices={deviceOptions}
             />

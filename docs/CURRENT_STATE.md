@@ -376,7 +376,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Sensor-only units are telemetry-only because they are not physically connected to irrigation hardware; only a physically equipped controller unit can water locally.
 - Phase 7L made no firmware, frontend runtime, SQL/RLS, deploy, or firmware upload changes.
 - Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`.
-- Current repo context is post-Phase 7L.1 customer/site access simulation closeout; the next planning target is the Phase 7L.2 customer-access/UI-mode plan after this docs scrub.
+- Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review, commit approval, and merge approval.
 - Phase 7L.1 Customer/Site Access Simulation MVP adds a hosted-readonly pilot customer/site simulation over real existing devices and telemetry.
 - Phase 7L.1 creates product artifact [`docs/product/phase7l1-customer-site-access-simulation.md`](./product/phase7l1-customer-site-access-simulation.md).
 - Phase 7L.1 static pilot assignment treats Jeremy Haney (`jeremy`) as the pilot customer for `Jeremy Balcony Pilot` (`jeremy-balcony-pilot`) at `Savannah Balcony`.
@@ -385,6 +385,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The Phase 7L.1 customer/site header is a temporary access-simulation scaffold.
 - It is not the final customer-facing UI.
 - Future customer-facing UI should be clean and site-focused, without engineering/auth disclaimers in the normal customer view.
+- Phase 7L.2 creates product artifact [`docs/product/phase7l2-hosted-customer-view-shell.md`](./product/phase7l2-hosted-customer-view-shell.md).
+- Phase 7L.2 renames the hosted shell component from `CustomerSiteHeader` to `HostedSiteHeader`.
+- Phase 7L.2 makes the hosted shell site-focused: `Jeremy Balcony Pilot`, `Savannah Balcony`, `Read-only monitoring dashboard`, `Balcony01` as Primary controller, and `Scout01` as Telemetry-only support sensor.
+- Phase 7L.2 keeps the small visible note `Pilot simulation: Static site assignment. Real login and customer isolation are deferred.`
+- Phase 7L.2 does not change the app-level brand/header in `App.tsx`.
 - MBG should not fork into separate independently maintained customer and engineering sites.
 - Prefer one shared dashboard codebase and shared UI components with mode/capability/context gates for customer hosted read-only mode, support/admin read-only diagnostics mode, and local engineering/service mode.
 - Customer, support/admin, and local engineering views may expose different capabilities, but they should reuse the same core layout/components where practical so the UI does not drift.
@@ -392,6 +397,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - If hosted pilot mode receives `?device=bench`, the selected device falls back to `Balcony01` because `bench` is not assigned to the pilot site.
 - Phase 7L.1 creates no fake telemetry, fake `sensor_logs` rows, ghost physical device, duplicate device ID, Supabase Auth flow, customer/site SQL table, membership table, or RLS policy.
 - Phase 7L.1 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
+- Phase 7L.2 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
 - Watering event capture/visibility remains future work: on 2026-06-05, Jeremy ran local Water Now twice for two 60-second sequences on `Balcony01`. All baskets were dripping and the watering appeared thorough, but the hosted site did not register/show the watering event. The event was recorded manually in `sensor_events`.
 - Future work must investigate and fix local manual watering event capture and hosted visibility without creating fake `sensor_logs` rows, without introducing Supabase command/control, and without changing Water Now behavior in this docs scrub.
 - Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design only.
