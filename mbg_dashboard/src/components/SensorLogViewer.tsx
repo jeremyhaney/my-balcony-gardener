@@ -1,13 +1,15 @@
-import { type ChangeEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, useEffect, useMemo, useState } from 'react'
 import {
   fetchDeviceDiagnostics,
   fetchHistoryLogs,
   fetchHostedGen2Measurements,
   type DeviceDiagnostics,
 } from '../api'
+import { PHASE_7L1_PILOT_CUSTOMER_SITE } from '../customerSites'
 import {
   getHistoryControlStateFromUrl,
   getHistoryDeviceOption,
+  getHistoryDeviceOptionsForDeviceKeys,
   getHistoryWindowOption,
   HISTORY_DEVICE_OPTIONS,
   HISTORY_WINDOW_OPTIONS,
@@ -19,6 +21,7 @@ import { calculateHostedGen2Health } from '../hostedGen2Health'
 import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import type { SensorLogRow } from '../types/sensorLog'
+import CustomerSiteHeader from './CustomerSiteHeader'
 import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
 import DualAxisChart from './DualAxisChart'
 import HostedGen2Measurements from './HostedGen2Measurements'
@@ -46,6 +49,14 @@ const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Unknown error'
 
 const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => {
+  const pilotCustomerSite = isHostedReadonly ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
+  const deviceOptions = useMemo(
+    () =>
+      pilotCustomerSite
+        ? getHistoryDeviceOptionsForDeviceKeys(pilotCustomerSite.deviceKeys)
+        : HISTORY_DEVICE_OPTIONS,
+    [pilotCustomerSite],
+  )
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [diagnostics, setDiagnostics] = useState<DeviceDiagnostics | null>(null)
@@ -57,7 +68,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
   const [openDeviceStatusPanel, setOpenDeviceStatusPanel] =
     useState<DeviceStatusPanelKey | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
-    () => getHistoryControlStateFromUrl().device,
+    () => getHistoryControlStateFromUrl(deviceOptions).device,
   )
   const [selectedWindow, setSelectedWindow] = useState<HistoryWindowOption>(
     () => getHistoryControlStateFromUrl().window,
@@ -122,7 +133,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
 
   useEffect(() => {
     const handlePopState = () => {
-      const nextControlState = getHistoryControlStateFromUrl()
+      const nextControlState = getHistoryControlStateFromUrl(deviceOptions)
       setSelectedDevice(nextControlState.device)
       setSelectedWindow(nextControlState.window)
     }
@@ -132,10 +143,10 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
     return () => {
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [])
+  }, [deviceOptions])
 
   const handleDeviceChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextDevice = getHistoryDeviceOption(event.target.value)
+    const nextDevice = getHistoryDeviceOption(event.target.value, deviceOptions)
 
     if (!nextDevice) {
       return
@@ -206,7 +217,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
             padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
           }}
         >
-          {HISTORY_DEVICE_OPTIONS.map((option) => (
+          {deviceOptions.map((option) => (
             <option key={option.key} value={option.key}>
               {isHostedReadonly ? option.hostedLabel : option.label}
             </option>
@@ -290,6 +301,12 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
     <div className="p-4">
       {isHostedReadonly ? (
         <>
+          {pilotCustomerSite ? (
+            <CustomerSiteHeader
+              customerSite={pilotCustomerSite}
+              assignedDevices={deviceOptions}
+            />
+          ) : null}
           {deviceStatusPanels}
           <HostedGen2Measurements
             rows={hostedGen2Rows}

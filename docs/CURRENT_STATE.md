@@ -375,6 +375,17 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The current `public.device_registry` remains a provisioned-device insert allowlist, not customer/site/auth access control.
 - Sensor-only units are telemetry-only because they are not physically connected to irrigation hardware; only a physically equipped controller unit can water locally.
 - Phase 7L made no firmware, frontend runtime, SQL/RLS, deploy, or firmware upload changes.
+- Phase 7L.1 Customer/Site Access Simulation MVP adds a hosted-readonly pilot customer/site simulation over real existing devices and telemetry.
+- Phase 7L.1 creates product artifact [`docs/product/phase7l1-customer-site-access-simulation.md`](./product/phase7l1-customer-site-access-simulation.md).
+- Phase 7L.1 static pilot assignment treats Jeremy Haney (`jeremy`) as the pilot customer for `Jeremy Balcony Pilot` (`jeremy-balcony-pilot`) at `Savannah Balcony`.
+- Phase 7L.1 assigns real device keys `balcony` and `scout01` to the pilot site; `Balcony01` remains the primary controller and `Scout01` remains telemetry-only support evidence.
+- Hosted-readonly mode now shows a customer/site context header that labels the view as an access simulation and states that real customer login, membership checks, and RLS isolation are deferred.
+- The Phase 7L.1 customer/site header is a temporary access-simulation scaffold, not the final customer-facing UI; future customer-facing UI should be clean and site-focused without engineering/auth disclaimers in the normal customer view.
+- MBG should avoid forking into independently maintained customer/support/engineering sites; prefer one shared dashboard codebase and shared UI components with mode, capability, and context gates.
+- Hosted-readonly pilot device selection is constrained through the Phase 7L.1 assignment layer to `Balcony01` and `Scout01`; `Prototype01` / `bench` remains in the base frontend device registry for support/development use outside this pilot simulation.
+- If hosted pilot mode receives `?device=bench`, the selected device falls back to `Balcony01` because `bench` is not assigned to the pilot site.
+- Phase 7L.1 creates no fake telemetry, fake `sensor_logs` rows, ghost physical device, duplicate device ID, Supabase Auth flow, customer/site SQL table, membership table, or RLS policy.
+- Phase 7L.1 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
 - Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design only.
 - Phase 7M creates product/design artifact [`docs/product/phase7m-sensor-upgrade-decision-matrix.md`](./product/phase7m-sensor-upgrade-decision-matrix.md).
 - Phase 7M creates proposed Balcony02 wiring/build-out planning artifact [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md`](./production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md), labeled proposed/not-as-built/not-implemented.
