@@ -2,6 +2,10 @@
 
 Date: 2026-06-05
 
+## Status
+
+Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`.
+
 ## Purpose
 
 Phase 7L.1 creates a hosted-readonly customer/site experience simulation over real existing My Balcony Gardener devices and real existing telemetry.
@@ -44,7 +48,11 @@ No fake device, duplicate device ID, duplicate telemetry, or fake `sensor_logs` 
 
 Hosted-readonly mode now shows a customer/site context header for the pilot site.
 
-The Phase 7L.1 customer/site header is a temporary access-simulation scaffold, not the final customer-facing UI. Future customer-facing UI should be clean and site-focused, without engineering/auth disclaimers in the normal customer view.
+The Phase 7L.1 customer/site header is a temporary access-simulation scaffold.
+
+It is not the final customer-facing UI.
+
+Future customer-facing UI should be clean and site-focused, without engineering/auth disclaimers in the normal customer view.
 
 The hosted pilot selector is constrained through the Phase 7L.1 assignment layer to:
 
@@ -57,13 +65,15 @@ If hosted pilot mode receives a URL query such as `?device=bench`, the selected 
 
 The underlying known-device registry remains intact. `Prototype01` / `bench` remains in the base frontend device registry for support and development use outside this pilot customer/site simulation.
 
-MBG should not fork into two independently maintained sites. Prefer one shared dashboard codebase and shared UI components with mode, capability, and context gates:
+MBG should not fork into separate independently maintained customer and engineering sites.
 
-- Customer hosted read-only mode.
-- Support/admin read-only diagnostics mode.
-- Local engineering/service mode.
+Prefer one shared dashboard codebase and shared UI components with mode/capability/context gates:
 
-Customer, support/admin, and engineering views may expose different capabilities, but they should reuse the same core layout/components where practical so the UI does not drift.
+- customer hosted read-only mode
+- support/admin read-only diagnostics mode
+- local engineering/service mode
+
+Customer, support/admin, and local engineering views may expose different capabilities, but they should reuse the same core layout/components where practical so the UI does not drift.
 
 ## Security Boundary
 
@@ -79,13 +89,18 @@ This phase does not provide:
 
 Device/window URL query state remains navigation state only, not security.
 
+Real customer access still requires auth, RLS-filtered hosted views, and customer/site/device membership.
+
 ## Control Boundary
 
 Hosted dashboard behavior remains read-only.
 
+The customer product path remains hosted read-only daily visibility.
+
 This phase does not add:
 
 - Remote Water Now.
+- App-based Water Now in the customer product path.
 - Supabase command/control.
 - Hosted calls to local ESP32 endpoints.
 - Watering decisions.
@@ -102,6 +117,20 @@ The simulation uses existing hosted Supabase read paths:
 - `public.hosted_device_diagnostics`
 
 `public.device_registry` remains a provisioned-device insert allowlist and hosted visibility source, not customer/site/auth access control.
+
+## Phase 7L.2 Readiness Notes
+
+The next customer-access/UI-mode plan should keep the Phase 7L product boundary intact:
+
+- The customer product path remains hosted read-only daily visibility.
+- App-based Water Now is not part of the customer product path.
+- Supabase remains telemetry/history/diagnostics storage only, not command/control.
+- Current URL/device/window selection is navigation convenience, not security.
+- Real customer access still requires auth, RLS-filtered hosted views, and customer/site/device membership.
+
+Watering event capture/visibility must be fixed in future work. On 2026-06-05, Jeremy ran local Water Now twice for two 60-second sequences on `Balcony01`. All baskets were dripping and the watering appeared thorough, but the hosted site did not register/show the watering event. The event was recorded manually in `sensor_events`.
+
+Future work must investigate and fix local manual watering event capture and hosted visibility without creating fake `sensor_logs` rows, without introducing Supabase command/control, and without changing Water Now behavior in this docs scrub.
 
 ## Deferred Follow-Up
 
