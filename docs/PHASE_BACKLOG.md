@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7L MVP Customer Setup, Access, and Local-Control Boundary documentation implementation
+- Current repo context: Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan documentation implementation
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -38,7 +38,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7K status: complete and present on `main`; hosted Gen2 Live Measurements cards show display-only at-a-glance trend cues
 - Phase 7K.5 status: complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`
 - Phase 7K.6 status: validated / complete pending final commit/push; hosted-readonly plain-English runtime diagnostics, matched top-panel UI, manually applied hosted diagnostics SQL, and transient-read recent-good display fallback
-- Phase 7L status: documentation/design implementation in progress; MVP customer setup, access, and local-control boundary
+- Phase 7L status: complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`
+- Phase 7M status: documentation/design implementation in progress; sensor upgrade decision matrix, proposed Balcony02 build-out, and wiring logic
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -84,14 +85,14 @@ It is a planning guide, not an implementation approval. Each item still requires
 36. Phase 7K - Hosted At-a-Glance Measurement Trends - complete and present on `main`
 37. Phase 7K.5 - ESP32 Runtime / Wi-Fi Recovery Incident Review - complete and present on `main`
 38. Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - validated / complete pending final commit/push
-39. Phase 7L - MVP Customer Setup, Access, and Local-Control Boundary - documentation/design implementation in progress
-40. Phase 7M - Sensor Upgrade Decision Matrix - future
+39. Phase 7L - MVP Customer Setup, Access, and Local-Control Boundary - complete and present on `main`
+40. Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan - documentation/design implementation in progress
 41. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
 42. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
 43. Phase 7P - Hardware Safety Maturity - future
 44. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is documentation/design implementation in progress. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design implementation in progress. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - VALIDATED / COMPLETE PENDING FINAL COMMIT/PUSH
 
@@ -1297,25 +1298,40 @@ Out of scope:
 - Firmware, frontend runtime, SQL/RLS, provisioning UI, local dashboard removal, or physical button implementation.
 - Full production fleet management.
 
-## Phase 7M - Sensor Upgrade Decision Matrix
+## Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan
 
 Scope:
 
-- Compare candidate sensors before deep calibration work.
-- Preserve that Jeremy has not yet purchased new sensors.
-- Track likely IP68 DFRobot light sensors as future light-mapping candidates.
-- Track DFRobot SEN0308 as a strong candidate upgrade to the current analog moisture sensors.
-- Track liquid level, flow, leak, pump-current, and other product-safety/serviceability sensors as candidates.
-- Treat candidate sensors as evaluation items, not approved implementation work.
-- Separate plant-insight telemetry from watering safety.
-- Evaluate soil moisture sensor upgrades before deep calibration work.
-- Treat liquid level, flow, leak, and pump-current sensing as product-safety/serviceability candidates.
+- Create product/design decision matrix [`docs/product/phase7m-sensor-upgrade-decision-matrix.md`](./product/phase7m-sensor-upgrade-decision-matrix.md).
+- Create proposed Balcony02 wiring/build-out planning artifact [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md`](./production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md), labeled proposed/not-as-built/not-implemented.
+- Inspect the existing current/as-built Gen2 production workbook without modifying it.
+- Compare incoming sensors before deep calibration work or hardware modification.
+- Record incoming Digi-Key parts as not yet installed: 4x DFRobot SEN0308 waterproof capacitive moisture, 5x DFRobot SEN0562 IP68 I2C ambient light, 2x DFRobot SEN0390 ambient light / optical module, and 2x DFRobot SEN0204 non-contact liquid level.
+- Prefer Option C: build a new Balcony02 candidate unit first for side-by-side validation, then modify Balcony01 only after comparison evidence and explicit approval.
+- Preserve Balcony01 as the current installed baseline.
+- Treat SEN0308 as a strong MVP comparison candidate, not a control-approved replacement.
+- Treat SEN0562 as the stronger light-sensing MVP/evaluation candidate because it is IP68.
+- Treat SEN0390 as comparison/evaluation or deferred unless weatherproofing and mounting prove practical.
+- Treat SEN0204 as an MVP-worthy reservoir-level safety/serviceability candidate, but not an alert source or dry-run interlock yet.
+- Define momentary physical hold-to-water/test switch requirements only.
+- Think through Balcony02 I2C topology for three SEN0562 sensors, including a possible TCA9548A-style I2C multiplexer if addresses conflict.
+- Think through Balcony02 analog moisture topology for 2-3 SEN0308 sensors, including ESP32 ADC1-capable pins versus an external ADS1115/ADS1015-style ADC, and avoiding ADC2 pins during Wi-Fi operation.
+- Identify power distribution, common ground, connector, cable gland, enclosure penetration, strain relief, labeling, and weatherproof mounting needs.
+- Separate plant/environment insight telemetry from watering safety.
+- Define evidence needed for moisture calibration, watering-response review, reservoir-level physical tests, light mapping, and future control validation.
 
 Out of scope:
 
 - Purchasing or installing sensors by documentation implication.
-- Treating light sensing as watering safety.
-- Approving firmware, hardware, SQL/RLS, or hosted changes.
+- Treating incoming sensors as installed, wired, configured, provisioned, dashboard-visible, or control-approved.
+- Treating light sensing as watering safety or plant diagnosis.
+- Treating reservoir level as alerting, dry-run protection, or pump-control authority.
+- Implementing pin/wiring assignments, physical wiring, a Balcony02 UUID, build profile, device registry row, dashboard selector, or provisioning entry.
+- Editing the current/as-built Gen2 production wiring workbook.
+- Firmware, frontend runtime, SQL/RLS, hosted behavior, `control_eligible`, watering duration, `MOISTURE_THRESHOLD`, cooldown, cadence, moisture mapping, `/water-now`, or Manual Water Now behavior changes.
+- Switch firmware or sensor firmware implementation.
+- Calibration or control-validation claims before side-by-side evidence exists.
+- ADR 0021 creation unless separately proposed and approved.
 
 ## Phase 7N - Sensor Calibration / Measurement-System Evaluation
 

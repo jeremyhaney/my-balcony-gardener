@@ -375,6 +375,20 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The current `public.device_registry` remains a provisioned-device insert allowlist, not customer/site/auth access control.
 - Sensor-only units are telemetry-only because they are not physically connected to irrigation hardware; only a physically equipped controller unit can water locally.
 - Phase 7L made no firmware, frontend runtime, SQL/RLS, deploy, or firmware upload changes.
+- Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design only.
+- Phase 7M creates product/design artifact [`docs/product/phase7m-sensor-upgrade-decision-matrix.md`](./product/phase7m-sensor-upgrade-decision-matrix.md).
+- Phase 7M creates proposed Balcony02 wiring/build-out planning artifact [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md`](./production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md), labeled proposed/not-as-built/not-implemented.
+- Phase 7M inspected but did not edit the current/as-built Gen2 production workbook [`docs/production/MBG_Gen2_Pinout_From-To_v1.1_2026-06-02.xlsx`](./production/MBG_Gen2_Pinout_From-To_v1.1_2026-06-02.xlsx).
+- Phase 7M records incoming Digi-Key parts as planning inputs, not installed hardware: 4x DFRobot SEN0308 waterproof capacitive moisture, 5x DFRobot SEN0562 IP68 I2C ambient light, 2x DFRobot SEN0390 ambient light / optical module, and 2x DFRobot SEN0204 non-contact liquid level.
+- Phase 7M recommends Option C: build a new Balcony02 candidate unit first for side-by-side validation, then modify Balcony01 only after comparison evidence and explicit approval.
+- Phase 7M preserves Balcony01 as the current installed baseline and does not assign a Balcony02 UUID, build profile, registry row, dashboard selector, or provisioning record, and it does not implement pin wiring, cable routing, or production wiring entries.
+- Phase 7M treats SEN0308 as a strong MVP comparison candidate, not a control-approved replacement.
+- Phase 7M treats SEN0562 as the stronger light-sensing MVP/evaluation candidate because it is IP68, while SEN0390 remains comparison/evaluation or deferred unless weatherproofing and mounting prove practical.
+- Phase 7M treats SEN0204 as an MVP-worthy reservoir-level safety/serviceability candidate, but not an alert source, dry-run interlock, or pump-control input yet.
+- Phase 7M identifies possible additional Balcony02 hardware needs including a TCA9548A-style I2C multiplexer, ADS1115/ADS1015-style external ADC, serviceable connectors, cable glands, enclosure penetration planning, strain relief, power distribution, common ground, and weatherproof sensor/switch mounting.
+- Phase 7M defines future momentary physical hold-to-water/test switch requirements only; GPIO32 is a proposed planning candidate, and Phase 7M does not implement switch wiring or firmware behavior.
+- Phase 7M does not create ADR 0021 because no new durable architecture/product boundary is locked beyond existing ADRs.
+- Phase 7M makes no firmware, frontend runtime, SQL/RLS, production wiring, deploy, firmware upload, sensor assignment, pin, device ID, metadata, `control_eligible`, watering duration, threshold, cooldown, cadence, moisture mapping, `/water-now`, or Manual Water Now behavior changes.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
