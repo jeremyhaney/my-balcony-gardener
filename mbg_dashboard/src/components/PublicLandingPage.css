@@ -208,7 +208,17 @@
   width: min(100%, 420px);
 }
 
-.public-login-modal p {
+.login-panel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.login-panel-heading {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.login-panel-heading p {
   color: #16803f;
   font-size: 0.78rem;
   font-weight: 900;
@@ -216,19 +226,47 @@
   text-transform: uppercase;
 }
 
-.public-login-modal h2 {
+.login-panel-heading h2 {
   color: #102019;
   font-size: 1.55rem;
   line-height: 1.15;
   margin: 0;
 }
 
-.public-login-modal span {
+.login-panel-heading span {
   color: #4d6056;
   line-height: 1.55;
 }
 
-.public-login-modal button {
+.login-panel label {
+  color: #315243;
+  display: grid;
+  font-size: 0.86rem;
+  font-weight: 800;
+  gap: 0.35rem;
+}
+
+.login-panel input {
+  border: 1px solid #cddfd3;
+  border-radius: 8px;
+  color: #102019;
+  font: inherit;
+  min-height: 42px;
+  padding: 0 0.75rem;
+}
+
+.login-panel-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #7f1d1d;
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+}
+
+.login-panel button,
+.public-login-modal-close {
   background: #123326;
   border: 0;
   border-radius: 8px;
@@ -239,6 +277,17 @@
   justify-self: start;
   min-height: 42px;
   padding: 0 1rem;
+}
+
+.login-panel button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.public-login-modal-close {
+  background: #f1f5f9;
+  color: #334155;
+  margin-top: 0.15rem;
 }
 
 @media (max-width: 860px) {

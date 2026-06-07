@@ -1,12 +1,17 @@
 import LiveDemoSnapshot from "./LiveDemoSnapshot";
 import "./PublicLandingPage.css";
 import { useState } from "react";
+import LoginPanel from "./LoginPanel";
 
 type PublicLandingPageProps = {
   initialLoginOpen?: boolean;
+  onSignedIn?: () => void;
 };
 
-const PublicLandingPage = ({ initialLoginOpen = false }: PublicLandingPageProps) => {
+const PublicLandingPage = ({
+  initialLoginOpen = false,
+  onSignedIn,
+}: PublicLandingPageProps) => {
   const [isLoginOpen, setIsLoginOpen] = useState(initialLoginOpen);
 
   return (
@@ -79,7 +84,11 @@ const PublicLandingPage = ({ initialLoginOpen = false }: PublicLandingPageProps)
         <p>Demo video coming soon</p>
       </section>
 
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onSignedIn={onSignedIn}
+      />
     </main>
   );
 };
@@ -87,12 +96,18 @@ const PublicLandingPage = ({ initialLoginOpen = false }: PublicLandingPageProps)
 type LoginModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onSignedIn?: () => void;
 };
 
-export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
+export const LoginModal = ({ isOpen, onClose, onSignedIn }: LoginModalProps) => {
   if (!isOpen) {
     return null;
   }
+
+  const handleSignedIn = () => {
+    onSignedIn?.();
+    onClose();
+  };
 
   return (
     <div
@@ -102,10 +117,12 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       role="dialog"
     >
       <section className="public-login-modal">
-        <p>Customer Login</p>
-        <h2 id="customer-login-title">Customer access is coming next.</h2>
-        <span>Early access is currently managed by Jeremy.</span>
-        <button onClick={onClose} type="button">
+        <LoginPanel
+          heading="Customer access"
+          message="Sign in with your My Balcony Gardener account."
+          onSignedIn={handleSignedIn}
+        />
+        <button className="public-login-modal-close" onClick={onClose} type="button">
           Close
         </button>
       </section>

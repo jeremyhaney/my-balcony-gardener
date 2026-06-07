@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7L.3 minimal landing page with embedded live demo and hosted route shell implemented pending validation, Jeremy review, commit approval, and merge approval.
+- Current repo context: Phase 7L.4 customer auth, garden membership, and RLS implementation is locally/browser validated on branch `phase7l4-customer-auth-garden-rls`, pending commit, merge, push, deploy, and production validation.
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -42,6 +42,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7L.1 status: complete and present on `main` in commit `2d74588 Add customer site access simulation`; hosted-readonly customer/site access simulation over real Balcony01 and Scout01 telemetry
 - Phase 7L.2 status: implemented pending Jeremy review, commit approval, and merge approval; hosted-readonly site shell visually prioritizes Jeremy Balcony Pilot / Savannah Balcony while preserving a small pilot simulation note
 - Phase 7L.3 status: implemented pending validation, Jeremy review, commit approval, and merge approval; hosted-readonly `/` is now a minimal public landing page with an embedded compact real-data snapshot, `/demo` is the fuller public read-only demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` preserves the customer `My Garden` shell without the prominent site-assignment shell, `/app` remains a backward-compatible alias, `/login` opens the placeholder login dialog, and `/support` is a temporary read-only support review route by direct URL
+- Phase 7L.4 status: validated locally / browser validated, pending commit, merge, push, deploy, and production validation; `/mygarden` uses authenticated customer views and `/support` uses authenticated support views while `/` and `/demo` remain public.
 - Phase 7M status: documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
@@ -1404,6 +1405,17 @@ Boundary:
 Out of scope:
 
 - Supabase Auth, customer/site/device SQL tables, membership SQL tables, RLS policies, database migrations, real login/logout, account invites, support/admin UI with real privileges, Cloudflare Access, role-based routing, customer billing/account lifecycle, provisioning UI, settings/admin implementation, watering-event capture fix, telemetry event-capture changes, fake telemetry, fake `sensor_logs` rows, duplicate device IDs, ghost physical devices, firmware, `src/main.cpp`, `src/config.h`, `platformio.ini`, pins, sensors, sensor assignments, device IDs, firmware metadata wording, watering duration, `MOISTURE_THRESHOLD`, cooldown, `LOG_INTERVAL_MS`, moisture mapping, `control_eligible` behavior, `/water-now` behavior, local dashboard behavior, Supabase schema/RLS, SQL artifacts, production wiring docs, field readings, CSV field-capture files, support-folder exports, Cloudflare deploy command, deploy, push, commit, merge, or firmware upload.
+
+## Phase 7L.4 - Customer Auth, Garden Membership, and RLS Implementation - VALIDATED LOCALLY / BROWSER VALIDATED
+
+- SQL artifact `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql` was drafted, hash-reviewed, and manually applied in Supabase SQL Editor.
+- Manual seed validation passed: `customer_garden_devices` returns Balcony01 and Scout01 with no Bench01; `support_garden_devices` returns Balcony01, Scout01, and Bench01 / Prototype01.
+- Frontend auth was implemented with Supabase email/password login and sign out.
+- Header login from `/` or `/demo` redirects to `/mygarden`; direct logged-out `/support` login returns to `/support`; `/login` redirects to `/mygarden` after successful login.
+- `/mygarden` uses `customer_*` protected views, `/support` uses `support_*` protected views, and `/app` behaves like `/mygarden`.
+- `/demo` remains public and uses public demo-safe views. `/support` remains hidden from normal navigation.
+- Hosted routes remain read-only. No Remote Water Now, Supabase command/control, local ESP32 calls, firmware changes, push, deploy, or commit occurred in this phase step.
+- Phase 7L.4 is pending commit, merge, push, deploy, and production/custom-domain validation.
 
 ## Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan
 

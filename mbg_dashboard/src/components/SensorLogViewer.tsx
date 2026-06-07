@@ -1,8 +1,11 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchDeviceDiagnostics,
+  fetchGardenDevices,
   fetchHistoryLogs,
   fetchHostedGen2Measurements,
+  type GardenDevice,
+  type HostedDataScope,
   type DeviceDiagnostics,
 } from '../api'
 import { PHASE_7L1_PILOT_CUSTOMER_SITE } from '../customerSites'
@@ -14,6 +17,7 @@ import {
   HISTORY_DEVICE_OPTIONS,
   HISTORY_WINDOW_OPTIONS,
   type HistoryDeviceOption,
+  type HistoryDeviceKey,
   type HistoryWindowOption,
   updateHistoryControlUrl,
 } from '../historyControls'
@@ -41,9 +45,10 @@ const HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE = 8
 
 type SensorLogViewerProps = {
   isHostedReadonly?: boolean
-  hostedReadonlyScope?: 'pilot' | 'support'
+  hostedReadonlyScope?: 'demo' | 'pilot' | 'customer' | 'support'
   showHostedSiteHeader?: boolean
   demoGuideTarget?: DemoGuideTarget
+  emptyStateMessage?: string
 }
 
 type DeviceStatusPanelKey = 'status' | 'diagnostics'
@@ -54,13 +59,16 @@ const getErrorMessage = (error: unknown): string =>
 
 const SensorLogViewer = ({
   isHostedReadonly = false,
-  hostedReadonlyScope = 'pilot',
+  hostedReadonlyScope = 'demo',
   showHostedSiteHeader = true,
   demoGuideTarget,
+  emptyStateMessage,
 }: SensorLogViewerProps) => {
+  const hostedDataScope = getHostedDataScope(hostedReadonlyScope)
+  const isProtectedHostedScope = isHostedReadonly && hostedDataScope !== 'demo'
   const pilotCustomerSite =
-    isHostedReadonly && hostedReadonlyScope === 'pilot' ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
-  const deviceOptions = useMemo(
+    isHostedReadonly && hostedDataScope === 'demo' ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
+  const demoDeviceOptions = useMemo(
     () =>
       pilotCustomerSite
         ? getHistoryDeviceOptionsForDeviceKeys(pilotCustomerSite.deviceKeys)
@@ -68,6 +76,11 @@ const SensorLogViewer = ({
     [pilotCustomerSite],
   )
   const deviceStatusPanelsRef = useRef<HTMLDivElement>(null)
+  const [authorizedDeviceOptions, setAuthorizedDeviceOptions] = useState<HistoryDeviceOption[]>([])
+  const [authorizedDevicesError, setAuthorizedDevicesError] = useState<string | null>(null)
+  const [isAuthorizedDevicesLoading, setIsAuthorizedDevicesLoading] = useState(
+    isProtectedHostedScope,
+  )
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [diagnostics, setDiagnostics] = useState<DeviceDiagnostics | null>(null)
@@ -78,22 +91,87 @@ const SensorLogViewer = ({
   const [isLoading, setIsLoading] = useState(true)
   const [openDeviceStatusPanel, setOpenDeviceStatusPanel] =
     useState<DeviceStatusPanelKey | null>(null)
+  const deviceOptions = isProtectedHostedScope ? authorizedDeviceOptions : demoDeviceOptions
   const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
-    () => getHistoryControlStateFromUrl(deviceOptions).device,
+    () => getHistoryControlStateFromUrl(demoDeviceOptions).device,
   )
   const [selectedWindow, setSelectedWindow] = useState<HistoryWindowOption>(
     () => getHistoryControlStateFromUrl().window,
   )
 
   useEffect(() => {
+    if (!isProtectedHostedScope) {
+      setAuthorizedDeviceOptions([])
+      setAuthorizedDevicesError(null)
+      setIsAuthorizedDevicesLoading(false)
+      return
+    }
+
+    let isMounted = true
+    setIsAuthorizedDevicesLoading(true)
+
+    const loadAuthorizedDevices = async () => {
+      const result = await fetchGardenDevices(
+        hostedDataScope === 'support' ? 'support' : 'customer',
+      )
+
+      if (!isMounted) {
+        return
+      }
+
+      setAuthorizedDeviceOptions(result.devices.map(mapGardenDeviceToHistoryOption))
+      setAuthorizedDevicesError(result.error)
+      setIsAuthorizedDevicesLoading(false)
+    }
+
+    void loadAuthorizedDevices()
+
+    return () => {
+      isMounted = false
+    }
+  }, [hostedDataScope, isProtectedHostedScope])
+
+  useEffect(() => {
+    if (deviceOptions.length === 0) {
+      return
+    }
+
+    const nextControlState = getHistoryControlStateFromUrl(deviceOptions)
+    const selectedDeviceIsAllowed = deviceOptions.some(
+      (device) => device.key === selectedDevice.key,
+    )
+
+    if (!selectedDeviceIsAllowed) {
+      setSelectedDevice(nextControlState.device)
+    }
+  }, [deviceOptions, selectedDevice.key])
+
+  useEffect(() => {
     let isMounted = true
 
     const loadHistory = async () => {
+      if (isProtectedHostedScope && isAuthorizedDevicesLoading) {
+        return
+      }
+
+      if (isProtectedHostedScope && deviceOptions.length === 0) {
+        setLogs([])
+        setHistoryError(null)
+        setDiagnostics(null)
+        setDiagnosticsError(null)
+        setHostedGen2Rows([])
+        setHostedGen2Error(null)
+        setIsHostedGen2Loading(false)
+        setIsLoading(false)
+        return
+      }
+
       const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
       const hostedGen2Request = isHostedReadonly
         ? fetchHostedGen2Measurements(selectedDevice.deviceId, {
             startTime: lowerBoundIso,
             limit: Math.max(1000, selectedWindow.limit * HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE),
+            scope: hostedDataScope,
           })
             .then((rows) => ({ rows, error: null }))
             .catch((error: unknown) => ({
@@ -107,12 +185,14 @@ const SensorLogViewer = ({
       }
 
       const [historyResult, diagnosticsResult, hostedGen2Result] = await Promise.all([
-        fetchHistoryLogs(
-          selectedWindow.limit,
-          selectedDevice.deviceId,
-          lowerBoundIso,
-        ),
-        fetchDeviceDiagnostics(selectedDevice.deviceId),
+        hostedDataScope === 'demo'
+          ? fetchHistoryLogs(
+              selectedWindow.limit,
+              selectedDevice.deviceId,
+              lowerBoundIso,
+            )
+          : Promise.resolve({ rows: [] as SensorLogRow[], error: null }),
+        fetchDeviceDiagnostics(selectedDevice.deviceId, hostedDataScope),
         hostedGen2Request,
       ])
 
@@ -140,10 +220,22 @@ const SensorLogViewer = ({
       isMounted = false
       window.clearInterval(refreshTimer)
     }
-  }, [isHostedReadonly, selectedDevice, selectedWindow])
+  }, [
+    deviceOptions.length,
+    hostedDataScope,
+    isAuthorizedDevicesLoading,
+    isHostedReadonly,
+    isProtectedHostedScope,
+    selectedDevice,
+    selectedWindow,
+  ])
 
   useEffect(() => {
     const handlePopState = () => {
+      if (deviceOptions.length === 0) {
+        return
+      }
+
       const nextControlState = getHistoryControlStateFromUrl(deviceOptions)
       setSelectedDevice(nextControlState.device)
       setSelectedWindow(nextControlState.window)
@@ -296,6 +388,24 @@ const SensorLogViewer = ({
     </div>
   )
 
+  if (isProtectedHostedScope && isAuthorizedDevicesLoading) {
+    return (
+      <div className="p-4">
+        <p className="text-sm">Loading assigned garden devices...</p>
+      </div>
+    )
+  }
+
+  if (isProtectedHostedScope && deviceOptions.length === 0) {
+    return (
+      <div className="p-4">
+        <p className="text-sm">
+          {authorizedDevicesError ?? emptyStateMessage ?? 'No assigned garden devices found.'}
+        </p>
+      </div>
+    )
+  }
+
   const historyErrorMessage = historyError ? (
     <p className="mb-3 text-sm" style={{ color: '#7f1d1d' }}>
       {historyError}
@@ -390,6 +500,41 @@ const SensorLogViewer = ({
       )}
     </div>
   )
+}
+
+const getHostedDataScope = (
+  hostedReadonlyScope: SensorLogViewerProps['hostedReadonlyScope'],
+): HostedDataScope => {
+  if (hostedReadonlyScope === 'customer') {
+    return 'customer'
+  }
+
+  if (hostedReadonlyScope === 'support') {
+    return 'support'
+  }
+
+  return 'demo'
+}
+
+const mapGardenDeviceToHistoryOption = (device: GardenDevice): HistoryDeviceOption => ({
+  key: device.device_key as HistoryDeviceKey,
+  label: device.display_name,
+  hostedLabel: device.display_name,
+  deviceId: device.device_id,
+  role: device.device_role,
+  description: formatGardenDeviceDescription(device),
+})
+
+const formatGardenDeviceDescription = (device: GardenDevice): string => {
+  if (device.garden_device_role === 'support_bench') {
+    return 'Support-only bench validation unit.'
+  }
+
+  if (device.garden_device_role === 'telemetry_readings_sensor') {
+    return 'Telemetry-only garden readings sensor.'
+  }
+
+  return 'Primary garden controller.'
 }
 
 export default SensorLogViewer

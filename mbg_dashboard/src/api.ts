@@ -3,8 +3,32 @@ import type { SensorData, SensorLogRow } from './types/sensorLog'
 import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
 import { getConfiguredDeviceId } from './historyControls'
 
+export type HostedDataScope = 'demo' | 'customer' | 'support'
+
 type HistoryFetchResult = {
   rows: SensorLogRow[]
+  error: string | null
+}
+
+export type GardenDevice = {
+  garden_id: string
+  garden_key: string
+  garden_name: string
+  location_label: string | null
+  garden_sort_order: number
+  garden_device_id: string
+  device_id: string
+  device_key: string
+  display_name: string
+  garden_device_role: string
+  device_role: string
+  device_sort_order: number
+  customer_visible?: boolean
+  support_visible?: boolean
+}
+
+type GardenDevicesFetchResult = {
+  devices: GardenDevice[]
   error: string | null
 }
 
@@ -56,6 +80,37 @@ type SupabaseSensorLogRow = {
 
 const DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT = 1000
 const HOSTED_GEN2_MEASUREMENT_BATCH_SIZE = 1000
+const HOSTED_GEN2_MEASUREMENT_COLUMNS =
+  'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at'
+const DEVICE_DIAGNOSTICS_COLUMNS =
+  'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_reconnect_attempt_count, last_supabase_http_status, consecutive_supabase_failures, last_supabase_error_category, last_successful_telemetry_post_at, last_successful_diagnostics_post_at, free_heap, min_free_heap, currently_watering, last_watering_duration, pump_control_available, device_can_water, wifi_begin_recovery_attempt_count, wifi_disconnect_event_count, wifi_got_ip_event_count, last_wifi_status_code, last_wifi_disconnect_reason, last_wifi_disconnected_uptime_seconds, last_wifi_reconnected_uptime_seconds, last_network_recovery_action'
+
+const getGardenDevicesView = (scope: HostedDataScope): string =>
+  scope === 'support' ? 'support_garden_devices' : 'customer_garden_devices'
+
+const getMeasurementsView = (scope: HostedDataScope): string => {
+  if (scope === 'customer') {
+    return 'customer_hosted_gen2_measurements'
+  }
+
+  if (scope === 'support') {
+    return 'support_hosted_gen2_measurements'
+  }
+
+  return 'hosted_gen2_measurements'
+}
+
+const getDiagnosticsView = (scope: HostedDataScope): string => {
+  if (scope === 'customer') {
+    return 'customer_hosted_device_diagnostics'
+  }
+
+  if (scope === 'support') {
+    return 'support_hosted_device_diagnostics'
+  }
+
+  return 'hosted_device_diagnostics'
+}
 
 const DEFAULT_SENSOR_DATA: SensorData = {
   temperature: 0,
@@ -137,6 +192,7 @@ export async function fetchHistoryLogs(
 
 export async function fetchDeviceDiagnostics(
   selectedDeviceId = '',
+  scope: HostedDataScope = 'demo',
 ): Promise<DeviceDiagnosticsFetchResult> {
   if (!isSupabaseConfigured || !supabase) {
     return {
@@ -156,10 +212,8 @@ export async function fetchDeviceDiagnostics(
     }
 
     const query = supabase
-      .from('hosted_device_diagnostics')
-      .select(
-        'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_reconnect_attempt_count, last_supabase_http_status, consecutive_supabase_failures, last_supabase_error_category, last_successful_telemetry_post_at, last_successful_diagnostics_post_at, free_heap, min_free_heap, currently_watering, last_watering_duration, pump_control_available, device_can_water, wifi_begin_recovery_attempt_count, wifi_disconnect_event_count, wifi_got_ip_event_count, last_wifi_status_code, last_wifi_disconnect_reason, last_wifi_disconnected_uptime_seconds, last_wifi_reconnected_uptime_seconds, last_network_recovery_action',
-      )
+      .from(getDiagnosticsView(scope))
+      .select(DEVICE_DIAGNOSTICS_COLUMNS)
       .eq('device_id', effectiveDeviceId)
 
     const { data, error } = await query.maybeSingle()
@@ -187,6 +241,7 @@ export async function fetchHostedGen2Measurements(
   options: {
     startTime?: string
     limit?: number
+    scope?: HostedDataScope
   } = {},
 ): Promise<HostedGen2MeasurementRow[]> {
   if (!isSupabaseConfigured || !supabase) {
@@ -202,10 +257,8 @@ export async function fetchHostedGen2Measurements(
     const batchEnd = Math.min(batchStart + HOSTED_GEN2_MEASUREMENT_BATCH_SIZE, limit) - 1
 
     let query = supabase
-      .from('hosted_gen2_measurements')
-      .select(
-        'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at',
-      )
+      .from(getMeasurementsView(options.scope ?? 'demo'))
+      .select(HOSTED_GEN2_MEASUREMENT_COLUMNS)
       .order('measured_at', { ascending: false })
       .order('record_index', { ascending: true })
       .range(batchStart, batchEnd)
@@ -233,4 +286,61 @@ export async function fetchHostedGen2Measurements(
   }
 
   return rows
+}
+
+export async function fetchGardenDevices(
+  scope: Exclude<HostedDataScope, 'demo'>,
+): Promise<GardenDevicesFetchResult> {
+  if (!isSupabaseConfigured || !supabase) {
+    return {
+      devices: [],
+      error: 'Supabase garden access is not configured.',
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from(getGardenDevicesView(scope))
+      .select(
+        [
+          'garden_id',
+          'garden_key',
+          'garden_name',
+          'location_label',
+          'garden_sort_order',
+          'garden_device_id',
+          'device_id',
+          'device_key',
+          'display_name',
+          'garden_device_role',
+          'device_role',
+          'device_sort_order',
+          scope === 'support' ? 'customer_visible' : '',
+          scope === 'support' ? 'support_visible' : '',
+        ]
+          .filter(Boolean)
+          .join(', '),
+      )
+      .order('garden_sort_order', { ascending: true })
+      .order('device_sort_order', { ascending: true })
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      devices: (data ?? []) as unknown as GardenDevice[],
+      error: null,
+    }
+  } catch (error) {
+    console.warn('Protected garden device fetch failed:', error)
+
+    return {
+      devices: [],
+      error:
+        scope === 'support'
+          ? 'Support access is not available for this account.'
+          : 'Garden access is currently unavailable.',
+    }
+  }
 }
