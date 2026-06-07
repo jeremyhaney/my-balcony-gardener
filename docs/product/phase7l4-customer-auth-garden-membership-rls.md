@@ -4,9 +4,15 @@ Date: 2026-06-07
 
 ## Status
 
-Phase 7L.4 is locally/browser validated and pending commit, merge, push, deploy, and production/custom-domain validation.
+Phase 7L.4 is complete, merged to `main`, pushed, Cloudflare production auto-deployed from `main`, and production/credentialed browser validated.
 
-The SQL schema was applied manually in Supabase SQL Editor after hash review. The frontend implementation has been validated locally by browser testing.
+Commit: `1706798 Add customer auth garden membership RLS`
+
+Branch merged: `phase7l4-customer-auth-garden-rls`
+
+Production custom domain: `https://mybalconygardener.boileragency.com`
+
+The SQL schema was applied manually in Supabase SQL Editor after hash review. The frontend implementation has been validated locally and on the production custom domain by browser testing.
 
 ## Phase Objective
 
@@ -125,6 +131,19 @@ Results:
 
 Manual browser validation passed for login redirects, route gating, customer/support visibility, sign out, `/app` alias behavior, public `/demo`, hidden support navigation, and removal of green all-caps route eyebrow labels.
 
+Production credentialed browser validation passed on `https://mybalconygardener.boileragency.com`:
+
+- Logged-out `/` and `/demo` load publicly.
+- Logged-out `/mygarden`, `/app`, and `/support` require login.
+- Header Login from `/` or `/demo` redirects to `/mygarden`.
+- Direct `/support` login returns to `/support`.
+- Logged-in `/mygarden` shows Balcony01 and Scout01 only.
+- Logged-in `/support` shows Balcony01, Scout01, and Bench01 / Prototype01.
+- Support remains hidden from normal navigation.
+- Sign out works.
+
+Cloudflare production deployment came from pushing `main`. No manual deploy command was run.
+
 ## Guardrails Preserved
 
 Phase 7L.4 preserves:
@@ -137,12 +156,15 @@ Phase 7L.4 preserves:
 - No hosted `/water-now` calls.
 - No local ESP32 IPs in hosted production artifacts.
 - No firmware changes.
+- No firmware upload.
 - No pin, sensor, device ID, watering duration, threshold, cooldown, moisture mapping, or control eligibility changes.
 - ESP32 firmware remains the owner of watering decisions and pump shutoff.
 
+During production-validation closeout, no SQL was run, no firmware was touched, and no manual deploy command was run.
+
 ## Known Remaining Risk
 
-The public demo views still rely on the existing demo-safe public posture. Before adding external customer devices, public demo exposure should be narrowed or explicitly revalidated so public demo views cannot expose non-demo customer/support devices merely because a registry row is active and hosted-visible.
+Before adding external customer devices, public demo visibility should be narrowed so public demo views cannot accidentally expose non-demo customer data.
 
 ## Out Of Scope
 
@@ -158,5 +180,5 @@ Phase 7L.4 does not implement:
 - Remote Water Now.
 - Supabase command/control.
 - Firmware changes.
-- Deployment.
-- Production/custom-domain validation.
+- Commercial account lifecycle readiness.
+- Broad external customer onboarding.
