@@ -6,7 +6,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 
 ## Current Active Branch Context
 
-- Current repo context: Phase 7L.2 hosted customer view shell implemented pending Jeremy review, commit approval, and merge approval.
+- Current repo context: Phase 7L.3 minimal landing page with embedded live demo and hosted route shell implemented pending validation, Jeremy review, commit approval, and merge approval.
 - Current Phase 6A status: merged to `main`; Cloudflare Pages Production and custom domain validated
 - Current Phase 6B status: complete; device identity and bench unit readiness convention documented
 - Current Phase 6C status: complete; PlatformIO device identity build-profile bridge validated
@@ -41,6 +41,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7L status: complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`
 - Phase 7L.1 status: complete and present on `main` in commit `2d74588 Add customer site access simulation`; hosted-readonly customer/site access simulation over real Balcony01 and Scout01 telemetry
 - Phase 7L.2 status: implemented pending Jeremy review, commit approval, and merge approval; hosted-readonly site shell visually prioritizes Jeremy Balcony Pilot / Savannah Balcony while preserving a small pilot simulation note
+- Phase 7L.3 status: implemented pending validation, Jeremy review, commit approval, and merge approval; hosted-readonly `/` is now a minimal public landing page with an embedded compact real-data snapshot, `/demo` is the fuller public read-only demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` preserves the customer `My Garden` shell without the prominent site-assignment shell, `/app` remains a backward-compatible alias, `/login` opens the placeholder login dialog, and `/support` is a temporary read-only support review route by direct URL
 - Phase 7M status: documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
@@ -90,13 +91,14 @@ It is a planning guide, not an implementation approval. Each item still requires
 39. Phase 7L - MVP Customer Setup, Access, and Local-Control Boundary - complete and present on `main`
 40. Phase 7L.1 - Customer/Site Access Simulation MVP - complete and present on `main`
 41. Phase 7L.2 - Hosted Customer View Shell and UI Mode Boundary - implemented pending Jeremy review
-42. Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan - documentation/design complete and present on `main`
-43. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
-44. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
-45. Phase 7P - Hardware Safety Maturity - future
-46. Phase 7Q - Pilot Deployment Package - future
+42. Phase 7L.3 - Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell - implemented pending validation and review
+43. Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan - documentation/design complete and present on `main`
+44. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
+45. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
+46. Phase 7P - Hardware Safety Maturity - future
+47. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - VALIDATED / COMPLETE PENDING FINAL COMMIT/PUSH
 
@@ -1373,6 +1375,35 @@ Boundary:
 Out of scope:
 
 - Supabase Auth, customer/site/device SQL tables, membership SQL tables, RLS policies, database migrations, real login/logout, account invites, support/admin UI with real privileges, Cloudflare Access, role-based routing, customer billing/account lifecycle, provisioning UI, settings/admin implementation, watering-event capture fix, telemetry event-capture changes, fake telemetry, fake `sensor_logs` rows, duplicate device IDs, ghost physical devices, firmware, `src/main.cpp`, `src/config.h`, `platformio.ini`, pins, sensors, sensor assignments, device IDs, firmware metadata wording, watering duration, `MOISTURE_THRESHOLD`, cooldown, `LOG_INTERVAL_MS`, moisture mapping, `control_eligible` behavior, `/water-now` behavior, local dashboard behavior, Supabase schema/RLS, SQL artifacts, production wiring docs, field readings, CSV field-capture files, support-folder exports, Cloudflare configuration, deploy, commit, or merge.
+
+## Phase 7L.3 - Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell - IMPLEMENTED PENDING VALIDATION
+
+Status:
+
+- Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation, Jeremy review, commit approval, and merge approval.
+
+Scope:
+
+- Add a lightweight hosted-readonly route shell in `App.tsx` using `window.location.pathname`.
+- Route `/` to a minimal public landing page with an embedded compact live telemetry snapshot.
+- Route `/demo` to a fuller public read-only live demo using existing hosted dashboard/data components.
+- Route `/app` to the existing hosted customer dashboard shell from Phase 7L.2.
+- Route `/login` to a placeholder stating customer login is coming next and pilot access is managed by Jeremy.
+- Route `/support` to a temporary read-only support view for reviewing connected garden units by direct URL while real login protection remains future work.
+- Add Cloudflare Pages SPA fallback file `mbg_dashboard/public/_redirects` with `/* /index.html 200`.
+- Document the phase in [`docs/product/phase7l3-public-landing-page-and-hosted-route-shell.md`](./product/phase7l3-public-landing-page-and-hosted-route-shell.md).
+
+Boundary:
+
+- The landing-page live snapshot uses real hosted telemetry from Balcony01 (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) through existing hosted read-only fetch helpers.
+- Missing or unavailable live snapshot values are shown as unavailable and are not faked.
+- `/demo` and `/app` preserve the current pilot assignment constraint to Balcony01 and Scout01.
+- Prototype01 / bench is not exposed in public or customer routes.
+- URL/query/path selection remains navigation convenience only, not security.
+
+Out of scope:
+
+- Supabase Auth, customer/site/device SQL tables, membership SQL tables, RLS policies, database migrations, real login/logout, account invites, support/admin UI with real privileges, Cloudflare Access, role-based routing, customer billing/account lifecycle, provisioning UI, settings/admin implementation, watering-event capture fix, telemetry event-capture changes, fake telemetry, fake `sensor_logs` rows, duplicate device IDs, ghost physical devices, firmware, `src/main.cpp`, `src/config.h`, `platformio.ini`, pins, sensors, sensor assignments, device IDs, firmware metadata wording, watering duration, `MOISTURE_THRESHOLD`, cooldown, `LOG_INTERVAL_MS`, moisture mapping, `control_eligible` behavior, `/water-now` behavior, local dashboard behavior, Supabase schema/RLS, SQL artifacts, production wiring docs, field readings, CSV field-capture files, support-folder exports, Cloudflare deploy command, deploy, push, commit, merge, or firmware upload.
 
 ## Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan
 

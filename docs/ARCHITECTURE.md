@@ -79,6 +79,7 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 - The local ESP32 live/control path and Supabase history/read path remain separate.
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
+- Phase 7L.3 adds a hosted route shell for the static frontend: `/` is the public landing page with a compact real-data snapshot, `/demo` is the fuller public read-only demo, `/mygarden` is the customer `My Garden` dashboard shell, `/app` remains a backward-compatible alias, `/login` is a placeholder login route, and `/support` is a temporary read-only support review route by direct URL. These routes are navigation surfaces, not customer isolation or support authorization.
 
 ## Multi-Unit Visibility And Local Control Target Safety
 

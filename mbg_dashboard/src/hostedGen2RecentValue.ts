@@ -104,7 +104,7 @@ const getDisplayModelForIdentity = (
     mode: 'unavailable',
     labelOverride: 'Check Sensor',
     message: 'Fresh read failed; no recent good reading is available.',
-    detailReason: 'The latest hosted row is not displayable and no recent good same-sensor value was found in the selected hosted window.',
+    detailReason: 'The latest garden reading is not displayable and no recent good same-sensor value was found in the selected window.',
     trustFlags: ['latest-read-failed', 'no-recent-good-value'],
   }
 }
@@ -127,7 +127,7 @@ const getRecentGoodDetailReason = (latestRow: HostedGen2MeasurementRow): string 
   const measurementName = normalizeText(latestRow.measurement_name)
 
   if (measurementName === 'moisture_index') {
-    return 'Recent value is shown for display only. It does not authorize watering and does not change local firmware control eligibility.'
+    return 'Recent value is shown for display only. It does not authorize watering and does not change garden unit watering eligibility.'
   }
 
   if (measurementName === 'raw_adc') {

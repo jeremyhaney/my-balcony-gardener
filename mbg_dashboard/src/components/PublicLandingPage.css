@@ -1,0 +1,274 @@
+.public-landing {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(134, 239, 172, 0.62) 0, rgba(134, 239, 172, 0) 34%),
+    linear-gradient(145deg, #d9fbe6 0%, #f0fdf4 46%, #f8fafc 100%),
+    #f8fafc;
+  color: #102019;
+  min-height: 100vh;
+  padding: 1.25rem clamp(1rem, 4vw, 3rem) 3rem;
+}
+
+.public-landing-nav {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1120px;
+  min-height: 48px;
+}
+
+.public-landing-brand {
+  color: #123326;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.public-landing-nav-links {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.public-landing-nav-links a,
+.public-landing-login {
+  color: #315243;
+  font-size: 0.92rem;
+  padding: 0 0.75rem;
+}
+
+.public-landing-login,
+.public-landing-primary-action,
+.live-demo-snapshot-link {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  line-height: 1.1;
+  min-height: 42px;
+  text-decoration: none;
+}
+
+.public-landing-login {
+  border: 0;
+  background: #123326;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0 1rem;
+}
+
+.public-landing-hero {
+  align-items: center;
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.9fr);
+  margin: clamp(2rem, 6vw, 5rem) auto 0;
+  max-width: 1120px;
+}
+
+.public-landing-copy {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.public-landing-section-label {
+  color: #16803f;
+  font-size: 0.82rem;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.public-landing-copy h1 {
+  color: #0f241a;
+  font-size: clamp(2.4rem, 5vw, 4.8rem);
+  line-height: 1;
+  margin: 0;
+  max-width: 760px;
+}
+
+.public-landing-copy h1 span {
+  display: block;
+}
+
+.public-landing-copy p {
+  color: #3d5148;
+  font-size: 1.12rem;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 620px;
+}
+
+.public-landing-copy .public-landing-value-line {
+  color: #14532d;
+  font-size: 1.02rem;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.public-landing-primary-action {
+  background: #16803f;
+  color: #ffffff;
+  justify-self: start;
+  padding: 0 1.15rem;
+}
+
+.public-landing-section,
+.public-landing-proof,
+.public-landing-video {
+  margin: clamp(2.5rem, 6vw, 5rem) auto 0;
+  max-width: 1120px;
+}
+
+.public-landing-section {
+  align-items: start;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 0.85fr) minmax(280px, 1fr);
+}
+
+.public-landing-section h2,
+.public-landing-proof h2 {
+  color: #12241b;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  margin: 0.25rem 0 0;
+}
+
+.public-landing-steps {
+  counter-reset: step;
+  display: grid;
+  gap: 0.8rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.public-landing-steps li {
+  background: #ffffff;
+  border: 1px solid #d9e5dc;
+  border-radius: 8px;
+  color: #34483e;
+  padding: 0.85rem 1rem;
+}
+
+.public-landing-proof {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.public-landing-proof article,
+.public-landing-video {
+  background: #ffffff;
+  border: 1px solid #d9e5dc;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.public-landing-proof p,
+.public-landing-video p {
+  color: #4d6056;
+  line-height: 1.55;
+  margin: 0.45rem 0 0;
+}
+
+.public-landing-video {
+  min-height: 120px;
+}
+
+.public-landing-video p {
+  font-weight: 800;
+}
+
+.public-login-modal-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 30;
+}
+
+.public-login-modal {
+  background: #ffffff;
+  border: 1px solid #d9e5dc;
+  border-radius: 8px;
+  box-shadow: 0 22px 55px rgba(15, 35, 25, 0.22);
+  color: #102019;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 420px;
+  padding: clamp(1.1rem, 4vw, 1.75rem);
+  width: min(100%, 420px);
+}
+
+.public-login-modal p {
+  color: #16803f;
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.public-login-modal h2 {
+  color: #102019;
+  font-size: 1.55rem;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.public-login-modal span {
+  color: #4d6056;
+  line-height: 1.55;
+}
+
+.public-login-modal button {
+  background: #123326;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  justify-self: start;
+  min-height: 42px;
+  padding: 0 1rem;
+}
+
+@media (max-width: 860px) {
+  .public-landing-hero,
+  .public-landing-section,
+  .public-landing-proof {
+    grid-template-columns: 1fr;
+  }
+
+  .public-landing-hero {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 520px) {
+  .public-landing {
+    padding-inline: 0.85rem;
+  }
+
+  .public-landing-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .public-landing-nav-links {
+    justify-content: flex-start;
+  }
+
+  .public-landing-copy h1 {
+    font-size: 2.35rem;
+  }
+}

@@ -67,6 +67,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
 - Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
 - Phase 6E custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
+- Phase 7L.3 hosted-readonly routing is implemented pending validation and review: `/` is a minimal public landing page with an embedded real-data snapshot, `/demo` is the fuller public read-only demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` is the customer `My Garden` dashboard shell without the prominent site-assignment shell, `/app` remains a backward-compatible alias, `/login` opens the landing page with a placeholder login dialog, and `/support` is a temporary read-only support view reachable by direct URL.
+- The Phase 7L.3 landing snapshot uses real hosted telemetry from Balcony01 and does not introduce fake telemetry, fake `sensor_logs` rows, or ghost devices.
 - Local/default dashboard behavior remains unchanged; Manual Water Now remains available only through the local/default path.
 - Remote command/control (Remote Water Now) is not part of MVP.
 - Supabase remains read-only for telemetry and history; it is not used for command/control.
@@ -153,6 +155,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - Hosted read-only mode uses `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted read-only builds require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; do not document real values.
+- Hosted read-only routing now uses `/` for the public landing page, `/demo` for the public detailed demo, `/mygarden` for the customer `My Garden` dashboard shell, `/app` as a backward-compatible alias, `/login` for a placeholder login dialog, and `/support` for temporary read-only support review by direct URL.
+- Cloudflare Pages direct route refreshes are supported by `mbg_dashboard/public/_redirects` with `/* /index.html 200`.
 - Hosted read-only builds now expose read-only Device and Window selectors for Supabase Sensor History.
 - `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device when no valid `device` query value is present.
 - Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.

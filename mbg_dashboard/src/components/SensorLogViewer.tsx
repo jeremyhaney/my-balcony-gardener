@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchDeviceDiagnostics,
   fetchHistoryLogs,
@@ -41,15 +41,25 @@ const HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE = 8
 
 type SensorLogViewerProps = {
   isHostedReadonly?: boolean
+  hostedReadonlyScope?: 'pilot' | 'support'
+  showHostedSiteHeader?: boolean
+  demoGuideTarget?: DemoGuideTarget
 }
 
 type DeviceStatusPanelKey = 'status' | 'diagnostics'
+export type DemoGuideTarget = 'readings' | 'status' | 'device' | 'window' | 'chart'
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Unknown error'
 
-const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => {
-  const pilotCustomerSite = isHostedReadonly ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
+const SensorLogViewer = ({
+  isHostedReadonly = false,
+  hostedReadonlyScope = 'pilot',
+  showHostedSiteHeader = true,
+  demoGuideTarget,
+}: SensorLogViewerProps) => {
+  const pilotCustomerSite =
+    isHostedReadonly && hostedReadonlyScope === 'pilot' ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
   const deviceOptions = useMemo(
     () =>
       pilotCustomerSite
@@ -57,6 +67,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
         : HISTORY_DEVICE_OPTIONS,
     [pilotCustomerSite],
   )
+  const deviceStatusPanelsRef = useRef<HTMLDivElement>(null)
   const [logs, setLogs] = useState<SensorLogRow[]>([])
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [diagnostics, setDiagnostics] = useState<DeviceDiagnostics | null>(null)
@@ -145,6 +156,31 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
     }
   }, [deviceOptions])
 
+  useEffect(() => {
+    if (!openDeviceStatusPanel) {
+      return
+    }
+
+    const handleDocumentPointerDown = (event: PointerEvent) => {
+      const target = event.target
+
+      if (
+        target instanceof Node &&
+        deviceStatusPanelsRef.current?.contains(target)
+      ) {
+        return
+      }
+
+      setOpenDeviceStatusPanel(null)
+    }
+
+    document.addEventListener('pointerdown', handleDocumentPointerDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handleDocumentPointerDown)
+    }
+  }, [openDeviceStatusPanel])
+
   const handleDeviceChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const nextDevice = getHistoryDeviceOption(event.target.value, deviceOptions)
 
@@ -194,6 +230,13 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
       ? calculateHostedGen2Health(hostedGen2Rows, selectedWindow.key)
       : calculateTelemetryHealth(logs, selectedWindow.key)
   const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
+  const getDemoGuideTargetClass = (target: DemoGuideTarget): string =>
+    [
+      'demo-guide-target',
+      demoGuideTarget === target ? 'is-demo-guide-highlighted' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
 
   const historyControls = (
     <div
@@ -207,7 +250,11 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
         marginBottom: isHostedReadonly ? 0 : '1rem',
       }}
     >
-      <label style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}>
+      <label
+        className={getDemoGuideTargetClass('device')}
+        data-guide-target="device"
+        style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
+      >
         <span>History Device</span>
         <select
           value={selectedDevice.key}
@@ -225,7 +272,11 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
         </select>
       </label>
 
-      <label style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}>
+      <label
+        className={getDemoGuideTargetClass('window')}
+        data-guide-target="window"
+        style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
+      >
         <span>Window</span>
         <select
           value={selectedWindow.key}
@@ -252,7 +303,14 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
   ) : null
 
   const deviceStatusPanels = (
-    <div className="device-status-panels">
+    <div
+      className={[
+        'device-status-panels',
+        getDemoGuideTargetClass('status'),
+      ].join(' ')}
+      data-guide-target="status"
+      ref={deviceStatusPanelsRef}
+    >
       {telemetryHealth ? (
         <SensorHealthPanel
           health={telemetryHealth}
@@ -301,7 +359,7 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
     <div className="p-4">
       {isHostedReadonly ? (
         <>
-          {pilotCustomerSite ? (
+          {pilotCustomerSite && showHostedSiteHeader ? (
             <HostedSiteHeader
               customerSite={pilotCustomerSite}
               assignedDevices={deviceOptions}
@@ -313,12 +371,14 @@ const SensorLogViewer = ({ isHostedReadonly = false }: SensorLogViewerProps) => 
             isLoading={isHostedGen2Loading}
             error={hostedGen2Error}
             fallbackDeviceLabel={selectedDeviceLabel}
+            className={getDemoGuideTargetClass('readings')}
           />
           <HostedGen2TrendChart
             rows={hostedGen2Rows}
             isLoading={isHostedGen2Loading}
             error={hostedGen2Error}
             controls={historyControls}
+            className={getDemoGuideTargetClass('chart')}
           />
         </>
       ) : (

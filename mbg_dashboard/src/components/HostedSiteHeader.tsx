@@ -19,11 +19,10 @@ const HostedSiteHeader = ({
   )
 
   return (
-    <section className="hosted-site-header" aria-label="Hosted site context">
+    <section className="hosted-site-header" aria-label="Garden site context">
       <div className="hosted-site-header-main">
-        <p className="hosted-site-header-location">{customerSite.siteLocationLabel}</p>
         <h2>{customerSite.siteName}</h2>
-        <p className="hosted-site-header-copy">Read-only monitoring dashboard</p>
+        <p className="hosted-site-header-copy">Read-only online dashboard</p>
       </div>
 
       <div className="hosted-site-header-devices" aria-label="Assigned devices">
@@ -36,7 +35,7 @@ const HostedSiteHeader = ({
           {supportDevices.map((device) => (
             <li key={device.key}>
               <strong>{device.hostedLabel}</strong>
-              <span>Telemetry-only support sensor</span>
+              <span>Garden readings support sensor</span>
             </li>
           ))}
         </ul>

@@ -185,14 +185,14 @@ const getPanelStatusLabel = (status: DeviceStatusHealthStatus): string => {
 
 const getStatusSubtitle = (status: DeviceStatusHealthStatus): string => {
   if (status === 'healthy') {
-    return 'Recent hosted measurement history looks healthy.'
+    return 'Recent garden reading history looks healthy.'
   }
 
   if (status === 'warning') {
-    return 'Hosted measurement history has evidence to review.'
+    return 'Garden reading history has evidence to review.'
   }
 
-  return 'Hosted measurement history is missing or stale.'
+  return 'Garden reading history is missing or stale.'
 }
 
 const getStatusSummaries = (health: DeviceStatusHealth<unknown>): StatusSummary[] => [
@@ -207,7 +207,7 @@ const getFreshnessSummary = (health: DeviceStatusHealth<unknown>): StatusSummary
     return {
       tone: 'check',
       label: 'No recent data',
-      message: 'No latest hosted report is available for this window.',
+      message: 'No latest garden report is available for this window.',
     }
   }
 
@@ -245,7 +245,7 @@ const getLatestSampleSummary = (health: DeviceStatusHealth<unknown>): StatusSumm
     return {
       tone: health.status === 'healthy' ? 'neutral' : 'check',
       label: 'Latest sample unavailable',
-      message: 'The latest hosted sample does not have displayable reading evidence.',
+      message: 'The latest garden sample does not have displayable reading evidence.',
     }
   }
 

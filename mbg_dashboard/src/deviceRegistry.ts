@@ -21,8 +21,8 @@ export const DEVICE_REGISTRY: RegisteredDevice[] = [
   },
   {
     key: 'bench',
-    label: 'Bench Prototype Unit',
-    hostedLabel: 'Prototype01',
+    label: 'Bench Test Unit',
+    hostedLabel: 'Bench01',
     deviceId: '318fab98-89ad-4f36-9100-3134a04e0be5',
     role: 'bench',
     description: 'Bench test unit. Do not use for real-world plant watering.',

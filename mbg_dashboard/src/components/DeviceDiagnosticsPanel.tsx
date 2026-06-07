@@ -140,7 +140,7 @@ const DeviceDiagnosticsPanel = ({
             <dt>Cloud error category</dt>
             <dd>{formatNullableText(diagnostics?.last_supabase_error_category)}</dd>
 
-            <dt>Successful telemetry post</dt>
+            <dt>Successful reading post</dt>
             <dd>{formatTimestamp(diagnostics?.last_successful_telemetry_post_at)}</dd>
 
             <dt>Successful diagnostics post</dt>
@@ -205,7 +205,7 @@ const getFreshnessSummary = (
     return {
       tone: 'check',
       label: 'No recent diagnostics',
-      message: 'The hosted dashboard has not received heartbeat evidence from this device yet.',
+      message: 'The online dashboard has not received heartbeat evidence from this garden unit yet.',
     }
   }
 
@@ -213,7 +213,7 @@ const getFreshnessSummary = (
     return {
       tone: 'watch',
       label: 'Diagnostics stale',
-      message: 'The hosted dashboard has not received a recent heartbeat from this device.',
+      message: 'The online dashboard has not received a recent heartbeat from this garden unit.',
     }
   }
 
@@ -229,7 +229,7 @@ const getCloudSummary = (diagnostics: DeviceDiagnostics | null): DiagnosticsSumm
     return {
       tone: 'neutral',
       label: 'Cloud reporting unknown',
-      message: 'No hosted heartbeat evidence is available to judge cloud reporting yet.',
+      message: 'No garden unit heartbeat evidence is available to judge cloud reporting yet.',
     }
   }
 
@@ -269,7 +269,7 @@ const getConnectionSummary = (
     return {
       tone: 'neutral',
       label: 'Connection unknown',
-      message: 'No hosted heartbeat evidence is available to judge connection state yet.',
+      message: 'No garden unit heartbeat evidence is available to judge connection state yet.',
     }
   }
 
@@ -288,7 +288,7 @@ const getConnectionSummary = (
     return {
       tone: 'check',
       label: 'Connection needs review',
-      message: 'The latest hosted evidence is stale or reports Wi-Fi as disconnected.',
+      message: 'The latest garden unit evidence is stale or reports Wi-Fi as disconnected.',
     }
   }
 
@@ -331,7 +331,7 @@ const getWateringCapabilitySummary = (
       tone: 'neutral',
       label: 'Watering capable',
       message:
-        'Latest firmware evidence says this device can water locally; the hosted dashboard remains read-only.',
+        'Latest garden unit evidence says this unit can water itself; the online dashboard remains read-only.',
     }
   }
 
@@ -339,7 +339,7 @@ const getWateringCapabilitySummary = (
     return {
       tone: 'neutral',
       label: 'No watering authority',
-      message: 'Latest firmware evidence says this device does not have watering authority.',
+      message: 'Latest garden unit evidence says this unit does not have watering authority.',
     }
   }
 

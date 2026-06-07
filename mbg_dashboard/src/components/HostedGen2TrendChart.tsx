@@ -23,6 +23,7 @@ type HostedGen2TrendChartProps = {
   isLoading: boolean
   error: string | null
   controls?: ReactNode
+  className?: string
 }
 
 type ChartPoint = {
@@ -97,6 +98,7 @@ const HostedGen2TrendChart = ({
   isLoading,
   error,
   controls,
+  className = '',
 }: HostedGen2TrendChartProps) => {
   const numericRows = useMemo(
     () =>
@@ -164,7 +166,11 @@ const HostedGen2TrendChart = ({
   }
 
   return (
-    <section className="hosted-gen2-trend-chart" aria-label="Gen2 Trend Chart">
+    <section
+      className={['hosted-gen2-trend-chart', className].filter(Boolean).join(' ')}
+      data-guide-target="chart"
+      aria-label="Gen2 Trend Chart"
+    >
       {controls ? (
         <div className="hosted-gen2-trend-chart-header">
           {controls}

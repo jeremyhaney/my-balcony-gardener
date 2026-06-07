@@ -390,6 +390,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7L.2 makes the hosted shell site-focused: `Jeremy Balcony Pilot`, `Savannah Balcony`, `Read-only monitoring dashboard`, `Balcony01` as Primary controller, and `Scout01` as Telemetry-only support sensor.
 - Phase 7L.2 keeps the small visible note `Pilot simulation: Static site assignment. Real login and customer isolation are deferred.`
 - Phase 7L.2 does not change the app-level brand/header in `App.tsx`.
+- Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation, Jeremy review, commit approval, and merge approval.
+- Phase 7L.3 creates product artifact [`docs/product/phase7l3-public-landing-page-and-hosted-route-shell.md`](./product/phase7l3-public-landing-page-and-hosted-route-shell.md).
+- Hosted-readonly mode now routes `/` to a minimal public landing page with an embedded compact real-data snapshot, `/demo` to a fuller public read-only live demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` to the current customer `My Garden` dashboard shell without the prominent site-assignment shell, `/app` as a backward-compatible alias, `/login` to a placeholder login dialog, and `/support` to a temporary read-only support review route by direct URL.
+- The landing page snapshot uses real hosted telemetry from `Balcony01` / `balcony` / `550e8400-e29b-41d4-a716-446655440000`; unavailable measurements are not faked.
+- `mbg_dashboard/public/_redirects` now provides the Cloudflare Pages SPA fallback `/* /index.html 200` for direct hosted route refreshes.
 - MBG should not fork into separate independently maintained customer and engineering sites.
 - Prefer one shared dashboard codebase and shared UI components with mode/capability/context gates for customer hosted read-only mode, support/admin read-only diagnostics mode, and local engineering/service mode.
 - Customer, support/admin, and local engineering views may expose different capabilities, but they should reuse the same core layout/components where practical so the UI does not drift.
@@ -398,6 +403,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7L.1 creates no fake telemetry, fake `sensor_logs` rows, ghost physical device, duplicate device ID, Supabase Auth flow, customer/site SQL table, membership table, or RLS policy.
 - Phase 7L.1 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
 - Phase 7L.2 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
+- Phase 7L.3 keeps hosted routes read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, auth, customer isolation, SQL/RLS change, firmware change, deploy, or firmware upload.
 - Watering event capture/visibility remains future work: on 2026-06-05, Jeremy ran local Water Now twice for two 60-second sequences on `Balcony01`. All baskets were dripping and the watering appeared thorough, but the hosted site did not register/show the watering event. The event was recorded manually in `sensor_events`.
 - Future work must investigate and fix local manual watering event capture and hosted visibility without creating fake `sensor_logs` rows, without introducing Supabase command/control, and without changing Water Now behavior in this docs scrub.
 - Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design only.

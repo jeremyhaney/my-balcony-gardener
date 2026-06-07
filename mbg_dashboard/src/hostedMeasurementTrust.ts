@@ -110,7 +110,7 @@ export const getHostedMeasurementTrust = ({
       level: 'unavailable',
       label: 'Unavailable',
       headlineReason: 'No displayable recent value is available for this measurement.',
-      detailReason: 'No latest hosted Gen2 row was available for this measurement card.',
+      detailReason: 'No latest garden reading was available for this measurement card.',
       trustFlags: ['missing-row'],
     })
   }
@@ -142,7 +142,7 @@ export const getHostedMeasurementTrust = ({
       level: 'failed',
       label: 'Failed',
       headlineReason: 'The reported value is not a usable numeric measurement.',
-      detailReason: 'The latest hosted row did not include a finite numeric measurement value.',
+      detailReason: 'The latest garden reading did not include a finite numeric measurement value.',
       trustFlags: ['non-finite-value'],
     })
   }
@@ -250,14 +250,14 @@ const getFallbackTrustResult = (
     fallbackStatus.reason ??
     (isCaution
       ? 'Reading is displayable, but the latest value still needs review.'
-      : 'Reading is displayable and passed hosted trust checks.')
+      : 'Reading is displayable and passed dashboard quality checks.')
 
   return buildTrustResult({
     level,
     label,
     headlineReason,
     detailReason:
-      'Hosted trust checks did not find metadata failure, hard-bound failure, or recent-behavior concerns.',
+      'Dashboard quality checks did not find metadata failure, hard-bound failure, or recent-behavior concerns.',
     trustFlags: ['display-status-fallback'],
   })
 }

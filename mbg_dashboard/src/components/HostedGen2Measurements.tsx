@@ -22,12 +22,14 @@ type HostedGen2MeasurementsProps = {
   isLoading: boolean
   error: string | null
   fallbackDeviceLabel: string
+  className?: string
 }
 
 const HostedGen2Measurements = ({
   rows,
   isLoading,
   error,
+  className = '',
 }: HostedGen2MeasurementsProps) => {
   const sortedRows = [...rows].sort(compareRowsNewestFirst)
   const hasUsableRows = rows.length > 0
@@ -38,7 +40,11 @@ const HostedGen2Measurements = ({
   const latestMeasuredAt = sortedRows[0]?.measured_at ?? null
 
   return (
-    <section className="hosted-gen2-measurements" aria-label="Live Measurements">
+    <section
+      className={['hosted-gen2-measurements', className].filter(Boolean).join(' ')}
+      data-guide-target="readings"
+      aria-label="Live Measurements"
+    >
       <div className="hosted-gen2-measurements-header">
         <div>
           <h2>Live Measurements</h2>
@@ -230,7 +236,7 @@ const MeasurementCard = ({
 const SPARKLINE_WIDTH = 64
 const SPARKLINE_HEIGHT = 24
 const SPARKLINE_PADDING = 3
-const ROUTINE_TRUST_PASS_REASON = 'Reading is displayable and passed hosted trust checks.'
+const ROUTINE_TRUST_PASS_REASON = 'Reading is displayable and passed dashboard quality checks.'
 
 const TREND_DIRECTION_SYMBOLS: Partial<Record<HostedGen2TrendDirection, string>> = {
   rising: '↗',
@@ -327,7 +333,7 @@ const formatNullableText = (value: string | null | undefined): string =>
   value?.trim() ? value : 'Not available'
 
 const formatControlEligible = (value: boolean | null | undefined): string =>
-  `${formatNullableBoolean(value)} - local firmware evidence only`
+  `${formatNullableBoolean(value)} - garden unit evidence only`
 
 const formatTrustFlags = (values: string[]): string =>
   values.length > 0 ? values.join(', ') : 'None'
@@ -341,7 +347,7 @@ const formatDisplaySource = (mode: HostedGen2MeasurementDisplayModel['mode']): s
     return 'Latest read is not displayable and no recent good value was found.'
   }
 
-  return 'Latest hosted reading.'
+  return 'Latest garden reading.'
 }
 
 const formatRecentGoodEvidence = (
