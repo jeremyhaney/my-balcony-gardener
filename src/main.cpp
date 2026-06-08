@@ -7,6 +7,7 @@
 #include <HTTPClient.h>
 #include <WebServer.h>
 #include <DHT.h>
+#include <cstring>
 #include "time.h"
 #include "config.h"
 #include "profile_overrides.h"
@@ -63,6 +64,7 @@ unsigned long wateringStartTime = 0;
 unsigned long lastWateringEndTime = 0;
 unsigned long lastLogTime = 0;
 unsigned long lastWateringDuration = 0;
+const char* activeWateringTriggerSource = "firmware_safety";
 unsigned long lastWiFiReconnectAttemptTime = 0;
 unsigned long lastWiFiBeginRecoveryAttemptTime = 0;
 unsigned long wifiReconnectAttemptCount = 0;
@@ -114,6 +116,13 @@ void readSoilMoisture(float &moisture, int &soilRawAdc);
 bool automaticControlQualityGatesPass(float moisture, unsigned long sampledAt, unsigned long decisionAt);
 bool maybeStartAutomaticWatering(float moisture);
 void sendDataToSupabase(float temperature, float humidity, int moisture, int soilRawAdc, bool watering);
+void sendWateringEventToSupabase(
+  const char* eventType,
+  const char* triggerSource,
+  bool includeDuration,
+  int durationSeconds,
+  const char* reason
+);
 void sendDeviceHeartbeatToSupabase(String heartbeatReason);
 #ifdef MBG_GEN2_ENABLED
 void sendGen2MeasurementsToSupabase();
@@ -398,8 +407,18 @@ bool maybeStartAutomaticWatering(float moisture) {
     digitalWrite(RELAY_PIN, HIGH);
     isWatering = true;
     wateringStartTime = millis();
+    activeWateringTriggerSource = "automatic";
     lastWateredTime = getFormattedTime();
     Serial.println("💧 Auto-watering triggered (low moisture)");
+#ifdef MBG_GEN2_ENABLED
+    sendWateringEventToSupabase(
+      "watering_started",
+      activeWateringTriggerSource,
+      false,
+      0,
+      "automatic_watering_started"
+    );
+#endif
     return true;
   }
 
@@ -548,6 +567,101 @@ void sendDataToSupabase(float temperature, float humidity, int moisture, int soi
     }
   } else {
     Serial.println("❌ POST failed");
+    Serial.print("Error: ");
+    recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
+    Serial.println(https.errorToString(httpCode).c_str());
+  }
+
+  https.end();
+}
+
+// Send device-originated watering event evidence to Supabase.
+void sendWateringEventToSupabase(
+  const char* eventType,
+  const char* triggerSource,
+  bool includeDuration,
+  int durationSeconds,
+  const char* reason
+) {
+  if (WiFi.status() != WL_CONNECTED) {
+    recordSupabasePostFailure(0, "wifi_unavailable");
+    Serial.println("Watering event post skipped: WiFi not connected");
+    return;
+  }
+
+  String eventAt = getUtcIsoTimestamp();
+  if (eventAt == "TIME_ERROR") {
+    recordSupabasePostFailure(0, "time_unavailable");
+    Serial.println("Watering event post skipped: UTC time unavailable");
+    return;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure(); // TODO: Use setCACert() for production
+  HTTPClient https;
+
+  String url = String(SUPABASE_URL);
+  if (url.endsWith("watering_events")) {
+    // Use configured watering event endpoint as-is.
+  } else if (url.endsWith("sensor_logs")) {
+    url = url.substring(0, url.length() - String("sensor_logs").length()) + "watering_events";
+  } else if (url.endsWith("device_heartbeats")) {
+    url = url.substring(0, url.length() - String("device_heartbeats").length()) + "watering_events";
+  } else if (url.endsWith("sensor_measurement_batches")) {
+    url = url.substring(0, url.length() - String("sensor_measurement_batches").length()) + "watering_events";
+  } else if (url.endsWith("sensor_measurements")) {
+    url = url.substring(0, url.length() - String("sensor_measurements").length()) + "watering_events";
+  } else if (url.endsWith("/")) {
+    url += "rest/v1/watering_events";
+  } else {
+    url += "/rest/v1/watering_events";
+  }
+
+  https.begin(client, url);
+  // Keep watering evidence best-effort so local control remains responsive.
+  https.setTimeout(3000);
+  https.addHeader("apikey", SUPABASE_ANON_KEY);
+  https.addHeader("Authorization", "Bearer " + String(SUPABASE_ANON_KEY));
+  https.addHeader("Content-Type", "application/json");
+  https.addHeader("Prefer", "return=minimal");
+
+  String postData = "{";
+  postData += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  postData += "\"event_at\":\"" + eventAt + "\",";
+  postData += "\"event_type\":\"" + String(eventType) + "\",";
+  postData += "\"trigger_source\":\"" + String(triggerSource) + "\",";
+  postData += "\"duration_seconds\":";
+  postData += includeDuration ? String(durationSeconds) : "null";
+  postData += ",";
+  postData += "\"reason\":\"" + String(reason) + "\",";
+  postData += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
+  postData += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
+  postData += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
+  postData += "\"details\":{";
+  postData += "\"phase\":\"7O.1\",";
+  postData += "\"source\":\"firmware\",";
+  postData += "\"uptime_seconds\":" + String(millis() / 1000);
+  postData += "}";
+  postData += "}";
+
+  Serial.println("Posting watering event: " + String(eventType) + " / " + String(triggerSource));
+
+  int httpCode = https.POST(postData);
+
+  if (httpCode > 0) {
+    if (httpCode == 201) {
+      recordSupabasePostSuccess(false, httpCode);
+      Serial.println("Watering event sent to Supabase");
+    } else {
+      Serial.print("Watering event Supabase response code: ");
+      Serial.println(httpCode);
+      recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
+      String response = https.getString();
+      Serial.print("Response: ");
+      Serial.println(response);
+    }
+  } else {
+    Serial.println("Watering event POST failed");
     Serial.print("Error: ");
     recordSupabasePostFailure(httpCode, supabaseFailureCategoryForHttpCode(httpCode));
     Serial.println(https.errorToString(httpCode).c_str());
@@ -936,8 +1050,18 @@ void handleWaterNow() {
     digitalWrite(RELAY_PIN, HIGH);
     isWatering = true;
     wateringStartTime = millis();
+    activeWateringTriggerSource = "manual_local";
     lastWateredTime = getFormattedTime();
     Serial.println("💧 Manual watering triggered");
+#ifdef MBG_GEN2_ENABLED
+    sendWateringEventToSupabase(
+      "watering_started",
+      activeWateringTriggerSource,
+      false,
+      0,
+      "manual_water_now_started"
+    );
+#endif
 #ifndef MBG_GEN2_ENABLED
     // Phase 5D: log watering start immediately so short pump cycles are visible.
     float humidity = 0;
@@ -1005,6 +1129,27 @@ void loop() {
       isWatering = false;
       lastWateringEndTime = millis();
       lastWateringDuration = wateringDuration / 1000; // Convert to seconds
+
+#ifdef MBG_GEN2_ENABLED
+      const char* completionTriggerSource = "firmware_safety";
+      const char* completionReason = "watering_completed_trigger_source_fallback";
+      if (strcmp(activeWateringTriggerSource, "manual_local") == 0) {
+        completionTriggerSource = "manual_local";
+        completionReason = "manual_water_now_completed";
+      } else if (strcmp(activeWateringTriggerSource, "automatic") == 0) {
+        completionTriggerSource = "automatic";
+        completionReason = "automatic_watering_completed";
+      }
+
+      sendWateringEventToSupabase(
+        "watering_completed",
+        completionTriggerSource,
+        true,
+        (int)lastWateringDuration,
+        completionReason
+      );
+      activeWateringTriggerSource = "firmware_safety";
+#endif
 
       // Send final update with watering completed
 #ifndef MBG_GEN2_ENABLED
