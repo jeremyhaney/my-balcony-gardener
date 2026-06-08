@@ -10,6 +10,7 @@
 #include "gen2_bme280.h"
 #include "gen2_dht11.h"
 #include "gen2_ds18b20.h"
+#include "gen2_i2c_mux.h"
 #include "gen2_soil_moisture.h"
 #include "gen2_veml6030.h"
 
@@ -87,6 +88,9 @@ String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
   response += (MBG_HAS_I2C_MODULES ? String(MBG_I2C_SCL_PIN) : String("null"));
   response += "},";
   response += "\"i2c_scan\":" + i2cScanJson() + ",";
+#if MBG_HAS_I2C_MUX
+  response += "\"i2c_mux\":" + gen2I2cMuxCapabilitiesJson() + ",";
+#endif
   response += "\"legacy_dht11_enabled\":" + boolString(MBG_HAS_DHT11 != 0) + ",";
   response += "\"modules\":[";
   response += gen2Dht11CapabilityJson();
