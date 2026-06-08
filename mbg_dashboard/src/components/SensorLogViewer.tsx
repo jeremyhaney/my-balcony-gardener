@@ -4,9 +4,11 @@ import {
   fetchGardenDevices,
   fetchHistoryLogs,
   fetchHostedGen2Measurements,
+  fetchHostedWateringEvents,
   type GardenDevice,
   type HostedDataScope,
   type DeviceDiagnostics,
+  type HostedWateringEventRow,
 } from '../api'
 import { PHASE_7L1_PILOT_CUSTOMER_SITE } from '../customerSites'
 import {
@@ -22,6 +24,7 @@ import {
   updateHistoryControlUrl,
 } from '../historyControls'
 import { calculateHostedGen2Health } from '../hostedGen2Health'
+import { getHostedWateringCycles } from '../hostedWateringCycles'
 import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import type { SensorLogRow } from '../types/sensorLog'
@@ -30,6 +33,7 @@ import DualAxisChart from './DualAxisChart'
 import HostedGen2Measurements from './HostedGen2Measurements'
 import HostedGen2TrendChart from './HostedGen2TrendChart'
 import HostedSiteHeader from './HostedSiteHeader'
+import HostedWateringEvents from './HostedWateringEvents'
 import SensorHealthPanel from './SensorHealthPanel'
 
 const isValidPercent = (value: number): boolean =>
@@ -88,6 +92,9 @@ const SensorLogViewer = ({
   const [hostedGen2Rows, setHostedGen2Rows] = useState<HostedGen2MeasurementRow[]>([])
   const [hostedGen2Error, setHostedGen2Error] = useState<string | null>(null)
   const [isHostedGen2Loading, setIsHostedGen2Loading] = useState(false)
+  const [wateringEventRows, setWateringEventRows] = useState<HostedWateringEventRow[]>([])
+  const [wateringEventsError, setWateringEventsError] = useState<string | null>(null)
+  const [isWateringEventsLoading, setIsWateringEventsLoading] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [openDeviceStatusPanel, setOpenDeviceStatusPanel] =
     useState<DeviceStatusPanelKey | null>(null)
@@ -162,6 +169,9 @@ const SensorLogViewer = ({
         setHostedGen2Rows([])
         setHostedGen2Error(null)
         setIsHostedGen2Loading(false)
+        setWateringEventRows([])
+        setWateringEventsError(null)
+        setIsWateringEventsLoading(false)
         setIsLoading(false)
         return
       }
@@ -179,22 +189,35 @@ const SensorLogViewer = ({
               error: `Supabase Gen2 measurements are currently unavailable: ${getErrorMessage(error)}`,
             }))
         : Promise.resolve({ rows: [] as HostedGen2MeasurementRow[], error: null })
+      const wateringEventsRequest = isProtectedHostedScope
+        ? fetchHostedWateringEvents(selectedDevice.deviceId, {
+            startTime: lowerBoundIso,
+            limit: 50,
+            scope: hostedDataScope === 'support' ? 'support' : 'customer',
+          })
+        : Promise.resolve({ rows: [] as HostedWateringEventRow[], error: null })
 
       if (isHostedReadonly) {
         setIsHostedGen2Loading(true)
       }
 
-      const [historyResult, diagnosticsResult, hostedGen2Result] = await Promise.all([
-        hostedDataScope === 'demo'
-          ? fetchHistoryLogs(
-              selectedWindow.limit,
-              selectedDevice.deviceId,
-              lowerBoundIso,
-            )
-          : Promise.resolve({ rows: [] as SensorLogRow[], error: null }),
-        fetchDeviceDiagnostics(selectedDevice.deviceId, hostedDataScope),
-        hostedGen2Request,
-      ])
+      if (isProtectedHostedScope) {
+        setIsWateringEventsLoading(true)
+      }
+
+      const [historyResult, diagnosticsResult, hostedGen2Result, wateringEventsResult] =
+        await Promise.all([
+          hostedDataScope === 'demo'
+            ? fetchHistoryLogs(
+                selectedWindow.limit,
+                selectedDevice.deviceId,
+                lowerBoundIso,
+              )
+            : Promise.resolve({ rows: [] as SensorLogRow[], error: null }),
+          fetchDeviceDiagnostics(selectedDevice.deviceId, hostedDataScope),
+          hostedGen2Request,
+          wateringEventsRequest,
+        ])
 
       if (!isMounted) {
         return
@@ -207,6 +230,9 @@ const SensorLogViewer = ({
       setHostedGen2Rows(hostedGen2Result.rows)
       setHostedGen2Error(hostedGen2Result.error)
       setIsHostedGen2Loading(false)
+      setWateringEventRows(wateringEventsResult.rows)
+      setWateringEventsError(wateringEventsResult.error)
+      setIsWateringEventsLoading(false)
       setIsLoading(false)
     }
 
@@ -322,6 +348,10 @@ const SensorLogViewer = ({
       ? calculateHostedGen2Health(hostedGen2Rows, selectedWindow.key)
       : calculateTelemetryHealth(logs, selectedWindow.key)
   const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
+  const wateringCycles = useMemo(
+    () => getHostedWateringCycles(wateringEventRows),
+    [wateringEventRows],
+  )
   const getDemoGuideTargetClass = (target: DemoGuideTarget): string =>
     [
       'demo-guide-target',
@@ -347,7 +377,7 @@ const SensorLogViewer = ({
         data-guide-target="device"
         style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
       >
-        <span>History Device</span>
+        <span>Device History</span>
         <select
           value={selectedDevice.key}
           onChange={handleDeviceChange}
@@ -489,7 +519,15 @@ const SensorLogViewer = ({
             error={hostedGen2Error}
             controls={historyControls}
             className={getDemoGuideTargetClass('chart')}
+            wateringCycles={isProtectedHostedScope ? wateringCycles : []}
           />
+          {isProtectedHostedScope ? (
+            <HostedWateringEvents
+              cycles={wateringCycles}
+              isLoading={isWateringEventsLoading}
+              error={wateringEventsError}
+            />
+          ) : null}
         </>
       ) : (
         <>

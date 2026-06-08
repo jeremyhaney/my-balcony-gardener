@@ -1,0 +1,130 @@
+.hosted-watering-events {
+  box-sizing: border-box;
+  margin: 1.5rem 0 0;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.18);
+  color: white;
+}
+
+.hosted-watering-events-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+
+.hosted-watering-events h2 {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.25rem;
+}
+
+.hosted-watering-events-header span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.65rem;
+  padding: 0.18rem 0.5rem;
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.22);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.hosted-watering-events-note,
+.hosted-watering-events-error {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.86rem;
+}
+
+.hosted-watering-events-note {
+  border: 1px solid #d9e5dc;
+  background: rgba(248, 250, 248, 0.96);
+  color: #315243;
+}
+
+.hosted-watering-events-error {
+  border: 1px solid rgba(220, 38, 38, 0.65);
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+.hosted-watering-events-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.hosted-watering-events-table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  background: transparent;
+}
+
+.hosted-watering-events-table th,
+.hosted-watering-events-table td {
+  padding: 0.45rem 0.5rem;
+  border-top: 1px solid #d9e5dc;
+  text-align: left;
+  vertical-align: top;
+}
+
+.hosted-watering-events-table th {
+  border-top: 0;
+  background: #f0fdf4;
+  color: #14532d;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.hosted-watering-events-table td {
+  color: #102019;
+  overflow-wrap: anywhere;
+}
+
+.hosted-watering-events-older {
+  margin-top: 0.5rem;
+}
+
+.hosted-watering-events-older summary {
+  width: fit-content;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.8rem;
+  font-weight: 700;
+  list-style-position: inside;
+}
+
+.hosted-watering-events-older summary:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.hosted-watering-events-older .hosted-watering-events-table-wrap {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .hosted-watering-events {
+    padding: 0.85rem;
+  }
+
+  .hosted-watering-events-table {
+    min-width: 420px;
+  }
+}

@@ -71,6 +71,31 @@ type DeviceDiagnosticsFetchResult = {
   error: string | null
 }
 
+export type HostedWateringEventRow = {
+  id: string
+  device_id: string
+  device_key: string | null
+  device_label: string | null
+  event_at: string
+  event_type:
+    | 'watering_started'
+    | 'watering_completed'
+    | 'watering_blocked'
+    | 'watering_safety_cutoff'
+  trigger_source: 'manual_local' | 'automatic' | 'physical_button' | 'firmware_safety'
+  duration_seconds: number | null
+  reason: string | null
+  firmware_version: string | null
+  build_profile: string | null
+  details: Record<string, unknown> | null
+  created_at: string | null
+}
+
+type HostedWateringEventsFetchResult = {
+  rows: HostedWateringEventRow[]
+  error: string | null
+}
+
 type SupabaseSensorLogRow = {
   id?: string | null
   device_id?: string | null
@@ -84,6 +109,8 @@ const HOSTED_GEN2_MEASUREMENT_COLUMNS =
   'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at'
 const DEVICE_DIAGNOSTICS_COLUMNS =
   'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_reconnect_attempt_count, last_supabase_http_status, consecutive_supabase_failures, last_supabase_error_category, last_successful_telemetry_post_at, last_successful_diagnostics_post_at, free_heap, min_free_heap, currently_watering, last_watering_duration, pump_control_available, device_can_water, wifi_begin_recovery_attempt_count, wifi_disconnect_event_count, wifi_got_ip_event_count, last_wifi_status_code, last_wifi_disconnect_reason, last_wifi_disconnected_uptime_seconds, last_wifi_reconnected_uptime_seconds, last_network_recovery_action'
+const WATERING_EVENT_COLUMNS =
+  'id, device_id, device_key, device_label, event_at, event_type, trigger_source, duration_seconds, reason, firmware_version, build_profile, details, created_at'
 
 const getGardenDevicesView = (scope: HostedDataScope): string =>
   scope === 'support' ? 'support_garden_devices' : 'customer_garden_devices'
@@ -111,6 +138,9 @@ const getDiagnosticsView = (scope: HostedDataScope): string => {
 
   return 'hosted_device_diagnostics'
 }
+
+const getWateringEventsView = (scope: Exclude<HostedDataScope, 'demo'>): string =>
+  scope === 'support' ? 'support_watering_events' : 'customer_watering_events'
 
 const DEFAULT_SENSOR_DATA: SensorData = {
   temperature: 0,
@@ -341,6 +371,62 @@ export async function fetchGardenDevices(
         scope === 'support'
           ? 'Support access is not available for this account.'
           : 'Garden access is currently unavailable.',
+    }
+  }
+}
+
+export async function fetchHostedWateringEvents(
+  deviceId: string,
+  options: {
+    startTime?: string
+    limit?: number
+    scope: Exclude<HostedDataScope, 'demo'>
+  },
+): Promise<HostedWateringEventsFetchResult> {
+  if (!isSupabaseConfigured || !supabase) {
+    return {
+      rows: [],
+      error: 'Supabase watering history is not configured.',
+    }
+  }
+
+  try {
+    const effectiveDeviceId = deviceId.trim() || getConfiguredDeviceId()
+
+    if (!effectiveDeviceId) {
+      return {
+        rows: [],
+        error: null,
+      }
+    }
+
+    let query = supabase
+      .from(getWateringEventsView(options.scope))
+      .select(WATERING_EVENT_COLUMNS)
+      .eq('device_id', effectiveDeviceId)
+      .order('event_at', { ascending: false })
+      .limit(Math.max(1, options.limit ?? 10))
+
+    if (options.startTime) {
+      query = query.gte('event_at', options.startTime)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      rows: (data ?? []) as HostedWateringEventRow[],
+      error: null,
+    }
+  } catch (error) {
+    console.warn('Protected watering history fetch failed:', error)
+
+    return {
+      rows: [],
+      error: 'Watering history is currently unavailable.',
     }
   }
 }

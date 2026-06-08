@@ -4,6 +4,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,6 +16,10 @@ import {
   getHostedGen2MeasurementDisplay,
   type HostedGen2AxisGroup,
 } from '../hostedGen2Display'
+import {
+  formatWateringCycleMarkerLabel,
+  type HostedWateringCycle,
+} from '../hostedWateringCycles'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import './HostedGen2TrendChart.css'
 
@@ -24,6 +29,7 @@ type HostedGen2TrendChartProps = {
   error: string | null
   controls?: ReactNode
   className?: string
+  wateringCycles?: HostedWateringCycle[]
 }
 
 type ChartPoint = {
@@ -42,6 +48,9 @@ type AxisConfig = {
 type AxisDomainValue = number | ((value: number) => number)
 
 type AxisDomain = [AxisDomainValue, AxisDomainValue]
+type TimeDomain = [number, number]
+
+const MAX_WATERING_MARKER_COUNT = 6
 
 const withDefaultAxisDomain = (
   lowerBound: number,
@@ -99,6 +108,7 @@ const HostedGen2TrendChart = ({
   error,
   controls,
   className = '',
+  wateringCycles = [],
 }: HostedGen2TrendChartProps) => {
   const numericRows = useMemo(
     () =>
@@ -149,7 +159,16 @@ const HostedGen2TrendChart = ({
     () => buildChartData(numericRows, selectedMeasurements),
     [numericRows, selectedMeasurements],
   )
+  const chartTimeDomain = useMemo(
+    () => getChartTimeDomain(chartData, wateringCycles),
+    [chartData, wateringCycles],
+  )
+  const visibleWateringMarkers = useMemo(
+    () => getVisibleWateringMarkers(wateringCycles, chartTimeDomain),
+    [chartTimeDomain, wateringCycles],
+  )
   const selectedAxisGroups = getSelectedAxisGroups(selectedMeasurements)
+  const primaryAxisGroup = selectedAxisGroups[0]
   const rightAxisCount = Math.max(0, selectedAxisGroups.length - 1)
   const leftAxisWidth = 52
   const hasUsableRows = rows.length > 0
@@ -241,7 +260,7 @@ const HostedGen2TrendChart = ({
                 dataKey="timestampMs"
                 type="number"
                 scale="time"
-                domain={['dataMin', 'dataMax']}
+                domain={chartTimeDomain}
                 tickFormatter={formatAxisTimestamp}
                 minTickGap={28}
               />
@@ -287,6 +306,24 @@ const HostedGen2TrendChart = ({
                 labelStyle={{ color: '#111827', fontWeight: 700, marginBottom: '0.25rem' }}
               />
               <Legend formatter={(value) => getHostedGen2MeasurementDisplay(String(value)).label} />
+              {visibleWateringMarkers.map((cycle) => (
+                <ReferenceLine
+                  key={cycle.id}
+                  x={cycle.startTimestampMs}
+                  yAxisId={primaryAxisGroup}
+                  stroke="#2563eb"
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                  ifOverflow="visible"
+                  label={{
+                    value: formatWateringCycleMarkerLabel(cycle),
+                    position: 'insideTop',
+                    fill: '#1d4ed8',
+                    fontSize: 11,
+                    fontWeight: 800,
+                  }}
+                />
+              ))}
               {selectedMeasurements.map((measurementName) => {
                 const display = getHostedGen2MeasurementDisplay(measurementName)
 
@@ -349,6 +386,45 @@ const buildChartData = (
 
   return Array.from(points.values()).sort((left, right) => left.timestampMs - right.timestampMs)
 }
+
+const getChartTimeDomain = (
+  chartData: ChartPoint[],
+  wateringCycles: HostedWateringCycle[],
+): TimeDomain => {
+  const timestamps = chartData.map((point) => point.timestampMs)
+
+  wateringCycles.slice(0, MAX_WATERING_MARKER_COUNT).forEach((cycle) => {
+    if (Number.isFinite(cycle.startTimestampMs)) {
+      timestamps.push(cycle.startTimestampMs)
+    }
+  })
+
+  if (timestamps.length === 0) {
+    const now = Date.now()
+    return [now - 60 * 60 * 1000, now]
+  }
+
+  const minTimestamp = Math.min(...timestamps)
+  const maxTimestamp = Math.max(...timestamps)
+
+  if (minTimestamp === maxTimestamp) {
+    return [minTimestamp - 30 * 60 * 1000, maxTimestamp + 30 * 60 * 1000]
+  }
+
+  return [minTimestamp, maxTimestamp]
+}
+
+const getVisibleWateringMarkers = (
+  wateringCycles: HostedWateringCycle[],
+  chartTimeDomain: TimeDomain,
+): HostedWateringCycle[] =>
+  wateringCycles
+    .filter(
+      (cycle) =>
+        cycle.startTimestampMs >= chartTimeDomain[0] &&
+        cycle.startTimestampMs <= chartTimeDomain[1],
+    )
+    .slice(0, MAX_WATERING_MARKER_COUNT)
 
 const getSelectedAxisGroups = (measurementNames: string[]): HostedGen2AxisGroup[] => {
   const axisGroups = new Set<HostedGen2AxisGroup>()

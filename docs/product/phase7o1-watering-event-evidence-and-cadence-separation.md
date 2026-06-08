@@ -4,7 +4,7 @@
 
 Phase 7O.1 records the design direction for making physical watering visible as trustworthy, device-originated evidence in hosted customer and support views.
 
-This document began as the Phase 7O.1 design record and now also records the approved backend/firmware evidence-path runtime validation. Hosted frontend display of `watering_events` is not implemented yet.
+This document began as the Phase 7O.1 design record and now also records the approved backend/firmware evidence-path runtime validation plus the Phase 7O.2 hosted read-only display implementation.
 
 ## Trust Gap Found
 
@@ -87,7 +87,7 @@ Phase 7O.1 recommends Option E - Hybrid:
 3. Keep `sensor_measurement_batches` as Gen2 measurement package evidence only.
 4. Keep `device_heartbeats` as diagnostics/latest health evidence only.
 5. Keep `sensor_events` as manual operational context only.
-6. Render future watering event evidence in protected customer/support hosted views.
+6. Render watering event evidence in protected customer/support hosted views.
 7. Keep Supabase as telemetry/history/diagnostics/event-evidence storage only.
 8. Keep local ESP32 firmware as the only owner of watering decisions and pump shutoff.
 
@@ -217,13 +217,16 @@ Runtime facts:
 - Pump shutoff remained local.
 - Supabase remains event-evidence storage only.
 
-Hosted customer/support frontend display is not wired to show `watering_events` yet. That remains a later implementation slice.
+Phase 7O.2 wires hosted customer/support frontend display for `/mygarden`, `/app`, and `/support` through protected `customer_watering_events` / `support_watering_events` views. The display marks completed watering cycles on the Gen2 trend chart, keeps chart markers as the primary visual watering indicator, shows a visually aligned compact Watering History table below the chart with `Start Time`, `Duration`, and `Watering Type` columns, uses `Manual Watering`, `Automatic Watering`, `Button Watering`, and rare/fallback `Device Safety` customer-facing nomenclature, corrects the hosted control label to `Device History`, aligns the Watering History panel shell with the hosted dashboard panels, removes defensive read-only copy/pill from the panel, adds no hosted control path, adds no local ESP32 calls, and does not read `public.watering_events` directly.
+
+The public `/demo` route does not read protected watering-event views and cannot show clean completed watering-cycle history without a future approved curated public demo-safe watering-event view.
+
+Frontend implementation validation passed `npm.cmd run lint`, the default production build, a hosted-readonly production build, and a hosted bundle forbidden-string scan. Jeremy visually reviewed `/mygarden` locally before commit, including the real Balcony01 60-second event marker and compact Watering History table row.
 
 ## Explicit Non-Goals
 
 Remaining non-goals:
 
-- Hosted customer/support runtime frontend display until separately approved.
 - Deployment.
 - Commit or push without approval.
 - Supabase command/control.

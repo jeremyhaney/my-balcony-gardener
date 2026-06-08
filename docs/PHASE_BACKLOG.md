@@ -44,7 +44,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7L.3 status: implemented pending validation, Jeremy review, commit approval, and merge approval; hosted-readonly `/` is now a minimal public landing page with an embedded compact real-data snapshot, `/demo` is the fuller public read-only demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` preserves the customer `My Garden` shell without the prominent site-assignment shell, `/app` remains a backward-compatible alias, `/login` opens the placeholder login dialog, and `/support` is a temporary read-only support review route by direct URL
 - Phase 7L.4 status: complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`; branch `phase7l4-customer-auth-garden-rls` was fast-forward merged, `main` was pushed, Cloudflare production auto-deployed from `main`, and production/credentialed browser validation passed on `https://mybalconygardener.boileragency.com`.
 - Phase 7M status: documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`
-- Phase 7O.1 status: backend/firmware evidence path runtime validated pending hosted display and closeout review
+- Phase 7O.1 status: backend/firmware evidence path runtime validated; Phase 7O.2 hosted customer/support display implemented pending review
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -98,7 +98,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 44. Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan - documentation/design complete and present on `main`
 45. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
 46. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
-47. Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - backend/firmware evidence path runtime validated pending hosted display and closeout review
+47. Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - backend/firmware evidence path runtime validated; Phase 7O.2 hosted display implemented pending review
 48. Phase 7P - Hardware Safety Maturity - future
 49. Phase 7Q - Pilot Deployment Package - future
 
@@ -1477,7 +1477,7 @@ Out of scope:
 - Changing moisture scaling without documentation and approval.
 - Bundling watering-duration changes into calibration unless explicitly approved.
 
-## Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - BACKEND/FIRMWARE EVIDENCE PATH RUNTIME VALIDATED PENDING HOSTED DISPLAY AND CLOSEOUT REVIEW
+## Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - BACKEND/FIRMWARE EVIDENCE PATH RUNTIME VALIDATED; PHASE 7O.2 HOSTED DISPLAY IMPLEMENTED PENDING REVIEW
 
 Purpose:
 
@@ -1496,13 +1496,17 @@ Status:
 - Firmware event posting was implemented in `src/main.cpp`.
 - Balcony01 upload was validated using `balcony-installed-gen2`.
 - One real local Manual Water Now generated device-originated `watering_started` and `watering_completed` event evidence.
-- Hosted customer/support display remains future work.
-- No frontend runtime changes were made.
+- Phase 7O.2 hosted customer/support display reads protected `customer_watering_events` / `support_watering_events` views for `/mygarden`, `/app`, and `/support`.
+- The hosted watering event display uses the selected device/window, keeps chart markers as the primary visual watering indicator, and shows a compact Watering History table below the chart with `Start Time`, `Duration`, and `Watering Type` columns.
+- Customer-facing watering labels use `Manual Watering`, `Automatic Watering`, `Button Watering`, and rare/fallback `Device Safety` nomenclature; the hosted control label now reads `Device History`.
+- The Watering History panel removed defensive read-only copy/pill, improved table contrast, and visually aligns its outer shell and compact table with the Live Measurements and chart panels.
+- `/demo` does not read protected watering-event views; public demo watering history remains deferred until a curated public demo-safe watering-event view is approved.
+- Frontend validation passed lint, default build, hosted-readonly build, and hosted bundle forbidden-string scan; Jeremy visually reviewed `/mygarden` locally before commit.
+- No hosted local ESP32 calls were added.
 - No Supabase command/control was introduced.
 
 Remaining out of scope until separately approved:
 
-- Hosted customer/support runtime frontend display of `watering_events`.
 - Deployment.
 - Changing pins, sensors, device IDs, watering duration, `MOISTURE_THRESHOLD`, cooldown, `LOG_INTERVAL_MS`, moisture mapping, `control_eligible`, firmware metadata wording, or local dashboard Water Now behavior.
 - Supabase command/control, Remote Water Now, hosted Water Now, hosted local ESP32 calls, app-based watering commands, fake telemetry rows, or fake watering rows.
@@ -1523,8 +1527,7 @@ Candidate future direction:
 - Normal cloud posting can remain approximately 15 minutes for customer history and hosted charting.
 - Local control evaluation should be its own decision cadence, probably based on recent local samples rather than every hosted telemetry row.
 - Watering events should still post immediate start/stop evidence.
-- Watering event visibility must be completed in the hosted UI: Phase 7O.1 validated device-originated `watering_started` and `watering_completed` rows in `public.watering_events`, but hosted customer/support display remains deferred.
-- Future work must expose real local manual watering event evidence in hosted customer/support views without creating fake rows, without introducing Supabase command/control, and without changing Water Now behavior.
+- Watering event visibility now has a hosted read-only foundation: Phase 7O.2 reads protected customer/support watering-event views without creating fake rows, without introducing Supabase command/control, and without changing local watering behavior.
 - After watering, during validation/debug mode, or when a sensor looks questionable, firmware may temporarily sample faster.
 - Future firmware should consider a small local rolling buffer, such as the latest 6-12 readings per relevant measurement, to support repeated-reading validation, last-good fallback, local rate checks, stuck-sensor detection, and future trend/alert logic without posting every local sample.
 - Future firmware should evaluate a recent last-good fallback window based on local sample age, with honest metadata such as fallback age and reason. Short recent fallback may be acceptable within a defined synchronization tolerance; stale fallback must not be presented as a fresh measurement.
