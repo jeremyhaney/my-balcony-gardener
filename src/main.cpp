@@ -102,6 +102,26 @@ bool hasLastGoodDht = false;
 float lastGoodTempF = 0;
 float lastGoodHumidity = 0;
 
+#if MBG_PHYSICAL_BUTTON_ENABLED
+const int PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY = 4;
+struct QueuedWateringEvent {
+  String eventAt;
+  const char* eventType;
+  const char* triggerSource;
+  bool includeDuration;
+  int durationSeconds;
+  const char* reason;
+};
+QueuedWateringEvent physicalButtonEventQueue[PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY];
+int physicalButtonEventHead = 0;
+int physicalButtonEventTail = 0;
+int physicalButtonEventCount = 0;
+bool physicalButtonLastRawPressed = false;
+bool physicalButtonDebouncedPressed = false;
+unsigned long physicalButtonLastRawChangeTime = 0;
+bool physicalButtonReleaseRequired = false;
+#endif
+
 // Function declarations
 void handleWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info);
 void recordSupabasePostSuccess(bool diagnosticsPost, int httpCode);
@@ -123,7 +143,35 @@ void sendWateringEventToSupabase(
   int durationSeconds,
   const char* reason
 );
+void sendWateringEventToSupabaseAt(
+  const String &eventAt,
+  const char* eventType,
+  const char* triggerSource,
+  bool includeDuration,
+  int durationSeconds,
+  const char* reason
+);
 void sendDeviceHeartbeatToSupabase(String heartbeatReason);
+#if MBG_PHYSICAL_BUTTON_ENABLED
+bool physicalButtonReadPressed();
+void queuePhysicalButtonWateringEvent(
+  const char* eventType,
+  const char* triggerSource,
+  bool includeDuration,
+  int durationSeconds,
+  const char* reason
+);
+void flushOnePhysicalButtonWateringEvent();
+void startPhysicalButtonWatering(unsigned long now);
+void stopPhysicalButtonWatering(
+  unsigned long now,
+  const char* eventType,
+  const char* triggerSource,
+  const char* reason,
+  bool requireRelease
+);
+void handlePhysicalButton(unsigned long now);
+#endif
 #ifdef MBG_GEN2_ENABLED
 void sendGen2MeasurementsToSupabase();
 #endif
@@ -425,6 +473,152 @@ bool maybeStartAutomaticWatering(float moisture) {
   return false;
 }
 
+#if MBG_PHYSICAL_BUTTON_ENABLED
+bool physicalButtonReadPressed() {
+  int level = digitalRead(MBG_PHYSICAL_BUTTON_PIN);
+  return MBG_PHYSICAL_BUTTON_ACTIVE_LOW ? level == LOW : level == HIGH;
+}
+
+void queuePhysicalButtonWateringEvent(
+  const char* eventType,
+  const char* triggerSource,
+  bool includeDuration,
+  int durationSeconds,
+  const char* reason
+) {
+  if (physicalButtonEventCount >= PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY) {
+    Serial.println("Physical button watering event queue full; dropping event evidence");
+    return;
+  }
+
+  QueuedWateringEvent &event = physicalButtonEventQueue[physicalButtonEventTail];
+  event.eventAt = getUtcIsoTimestamp();
+  event.eventType = eventType;
+  event.triggerSource = triggerSource;
+  event.includeDuration = includeDuration;
+  event.durationSeconds = durationSeconds;
+  event.reason = reason;
+
+  physicalButtonEventTail = (physicalButtonEventTail + 1) % PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY;
+  physicalButtonEventCount++;
+}
+
+void flushOnePhysicalButtonWateringEvent() {
+  if (isWatering ||
+      physicalButtonReleaseRequired ||
+      physicalButtonDebouncedPressed ||
+      physicalButtonEventCount == 0) {
+    return;
+  }
+
+  QueuedWateringEvent &event = physicalButtonEventQueue[physicalButtonEventHead];
+  sendWateringEventToSupabaseAt(
+    event.eventAt,
+    event.eventType,
+    event.triggerSource,
+    event.includeDuration,
+    event.durationSeconds,
+    event.reason
+  );
+  event.eventAt = "";
+
+  physicalButtonEventHead = (physicalButtonEventHead + 1) % PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY;
+  physicalButtonEventCount--;
+}
+
+void startPhysicalButtonWatering(unsigned long now) {
+  digitalWrite(RELAY_PIN, HIGH);
+  isWatering = true;
+  wateringStartTime = now;
+  activeWateringTriggerSource = "physical_button";
+  lastWateredTime = getFormattedTime();
+  Serial.println("Physical button watering started");
+
+  queuePhysicalButtonWateringEvent(
+    "watering_started",
+    "physical_button",
+    false,
+    0,
+    "physical_button_pressed"
+  );
+}
+
+void stopPhysicalButtonWatering(
+  unsigned long now,
+  const char* eventType,
+  const char* triggerSource,
+  const char* reason,
+  bool requireRelease
+) {
+  unsigned long wateringDuration = now - wateringStartTime;
+  digitalWrite(RELAY_PIN, LOW);
+  isWatering = false;
+  lastWateringEndTime = now;
+  lastWateringDuration = wateringDuration / 1000;
+
+  queuePhysicalButtonWateringEvent(
+    eventType,
+    triggerSource,
+    true,
+    (int)lastWateringDuration,
+    reason
+  );
+
+  activeWateringTriggerSource = "firmware_safety";
+  physicalButtonReleaseRequired = requireRelease;
+  Serial.printf("Physical button watering stopped. Duration: %lu seconds\n", lastWateringDuration);
+}
+
+void handlePhysicalButton(unsigned long now) {
+  bool rawPressed = physicalButtonReadPressed();
+  if (rawPressed != physicalButtonLastRawPressed) {
+    physicalButtonLastRawPressed = rawPressed;
+    physicalButtonLastRawChangeTime = now;
+  }
+
+  if (now - physicalButtonLastRawChangeTime >= MBG_PHYSICAL_BUTTON_DEBOUNCE_MS &&
+      rawPressed != physicalButtonDebouncedPressed) {
+    physicalButtonDebouncedPressed = rawPressed;
+
+    if (physicalButtonDebouncedPressed) {
+      if (!physicalButtonReleaseRequired &&
+          !isWatering &&
+          MBG_PUMP_CONTROL_AVAILABLE &&
+          MBG_DEVICE_CAN_WATER) {
+        startPhysicalButtonWatering(now);
+      }
+    } else {
+      if (isWatering && strcmp(activeWateringTriggerSource, "physical_button") == 0) {
+        stopPhysicalButtonWatering(
+          now,
+          "watering_completed",
+          "physical_button",
+          "physical_button_released",
+          false
+        );
+      }
+      if (physicalButtonReleaseRequired) {
+        physicalButtonReleaseRequired = false;
+        Serial.println("Physical button release observed; re-armed");
+      }
+    }
+  }
+
+  if (isWatering && strcmp(activeWateringTriggerSource, "physical_button") == 0) {
+    unsigned long wateringDuration = now - wateringStartTime;
+    if (wateringDuration >= MBG_PHYSICAL_BUTTON_MAX_HOLD_MS) {
+      stopPhysicalButtonWatering(
+        now,
+        "watering_safety_cutoff",
+        "firmware_safety",
+        "physical_button_hold_timeout",
+        true
+      );
+    }
+  }
+}
+#endif
+
 // Connect to Wi-Fi
 void connectToWiFi() {
   WiFi.persistent(false);
@@ -583,13 +777,31 @@ void sendWateringEventToSupabase(
   int durationSeconds,
   const char* reason
 ) {
+  String eventAt = getUtcIsoTimestamp();
+  sendWateringEventToSupabaseAt(
+    eventAt,
+    eventType,
+    triggerSource,
+    includeDuration,
+    durationSeconds,
+    reason
+  );
+}
+
+void sendWateringEventToSupabaseAt(
+  const String &eventAt,
+  const char* eventType,
+  const char* triggerSource,
+  bool includeDuration,
+  int durationSeconds,
+  const char* reason
+) {
   if (WiFi.status() != WL_CONNECTED) {
     recordSupabasePostFailure(0, "wifi_unavailable");
     Serial.println("Watering event post skipped: WiFi not connected");
     return;
   }
 
-  String eventAt = getUtcIsoTimestamp();
   if (eventAt == "TIME_ERROR") {
     recordSupabasePostFailure(0, "time_unavailable");
     Serial.println("Watering event post skipped: UTC time unavailable");
@@ -1095,6 +1307,20 @@ void setup() {
     pinMode(RELAY_PIN, OUTPUT);
     digitalWrite(RELAY_PIN, LOW);
   }
+#if MBG_PHYSICAL_BUTTON_ENABLED
+  pinMode(MBG_PHYSICAL_BUTTON_PIN, INPUT_PULLUP);
+  physicalButtonLastRawPressed = physicalButtonReadPressed();
+  physicalButtonDebouncedPressed = physicalButtonLastRawPressed;
+  physicalButtonLastRawChangeTime = millis();
+  physicalButtonReleaseRequired = physicalButtonDebouncedPressed;
+  Serial.printf(
+    "Physical button enabled on GPIO%d, active-%s, debounce=%dms, max-hold=%dms\n",
+    MBG_PHYSICAL_BUTTON_PIN,
+    MBG_PHYSICAL_BUTTON_ACTIVE_LOW ? "low" : "high",
+    MBG_PHYSICAL_BUTTON_DEBOUNCE_MS,
+    MBG_PHYSICAL_BUTTON_MAX_HOLD_MS
+  );
+#endif
 
   // Connect to network and setup time
   connectToWiFi();
@@ -1120,11 +1346,16 @@ void setup() {
 void loop() {
   unsigned long now = millis();
 
+#if MBG_PHYSICAL_BUTTON_ENABLED
+  handlePhysicalButton(now);
+#endif
+
   // Pump shutoff has priority over client/server, network, and telemetry work.
   if (isWatering) {
     unsigned long wateringDuration = now - wateringStartTime;
 
-    if (wateringDuration >= WATERING_DURATION_MS) {
+    if (strcmp(activeWateringTriggerSource, "physical_button") != 0 &&
+        wateringDuration >= WATERING_DURATION_MS) {
       digitalWrite(RELAY_PIN, LOW);
       isWatering = false;
       lastWateringEndTime = millis();
@@ -1166,6 +1397,10 @@ void loop() {
       Serial.printf("✅ Watering complete. Duration: %lu seconds\n", lastWateringDuration);
     }
   }
+
+#if MBG_PHYSICAL_BUTTON_ENABLED
+  flushOnePhysicalButtonWateringEvent();
+#endif
 
   maintainWiFiConnection();
   server.handleClient();

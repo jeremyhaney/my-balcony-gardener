@@ -45,6 +45,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7L.4 status: complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`; branch `phase7l4-customer-auth-garden-rls` was fast-forward merged, `main` was pushed, Cloudflare production auto-deployed from `main`, and production/credentialed browser validation passed on `https://mybalconygardener.boileragency.com`.
 - Phase 7M status: documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`
 - Phase 7O.1 status: backend/firmware evidence path runtime validated; Phase 7O.2 hosted customer/support display implemented pending review
+- Phase 7P.1 status: bench physical button push-to-water proof runtime validated / complete pending commit; broader Phase 7P hardware safety maturity remains future
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -99,10 +100,10 @@ It is a planning guide, not an implementation approval. Each item still requires
 45. Phase 7N - Sensor Calibration / Measurement-System Evaluation - future
 46. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
 47. Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - backend/firmware evidence path runtime validated; Phase 7O.2 hosted display implemented pending review
-48. Phase 7P - Hardware Safety Maturity - future
+48. Phase 7P - Hardware Safety Maturity - future; Phase 7P.1 bench physical button proof runtime validated / complete pending commit
 49. Phase 7Q - Pilot Deployment Package - future
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`, with Cloudflare production auto-deployed from `main` and credentialed browser validation passed on `https://mybalconygardener.boileragency.com`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`, with Cloudflare production auto-deployed from `main` and credentialed browser validation passed on `https://mybalconygardener.boileragency.com`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Phase 7P.1 Bench Physical Button Push-to-Water Proof is runtime validated / complete pending commit, while broader Phase 7P hardware safety maturity remains future. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - VALIDATED / COMPLETE PENDING FINAL COMMIT/PUSH
 
@@ -1555,6 +1556,45 @@ Out of scope until separately approved:
 This future phase is not part of Phase 7I implementation except for backlog capture.
 
 ## Phase 7P - Hardware Safety Maturity
+
+### Phase 7P.1 - Bench Physical Button Push-to-Water Proof - RUNTIME VALIDATED / COMPLETE PENDING COMMIT
+
+Product note:
+
+- [`docs/product/phase7p1-bench-physical-button-push-to-water-proof.md`](./product/phase7p1-bench-physical-button-push-to-water-proof.md)
+
+Scope:
+
+- Added a bench-only GPIO32 physical button proof on `Prototype01` / `bench-proto-gen2`.
+- Used a normally-open switch to GND with `INPUT_PULLUP` active-low logic.
+- Validated BLACK = ESP32 GND and WHITE = GPIO32 / SW1 physical-button signal on COM + NO switch terminals.
+- Kept NC, 12V, pump voltage on GPIO32, and illuminated switch LED wiring out of scope.
+
+Runtime validation:
+
+- Uploaded `bench-proto-gen2` to `COM5`; device booted at `10.0.0.192` as UUID `318fab98-89ad-4f36-9100-3134a04e0be5`, role `bench`, build profile `bench-proto-gen2`.
+- Proved press-to-start, release-to-stop, hold-to-run, 15-second physical-button safety timeout, and release-to-rearm behavior.
+- Confirmed physical-button watering does not use `/water-now` and does not use the preset `WATERING_DURATION_MS` path.
+- Confirmed queued physical-button event evidence posts only after local shutoff/release conditions clear.
+- Evidence counts: 41 `physical_button` start events, 36 `physical_button` completion events, and 5 `firmware_safety` timeout events.
+- All timeout events had `duration_seconds = 15`.
+- Normal completed durations ranged from 0-6 seconds during rapid bench testing.
+- `created_at` may lag `event_at` because queued evidence posts only after local safety conditions clear.
+- Normal Gen2 measurement cadence remained separate at approximately 15 minutes.
+
+Non-changes:
+
+- No Balcony01 behavior changes.
+- No Scout01 behavior changes.
+- No hosted watering control.
+- No Supabase command/control.
+- No SQL.
+- No frontend.
+- No ADC, I2C mux, moisture-sensor, or light-sensor implementation.
+
+Known limitation:
+
+- Rapid repeat presses may appear delayed by synchronous queued physical-button event flushing after release. This is not a relay shutoff safety issue because release, timeout, and release-to-rearm remain local.
 
 Scope:
 
