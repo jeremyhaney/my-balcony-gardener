@@ -2,11 +2,14 @@
 
 This document is the stable architecture authority for the repo. Changes to the approved architecture require a new ADR in [`docs/adr`](./adr).
 
+Source-pack compression/reference documents are available for future ChatGPT/Codex loading: [`docs/ADR_ACTIVE_DECISION_DIGEST.md`](./ADR_ACTIVE_DECISION_DIGEST.md), [`docs/ADR_SOURCE_PACK_INDEX.md`](./ADR_SOURCE_PACK_INDEX.md), and [`docs/SQL_SCHEMA_ACTIVE_DIGEST.md`](./SQL_SCHEMA_ACTIVE_DIGEST.md). These documents summarize and index the current decision/storage state; they do not replace the historical ADRs.
+
 ## Authoritative Repo Ownership
 
 - Firmware project: [`platformio.ini`](../platformio.ini), [`src`](../src), [`include`](../include), [`lib`](../lib)
 - Frontend project: [`mbg_dashboard`](../mbg_dashboard)
 - Stable architecture docs: this file plus [`docs/adr`](./adr)
+- Source-pack reference docs: [`docs/ADR_ACTIVE_DECISION_DIGEST.md`](./ADR_ACTIVE_DECISION_DIGEST.md), [`docs/ADR_SOURCE_PACK_INDEX.md`](./ADR_SOURCE_PACK_INDEX.md), [`docs/SQL_SCHEMA_ACTIVE_DIGEST.md`](./SQL_SCHEMA_ACTIVE_DIGEST.md)
 - Operational snapshot: [`docs/CURRENT_STATE.md`](./CURRENT_STATE.md)
 
 ## Active Components

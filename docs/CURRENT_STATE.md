@@ -7,6 +7,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - This file is the changeable operational snapshot.
 - Stable architecture authority lives in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md).
 - Locked architectural decisions live in [`docs/adr`](./adr).
+- Phase 7R.1 adds source-pack compression/reference docs for ADR and SQL loading: [`docs/ADR_ACTIVE_DECISION_DIGEST.md`](./ADR_ACTIVE_DECISION_DIGEST.md), [`docs/ADR_SOURCE_PACK_INDEX.md`](./ADR_SOURCE_PACK_INDEX.md), and [`docs/SQL_SCHEMA_ACTIVE_DIGEST.md`](./SQL_SCHEMA_ACTIVE_DIGEST.md). These do not replace the historical ADRs.
 
 ## Authoritative Ownership
 
