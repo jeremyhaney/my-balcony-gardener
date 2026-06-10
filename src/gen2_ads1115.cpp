@@ -11,6 +11,9 @@ namespace {
 const uint8_t ADS1115_POINTER_CONVERSION = 0x00;
 const uint8_t ADS1115_POINTER_CONFIG = 0x01;
 const uint16_t ADS1115_CONFIG_A0_SINGLE_SHOT = 0xC383;
+const uint16_t ADS1115_CONFIG_A1_SINGLE_SHOT = 0xD383;
+const uint16_t ADS1115_CONFIG_A2_SINGLE_SHOT = 0xE383;
+const uint16_t ADS1115_CONFIG_A3_SINGLE_SHOT = 0xF383;
 
 String hexAddressValue(uint8_t address) {
   String response = "0x";
@@ -68,8 +71,32 @@ bool readAds1115Conversion(int16_t &rawAdc) {
   return true;
 }
 
-bool readAds1115A0SingleShot(int16_t &rawAdc) {
-  if (!writeAds1115Register(ADS1115_POINTER_CONFIG, ADS1115_CONFIG_A0_SINGLE_SHOT)) {
+bool ads1115SingleShotConfig(uint8_t adsChannel, uint16_t &config) {
+  switch (adsChannel) {
+    case 0:
+      config = ADS1115_CONFIG_A0_SINGLE_SHOT;
+      return true;
+    case 1:
+      config = ADS1115_CONFIG_A1_SINGLE_SHOT;
+      return true;
+    case 2:
+      config = ADS1115_CONFIG_A2_SINGLE_SHOT;
+      return true;
+    case 3:
+      config = ADS1115_CONFIG_A3_SINGLE_SHOT;
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool readAds1115SingleShot(uint8_t adsChannel, int16_t &rawAdc) {
+  uint16_t config = 0;
+  if (!ads1115SingleShotConfig(adsChannel, config)) {
+    return false;
+  }
+
+  if (!writeAds1115Register(ADS1115_POINTER_CONFIG, config)) {
     return false;
   }
 
@@ -92,9 +119,14 @@ String gen2Ads1115HexAddressJson(uint8_t address) {
 #endif
 }
 
-Gen2Ads1115Read gen2Ads1115ReadA0() {
+Gen2Ads1115Read gen2Ads1115ReadChannel(uint8_t adsChannel) {
   Gen2Ads1115Read result;
 #if MBG_HAS_ADS1115 && MBG_HAS_I2C_MUX
+  if (adsChannel > 3) {
+    result.failureDetail = "ads1115_channel_out_of_range";
+    return result;
+  }
+
   result.muxDetected = i2cAddressResponds(MBG_I2C_MUX_ADDRESS);
   if (!result.muxDetected) {
     result.failureDetail = "mux_not_detected";
@@ -123,11 +155,15 @@ Gen2Ads1115Read gen2Ads1115ReadA0() {
     return result;
   }
 
-  result.readOk = readAds1115A0SingleShot(result.rawAdc);
+  result.readOk = readAds1115SingleShot(adsChannel, result.rawAdc);
   result.failureDetail = result.readOk ? "" : "ads1115_conversion_read_failed";
   result.disableAfterReadOk = muxDisableAll();
 #endif
   return result;
+}
+
+Gen2Ads1115Read gen2Ads1115ReadA0() {
+  return gen2Ads1115ReadChannel(0);
 }
 
 #endif

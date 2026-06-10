@@ -17,6 +17,7 @@ struct Gen2Ads1115Read {
   const char *failureDetail = "";
 };
 
+Gen2Ads1115Read gen2Ads1115ReadChannel(uint8_t adsChannel);
 Gen2Ads1115Read gen2Ads1115ReadA0();
 String gen2Ads1115HexAddressJson(uint8_t address);
 

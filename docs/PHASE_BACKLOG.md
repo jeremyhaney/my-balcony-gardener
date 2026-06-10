@@ -46,7 +46,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7M status: documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`
 - Phase 7N.1 status: runtime validated / complete; Prototype01 proved the 3.3V-only MUX01 and ADS1115 channel-0 detection topology on the bench.
 - Phase 7N.2A status: runtime validated / complete pending push; SEN0308-M01 raw diagnostic record on ADS1115 A0 with ADS1115 as provider and SEN0308 as sensor-family module.
-- Phase 7N.2B status: future; SEN0308-M02/M03/M04 Four-Channel Wiring Proof.
+- Phase 7N.2B status: runtime validated / documentation closeout pending commit; SEN0308-M01/M02/M03/M04 four-channel ADS1115 wiring proof completed on Prototype01 with all four records diagnostic-only and GPIO34 preserved separately.
 - Phase 7N.3 status: future; SEN0308 Moisture Sensor Measurement-System Evaluation.
 - Phase 7N.4 status: future; SEN0562 Muxed Light Sensor Bring-Up.
 - Phase 7O.1 status: backend/firmware evidence path runtime validated; Phase 7O.2 hosted customer/support display implemented pending review
@@ -105,7 +105,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 44. Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan - documentation/design complete and present on `main`
 45. Phase 7N.1 - Bench I2C/ADC/MUX Electrical Bring-Up and Topology Proof - runtime validated / complete
 46. Phase 7N.2A - SEN0308-M01 ADS1115 A0 Diagnostic Proof - runtime validated / complete pending push
-47. Phase 7N.2B - SEN0308-M02/M03/M04 Four-Channel Wiring Proof - future
+47. Phase 7N.2B - SEN0308-M02/M03/M04 Four-Channel Wiring Proof - runtime validated / documentation closeout pending commit
 48. Phase 7N.3 - SEN0308 Measurement-System / Calibration Evaluation - future
 49. Phase 7N.4 - SEN0562 Muxed Light Sensor Bring-Up - future
 50. Future separate review - SEN0204 Liquid-Level Electrical Feasibility
@@ -115,7 +115,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 54. Phase 7Q - Pilot Deployment Package - future
 55. Phase 7R.1 - ADR Source-Pack Compression and Decision Digest - documentation-only pending Jeremy review
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`, with Cloudflare production auto-deployed from `main` and credentialed browser validation passed on `https://mybalconygardener.boileragency.com`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Phase 7N.1 Bench I2C/ADC/MUX Electrical Bring-Up and Topology Proof is runtime validated / complete. Phase 7N.2A SEN0308-M01 ADS1115 A0 Diagnostic Proof is runtime validated / complete pending push. Phase 7P.1 Bench Physical Button Push-to-Water Proof is runtime validated / complete pending commit, while broader Phase 7P hardware safety maturity remains future. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`, with Cloudflare production auto-deployed from `main` and credentialed browser validation passed on `https://mybalconygardener.boileragency.com`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Phase 7N.1 Bench I2C/ADC/MUX Electrical Bring-Up and Topology Proof is runtime validated / complete. Phase 7N.2A SEN0308-M01 ADS1115 A0 Diagnostic Proof is runtime validated / complete pending push. Phase 7N.2B SEN0308-M02/M03/M04 Four-Channel Wiring Proof is runtime validated / documentation closeout pending commit. Phase 7P.1 Bench Physical Button Push-to-Water Proof is runtime validated / complete pending commit, while broader Phase 7P hardware safety maturity remains future. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - VALIDATED / COMPLETE PENDING FINAL COMMIT/PUSH
 
@@ -1507,25 +1507,39 @@ Out of scope:
 - Treating ADS1115 values as watering-control inputs before calibration/control validation.
 - Changing `MOISTURE_THRESHOLD`, moisture mapping, watering duration, cooldown, or `control_eligible` behavior.
 
-## Phase 7N.2B - SEN0308-M02/M03/M04 Four-Channel Wiring Proof - FUTURE
+## Phase 7N.2B - SEN0308-M02/M03/M04 Four-Channel Wiring Proof - RUNTIME VALIDATED / DOCUMENTATION CLOSEOUT PENDING COMMIT
 
-Scope:
+Status:
 
-- Add SEN0308-M02, SEN0308-M03, and SEN0308-M04 wiring proof on remaining ADS1115 channels after separate approval.
-- Confirm each physical sensor identity maps to the intended provider channel.
-- Preserve diagnostic-only records until measurement-system evaluation is complete.
+- Product note: [`docs/product/phase7n2b-sen0308-four-channel-wiring-proof.md`](./product/phase7n2b-sen0308-four-channel-wiring-proof.md).
+- `Prototype01` / `bench-proto-gen2` proved four-channel SEN0308 diagnostic reads through ADS1115 A0-A3 behind MUX01 channel 0.
+- `sen0308_m01` maps to `SEN0308-M01` on ADS1115 A0.
+- `sen0308_m02` maps to `SEN0308-M02` on ADS1115 A1.
+- `sen0308_m03` maps to `SEN0308-M03` on ADS1115 A2.
+- `sen0308_m04` maps to `SEN0308-M04` on ADS1115 A3.
+- All four current SEN0308 records use sensor_type `sen0308`, measurement_name `raw_adc`, measurement_unit `count`, quality `diagnostic`, reason `read_ok`, and `control_eligible:false`.
+- GPIO34 legacy/reference `soil_moisture_analog` `moisture_index` and `raw_adc` records remained present and separate.
+- VEML6030 remains intentionally disconnected for the clean ADS1115 proof.
+- Hosted 24h views may temporarily show old `sen0308_ads1115` historical rows from Phase 7N.2A; those are stale history, not a current sixth sensor or current firmware record shape.
+- Hosted Raw ADC plausibility/trust display should become ADS1115-aware so ESP32 GPIO34 raw ADC bounds are not incorrectly applied to ADS1115-backed SEN0308 raw counts.
 
 Out of scope:
 
 - Calibration.
 - Watering-control use.
 - Replacing GPIO34 as the legacy/reference moisture path.
+- Wet/dry threshold claims.
+- SQL/RLS changes.
+- Hosted/frontend code changes.
+- Field-unit firmware uploads.
+- Cloudflare deploy.
 
 ## Phase 7N.3 - SEN0308 Moisture Sensor Measurement-System Evaluation - FUTURE
 
 Scope:
 
 - Compare SEN0308 moisture sensors against the current analog moisture baseline.
+- Evaluate SEN0308 measurement behavior, sensor-to-sensor variation, air/hand/proximity response, inserted-media behavior, wetting response, dry-down response, and whether any SEN0308-derived value can ever become control-quality evidence.
 - Perform gage R&R or a suitable measurement-system evaluation.
 - Distinguish display moisture index from validated control input.
 - Determine whether software adjustment, filtering, sensor replacement, or no action is appropriate.

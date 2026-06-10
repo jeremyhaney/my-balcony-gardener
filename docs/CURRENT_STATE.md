@@ -459,6 +459,15 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - GPIO34 legacy `moisture_index` / `raw_adc` remains separate and unchanged.
 - VEML6030 remains temporarily disconnected for clean ADS1115/SEN0308 reads.
 - Phase 7N.2A changed no watering behavior, threshold, duration, cooldown, SQL, frontend, or field-unit upload.
+- Phase 7N.2B is runtime validated on Prototype01.
+- Phase 7N.2B reads ADS1115 A0-A3 through the SEN0308 physical sensor-family module.
+- SEN0308-M01, SEN0308-M02, SEN0308-M03, and SEN0308-M04 emit diagnostic `raw_adc` records from ADS1115 A0, A1, A2, and A3 respectively.
+- All four Phase 7N.2B SEN0308 records use sensor_type `sen0308`.
+- All four Phase 7N.2B SEN0308 records remain `control_eligible:false`.
+- GPIO34 legacy/reference `moisture_index` / `raw_adc` remains present and separate.
+- Hosted 24h views may temporarily show old `sen0308_ads1115` historical records from Phase 7N.2A; those rows are not current firmware record shape and should age out of short hosted windows naturally.
+- Hosted raw ADC plausibility checks still need future ADS1115-aware display handling so ESP32 GPIO34 raw ADC bounds are not applied to ADS1115-backed SEN0308 counts.
+- Phase 7N.2B changed no watering behavior, SQL/RLS, hosted/frontend code, deploy path, or field-unit behavior.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
