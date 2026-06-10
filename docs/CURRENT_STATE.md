@@ -443,6 +443,14 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7M defines future momentary physical hold-to-water/test switch requirements only; GPIO32 is a proposed planning candidate, and Phase 7M does not implement switch wiring or firmware behavior.
 - Phase 7M does not create ADR 0021 because no new durable architecture/product boundary is locked beyond existing ADRs.
 - Phase 7M makes no firmware, frontend runtime, SQL/RLS, production wiring, deploy, firmware upload, sensor assignment, pin, device ID, metadata, `control_eligible`, watering duration, threshold, cooldown, cadence, moisture mapping, `/water-now`, or Manual Water Now behavior changes.
+- Phase 7N.1 Bench I2C/ADC/MUX Electrical Bring-Up and Topology Proof is runtime validated on `Prototype01` / `bench-proto-gen2`.
+- Phase 7N.1 detected MUX01 at `0x70` and validated/reported the 3.3V-only boundary with `voltage_boundary: 3.3V_only` and `no_5v: true`.
+- Phase 7N.1 detected ADC01 / ADS1115 at `0x48` through MUX01 channel 0 when upstream `0x48` was temporarily removed.
+- Phase 7N.1 validated the ADS1115 ambiguity guard when upstream VEML6030 was present at `0x48`; firmware reported `ambiguous` instead of falsely confirming ADS1115.
+- Phase 7N.1 restored VEML6030 after the clean ADS1115 test; direct upstream `0x48` returned and VEML6030 light readings became valid again.
+- After Phase 7N.1 restoration, existing BME280, DS18B20, VEML6030, GPIO34 moisture index, and raw ADC measurements remained healthy.
+- Phase 7N.1 changed no watering behavior, performed no field-unit upload, and made no SQL, frontend, deploy, device ID, pin, metadata, or control-eligibility changes.
+- Phase 7N.1 diagnostics note for future polish: when VEML6030 was intentionally disconnected, `/capabilities` still listed it as present/configured while `/measurements` correctly showed `read_failed`; future diagnostics should distinguish configured/enabled from physically detected where practical.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
