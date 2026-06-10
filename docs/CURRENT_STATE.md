@@ -451,6 +451,14 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - After Phase 7N.1 restoration, existing BME280, DS18B20, VEML6030, GPIO34 moisture index, and raw ADC measurements remained healthy.
 - Phase 7N.1 changed no watering behavior, performed no field-unit upload, and made no SQL, frontend, deploy, device ID, pin, metadata, or control-eligibility changes.
 - Phase 7N.1 diagnostics note for future polish: when VEML6030 was intentionally disconnected, `/capabilities` still listed it as present/configured while `/measurements` correctly showed `read_failed`; future diagnostics should distinguish configured/enabled from physically detected where practical.
+- Phase 7N.2A added a provider/sensor split for SEN0308 raw diagnostics.
+- Phase 7N.2A creates `gen2_ads1115` as a low-level ADS1115 analog input provider and `gen2_sen0308` as the physical SEN0308 sensor-family module.
+- Prototype01 runtime validation confirmed SEN0308-M01 on ADS1115 A0 emits a diagnostic `raw_adc` record.
+- The SEN0308-M01 record uses `sensor_key` `sen0308_m01`, `sensor_type` `sen0308`, `measurement_name` `raw_adc`, and `control_eligible:false`.
+- SEN0308-M01 provider details identify ADS1115, mux channel/address, ADS channel, and physical sensor ID `SEN0308-M01`.
+- GPIO34 legacy `moisture_index` / `raw_adc` remains separate and unchanged.
+- VEML6030 remains temporarily disconnected for clean ADS1115/SEN0308 reads.
+- Phase 7N.2A changed no watering behavior, threshold, duration, cooldown, SQL, frontend, or field-unit upload.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.

@@ -11,6 +11,7 @@
 #include "gen2_dht11.h"
 #include "gen2_ds18b20.h"
 #include "gen2_i2c_mux.h"
+#include "gen2_sen0308.h"
 #include "gen2_soil_moisture.h"
 #include "gen2_veml6030.h"
 
@@ -102,6 +103,8 @@ String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
   response += gen2Veml6030CapabilityJson();
   response += ",";
   response += gen2SoilMoistureCapabilityJson();
+  response += ",";
+  response += gen2Sen0308CapabilityJson();
   response += "]";
   response += "}";
   return response;
@@ -113,6 +116,7 @@ String gen2MeasurementRecordsJson(const String &deviceId, const String &measured
   String ds18b20 = gen2Ds18b20MeasurementsJson(deviceId, measuredAt);
   String veml6030 = gen2Veml6030MeasurementsJson(deviceId, measuredAt);
   String soil = gen2SoilMoistureMeasurementsJson(deviceId, measuredAt);
+  String sen0308 = gen2Sen0308MeasurementsJson(deviceId, measuredAt);
 
   String response = "[";
 
@@ -147,6 +151,14 @@ String gen2MeasurementRecordsJson(const String &deviceId, const String &measured
       response += ",";
     }
     response += soil.substring(1, soil.length() - 1);
+    hasAny = true;
+  }
+  if (sen0308.length() > 0) {
+    if (hasAny) {
+      response += ",";
+    }
+    response += sen0308;
+    hasAny = true;
   }
 
   response += "]";
