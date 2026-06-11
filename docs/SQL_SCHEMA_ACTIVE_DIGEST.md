@@ -6,6 +6,8 @@ This digest summarizes the current SQL/storage/evidence surfaces represented by 
 
 This is a repo-artifact digest, not proof of the live Supabase state. When a line says an artifact is present, it means the repo contains that design. Applied Supabase state still needs verification unless current docs explicitly say it was manually or runtime validated.
 
+Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SUPABASE_SCHEMA_SNAPSHOT.md`](./sql/SUPABASE_SCHEMA_SNAPSHOT.md). Treat that snapshot as the field-level live-catalog reference from Jeremy's approved read-only result sets on 2026-06-11; keep this digest compact.
+
 ## Source Artifacts Inspected
 
 - [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
@@ -43,8 +45,8 @@ This is a repo-artifact digest, not proof of the live Supabase state. When a lin
 - Source of rows: Manual Supabase Table Editor or SQL Editor entry for MVP.
 - Device-originated inserts: No.
 - Browser/customer read path: Not a primary hosted/customer read path in current artifacts.
-- Anon SELECT: Needs verification from applied Supabase state; ADR 0005 approves RLS and no anonymous insert/update/delete policies, but does not define a broad hosted read path.
-- Authenticated SELECT: Needs verification from applied Supabase state.
+- Anon SELECT: Phase 7S.1 live catalog inspection found RLS enabled and no browser-role policies observed; treat this as manual/operator/admin context unless a later approved SQL phase changes access.
+- Authenticated SELECT: Phase 7S.1 live catalog inspection found RLS enabled and no browser-role policies observed; treat this as manual/operator/admin context unless a later approved SQL phase changes access.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0005, 0014, 0017, 0021.
 - Related SQL artifacts: No current `docs/sql` creation artifact found; ADR 0005 contains the validated core schema.
@@ -282,7 +284,7 @@ This is a repo-artifact digest, not proof of the live Supabase state. When a lin
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0021, plus ADR 0006, 0015, 0020.
 - Related SQL artifacts: `docs/sql/phase7o1-watering-events.sql`.
-- Notes: The SQL artifact labels itself as a proposal for later review/execution approval, while current backlog text says Phase 7O.1 backend/firmware evidence path was runtime validated. Applied state should be verified before relying on this table in a new SQL phase.
+- Notes: The SQL artifact labels itself as a proposal for later review/execution approval, while current backlog text says Phase 7O.1 backend/firmware evidence path was runtime validated. Phase 7S.1 live catalog inspection observed the live table and protected views; the SQL artifact header/status mismatch remains a repo-history note.
 
 ### customer_watering_events
 
@@ -295,7 +297,7 @@ This is a repo-artifact digest, not proof of the live Supabase state. When a lin
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0020, 0021.
 - Related SQL artifacts: `docs/sql/phase7o1-watering-events.sql`.
-- Notes: View presence/applied state needs verification from Supabase before future work relies on it.
+- Notes: Phase 7S.1 live catalog inspection observed the protected view; effective access still depends on grants plus RLS/view membership filters.
 
 ### support_watering_events
 
@@ -308,7 +310,7 @@ This is a repo-artifact digest, not proof of the live Supabase state. When a lin
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0020, 0021.
 - Related SQL artifacts: `docs/sql/phase7o1-watering-events.sql`.
-- Notes: View presence/applied state needs verification from Supabase before future work relies on it.
+- Notes: Phase 7S.1 live catalog inspection observed the protected view; effective access still depends on grants plus RLS/view membership filters.
 
 ## Explicit SQL Boundary Summary
 
@@ -317,3 +319,4 @@ This is a repo-artifact digest, not proof of the live Supabase state. When a lin
 - Registry flags and `control_eligible` are not command/control.
 - Browser/customer read access should use limited public/demo views or protected membership-filtered views, not raw base tables.
 - Applied live Supabase state can only be proven by Supabase inspection/API validation, not by repo artifacts alone.
+- Phase 7S.1 live catalog inspection found all observed public base tables have RLS enabled; object-level grants alone do not describe effective browser access without the observed RLS policies.

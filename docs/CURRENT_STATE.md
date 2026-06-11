@@ -8,6 +8,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Stable architecture authority lives in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md).
 - Locked architectural decisions live in [`docs/adr`](./adr).
 - Phase 7R.1 adds source-pack compression/reference docs for ADR and SQL loading: [`docs/ADR_ACTIVE_DECISION_DIGEST.md`](./ADR_ACTIVE_DECISION_DIGEST.md), [`docs/ADR_SOURCE_PACK_INDEX.md`](./ADR_SOURCE_PACK_INDEX.md), and [`docs/SQL_SCHEMA_ACTIVE_DIGEST.md`](./SQL_SCHEMA_ACTIVE_DIGEST.md). These do not replace the historical ADRs.
+- Phase 7S.1 adds the documentation-only live Supabase public-schema snapshot [`docs/sql/SUPABASE_SCHEMA_SNAPSHOT.md`](./sql/SUPABASE_SCHEMA_SNAPSHOT.md), based on approved read-only catalog result sets pasted by Jeremy on 2026-06-11. It changes no SQL/schema/data/runtime/firmware/frontend/hosted behavior.
 
 ## Authoritative Ownership
 
