@@ -19,12 +19,12 @@ struct Sen0562SensorConfig {
   uint8_t sensorAddress;
 };
 
-const Sen0562SensorConfig SEN0562_L01 = {
-  "sen0562_l01",
-  "SEN0562-L01",
-  MBG_SEN0562_L01_MUX_CHANNEL,
-  MBG_SEN0562_ADDRESS
+const Sen0562SensorConfig SEN0562_SENSORS[] = {
+  {"sen0562_l01", "SEN0562-L01", MBG_SEN0562_L01_MUX_CHANNEL, MBG_SEN0562_ADDRESS},
+  {"sen0562_l02", "SEN0562-L02", MBG_SEN0562_L02_MUX_CHANNEL, MBG_SEN0562_ADDRESS},
+  {"sen0562_l03", "SEN0562-L03", MBG_SEN0562_L03_MUX_CHANNEL, MBG_SEN0562_ADDRESS}
 };
+const size_t SEN0562_SENSOR_COUNT = sizeof(SEN0562_SENSORS) / sizeof(SEN0562_SENSORS[0]);
 
 bool sen0562NotDetected(const Gen2Bh1750Read &read) {
   return !read.muxDetected || (!read.upstreamExpectedAddressPresent && !read.selectedChannelExpectedAddressPresent);
@@ -110,15 +110,26 @@ String sen0562MeasurementJson(const String &deviceId, const String &measuredAt, 
 
 void gen2Sen0562Begin() {
 #if MBG_HAS_SEN0562 && MBG_HAS_I2C_MUX
-  Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_L01.muxChannel, SEN0562_L01.sensorAddress);
-  Serial.println(read.readOk ? "Gen2 SEN0562-L01 detected" : "Gen2 SEN0562-L01 missing");
+  for (size_t i = 0; i < SEN0562_SENSOR_COUNT; i++) {
+    Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_SENSORS[i].muxChannel, SEN0562_SENSORS[i].sensorAddress);
+    Serial.print("Gen2 ");
+    Serial.print(SEN0562_SENSORS[i].physicalSensorId);
+    Serial.println(read.readOk ? " detected" : " missing");
+  }
 #endif
 }
 
 String gen2Sen0562CapabilityJson() {
 #if MBG_HAS_SEN0562 && MBG_HAS_I2C_MUX
-  Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_L01.muxChannel, SEN0562_L01.sensorAddress);
-  return sen0562CapabilityJson(SEN0562_L01, read);
+  String response = "";
+  for (size_t i = 0; i < SEN0562_SENSOR_COUNT; i++) {
+    if (i > 0) {
+      response += ",";
+    }
+    Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_SENSORS[i].muxChannel, SEN0562_SENSORS[i].sensorAddress);
+    response += sen0562CapabilityJson(SEN0562_SENSORS[i], read);
+  }
+  return response;
 #else
   return "{\"sensor_key\":\"sen0562_l01\",\"sensor_type\":\"sen0562\",\"enabled\":false,\"present\":false,\"quality\":\"disabled\",\"reason\":\"module_disabled\",\"control_eligible\":false,\"details\":{}}";
 #endif
@@ -126,8 +137,15 @@ String gen2Sen0562CapabilityJson() {
 
 String gen2Sen0562MeasurementsJson(const String &deviceId, const String &measuredAt) {
 #if MBG_HAS_SEN0562 && MBG_HAS_I2C_MUX
-  Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_L01.muxChannel, SEN0562_L01.sensorAddress);
-  return sen0562MeasurementJson(deviceId, measuredAt, SEN0562_L01, read);
+  String response = "";
+  for (size_t i = 0; i < SEN0562_SENSOR_COUNT; i++) {
+    if (i > 0) {
+      response += ",";
+    }
+    Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_SENSORS[i].muxChannel, SEN0562_SENSORS[i].sensorAddress);
+    response += sen0562MeasurementJson(deviceId, measuredAt, SEN0562_SENSORS[i], read);
+  }
+  return response;
 #else
   return "";
 #endif

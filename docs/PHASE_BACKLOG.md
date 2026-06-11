@@ -49,7 +49,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7N.2B status: runtime validated / documentation closeout pending commit; SEN0308-M01/M02/M03/M04 four-channel ADS1115 wiring proof completed on Prototype01 with all four records diagnostic-only and GPIO34 preserved separately.
 - Phase 7N.3 status: future; SEN0308 Moisture Sensor Measurement-System Evaluation.
 - Phase 7N.4A status: runtime validated / complete pending review and commit; SEN0562-L01 controlled 3.3V proof succeeded on MUX01 channel 1 on Prototype01 only.
-- Phase 7N.4B status: future; SEN0562 four-channel muxed light proof.
+- Phase 7N.4B status: runtime validated / complete pending review and commit; SEN0562 three-sensor muxed light proof passed on Prototype01.
 - Phase 7O.1 status: backend/firmware evidence path runtime validated; Phase 7O.2 hosted customer/support display implemented pending review
 - Phase 7P.1 status: bench physical button push-to-water proof runtime validated / complete pending commit; broader Phase 7P hardware safety maturity remains future
 - Phase 7R.1 status: documentation-only ADR/source-pack compression implemented pending Jeremy review; no firmware, frontend runtime, SQL/RLS behavior, hosted behavior, watering/control, pin, sensor, device ID, or command/control changes.
@@ -110,7 +110,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 47. Phase 7N.2B - SEN0308-M02/M03/M04 Four-Channel Wiring Proof - runtime validated / documentation closeout pending commit
 48. Phase 7N.3 - SEN0308 Measurement-System / Calibration Evaluation - future
 49. Phase 7N.4A - SEN0562-L01 Controlled 3.3V Proof - runtime validated / complete pending review and commit
-50. Phase 7N.4B - SEN0562 Four-Channel Muxed Light Proof - future
+50. Phase 7N.4B - SEN0562 Three-Sensor Muxed Light Proof - runtime validated / complete pending review and commit
 51. Future separate review - SEN0204 Liquid-Level Electrical Feasibility
 52. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
 53. Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - backend/firmware evidence path runtime validated; Phase 7O.2 hosted display implemented pending review
@@ -1587,17 +1587,36 @@ Out of scope:
 - VEML6030 routing.
 - Watering behavior, threshold, cadence, device ID, moisture mapping, or `control_eligible` behavior changes.
 
-## Phase 7N.4B - SEN0562 Four-Channel Muxed Light Proof - FUTURE
+## Phase 7N.4B - SEN0562 Three-Sensor Muxed Light Proof - RUNTIME VALIDATED / COMPLETE PENDING REVIEW AND COMMIT
 
 Scope:
 
-- Bring up additional SEN0562 light sensor evidence through the mux only after 7N.4A runtime proof and a separately approved wiring and firmware phase.
-- Preserve the existing VEML6030 direct/upstream evidence until a later approved migration or comparison phase changes it.
+- Extend the bench-only SEN0562 firmware proof from one sensor to three configured physical sensors on Prototype01.
+- Preserve `SEN0562-L01` / `sen0562_l01` on MUX01 channel `1`.
+- Add `SEN0562-L02` / `sen0562_l02` on MUX01 channel `2`.
+- Add `SEN0562-L03` / `sen0562_l03` on MUX01 channel `3`.
+- Reserve `SEN0562-L04`; it is not configured.
+- Preserve ADS1115/SEN0308-M01-M04 on MUX01 channel `0`.
+- Preserve GPIO34 moisture records, BME280, DS18B20, and VEML6030 disconnected/out of the proof path.
+- Keep all SEN0562 records diagnostic-only with `measurement_name` `ambient_light`, `measurement_unit` `lux`, runtime-derived capability `present`, and `control_eligible:false`.
+- Emit non-breaking missing / `not_detected` evidence for disconnected optional SEN0562 sensors.
+- Product note: [`docs/product/phase7n4b-sen0562-multi-channel-mux-proof.md`](./product/phase7n4b-sen0562-multi-channel-mux-proof.md).
+
+Runtime validation:
+
+- Pre-upload `pio run -e bench-proto-gen2` succeeded.
+- First upload to Prototype01 on COM5 failed with `Serial data stream stopped`; COM5 was confirmed still present, and the single approved retry succeeded and hard-reset Prototype01.
+- Disconnected optional-sensor proof passed: L01 was valid at `144.17 lux` on MUX01 channel `1`; L02/L03 were configured but not wired and emitted missing / `not_detected` evidence with `sensor_not_detected_on_selected_channel` on channels `2` and `3`.
+- Jeremy confirmed L02/L03 wiring and approved continuation.
+- Wired proof passed: L01 reported `162.50 lux` on channel `1`, L02 reported `16.67 lux` on channel `2`, and L03 reported `135.00 lux` on channel `3`.
+- One-at-a-time cover/uncover proof passed: covering L01, L02, and L03 individually dropped only the covered sensor to `0.00 lux`, and each sensor rose again after uncovering.
+- SEN0308-M01/M02/M03/M04 stayed valid through ADS1115 on MUX01 channel `0`; GPIO34 moisture records stayed present/separate; BME280 and DS18B20 stayed valid; VEML6030 stayed missing / `not_detected` and out of the proof path; final `/status` showed `currently_watering:false`.
 
 Out of scope:
 
 - Moving VEML6030 behind the mux by implication.
 - Treating light sensing as watering safety or plant diagnosis without a separate approved control/trust phase.
+- SQL, RLS, Supabase schema snapshot updates, frontend/hosted behavior, deploy, field-unit upload, Prototype01 upload without separate approval, commit, push, watering behavior, relay behavior, `/water-now`, 5V fallback, light calibration, PAR conversion, sunlight scoring, final balcony placement labels, field installation assumptions, or long-cable claims.
 
 ## Future Separate Review - SEN0204 Liquid-Level Electrical Feasibility
 

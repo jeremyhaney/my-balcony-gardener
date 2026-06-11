@@ -489,6 +489,13 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7N.4A preserves ADS1115 on MUX01 channel 0, SEN0308-M01/M02/M03/M04 ADS1115 records, GPIO34 moisture records, BME280, DS18B20, and the intentionally disconnected/out-of-scope VEML6030 path.
 - Phase 7N.4A build validation passed for `bench-proto-gen2`, `balcony-installed-gen2`, and `balcony-sensor-scout-01`.
 - Phase 7N.4A uploaded only Prototype01 / `bench-proto-gen2`; it did not run SQL, deploy, commit, push, upload field units, upload Balcony01, upload Scout01, use 5V, add a 5V fallback, or change watering behavior.
+- Phase 7N.4B implementation extends the bench-only SEN0562 firmware proof to three fixed configured sensors on Prototype01: `SEN0562-L01` / `sen0562_l01` on MUX01 channel `1`, `SEN0562-L02` / `sen0562_l02` on MUX01 channel `2`, and `SEN0562-L03` / `sen0562_l03` on MUX01 channel `3`.
+- Phase 7N.4B preserves ADS1115/SEN0308-M01-M04 on MUX01 channel `0`, GPIO34 moisture records, BME280, DS18B20, and the intentionally disconnected/out-of-scope VEML6030 path.
+- Phase 7N.4B keeps SEN0562 diagnostic-only with `measurement_name` `ambient_light`, `measurement_unit` `lux`, runtime-derived capability `present`, `control_eligible:false`, and non-breaking missing / `not_detected` evidence for disconnected optional sensors.
+- Phase 7N.4B is runtime validated / complete pending review and commit. Prototype01 upload to `bench-proto-gen2` succeeded on the single approved retry after an initial COM5 serial transport failure; no Balcony01 or Scout01 upload occurred.
+- Phase 7N.4B disconnected validation proved L01 valid at `144.17 lux` on channel `1` while unwired L02/L03 emitted non-breaking missing / `not_detected` evidence with `sensor_not_detected_on_selected_channel` on channels `2` and `3`.
+- Phase 7N.4B wired validation proved L01/L02/L03 valid behind MUX01 with `162.50 lux` on channel `1`, `16.67 lux` on channel `2`, and `135.00 lux` on channel `3`; one-at-a-time cover/uncover checks dropped only the covered sensor to `0.00 lux` and recovered after uncovering.
+- Phase 7N.4B made no SQL, schema snapshot, frontend/hosted, deploy, field-unit upload, watering, relay, `/water-now`, 5V, calibration, PAR, sunlight scoring, plant recommendation, final placement label, field-readiness, long-cable, vendor-supported 3.3V, or watering-authority claim.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
