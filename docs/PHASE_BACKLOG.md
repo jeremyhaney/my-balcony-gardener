@@ -48,7 +48,8 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Phase 7N.2A status: runtime validated / complete pending push; SEN0308-M01 raw diagnostic record on ADS1115 A0 with ADS1115 as provider and SEN0308 as sensor-family module.
 - Phase 7N.2B status: runtime validated / documentation closeout pending commit; SEN0308-M01/M02/M03/M04 four-channel ADS1115 wiring proof completed on Prototype01 with all four records diagnostic-only and GPIO34 preserved separately.
 - Phase 7N.3 status: future; SEN0308 Moisture Sensor Measurement-System Evaluation.
-- Phase 7N.4 status: future; SEN0562 Muxed Light Sensor Bring-Up.
+- Phase 7N.4A status: runtime validated / complete pending review and commit; SEN0562-L01 controlled 3.3V proof succeeded on MUX01 channel 1 on Prototype01 only.
+- Phase 7N.4B status: future; SEN0562 four-channel muxed light proof.
 - Phase 7O.1 status: backend/firmware evidence path runtime validated; Phase 7O.2 hosted customer/support display implemented pending review
 - Phase 7P.1 status: bench physical button push-to-water proof runtime validated / complete pending commit; broader Phase 7P hardware safety maturity remains future
 - Phase 7R.1 status: documentation-only ADR/source-pack compression implemented pending Jeremy review; no firmware, frontend runtime, SQL/RLS behavior, hosted behavior, watering/control, pin, sensor, device ID, or command/control changes.
@@ -107,15 +108,16 @@ It is a planning guide, not an implementation approval. Each item still requires
 46. Phase 7N.2A - SEN0308-M01 ADS1115 A0 Diagnostic Proof - runtime validated / complete pending push
 47. Phase 7N.2B - SEN0308-M02/M03/M04 Four-Channel Wiring Proof - runtime validated / documentation closeout pending commit
 48. Phase 7N.3 - SEN0308 Measurement-System / Calibration Evaluation - future
-49. Phase 7N.4 - SEN0562 Muxed Light Sensor Bring-Up - future
-50. Future separate review - SEN0204 Liquid-Level Electrical Feasibility
-51. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
-52. Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - backend/firmware evidence path runtime validated; Phase 7O.2 hosted display implemented pending review
-53. Phase 7P - Hardware Safety Maturity - future; Phase 7P.1 bench physical button proof runtime validated / complete pending commit
-54. Phase 7Q - Pilot Deployment Package - future
-55. Phase 7R.1 - ADR Source-Pack Compression and Decision Digest - documentation-only pending Jeremy review
+49. Phase 7N.4A - SEN0562-L01 Controlled 3.3V Proof - runtime validated / complete pending review and commit
+50. Phase 7N.4B - SEN0562 Four-Channel Muxed Light Proof - future
+51. Future separate review - SEN0204 Liquid-Level Electrical Feasibility
+52. Phase 7O - Local Sampling, Control Evaluation, and Telemetry Cadence Decoupling - future
+53. Phase 7O.1 - Watering Event Evidence and Cadence Separation Design - backend/firmware evidence path runtime validated; Phase 7O.2 hosted display implemented pending review
+54. Phase 7P - Hardware Safety Maturity - future; Phase 7P.1 bench physical button proof runtime validated / complete pending commit
+55. Phase 7Q - Pilot Deployment Package - future
+56. Phase 7R.1 - ADR Source-Pack Compression and Decision Digest - documentation-only pending Jeremy review
 
-Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`, with Cloudflare production auto-deployed from `main` and credentialed browser validation passed on `https://mybalconygardener.boileragency.com`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Phase 7N.1 Bench I2C/ADC/MUX Electrical Bring-Up and Topology Proof is runtime validated / complete. Phase 7N.2A SEN0308-M01 ADS1115 A0 Diagnostic Proof is runtime validated / complete pending push. Phase 7N.2B SEN0308-M02/M03/M04 Four-Channel Wiring Proof is runtime validated / documentation closeout pending commit. Phase 7P.1 Bench Physical Button Push-to-Water Proof is runtime validated / complete pending commit, while broader Phase 7P hardware safety maturity remains future. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
+Phase 5F, Phase 6A, Phase 6B, Phase 6C, Phase 6D, Phase 6E, Phase 6F, and Phase 6G are complete and merged to `main`; Phase 6H is complete. Phase 6J.0, Phase 6J.1, Phase 6J.2, Phase 6J.3, Phase 6J.4, Phase 6J.5, and Phase 6J.6 are complete. Phase 7A is accepted. Phase 7B is runtime validated on the Gen2 bench mule. Phase 7C Live Measurements Local Frontend MVP is runtime validated / complete. Phase 7D Gen2 Measurement Storage MVP is runtime validated / complete. Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main. Phase 7F.1 Hosted Gen2 UI Flexibility and Trend Charting is runtime/browser validated / complete pending commit. Phase 7F.3 Hosted Device Status Gen2 Freshness Fix is validated / complete pending commit. Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is validated / complete pending commit. Phase 7G.1 Calibration / Control Validation Baseline, Phase 7G.2 Gen2 Calibration Evidence Review, and Phase 7G.3 Gen2 Control-Quality Rule Design are complete and committed. Phase 7G.4 Gen2 Local Control-Quality Gates Firmware Implementation is committed and build-validated. Phase 7G.5 Gen2 Local Control-Quality Gates Runtime Validation is complete and present on `main` in commit `1ea2f5a Document Phase 7G.5 control gate runtime validation`. Phase 7K Hosted At-a-Glance Measurement Trends is complete and present on `main`. Phase 7K.5 ESP32 Runtime / Wi-Fi Recovery Incident Review is complete and present on `main` in commit `4863eac Add Phase 7K.5 runtime Wi-Fi recovery diagnostics`. Phase 7K.6 Hosted Runtime Diagnostics Plain-English Visibility is validated / complete pending final commit/push. Phase 7L MVP Customer Setup, Access, and Local-Control Boundary is complete and present on `main` in commit `c34e1bd Define MVP customer setup access and local control boundary`. Phase 7L.1 Customer/Site Access Simulation MVP is complete and present on `main` in commit `2d74588 Add customer site access simulation`. Phase 7L.2 Hosted Customer View Shell and UI Mode Boundary is implemented pending Jeremy review. Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation and review. Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete and present on `main` in commit `1706798 Add customer auth garden membership RLS`, with Cloudflare production auto-deployed from `main` and credentialed browser validation passed on `https://mybalconygardener.boileragency.com`. Phase 7M Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan is documentation/design complete and present on `main` in commit `cb37ef7 Document Balcony02 sensor upgrade build-out plan`. Phase 7N.1 Bench I2C/ADC/MUX Electrical Bring-Up and Topology Proof is runtime validated / complete. Phase 7N.2A SEN0308-M01 ADS1115 A0 Diagnostic Proof is runtime validated / complete pending push. Phase 7N.2B SEN0308-M02/M03/M04 Four-Channel Wiring Proof is runtime validated / documentation closeout pending commit. Phase 7N.4A SEN0562-L01 Controlled 3.3V Proof is runtime validated / complete pending review and commit. Phase 7P.1 Bench Physical Button Push-to-Water Proof is runtime validated / complete pending commit, while broader Phase 7P hardware safety maturity remains future. Future work remains organized around this question: what must be true before MBG can be deployed at someone else's balcony without Jeremy babysitting it?
 
 ## Phase 7K.6 - Hosted Runtime Diagnostics Plain-English Visibility - VALIDATED / COMPLETE PENDING FINAL COMMIT/PUSH
 
@@ -1550,11 +1552,44 @@ Out of scope:
 - Changing moisture scaling without documentation and approval.
 - Bundling watering-duration changes into calibration unless explicitly approved.
 
-## Phase 7N.4 - SEN0562 Muxed Light Sensor Bring-Up - FUTURE
+## Phase 7N.4A - SEN0562-L01 Controlled 3.3V Proof - RUNTIME VALIDATED / COMPLETE PENDING REVIEW AND COMMIT
 
 Scope:
 
-- Bring up SEN0562 light sensor evidence through the mux only after a separately approved wiring and firmware phase.
+- Added bench-only firmware support for one SEN0562-L01 light sensor behind MUX01 channel 1.
+- Added `gen2_bh1750` as the low-level BH1750 provider and `gen2_sen0562` as the physical SEN0562 sensor-family module.
+- `bench-proto-gen2` enables SEN0562 at expected address `0x23`, MUX01 channel `1`, and the controlled 3.3V proof flag.
+- SEN0562-L01 records use `sensor_key` `sen0562_l01`, `sensor_type` `sen0562`, `measurement_name` `ambient_light`, `measurement_unit` `lux`, and `control_eligible:false`.
+- SEN0562 capability `present` reflects runtime read status and is not hard-coded.
+- SEN0562 details record `module_supply_documented_by_vendor: 5V`, `bench_proof_supply: 3.3V`, `electrical_boundary: 3.3V_only`, `no_5v: true`, mux address `0x70`, mux channel `1`, and sensor address `0x23`.
+- Build validation passed for `bench-proto-gen2`, `balcony-installed-gen2`, and `balcony-sensor-scout-01`.
+- The first upload attempt to Prototype01 on COM5 failed mid-flash with `Serial data stream stopped`; the second upload to Prototype01 on COM5 succeeded and hard-reset the ESP32.
+- Disconnected SEN0562 validation passed: `/status`, `/capabilities`, and `/measurements` responded, and SEN0562-L01 emitted non-breaking missing evidence.
+- An initial wiring mistake landed SEN0562-L01 on the upstream breadboard SDA/SCL path; firmware correctly reported `upstream_address_conflict` after `0x23` appeared in the upstream I2C scan, preventing a false mux-channel proof.
+- Corrected wiring placed SEN0562 green on MUX01 channel 1 SDA / SD1, yellow on MUX01 channel 1 SCL / SC1, red on 3.3V only, and blue on GND.
+- Runtime proof passed after corrected wiring: `/measurements` at `2026-06-10T23:27:38Z` reported `sen0562_l01` `ambient_light` `78.33 lux`, `valid:true`, `quality:"diagnostic"`, and `reason:"read_ok"`.
+- Cover/uncover behavior moved in the expected direction: covered at `2026-06-10T23:30:01Z` reported `0.00 lux`; uncovered at `2026-06-10T23:30:28Z` reported `50.00 lux`.
+- A later SEN0562-L01 missing / `not_detected` episode after several hours was traced to hardware wiring and connection faults, including a bad crimp on the SEN0562 yellow SCL wire and a temporary reversed-polarity rewiring mistake.
+- After replacing the bad SCL connection and correcting polarity, Jeremy measured ESP32 3.3V to GND at `3.282V` and SEN0562 connector VCC/GND at `3.17V`.
+- SEN0562-L01 revalidated after correction: `/measurements` at `2026-06-11T16:20:58Z` reported `sen0562_l01` `ambient_light` `238.33 lux`, `valid:true`, `quality:"diagnostic"`, `reason:"read_ok"`, mux channel `1`, sensor address `0x23`, `upstream_expected_address_present:false`, and `selected_channel_expected_address_present:true`.
+- Treat the hosted 24h chart interval around the June 11 late-morning local electrical fault, roughly between the `11:00` and `11:15` readings by visual review, as troubleshooting evidence only; it is not valid calibration, sensor-comparison, watering-response, or control-quality data.
+- The `238.33 lux` revalidation is bright indoor workbench-light evidence, not outdoor daylight or sunlight-level evidence; a manual Supabase `sensor_events` operational note is recommended as a separately approved operator step.
+- Existing BME280, DS18B20, GPIO34, and SEN0308-M01/M02/M03/M04 records stayed present; VEML6030 remained missing / `not_detected` and out of the proof path.
+- This proves one DFRobot SEN0562-L01 can operate at 3.3V on Prototype01 when wired behind MUX01 channel 1; the later missing episode was a wiring/connection fault, not an unresolved soak instability claim. It does not claim vendor-supported 3.3V operation, field installation readiness, long-cable behavior, waterproof connector readiness, PAR, calibrated lux, sunlight scoring, plant recommendations, or watering authority.
+
+Out of scope:
+
+- Firmware upload, SQL, deploy, commit, push, or field-unit upload.
+- 5V wiring or 5V fallback.
+- Moving ADS1115 off MUX01 channel 0.
+- VEML6030 routing.
+- Watering behavior, threshold, cadence, device ID, moisture mapping, or `control_eligible` behavior changes.
+
+## Phase 7N.4B - SEN0562 Four-Channel Muxed Light Proof - FUTURE
+
+Scope:
+
+- Bring up additional SEN0562 light sensor evidence through the mux only after 7N.4A runtime proof and a separately approved wiring and firmware phase.
 - Preserve the existing VEML6030 direct/upstream evidence until a later approved migration or comparison phase changes it.
 
 Out of scope:

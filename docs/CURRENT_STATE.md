@@ -468,6 +468,26 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted 24h views may temporarily show old `sen0308_ads1115` historical records from Phase 7N.2A; those rows are not current firmware record shape and should age out of short hosted windows naturally.
 - Hosted raw ADC plausibility checks still need future ADS1115-aware display handling so ESP32 GPIO34 raw ADC bounds are not applied to ADS1115-backed SEN0308 counts.
 - Phase 7N.2B changed no watering behavior, SQL/RLS, hosted/frontend code, deploy path, or field-unit behavior.
+- Phase 7N.4A is runtime validated / complete pending review and commit.
+- Phase 7N.4A adds bench-only controlled 3.3V firmware support for SEN0562-L01 behind MUX01 channel 1 at expected address `0x23`.
+- The SEN0562 implementation uses `gen2_bh1750` as the low-level BH1750 provider and `gen2_sen0562` as the physical SEN0562 sensor-family module.
+- SEN0562-L01 records use `sensor_key` `sen0562_l01`, `sensor_type` `sen0562`, `measurement_name` `ambient_light`, `measurement_unit` `lux`, and `control_eligible:false`.
+- SEN0562 capability `present` reflects runtime read status; it is not hard-coded.
+- SEN0562 details record the controlled 3.3V proof boundary, including vendor-documented module supply `5V`, bench proof supply `3.3V`, mux address `0x70`, mux channel `1`, and sensor address `0x23`.
+- Phase 7N.4A proved one DFRobot SEN0562-L01 can operate at 3.3V on Prototype01 when wired behind MUX01 channel 1; this does not claim vendor-supported 3.3V operation, calibration, PAR conversion, sunlight scoring, plant recommendations, field readiness, or watering control authority.
+- Step 1 disconnected validation showed SEN0562-L01 as configured but missing / `not_detected` with non-breaking `measurement_value:null`, `valid:false`, `quality:"missing"`, and `reason:"not_detected"`.
+- The first wired attempt accidentally landed SEN0562-L01 on the upstream breadboard SDA/SCL path; firmware correctly reported `upstream_address_conflict` after `0x23` appeared in the upstream I2C scan, preventing a false mux-channel proof.
+- After corrected wiring to MUX01 channel 1 SDA/SCL with red to 3.3V and blue to GND, `/measurements` at `2026-06-10T23:27:38Z` emitted `sen0562_l01` `ambient_light` `78.33 lux`, `valid:true`, `quality:"diagnostic"`, and `reason:"read_ok"`.
+- Cover/uncover validation moved in the expected direction: covered at `2026-06-10T23:30:01Z` reported `0.00 lux`, and uncovered at `2026-06-10T23:30:28Z` reported `50.00 lux`.
+- A later SEN0562-L01 missing / `not_detected` episode after several hours was traced to hardware wiring and connection faults: a bad crimp on the SEN0562 yellow SCL wire and a temporary reversed-polarity rewiring mistake.
+- After replacing the bad SCL connection and correcting polarity, Jeremy measured ESP32 3.3V to GND at `3.282V` and SEN0562 connector VCC/GND at `3.17V`.
+- After the hardware correction, `/measurements` at `2026-06-11T16:20:58Z` emitted `sen0562_l01` `ambient_light` `238.33 lux`, `valid:true`, `quality:"diagnostic"`, `reason:"read_ok"`, mux channel `1`, sensor address `0x23`, `upstream_expected_address_present:false`, and `selected_channel_expected_address_present:true`.
+- The temporary reversed-polarity fault appears to have affected multiple hosted 24h chart readings around the June 11 late-morning local interval, roughly between the `11:00` and `11:15` readings by visual review; treat that interval as electrical troubleshooting evidence only, not valid calibration, sensor-comparison, watering-response, or control-quality data.
+- The `238.33 lux` revalidation value is bright indoor workbench-light evidence, not outdoor daylight or sunlight-level evidence; a manual Supabase `sensor_events` operational note is recommended as a separately approved operator step.
+- Correct Phase 7N.4A interpretation: SEN0562-L01 can operate at 3.3V behind MUX01 channel 1 on Prototype01; the later missing episode was a wiring/connection fault, not an unresolved soak instability claim.
+- Phase 7N.4A preserves ADS1115 on MUX01 channel 0, SEN0308-M01/M02/M03/M04 ADS1115 records, GPIO34 moisture records, BME280, DS18B20, and the intentionally disconnected/out-of-scope VEML6030 path.
+- Phase 7N.4A build validation passed for `bench-proto-gen2`, `balcony-installed-gen2`, and `balcony-sensor-scout-01`.
+- Phase 7N.4A uploaded only Prototype01 / `bench-proto-gen2`; it did not run SQL, deploy, commit, push, upload field units, upload Balcony01, upload Scout01, use 5V, add a 5V fallback, or change watering behavior.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.
