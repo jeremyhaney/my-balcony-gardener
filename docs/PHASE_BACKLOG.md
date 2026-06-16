@@ -4,6 +4,98 @@ This document captures deferred work that should not be mixed into the current i
 
 It is a planning guide, not an implementation approval. Each item still requires normal inspection, design, review, validation, and commit discipline before implementation.
 
+## Phase 8.0 - Product Direction and Backlog Visual Rebaseline
+
+Phase 8 reframes My Balcony Gardener around a schedule-first customer product, with sensor evidence used carefully and progressively instead of treating every new sensor as immediate watering authority.
+
+### Product Direction
+
+| Layer | Product meaning | Near-term implication |
+| --- | --- | --- |
+| Base product | Timer / reservoir / spigot controller. | The product should be useful as a reliable local watering timer even before sensor authority is mature. |
+| Sensor assist | Skip or allow scheduled watering. | Sensors should initially help a scheduled watering decision, not create an always-on autonomous plant doctor. |
+| Advanced mode | Collect data, map balcony microclimates, learn dry-down, compare sensor readings to human judgment. | Balcony02 and Prototype01 evidence should teach the product what sensor readings mean across real balcony conditions. |
+| Future intelligence | Use history to improve the threshold/window model. | Historical telemetry can later improve fixed thresholds/windows after enough trusted evidence exists. |
+
+## Current Roadmap Snapshot
+
+The compact roadmap near the top is the current planning view. The detailed phase history below remains historical evidence and may be reorganized in a later Phase 8F documentation cleanup.
+
+Legend:
+
+- ✅ COMPLETE — closed / validated / merged or otherwise complete
+- 🔵 CURRENT — current documentation or transition phase
+- ➡️ NEXT — next intended implementation phase
+- 🟡 PLANNED — planned near-future work
+- 🧊 PARKED — intentionally deferred / not now
+- ⚠️ WATCH — known issue, risk, or evidence still needed
+
+| Status | Phase | Short purpose | Notes |
+| --- | --- | --- | --- |
+| ✅ COMPLETE | Foundation through Phase 7L.4 | Local control, hosted read-only visibility, telemetry/diagnostics, auth/RLS, and customer read-only path | ESP32 local firmware owns watering decisions and pump shutoff; hosted path stays read-only. |
+| ✅ COMPLETE | Phase 7M through Phase 7N sensor evidence | Balcony02 planning plus SEN0308/SEN0562 measurement-system evidence | SEN0308 insertion/contact/media variation supports fixed-sensor/window thinking before watering authority expands. |
+| ✅ COMPLETE | Phase 7O.1 / 7P.1 evidence | Watering-event evidence and physical-button proof work | Useful evidence for Phase 8 safety/cadence work; broader unattended control maturity remains future. |
+| ⚠️ WATCH | Phase 7N.5 learnings | SEN0308 Relative Moisture Index / moisture analytics direction | Preserve raw ADC as evidence while moving product display toward provisional meaning, confidence, and fixed-sensor analysis. |
+| 🔵 CURRENT | Phase 8.0 | Product Direction and Backlog Visual Rebaseline | Documentation-only pivot alignment. No runtime behavior changes. |
+| ➡️ NEXT | Phase 8A | Prototype01 Relative Moisture Index and Card Cleanup | Define provisional display-only Gen2 moisture index and clean measurement cards. |
+| 🟡 PLANNED | Phase 8B | Balcony02 Instrumented Buildout | 3 moisture sensors, 3 light sensors, air/soil context, permanent switch, frontend support. |
+| 🟡 PLANNED | Phase 8C | Safety/Cadence/Control-Error Prevention | Prevent repeated bad-data watering decisions before unattended maturity. |
+| 🟡 PLANNED | Phase 8D | Local Schedule UI and Schedule Persistence | Visible local schedule configuration and unit persistence. |
+| 🟡 PLANNED | Phase 8E | Sensor-Assisted Timer Mode | Schedule-first watering with single fixed-sensor skip/allow logic. |
+| 🟡 PLANNED | Phase 8F | Full Roadmap/Docs Reorganization | Larger later documentation cleanup by product tracks. |
+| 🧊 PARKED | Future intelligence / broader product tracks | Use history to improve threshold/window models after enough trusted evidence exists | Do not pull future intelligence, hosted command/control, or full docs reorganization into Phase 8.0. |
+
+### Early Phase 8 Sequence
+
+#### Phase 8.0 - Product Direction and Backlog Visual Rebaseline
+
+- Documentation-only roadmap orientation.
+- No runtime behavior changes.
+
+#### Phase 8A - Prototype01 Relative Moisture Index and Card Cleanup
+
+- Define provisional Gen2 Relative Moisture Index for display only.
+- Clean up measurement cards around product meaning.
+- Preserve raw ADC as advanced/debug evidence.
+- No watering authority changes.
+
+#### Phase 8B - Balcony02 Instrumented Buildout
+
+- Build Balcony02 as the product-learning mule.
+- Include 3 moisture sensors, 3 light sensors, air context, soil temperature, permanent local hold-to-water/test switch, and required frontend support.
+- No three-sensor voting logic by default.
+
+Balcony02 is both a product-development and garden-mapping platform, and the main evidence path for deciding whether single-sensor sensor-assisted timer behavior is good enough for the customer MVP.
+
+#### Phase 8C - Safety/Cadence/Control-Error Prevention
+
+- Prevent known bad-data watering decision classes before unattended control maturity.
+- Separate local sampling, control evaluation, telemetry cadence, and watering event evidence as needed.
+- Preserve local firmware ownership of watering decisions and pump shutoff.
+
+#### Phase 8D - Local Schedule UI and Schedule Persistence
+
+- User-visible local schedule configuration.
+- Local unit schedule storage.
+- No hosted command/control.
+
+#### Phase 8E - Sensor-Assisted Timer Mode
+
+- Schedule-first watering.
+- Single fixed-sensor skip/allow logic.
+- Conservative fallback behavior if sensor evidence is missing/stale/bad.
+
+#### Phase 8F - Full Roadmap/Docs Reorganization
+
+- Larger later documentation cleanup organized around product tracks.
+
+### Phase 8 Guardrails
+
+- Hosted/customer product path remains read-only unless separately approved.
+- Supabase remains telemetry/history/diagnostics/evidence storage only and must not become command/control.
+- Local ESP32 firmware owns watering decisions and pump shutoff.
+- Phase 8.0 does not change firmware, frontend runtime code, SQL, pins, sensors, thresholds, mappings, cadence, device IDs, `control_eligible`, watering duration, cooldown, or watering behavior.
+
 ## Current Active Branch Context
 
 - Current repo context: Phase 7L.4 customer auth, garden membership, and RLS implementation is complete, merged to `main`, pushed, Cloudflare production auto-deployed from `main`, and production/credentialed browser validated at `https://mybalconygardener.boileragency.com`.
@@ -61,7 +153,9 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
 - Custom domain status: configured and validated at `https://mybalconygardener.boileragency.com`
 
-## Recommended Phase Order
+## Historical Recommended Phase Order
+
+The top `Current Roadmap Snapshot` is now the current planning view. This older phase-order list remains as historical context until a later Phase 8F documentation cleanup.
 
 1. Phase 5D Validation - complete
 2. Phase 5D Closeout / merge - complete and merged to main
