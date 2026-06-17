@@ -17,13 +17,14 @@ struct Sen0308SensorConfig {
   const char *physicalSensorId;
   uint8_t adsChannel;
   const char *providerChannel;
+  bool installed;
 };
 
 const Sen0308SensorConfig SEN0308_SENSORS[] = {
-  {"sen0308_m01", "SEN0308-M01", 0, "A0"},
-  {"sen0308_m02", "SEN0308-M02", 1, "A1"},
-  {"sen0308_m03", "SEN0308-M03", 2, "A2"},
-  {"sen0308_m04", "SEN0308-M04", 3, "A3"}
+  {"sen0308_m01", MBG_SEN0308_A0_PHYSICAL_SENSOR_ID, 0, "A0", MBG_SEN0308_A0_INSTALLED},
+  {"sen0308_m02", MBG_SEN0308_A1_PHYSICAL_SENSOR_ID, 1, "A1", MBG_SEN0308_A1_INSTALLED},
+  {"sen0308_m03", MBG_SEN0308_A2_PHYSICAL_SENSOR_ID, 2, "A2", MBG_SEN0308_A2_INSTALLED},
+  {"sen0308_m04", MBG_SEN0308_A3_PHYSICAL_SENSOR_ID, 3, "A3", MBG_SEN0308_A3_INSTALLED}
 };
 const size_t SEN0308_SENSOR_COUNT = sizeof(SEN0308_SENSORS) / sizeof(SEN0308_SENSORS[0]);
 
@@ -45,26 +46,32 @@ String sen0308Reason(const Gen2Ads1115Read &read) {
   return sen0308NotDetected(read) ? "not_detected" : "read_failed";
 }
 
-String sen0308DetailsJson(const Gen2Ads1115Read &read, const Sen0308SensorConfig &sensor) {
+String sen0308DetailsJson(const Gen2Ads1115Read *read, const Sen0308SensorConfig &sensor) {
   String details = "{";
-  details += "\"physical_sensor_id\":\"" + String(sensor.physicalSensorId) + "\",";
+  details += "\"physical_sensor_id\":";
+  details += sensor.installed ? "\"" + String(sensor.physicalSensorId) + "\"" : "null";
+  details += ",";
   details += "\"analog_provider\":\"ads1115\",";
   details += "\"provider_channel\":\"" + String(sensor.providerChannel) + "\",";
+  details += "\"profile_installed\":" + boolString(sensor.installed) + ",";
   details += "\"mux_address\":" + gen2Ads1115HexAddressJson(MBG_I2C_MUX_ADDRESS) + ",";
   details += "\"mux_channel\":" + String(MBG_ADS1115_MUX_CHANNEL) + ",";
   details += "\"ads1115_address\":" + gen2Ads1115HexAddressJson(MBG_ADS1115_ADDRESS) + ",";
   details += "\"electrical_boundary\":\"3.3V_only\",";
-  details += "\"no_5v\":true,";
-  details += "\"mux_detected\":" + boolString(read.muxDetected) + ",";
-  details += "\"disable_before_read_ok\":" + boolString(read.disableBeforeReadOk) + ",";
-  details += "\"channel_select_ok\":" + boolString(read.channelSelectOk) + ",";
-  details += "\"post_read_all_channels_disabled\":" + boolString(read.disableAfterReadOk) + ",";
-  details += "\"upstream_expected_address_present\":" + boolString(read.upstreamExpectedAddressPresent) + ",";
-  details += "\"selected_channel_expected_address_present\":" + boolString(read.selectedChannelExpectedAddressPresent);
-  if (String(read.failureDetail).length() > 0) {
-    details += ",\"read_failure_detail\":\"";
-    details += read.failureDetail;
-    details += "\"";
+  details += "\"no_5v\":true";
+  if (read != nullptr) {
+    details += ",";
+    details += "\"mux_detected\":" + boolString(read->muxDetected) + ",";
+    details += "\"disable_before_read_ok\":" + boolString(read->disableBeforeReadOk) + ",";
+    details += "\"channel_select_ok\":" + boolString(read->channelSelectOk) + ",";
+    details += "\"post_read_all_channels_disabled\":" + boolString(read->disableAfterReadOk) + ",";
+    details += "\"upstream_expected_address_present\":" + boolString(read->upstreamExpectedAddressPresent) + ",";
+    details += "\"selected_channel_expected_address_present\":" + boolString(read->selectedChannelExpectedAddressPresent);
+    if (String(read->failureDetail).length() > 0) {
+      details += ",\"read_failure_detail\":\"";
+      details += read->failureDetail;
+      details += "\"";
+    }
   }
   details += "}";
   return details;
@@ -79,7 +86,21 @@ String sen0308CapabilityJson(const Sen0308SensorConfig &sensor, const Gen2Ads111
   response += "\"quality\":\"" + sen0308Quality(read) + "\",";
   response += "\"reason\":\"" + sen0308Reason(read) + "\",";
   response += "\"control_eligible\":false,";
-  response += "\"details\":" + sen0308DetailsJson(read, sensor);
+  response += "\"details\":" + sen0308DetailsJson(&read, sensor);
+  response += "}";
+  return response;
+}
+
+String sen0308NotInstalledCapabilityJson(const Sen0308SensorConfig &sensor) {
+  String response = "{";
+  response += "\"sensor_key\":\"" + String(sensor.sensorKey) + "\",";
+  response += "\"sensor_type\":\"sen0308\",";
+  response += "\"enabled\":false,";
+  response += "\"present\":false,";
+  response += "\"quality\":\"not_installed\",";
+  response += "\"reason\":\"profile_not_installed\",";
+  response += "\"control_eligible\":false,";
+  response += "\"details\":" + sen0308DetailsJson(nullptr, sensor);
   response += "}";
   return response;
 }
@@ -99,7 +120,25 @@ String sen0308MeasurementJson(const String &deviceId, const String &measuredAt, 
   response += "\"quality\":\"" + sen0308Quality(read) + "\",";
   response += "\"reason\":\"" + sen0308Reason(read) + "\",";
   response += "\"control_eligible\":false,";
-  response += "\"details\":" + sen0308DetailsJson(read, sensor);
+  response += "\"details\":" + sen0308DetailsJson(&read, sensor);
+  response += "}";
+  return response;
+}
+
+String sen0308NotInstalledMeasurementJson(const String &deviceId, const String &measuredAt, const Sen0308SensorConfig &sensor) {
+  String response = "{";
+  response += "\"device_id\":\"" + deviceId + "\",";
+  response += "\"measured_at\":\"" + measuredAt + "\",";
+  response += "\"sensor_key\":\"" + String(sensor.sensorKey) + "\",";
+  response += "\"sensor_type\":\"sen0308\",";
+  response += "\"measurement_name\":\"raw_adc\",";
+  response += "\"measurement_value\":null,";
+  response += "\"measurement_unit\":\"count\",";
+  response += "\"valid\":false,";
+  response += "\"quality\":\"not_installed\",";
+  response += "\"reason\":\"profile_not_installed\",";
+  response += "\"control_eligible\":false,";
+  response += "\"details\":" + sen0308DetailsJson(nullptr, sensor);
   response += "}";
   return response;
 }
@@ -113,8 +152,12 @@ String gen2Sen0308CapabilityJson() {
     if (i > 0) {
       response += ",";
     }
-    Gen2Ads1115Read read = gen2Ads1115ReadChannel(SEN0308_SENSORS[i].adsChannel);
-    response += sen0308CapabilityJson(SEN0308_SENSORS[i], read);
+    if (SEN0308_SENSORS[i].installed) {
+      Gen2Ads1115Read read = gen2Ads1115ReadChannel(SEN0308_SENSORS[i].adsChannel);
+      response += sen0308CapabilityJson(SEN0308_SENSORS[i], read);
+    } else {
+      response += sen0308NotInstalledCapabilityJson(SEN0308_SENSORS[i]);
+    }
   }
   return response;
 #else
@@ -129,8 +172,12 @@ String gen2Sen0308MeasurementsJson(const String &deviceId, const String &measure
     if (i > 0) {
       response += ",";
     }
-    Gen2Ads1115Read read = gen2Ads1115ReadChannel(SEN0308_SENSORS[i].adsChannel);
-    response += sen0308MeasurementJson(deviceId, measuredAt, SEN0308_SENSORS[i], read);
+    if (SEN0308_SENSORS[i].installed) {
+      Gen2Ads1115Read read = gen2Ads1115ReadChannel(SEN0308_SENSORS[i].adsChannel);
+      response += sen0308MeasurementJson(deviceId, measuredAt, SEN0308_SENSORS[i], read);
+    } else {
+      response += sen0308NotInstalledMeasurementJson(deviceId, measuredAt, SEN0308_SENSORS[i]);
+    }
   }
   return response;
 #else
