@@ -57,6 +57,7 @@ Legend:
 
 - Phase 8A.1 prerequisite cleanup is complete: Prototype01 now reports installed/expected sensor truth for the final bench topology.
 - Define provisional Gen2 Relative Moisture Index for display only.
+- Define the first-draft gardener-facing scale in [`docs/product/phase8a-relative-moisture-index-first-draft.md`](./product/phase8a-relative-moisture-index-first-draft.md): practical dead-dry soil maps to `0`, wet-drained / saturated-drained soil maps to `90`, and `100+` remains wetter-than-normal / saturated / water-like evidence.
 - Clean up measurement cards around product meaning.
 - Preserve raw ADC as advanced/debug evidence.
 - No watering authority changes.
