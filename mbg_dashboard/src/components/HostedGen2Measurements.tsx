@@ -4,13 +4,17 @@ import {
   formatHostedGen2MeasurementLabel,
   getHostedGen2MeasurementDisplay,
   getHostedGen2MeasurementStatus,
+  type HostedGen2MeasurementStatus,
 } from '../hostedGen2Display'
 import {
   getHostedGen2TrendSummary,
   type HostedGen2TrendDirection,
   type HostedGen2SparklinePoint,
 } from '../hostedGen2TrendSummary'
-import { getHostedMeasurementTrust } from '../hostedMeasurementTrust'
+import {
+  getHostedMeasurementTrust,
+  type HostedMeasurementTrustResult,
+} from '../hostedMeasurementTrust'
 import {
   getHostedGen2MeasurementDisplayModels,
   type HostedGen2MeasurementDisplayModel,
@@ -25,6 +29,27 @@ type HostedGen2MeasurementsProps = {
   className?: string
 }
 
+type MeasurementGroupKey = 'soil' | 'light' | 'air'
+
+type MeasurementDetailFact = {
+  label: string
+  value: string
+}
+
+type MeasurementCardDescriptor = {
+  key: string
+  group: MeasurementGroupKey
+  label: string
+  model: HostedGen2MeasurementDisplayModel
+  rows: HostedGen2MeasurementRow[]
+  displayRowOverride?: HostedGen2MeasurementRow | null
+  valueOverride?: string
+  statusOverride?: HostedGen2MeasurementStatus
+  trustOverride?: HostedMeasurementTrustResult
+  detailFacts?: MeasurementDetailFact[]
+  supportingFact?: string
+}
+
 const HostedGen2Measurements = ({
   rows,
   isLoading,
@@ -37,6 +62,7 @@ const HostedGen2Measurements = ({
   const isRefreshing = isLoading && hasUsableRows
   const measurementDisplayModels = getHostedGen2MeasurementDisplayModels(sortedRows)
     .sort(compareDisplayModelsForDisplay)
+  const groupedCards = getMeasurementCardGroups(measurementDisplayModels, rows)
   const latestMeasuredAt = sortedRows[0]?.measured_at ?? null
 
   return (
@@ -71,14 +97,33 @@ const HostedGen2Measurements = ({
 
       {rows.length > 0 ? (
         <>
-          <div className="hosted-gen2-measurements-card-grid">
-            {measurementDisplayModels.map((model) => (
-              <MeasurementCard
-                key={getMeasurementCardKey(model.latestRow)}
-                label={formatHostedGen2MeasurementLabel(model.latestRow.measurement_name)}
-                model={model}
-                rows={rows}
-              />
+          <div className="hosted-gen2-measurements-groups">
+            {groupedCards.map((group) => (
+              <section
+                className={[
+                  'hosted-gen2-measurements-group',
+                  `is-${group.key}`,
+                ].join(' ')}
+                key={group.key}
+              >
+                <h3 className="hosted-gen2-measurements-group-title">{group.label}</h3>
+                <div className="hosted-gen2-measurements-card-grid">
+                  {group.cards.map((card) => (
+                    <MeasurementCard
+                      key={card.key}
+                      label={card.label}
+                      model={card.model}
+                      rows={card.rows}
+                      displayRowOverride={card.displayRowOverride}
+                      valueOverride={card.valueOverride}
+                      statusOverride={card.statusOverride}
+                      trustOverride={card.trustOverride}
+                      detailFacts={card.detailFacts}
+                      supportingFact={card.supportingFact}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         </>
@@ -91,29 +136,45 @@ const MeasurementCard = ({
   label,
   model,
   rows,
+  displayRowOverride,
+  valueOverride,
+  statusOverride,
+  trustOverride,
+  detailFacts = [],
+  supportingFact,
 }: {
   label: string
   model: HostedGen2MeasurementDisplayModel
   rows: HostedGen2MeasurementRow[]
+  displayRowOverride?: HostedGen2MeasurementRow | null
+  valueOverride?: string
+  statusOverride?: HostedGen2MeasurementStatus
+  trustOverride?: HostedMeasurementTrustResult
+  detailFacts?: MeasurementDetailFact[]
+  supportingFact?: string
 }) => {
   const latestRow = model.latestRow
-  const displayRow = model.displayRow ?? undefined
-  const display = getHostedGen2MeasurementDisplay(latestRow.measurement_name)
+  const displayRow = displayRowOverride ?? model.displayRow ?? undefined
+  const display = getHostedGen2MeasurementDisplay(
+    displayRow?.measurement_name ?? latestRow.measurement_name,
+  )
   const status =
-    model.mode === 'unavailable'
+    statusOverride ??
+    (model.mode === 'unavailable'
       ? { level: 'check' as const, label: 'Check Sensor', reason: 'Reading unavailable' }
       : getHostedGen2MeasurementStatus({
           measurementName: displayRow?.measurement_name,
           measurementValue: displayRow?.measurement_value,
           valid: displayRow?.valid,
-        })
+        }))
   const baseTrust = getHostedMeasurementTrust({
     row: displayRow,
     rows,
     fallbackStatus: status,
   })
   const trust =
-    model.mode === 'recent-good'
+    trustOverride ??
+    (model.mode === 'recent-good'
       ? {
           level: 'watch' as const,
           label: model.labelOverride ?? 'Using Recent Value',
@@ -129,7 +190,7 @@ const MeasurementCard = ({
             detailReason: model.detailReason ?? '',
             trustFlags: model.trustFlags,
           }
-        : baseTrust
+        : baseTrust)
   const trendSummary = getHostedGen2TrendSummary(displayRow, rows)
   const shouldShowHeadlineReason = shouldShowTrustHeadlineReason(trust.headlineReason)
 
@@ -147,7 +208,12 @@ const MeasurementCard = ({
         <h3>{label}</h3>
         <span className="hosted-gen2-measurements-status-pill">{trust.label}</span>
       </div>
-      <p className="hosted-gen2-measurements-value">{formatMeasurementValue(displayRow)}</p>
+      <p className="hosted-gen2-measurements-value">
+        {valueOverride ?? formatMeasurementValue(displayRow)}
+      </p>
+      {supportingFact ? (
+        <p className="hosted-gen2-measurements-supporting-fact">{supportingFact}</p>
+      ) : null}
       <div
         className={[
           'hosted-gen2-measurements-trend',
@@ -193,6 +259,10 @@ const MeasurementCard = ({
           <dt>Displayed measured at</dt>
           <dd>{formatTimestamp(displayRow?.measured_at)}</dd>
 
+          {detailFacts.map((fact) => (
+            <MeasurementDetailFactRow fact={fact} key={fact.label} />
+          ))}
+
           {model.recentGoodRow ? (
             <>
               <dt>Recent good evidence</dt>
@@ -237,12 +307,46 @@ const SPARKLINE_WIDTH = 64
 const SPARKLINE_HEIGHT = 24
 const SPARKLINE_PADDING = 3
 const ROUTINE_TRUST_PASS_REASON = 'Reading is displayable and passed dashboard quality checks.'
+const PRACTICAL_DRY_RAW = 14820
+const WET_DRAINED_RAW = 11230
+const WET_DRAINED_INDEX = 90
+
+const HIDDEN_MAIN_CARD_SENSOR_KEYS = new Set([
+  'veml6030_light',
+  'soil_moisture_analog',
+  'sen0308_m02',
+  'sen0308_m03',
+  'sen0308_m04',
+  'sen0562_l02',
+  'sen0562_l03',
+])
+
+const UNINSTALLED_QUALITY_VALUES = new Set([
+  'disabled',
+  'missing',
+  'not_installed',
+  'not installed',
+  'unavailable',
+])
+
+const MEASUREMENT_GROUPS: Array<{ key: MeasurementGroupKey; label: string }> = [
+  { key: 'soil', label: 'Soil Conditions' },
+  { key: 'light', label: 'Light Conditions' },
+  { key: 'air', label: 'Air Conditions' },
+]
 
 const TREND_DIRECTION_SYMBOLS: Partial<Record<HostedGen2TrendDirection, string>> = {
   rising: '↗',
   falling: '↘',
   stable: '→',
 }
+
+const MeasurementDetailFactRow = ({ fact }: { fact: MeasurementDetailFact }) => (
+  <>
+    <dt>{fact.label}</dt>
+    <dd>{fact.value}</dd>
+  </>
+)
 
 const TrendSparkline = ({ points }: { points: HostedGen2SparklinePoint[] }) => {
   const polylinePoints = formatSparklinePolyline(points)
@@ -260,6 +364,265 @@ const TrendSparkline = ({ points }: { points: HostedGen2SparklinePoint[] }) => {
     </svg>
   )
 }
+
+const getMeasurementCardGroups = (
+  models: HostedGen2MeasurementDisplayModel[],
+  rows: HostedGen2MeasurementRow[],
+) => {
+  const cards = [
+    getMoistureIndexCard(models, rows),
+    ...models
+      .filter((model) => !shouldHideMainMeasurementCard(model))
+      .map((model): MeasurementCardDescriptor | null => {
+        const group = getMeasurementGroup(model.latestRow)
+
+        if (!group) {
+          return null
+        }
+
+        return {
+          key: getMeasurementCardKey(model.latestRow),
+          group,
+          label: formatHostedGen2MeasurementLabel(model.latestRow.measurement_name),
+          model,
+          rows,
+        }
+      }),
+  ].filter((card): card is MeasurementCardDescriptor => Boolean(card))
+
+  return MEASUREMENT_GROUPS.map((group) => ({
+    ...group,
+    cards: cards
+      .filter((card) => card.group === group.key)
+      .sort(compareMeasurementCardsForDisplay),
+  })).filter((group) => group.cards.length > 0)
+}
+
+const getMoistureIndexCard = (
+  models: HostedGen2MeasurementDisplayModel[],
+  rows: HostedGen2MeasurementRow[],
+): MeasurementCardDescriptor | null => {
+  const sourceModel = models.find((model) => isPrimarySen0308RawAdcRow(model.latestRow))
+
+  if (!sourceModel) {
+    return null
+  }
+
+  const rawDisplayRow = sourceModel.displayRow
+
+  if (!rawDisplayRow || !isFiniteNumber(rawDisplayRow.measurement_value)) {
+    return null
+  }
+
+  const moistureIndex = calculateGardenerMoistureIndex(rawDisplayRow.measurement_value)
+  const displayRow = buildMoistureIndexDisplayRow(rawDisplayRow, moistureIndex)
+  const trendRows = rows
+    .filter(isPrimarySen0308RawAdcRow)
+    .map((row) =>
+      isFiniteNumber(row.measurement_value)
+        ? buildMoistureIndexDisplayRow(row, calculateGardenerMoistureIndex(row.measurement_value))
+        : buildMoistureIndexDisplayRow(row, null),
+    )
+  const status = getGardenerMoistureStatus(moistureIndex)
+
+  return {
+    key: 'soil:gardener-moisture-index:sen0308_m01',
+    group: 'soil',
+    label: 'Moisture Index',
+    model: sourceModel,
+    rows: trendRows,
+    displayRowOverride: displayRow,
+    valueOverride: `${Math.round(moistureIndex).toLocaleString()} index`,
+    statusOverride: status,
+    trustOverride: getMoistureIndexTrust(status, sourceModel),
+    supportingFact: `Raw ADC ${formatRawAdcValue(rawDisplayRow.measurement_value)}`,
+    detailFacts: [
+      {
+        label: 'Raw ADC evidence',
+        value: `${formatRawAdcValue(rawDisplayRow.measurement_value)} from sen0308_m01`,
+      },
+      {
+        label: 'Moisture formula',
+        value: `${WET_DRAINED_INDEX} * (${PRACTICAL_DRY_RAW} - raw_adc) / (${PRACTICAL_DRY_RAW} - ${WET_DRAINED_RAW})`,
+      },
+      {
+        label: 'Unrounded index',
+        value: `${formatIndexValue(moistureIndex)} index`,
+      },
+    ],
+  }
+}
+
+const shouldHideMainMeasurementCard = (model: HostedGen2MeasurementDisplayModel): boolean => {
+  const latestRow = model.latestRow
+  const sensorKey = normalizeText(latestRow.sensor_key)
+  const measurementName = normalizeText(latestRow.measurement_name)
+
+  if (HIDDEN_MAIN_CARD_SENSOR_KEYS.has(sensorKey)) {
+    return true
+  }
+
+  if (normalizeText(latestRow.reason) === 'profile_not_installed') {
+    return true
+  }
+
+  if (UNINSTALLED_QUALITY_VALUES.has(normalizeText(latestRow.quality))) {
+    return true
+  }
+
+  return measurementName === 'moisture_index' || measurementName === 'raw_adc'
+}
+
+const getMeasurementGroup = (
+  row: HostedGen2MeasurementRow,
+): MeasurementGroupKey | null => {
+  const measurementName = normalizeText(row.measurement_name)
+  const sensorType = normalizeText(row.sensor_type)
+
+  if (measurementName === 'ambient_light') {
+    return 'light'
+  }
+
+  if (measurementName === 'temperature' && sensorType.includes('ds18b20')) {
+    return 'soil'
+  }
+
+  if (
+    measurementName === 'air_temperature' ||
+    measurementName === 'relative_humidity' ||
+    measurementName === 'barometric_pressure' ||
+    measurementName === 'temperature'
+  ) {
+    return 'air'
+  }
+
+  return null
+}
+
+const compareMeasurementCardsForDisplay = (
+  left: MeasurementCardDescriptor,
+  right: MeasurementCardDescriptor,
+): number => {
+  const rankDiff = getMeasurementCardRank(left) - getMeasurementCardRank(right)
+
+  if (rankDiff !== 0) {
+    return rankDiff
+  }
+
+  return left.label.localeCompare(right.label)
+}
+
+const getMeasurementCardRank = (card: MeasurementCardDescriptor): number => {
+  const measurementName = normalizeText(
+    card.displayRowOverride?.measurement_name ?? card.model.latestRow.measurement_name,
+  )
+
+  switch (measurementName) {
+    case 'moisture_index':
+      return 0
+    case 'temperature':
+      return 1
+    case 'ambient_light':
+      return 0
+    case 'air_temperature':
+      return 0
+    case 'relative_humidity':
+      return 1
+    case 'barometric_pressure':
+      return 2
+    default:
+      return 99
+  }
+}
+
+const buildMoistureIndexDisplayRow = (
+  row: HostedGen2MeasurementRow,
+  moistureIndex: number | null,
+): HostedGen2MeasurementRow => ({
+  ...row,
+  measurement_name: 'moisture_index',
+  measurement_value: moistureIndex,
+  measurement_unit: 'index',
+})
+
+const calculateGardenerMoistureIndex = (currentRaw: number): number =>
+  (WET_DRAINED_INDEX * (PRACTICAL_DRY_RAW - currentRaw)) /
+  (PRACTICAL_DRY_RAW - WET_DRAINED_RAW)
+
+const getGardenerMoistureStatus = (value: number): HostedGen2MeasurementStatus => {
+  if (value < 0) {
+    return {
+      level: 'check',
+      label: 'Check Sensor',
+      reason: 'Reading is outside the practical soil range.',
+    }
+  }
+
+  if (value <= 20) {
+    return { level: 'check', label: 'Too Dry', reason: 'Soil is already too dry.' }
+  }
+
+  if (value <= 40) {
+    return { level: 'watch', label: 'Dry', reason: 'Soil is on the dry side.' }
+  }
+
+  if (value <= 70) {
+    return { level: 'good', label: 'Moist' }
+  }
+
+  if (value <= 90) {
+    return { level: 'good', label: 'Well-watered' }
+  }
+
+  if (value <= 105) {
+    return {
+      level: 'watch',
+      label: 'Very Wet',
+      reason: 'Soil is wetter than the normal target range.',
+    }
+  }
+
+  return { level: 'check', label: 'Saturated', reason: 'Saturated or water-like evidence.' }
+}
+
+const getMoistureIndexTrust = (
+  status: HostedGen2MeasurementStatus,
+  model: HostedGen2MeasurementDisplayModel,
+): HostedMeasurementTrustResult => {
+  const isRoutine = status.level === 'good' && model.mode === 'latest'
+
+  return {
+    level: status.level,
+    label: status.label,
+    headlineReason:
+      model.mode === 'recent-good'
+        ? 'Fresh SEN0308 read failed; recent raw ADC is converted for display.'
+        : status.reason ?? (isRoutine ? ROUTINE_TRUST_PASS_REASON : 'Moisture index needs review.'),
+    detailReason:
+      model.mode === 'recent-good'
+        ? 'Latest raw ADC metadata is preserved below; the displayed moisture index comes from recent good SEN0308 raw ADC evidence.'
+        : 'Display-only moisture index computed from SEN0308 raw ADC evidence.',
+    trustFlags:
+      model.mode === 'recent-good'
+        ? [...model.trustFlags, 'display-only-moisture-index']
+        : ['display-only-moisture-index'],
+  }
+}
+
+const isPrimarySen0308RawAdcRow = (row: HostedGen2MeasurementRow): boolean =>
+  normalizeText(row.sensor_key) === 'sen0308_m01' &&
+  normalizeText(row.measurement_name) === 'raw_adc'
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value)
+
+const formatRawAdcValue = (value: number): string =>
+  `${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${
+    value === 1 ? 'count' : 'counts'
+  }`
+
+const formatIndexValue = (value: number): string =>
+  value.toLocaleString(undefined, { maximumFractionDigits: 1 })
 
 const compareRowsNewestFirst = (
   left: HostedGen2MeasurementRow,
@@ -331,6 +694,9 @@ const formatNullableBoolean = (value: boolean | null | undefined): string => {
 
 const formatNullableText = (value: string | null | undefined): string =>
   value?.trim() ? value : 'Not available'
+
+const normalizeText = (value: string | null | undefined): string =>
+  value?.trim().toLowerCase() ?? ''
 
 const formatControlEligible = (value: boolean | null | undefined): string =>
   `${formatNullableBoolean(value)} - garden unit evidence only`

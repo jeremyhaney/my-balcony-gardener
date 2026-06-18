@@ -51,6 +51,18 @@ type AxisDomain = [AxisDomainValue, AxisDomainValue]
 type TimeDomain = [number, number]
 
 const MAX_WATERING_MARKER_COUNT = 6
+const PRACTICAL_DRY_RAW = 14820
+const WET_DRAINED_RAW = 11230
+const WET_DRAINED_INDEX = 90
+
+const UNUSABLE_CHART_QUALITY_VALUES = new Set([
+  'failed',
+  'missing',
+  'disabled',
+  'not_installed',
+  'not installed',
+  'unavailable',
+])
 
 const withDefaultAxisDomain = (
   lowerBound: number,
@@ -110,16 +122,17 @@ const HostedGen2TrendChart = ({
   className = '',
   wateringCycles = [],
 }: HostedGen2TrendChartProps) => {
+  const chartReadyRows = useMemo(() => getChartReadyRows(rows), [rows])
   const numericRows = useMemo(
     () =>
-      rows.filter(
+      chartReadyRows.filter(
         (row) =>
           row.measurement_name?.trim() &&
           typeof row.measurement_value === 'number' &&
           Number.isFinite(row.measurement_value) &&
           Number.isFinite(new Date(row.measured_at).getTime()),
       ),
-    [rows],
+    [chartReadyRows],
   )
 
   const measurementNames = useMemo(
@@ -298,7 +311,7 @@ const HostedGen2TrendChart = ({
                 formatter={(value, name) => {
                   const display = getHostedGen2MeasurementDisplay(String(name))
                   return [
-                    `${formatNumber(Number(value))} ${display.unitLabel}`.trim(),
+                    formatTooltipMeasurementValue(Number(value), String(name)),
                     display.label,
                   ]
                 }}
@@ -386,6 +399,54 @@ const buildChartData = (
 
   return Array.from(points.values()).sort((left, right) => left.timestampMs - right.timestampMs)
 }
+
+const getChartReadyRows = (rows: HostedGen2MeasurementRow[]): HostedGen2MeasurementRow[] => {
+  const filteredRows = rows.filter((row) => !shouldExcludeHostedChartRow(row))
+  const derivedMoistureRows = rows
+    .filter(isDisplayablePrimarySen0308RawAdcRow)
+    .map((row) => ({
+      ...row,
+      measurement_name: 'moisture_index',
+      measurement_unit: 'index',
+      measurement_value: roundMoistureIndex(
+        calculateGardenerMoistureIndex(row.measurement_value ?? Number.NaN),
+      ),
+    }))
+
+  return [...filteredRows, ...derivedMoistureRows]
+}
+
+const shouldExcludeHostedChartRow = (row: HostedGen2MeasurementRow): boolean => {
+  if (normalizeText(row.reason) === 'profile_not_installed') {
+    return true
+  }
+
+  if (
+    normalizeText(row.sensor_key) === 'soil_moisture_analog' &&
+    normalizeText(row.measurement_name) === 'moisture_index'
+  ) {
+    return true
+  }
+
+  return false
+}
+
+const isDisplayablePrimarySen0308RawAdcRow = (
+  row: HostedGen2MeasurementRow,
+): row is HostedGen2MeasurementRow & { measurement_value: number } =>
+  normalizeText(row.sensor_key) === 'sen0308_m01' &&
+  normalizeText(row.measurement_name) === 'raw_adc' &&
+  typeof row.measurement_value === 'number' &&
+  Number.isFinite(row.measurement_value) &&
+  row.valid === true &&
+  !UNUSABLE_CHART_QUALITY_VALUES.has(normalizeText(row.quality)) &&
+  Number.isFinite(new Date(row.measured_at).getTime())
+
+const calculateGardenerMoistureIndex = (currentRaw: number): number =>
+  (WET_DRAINED_INDEX * (PRACTICAL_DRY_RAW - currentRaw)) /
+  (PRACTICAL_DRY_RAW - WET_DRAINED_RAW)
+
+const roundMoistureIndex = (value: number): number => Math.round(value)
 
 const getChartTimeDomain = (
   chartData: ChartPoint[],
@@ -503,5 +564,32 @@ const formatNumber = (value: number): string =>
   Number.isFinite(value)
     ? value.toLocaleString([], { maximumFractionDigits: 2 })
     : 'Not available'
+
+const formatTooltipMeasurementValue = (value: number, measurementName: string): string => {
+  if (!Number.isFinite(value)) {
+    return 'Not available'
+  }
+
+  switch (normalizeText(measurementName)) {
+    case 'moisture_index':
+      return value.toLocaleString([], { maximumFractionDigits: 0 })
+    case 'relative_humidity':
+      return `${value.toLocaleString([], { maximumFractionDigits: 1 })}%`
+    case 'air_temperature':
+    case 'temperature':
+      return `${value.toLocaleString([], { maximumFractionDigits: 2 })} F`
+    case 'barometric_pressure':
+      return `${value.toLocaleString([], { maximumFractionDigits: 2 })} hPa`
+    case 'ambient_light':
+      return `${value.toLocaleString([], { maximumFractionDigits: 2 })} lux`
+    case 'raw_adc':
+      return `${value.toLocaleString([], { maximumFractionDigits: 0 })} counts`
+    default:
+      return formatNumber(value)
+  }
+}
+
+const normalizeText = (value: string | null | undefined): string =>
+  value?.trim().toLowerCase() ?? ''
 
 export default HostedGen2TrendChart

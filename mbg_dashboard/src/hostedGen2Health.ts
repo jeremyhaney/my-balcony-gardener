@@ -175,6 +175,10 @@ const getLatestSampleQuality = (
   const warningReasons = new Set<string>()
 
   rows.forEach((row) => {
+    if (isExpectedNotInstalledRow(row)) {
+      return
+    }
+
     const hasMeasurementName = Boolean(row.measurement_name?.trim())
     const hasDisplayValue =
       typeof row.measurement_value === 'number' && Number.isFinite(row.measurement_value)
@@ -232,8 +236,19 @@ const getLatestSampleQuality = (
   }
 }
 
+const isExpectedNotInstalledRow = (row: HostedGen2MeasurementRow): boolean => {
+  const normalizedQuality = normalizeText(row.quality)
+
+  return (
+    (normalizedQuality === 'not_installed' || normalizedQuality === 'not installed') &&
+    normalizeText(row.reason) === 'profile_not_installed' &&
+    row.valid === false &&
+    row.measurement_value === null
+  )
+}
+
 const hasQualityMetadataWarning = (quality: string | null | undefined): boolean => {
-  const normalizedQuality = quality?.trim().toLowerCase()
+  const normalizedQuality = normalizeText(quality)
 
   return !normalizedQuality || !QUALITY_VALUES_WITHOUT_WARNINGS.has(normalizedQuality)
 }
@@ -245,3 +260,6 @@ const addReason = (reasons: Set<string>, reason: string | null | undefined) => {
     reasons.add(normalizedReason)
   }
 }
+
+const normalizeText = (value: string | null | undefined): string =>
+  value?.trim().toLowerCase() ?? ''

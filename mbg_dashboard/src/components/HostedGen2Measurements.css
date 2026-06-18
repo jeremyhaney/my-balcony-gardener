@@ -75,6 +75,24 @@
   gap: 0.55rem;
 }
 
+.hosted-gen2-measurements-groups {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hosted-gen2-measurements-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.hosted-gen2-measurements-group-title {
+  margin-bottom: 0;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  opacity: 0.9;
+}
+
 .hosted-gen2-measurements-card {
   padding: 0.6rem;
   border: 1px solid rgba(255, 255, 255, 0.34);
@@ -185,6 +203,14 @@
   font-size: clamp(1.15rem, 1.8vw, 1.45rem);
   font-weight: 800;
   line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.hosted-gen2-measurements-supporting-fact {
+  margin-bottom: 0.45rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.78rem;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -317,5 +343,24 @@
 @media (min-width: 641px) and (max-width: 980px) {
   .hosted-gen2-measurements-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 641px) {
+  .hosted-gen2-measurements-groups {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .hosted-gen2-measurements-group.is-air {
+    grid-column: 1 / -1;
+  }
+
+  .hosted-gen2-measurements-group .hosted-gen2-measurements-card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .hosted-gen2-measurements-group.is-air .hosted-gen2-measurements-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

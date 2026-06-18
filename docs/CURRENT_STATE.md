@@ -523,6 +523,14 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 8A.1 not-installed profile truth is runtime validated for SEN0308 A1/A2/A3 and SEN0562-L02/L03: records report `quality:"not_installed"`, `reason:"profile_not_installed"`, `measurement_value:null`, `valid:false`, `control_eligible:false`, and `details.physical_sensor_id:null` while preserving provider/channel/mux metadata.
 - Phase 8A.1 validation passed `pio run -e bench-proto-gen2`, `pio run -e balcony-installed-gen2`, `pio run -e balcony-sensor-scout-01`, `git diff --check`, and the explicit `LiveMeasurements` no-diff check.
 - Phase 8A.1 made no frontend, SQL, RLS, hosted-readonly, deploy, field-unit upload, watering behavior, pin, device ID, threshold, cadence, cooldown, command/control, or Balcony01 GPIO34/control-path changes.
+- Phase 8A hosted Support View card cleanup is complete and accepted for closeout. Product note: [`docs/product/phase8a-hosted-support-view-card-cleanup-closeout.md`](./product/phase8a-hosted-support-view-card-cleanup-closeout.md).
+- Phase 8A defines Prototype01 hosted Moisture Index as display-only `gardener_moisture_index = 90 * (14820 - current_raw) / (14820 - 11230)` from SEN0308 ADS1115 A0 raw ADC evidence (`sensor_key:sen0308_m01`, `measurement_name:raw_adc`), with constants `practical_dry_raw:14820`, `wet_drained_raw:11230`, and `wet_drained_index:90`.
+- Phase 8A hosted display labels are `< 0: Check Sensor`, `0-20: Too Dry`, `20-40: Dry`, `40-70: Moist`, `70-90: Well-watered`, `90-105: Very Wet`, and `> 105: Saturated`.
+- Phase 8A hosted card and chart behavior now use the derived display-only Moisture Index, preserve raw ADC as supporting evidence, hide disabled/profile-not-installed channels from the main card grid, avoid promoting legacy Prototype01 GPIO34 / `soil_moisture_analog` moisture index, and organize main cards under Soil Conditions, Light Conditions, and Air Conditions.
+- Phase 8A Device History tooltip formatting is measurement-specific: Moisture Index shows a plain index number, Relative Humidity shows percent only, and Raw ADC shows counts.
+- Phase 8A Device Status no longer treats expected `quality:"not_installed"` / `reason:"profile_not_installed"` rows as bad top-level data.
+- Phase 8A keeps light daily exposure/mapping as future learning/mapping work and explicitly defers a full graphic dashboard redesign.
+- Phase 8A made no firmware, SQL/RLS, deployed command/control, watering authority, pin, sensor, device ID, threshold, cadence, cooldown, or local dashboard behavior changes.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
 - MVP v1.0 physical install is complete.

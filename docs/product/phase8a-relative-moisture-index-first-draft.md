@@ -1,6 +1,6 @@
 # Phase 8A Relative Moisture Index First Draft
 
-Status: Accepted first-draft product scale
+Status: Accepted first-draft product scale; implemented in hosted Support View for Phase 8A
 
 Date: 2026-06-18
 
@@ -89,3 +89,11 @@ gardener_moisture_index =
 
 - Future tuning should compare this index against Jeremy's finger-test judgment, cheap moisture-meter readings, actual watering decisions, post-watering response, and dry-down behavior over time.
 - Preserve raw ADC so future tuning can revise constants or display windows without losing evidence.
+
+## Phase 8A Implementation Note
+
+- Phase 8A implemented this scale in the hosted Support View as display-only frontend behavior for Prototype01.
+- The hosted Moisture Index card and Device History series derive `gardener_moisture_index` from Prototype01 SEN0308 ADS1115 A0 raw ADC evidence (`sensor_key = sen0308_m01`, `measurement_name = raw_adc`).
+- Disabled/profile-not-installed channels are hidden from the main card grid, expected `profile_not_installed` rows no longer make Device Status yellow, and chart tooltips use measurement-specific units.
+- Closeout details: [`phase8a-hosted-support-view-card-cleanup-closeout.md`](./phase8a-hosted-support-view-card-cleanup-closeout.md).
+- This implementation did not change watering authority, firmware, SQL/RLS, command/control behavior, pins, sensors, device IDs, thresholds, cadence, cooldown, or local dashboard behavior.
