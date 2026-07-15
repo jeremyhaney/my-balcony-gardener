@@ -17,6 +17,7 @@
 #ifdef MBG_GEN2_ENABLED
 #include "gen2_bme280.h"
 #include "gen2_measurements.h"
+#include "gen2_sen0204.h"
 #endif
 
 // 15-minute post-watering cooldown/soak guard for automatic watering only.
@@ -585,6 +586,21 @@ void handlePhysicalButton(unsigned long now) {
           !isWatering &&
           MBG_PUMP_CONTROL_AVAILABLE &&
           MBG_DEVICE_CAN_WATER) {
+#if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
+        if (!gen2Sen0204LiquidDetected()) {
+          digitalWrite(RELAY_PIN, LOW);
+          physicalButtonReleaseRequired = true;
+          Serial.println("Physical button watering blocked: WL01 liquid not detected");
+          queuePhysicalButtonWateringEvent(
+            "watering_blocked",
+            "physical_button",
+            false,
+            0,
+            "reservoir_liquid_not_detected"
+          );
+          return;
+        }
+#endif
         startPhysicalButtonWatering(now);
       }
     } else {
@@ -605,6 +621,19 @@ void handlePhysicalButton(unsigned long now) {
   }
 
   if (isWatering && strcmp(activeWateringTriggerSource, "physical_button") == 0) {
+#if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
+    if (!gen2Sen0204LiquidDetected()) {
+      stopPhysicalButtonWatering(
+        now,
+        "watering_safety_cutoff",
+        "firmware_safety",
+        "reservoir_liquid_lost",
+        true
+      );
+      Serial.println("Physical button safety cutoff: WL01 liquid lost");
+      return;
+    }
+#endif
     unsigned long wateringDuration = now - wateringStartTime;
     if (wateringDuration >= MBG_PHYSICAL_BUTTON_MAX_HOLD_MS) {
       stopPhysicalButtonWatering(
@@ -853,6 +882,16 @@ void sendWateringEventToSupabaseAt(
   postData += "\"phase\":\"7O.1\",";
   postData += "\"source\":\"firmware\",";
   postData += "\"uptime_seconds\":" + String(millis() / 1000);
+#if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
+  if (strcmp(reason, "reservoir_liquid_not_detected") == 0 ||
+      strcmp(reason, "reservoir_liquid_lost") == 0) {
+    postData += ",\"physical_sensor_id\":\"WL01\"";
+    postData += ",\"gpio\":" + String(MBG_SEN0204_PIN);
+    postData += ",\"raw_digital_state\":0";
+    postData += ",\"raw_state_label\":\"LOW\"";
+    postData += ",\"interlock_enabled\":true";
+  }
+#endif
   postData += "}";
   postData += "}";
 

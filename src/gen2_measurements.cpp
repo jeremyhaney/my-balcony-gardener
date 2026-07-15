@@ -12,6 +12,7 @@
 #include "gen2_ds18b20.h"
 #include "gen2_i2c_mux.h"
 #include "gen2_sen0308.h"
+#include "gen2_sen0204.h"
 #include "gen2_sen0562.h"
 #include "gen2_soil_moisture.h"
 #include "gen2_veml6030.h"
@@ -64,6 +65,7 @@ void gen2Begin() {
   gen2Bme280Begin();
   gen2Ds18b20Begin();
   gen2Veml6030Begin();
+  gen2Sen0204Begin();
   gen2Sen0562Begin();
 }
 
@@ -112,6 +114,10 @@ String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
   response += gen2Sen0308CapabilityJson();
   response += ",";
   response += gen2Sen0562CapabilityJson();
+#if MBG_HAS_SEN0204
+  response += ",";
+  response += gen2Sen0204CapabilityJson();
+#endif
   response += "]";
   response += "}";
   return response;
@@ -125,6 +131,7 @@ String gen2MeasurementRecordsJson(const String &deviceId, const String &measured
   String soil = gen2SoilMoistureMeasurementsJson(deviceId, measuredAt);
   String sen0308 = gen2Sen0308MeasurementsJson(deviceId, measuredAt);
   String sen0562 = gen2Sen0562MeasurementsJson(deviceId, measuredAt);
+  String sen0204 = gen2Sen0204MeasurementsJson(deviceId, measuredAt);
 
   String response = "[";
 
@@ -173,6 +180,13 @@ String gen2MeasurementRecordsJson(const String &deviceId, const String &measured
       response += ",";
     }
     response += sen0562;
+    hasAny = true;
+  }
+  if (sen0204.length() > 0) {
+    if (hasAny) {
+      response += ",";
+    }
+    response += sen0204;
     hasAny = true;
   }
 
