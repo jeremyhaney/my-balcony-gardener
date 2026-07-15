@@ -1337,7 +1337,9 @@ void setup() {
   server.on("/measurements", HTTP_GET, handleMeasurements);
   server.onNotFound(handleNotFound);
 #endif
+#if MBG_HTTP_WATERING_ENDPOINT_ENABLED
   server.on("/water-now", HTTP_POST, handleWaterNow);
+#endif
 
   server.begin();
   Serial.println("🌐 Web server started");

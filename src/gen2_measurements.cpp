@@ -79,6 +79,7 @@ String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
   response += "\"pump_control_available\":" + boolString(MBG_PUMP_CONTROL_AVAILABLE != 0) + ",";
   response += "\"device_can_water\":" + boolString(MBG_DEVICE_CAN_WATER != 0) + ",";
   response += "\"watering_simulation_available\":" + boolString(MBG_WATERING_SIMULATION_AVAILABLE != 0) + ",";
+  response += "\"local_http_watering_endpoint_available\":" + boolString(MBG_HTTP_WATERING_ENDPOINT_ENABLED != 0) + ",";
   response += "\"relay_test_output_pin\":";
   response += (MBG_PUMP_CONTROL_AVAILABLE ? String(RELAY_PIN) : String("null"));
   response += ",";
@@ -94,7 +95,9 @@ String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
 #if MBG_HAS_I2C_MUX
   response += "\"i2c_mux\":" + gen2I2cMuxCapabilitiesJson() + ",";
 #endif
+#if MBG_CAPABILITIES_INCLUDE_DHT11_ALIAS
   response += "\"legacy_dht11_enabled\":" + boolString(MBG_HAS_DHT11 != 0) + ",";
+#endif
   response += "\"modules\":[";
   response += gen2Dht11CapabilityJson();
   response += ",";
