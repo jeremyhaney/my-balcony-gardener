@@ -131,7 +131,7 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Gen2 expanded measurements belong in a separate measurement-list/table path, likely future `public.sensor_measurements`.
 - `SensorLogRow.data` must not keep expanding with fixed fields for every future sensor.
 - Gen2 optional sensors may be present, missing, disabled, failed, or not installed without breaking device operation.
-- Valid for display is not the same as valid for control; watering control may only use measurements explicitly marked `control_eligible`.
+- Valid for display is not the same as valid for control. ADR 0022 removes `control_eligible` from new external `/measurements` records; local firmware/control logic remains solely responsible for deciding whether any measurement may influence watering.
 - GPIO5 is retired from Gen2 relay/pump control designs.
 - The standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature.
 - I2C SDA/SCL is approved as a short-range local sensor-module bus, not the long-distance field wiring strategy.
@@ -159,11 +159,11 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - `public.hosted_gen2_measurements` joins active, hosted-visible registry rows to flattened Gen2 measurements and exposes only hosted-safe display columns.
 - Hosted Gen2 display reads `public.hosted_gen2_measurements` only; it does not grant anon SELECT on `public.sensor_measurement_batches`, `public.sensor_measurements_flat`, or `public.device_registry`.
 - Hosted Gen2 display shows measurement history evidence only. It does not calibrate measurements, treat Raw ADC as calibrated moisture, control watering, call local ESP32 endpoints, or introduce Supabase command/control.
-- Hosted Gen2 Device Status freshness and measurement-quality warnings use already-fetched hosted Gen2 rows, unique `measured_at` report samples, and Gen2 metadata such as `valid`, `quality`, `reason`, and displayability. They do not diagnose plant health, diagnose sensor root cause, use `control_eligible` as command/control, or require every optional Gen2 sensor to be present.
+- Hosted Gen2 Device Status freshness and measurement-quality warnings use already-fetched hosted Gen2 rows, unique `measured_at` report samples, and Gen2 metadata such as `valid`, `quality`, `reason`, and displayability. They do not diagnose plant health, diagnose sensor root cause, infer watering authority, or require every optional Gen2 sensor to be present.
 - JSONB/GIN indexing on `records` is deferred until real query patterns justify it.
-- Unique physical sensor inventory / sensor assignment tracking is deferred to a later phase.
+- Database-backed physical sensor inventory and assignment administration remain deferred. ADR 0022 permits optional runtime `physical_sensor_id` on measurement/capability entries where a known physical identity already exists.
 - `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
-- Phase 7D preserves `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, watering behavior, and `control_eligible:false` on current Gen2 records.
+- Phase 7D preserved `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, watering behavior, and the then-current per-record `control_eligible` field. ADR 0022 later removes that field from new external Gen2 measurement records while preserving historical stored evidence.
 - Phase 7E moves field units onto the Gen2 compatibility path while preserving the installed controller UUID `550e8400-e29b-41d4-a716-446655440000` and scout UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`.
 - Phase 7E display labels are compile-time endpoint readability labels: `Balcony01`, `Scout01`, and `Prototype01`. They are not user-editable names or database-driven nicknames.
 - Phase 7E local endpoints report firmware provenance with `firmware_version`, `build_profile`, and `device_label` on `/status`, `/capabilities`, and `/measurements`.
@@ -173,8 +173,23 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`, plus `batch_details.phase = "7E"` and `batch_details.device_label`.
 - Installed `Balcony01` is watering-capable; `Scout01` is not watering-capable. Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
 - `/water-now` remains local-only and capability-gated; Remote Water Now remains prohibited.
-- Installed `Balcony01` may mark `moisture_index` `control_eligible:true`; DHT11 records and `raw_adc` remain `control_eligible:false`. Scout `Scout01` records remain `control_eligible:false`.
+- Historical pre-ADR-0022 records may contain `control_eligible`. New cleaned external Gen2 records omit it; watering eligibility remains internal firmware/control logic and does not grant hosted command authority.
 - The known DHT11 startup first-read wart may produce suspicious initial `/measurements` DHT values, but DHT11 records are not watering control inputs.
+
+### ADR 0022 Endpoint Responsibility Refinement
+
+ADR 0022 in [`docs/adr/0022-gen2-endpoint-responsibility-and-contract-cleanup.md`](./adr/0022-gen2-endpoint-responsibility-and-contract-cleanup.md) refines the active Gen2 external endpoint contract without changing hardware or watering behavior.
+
+- `/measurements` reports observations at one authoritative batch time. The envelope owns device identity and `measured_at`; new records contain measurement identity/value/unit, `valid`, coarse `quality`, the most specific available `reason`, and optional `physical_sensor_id` where one exists.
+- New measurement records omit record-level `device_id`, record-level `measured_at`, `control_eligible`, and `details`. Historical batches containing those fields remain valid and are not rewritten.
+- `public.sensor_measurements_flat` restores `device_id` and `measured_at` from the batch row when records are flattened.
+- `/capabilities` is a deterministic static compile-time/profile manifest. It reports identity, `can_water`, control authority, pinout, active states, shared provider topology, module inventory, installed state, connections, and actual declared control roles.
+- Requesting `/capabilities` must not perform sensor reads, GPIO health reads, I2C scans, mux scans, live detection, or provider conversions.
+- `/status` reports current operation through nested `network`, `cloud_reporting`, `watering`, and `system` objects. It does not duplicate static watering authority or configured inventory.
+- The periodic heartbeat is the flattened cloud representation of the same runtime semantics. Local IP and MAC remain local-only status evidence and are not exposed through hosted-safe diagnostics.
+- New DS18B20 records use external `measurement_name` `soil temp`; hosted consumers retain compatibility with historical DS18B20 `temperature` rows.
+- Balcony02 emits 11 successful observation records. SEN0308 M04 remains configured but uninstalled capability inventory and is not emitted as a measurement.
+- SEN0204 is the only current sensor module with declared `control_role: watering_interlock`. No automatic SEN0308 watering is approved.
 
 ## Hosted Read-Only Device Diagnostics
 

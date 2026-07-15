@@ -8,7 +8,7 @@ Use this file to decide which raw ADRs to load for future ChatGPT/Codex phases. 
 
 ## Inventory
 
-ADR files found in `docs/adr`: 21. ADR 0001 through ADR 0021 are all present in this repo, including ADR 0001, ADR 0002, and ADR 0019. No ADR numbers are missing in the current 0001-0021 range.
+ADR files found in `docs/adr`: 22. ADR 0001 through ADR 0022 are all present in this repo, including ADR 0001, ADR 0002, and ADR 0019. No ADR numbers are missing in the current 0001-0022 range.
 
 | ADR | Title | Date | Repo status | Current relevance | Amended / superseded / implemented by | Source-pack treatment |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -33,6 +33,7 @@ ADR files found in `docs/adr`: 21. ADR 0001 through ADR 0021 are all present in 
 | 0019 | Runtime Wi-Fi Recovery and Network Self-Healing | 2026-06-03 | Present, accepted | Active runtime Wi-Fi/network recovery architecture | Implemented by Phase 7K.5 and surfaced by Phase 7K.6 diagnostics | Active architecture anchor |
 | 0020 | MVP Customer Setup, Access, and Local-Control Boundary | 2026-06-04 | Present, accepted | Active customer/site/support and read-only product boundary | Implemented partly by Phase 7L.4 SQL and hosted auth routes | Active architecture anchor |
 | 0021 | Watering Event Evidence and Cadence Separation | 2026-06-07 | Present, accepted | Active watering event evidence and cadence-separation architecture | Implemented/proposed by Phase 7O.1 artifacts; hosted display later/current per backlog state | Active architecture anchor |
+| 0022 | Gen2 Endpoint Responsibility and Contract Cleanup | 2026-07-15 | Present, accepted | Active `/measurements`, `/capabilities`, `/status`, heartbeat-alignment, and compatibility contract | Refines endpoint-shape portions of ADR 0016/0017; preserves batch storage, watering ownership, and read-only boundaries | Active architecture anchor |
 
 ## Source-Pack Guidance
 
@@ -40,5 +41,5 @@ ADR files found in `docs/adr`: 21. ADR 0001 through ADR 0021 are all present in 
 - For watering/control work: also load ADR 0006, 0011, 0016, 0018, 0020, and 0021.
 - For hosted/customer work: also load ADR 0009, 0013, 0020, and relevant Phase 7L/7O docs.
 - For SQL/RLS/storage work: load [`docs/SQL_SCHEMA_ACTIVE_DIGEST.md`](./SQL_SCHEMA_ACTIVE_DIGEST.md) first, then raw SQL artifacts only for the affected table/view.
-- For Gen2 measurement work: load ADR 0016 and 0017, plus raw SQL for `sensor_measurement_batches` or hosted Gen2 views when changing storage/read behavior.
-- For diagnostics/recovery work: load ADR 0014 and 0019, plus raw SQL for `device_heartbeats` and hosted diagnostics views when changing storage/read behavior.
+- For Gen2 endpoint or measurement work: load ADR 0016, 0017, and 0022, plus raw SQL for `sensor_measurement_batches` or hosted Gen2 views when changing storage/read behavior.
+- For diagnostics/recovery work: load ADR 0014, 0019, and 0022, plus raw SQL for `device_heartbeats` and hosted diagnostics views when changing storage/read behavior.

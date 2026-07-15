@@ -23,7 +23,7 @@ The original files in [`docs/adr`](./adr) remain the historical decision log and
 - No Supabase command/control.
 - Manual Water Now remains local and supervised.
 - Gen2 measurements remain separate from the legacy `SensorLogRow` compatibility contract.
-- `control_eligible` is local firmware evidence about possible control suitability, not a hosted command/control flag.
+- Control eligibility remains an internal firmware/control-design concern and historical evidence field; it is not part of new cleaned Gen2 `/measurements` records and is never hosted command/control.
 
 ## Local Runtime And Watering Control Boundary
 
@@ -51,20 +51,23 @@ ADR 0012 amends ADR 0003 by adding optional `data.soilRawAdc` for raw ESP32 ADC 
 
 ADR 0016 further clarifies that `SensorLogRow` and `sensor_logs` remain stable for Gen1/current compatibility while Gen2 expanded measurements use a separate measurement path.
 
-## Gen2 Modular Measurement Contract
+## Gen2 Modular Measurement And Endpoint Contract
 
-ADR 0016 is the major active Gen2 architecture anchor. Gen2 is a modular grow-environment platform where sensors, capabilities, and control authority are independently discoverable, optional, and replaceable.
+ADR 0016 remains the major Gen2 modular sensor architecture anchor. ADR 0017 remains the raw measurement-batch storage anchor. ADR 0022 refines the active external endpoint shapes and aligns local status with cloud heartbeat evidence.
 
-Active Gen2 meaning:
+Active Gen2 endpoint meaning:
 
-- `/capabilities` and `/measurements` are the modular local endpoint contract.
-- Optional sensors may be present, missing, disabled, failed, or not installed without breaking device operation.
-- Display validity is separate from watering-control eligibility.
-- `control_eligible:true` is local firmware evidence only.
-- GPIO5 is retired from Gen2 relay/pump designs.
+- `/measurements` reports installed sensor observations at one authoritative batch time. The envelope owns `device_id` and `measured_at`; new records contain `sensor_key`, `sensor_type`, optional `physical_sensor_id`, measurement value/unit, `valid`, coarse `quality`, and the most specific available `reason`.
+- New `/measurements` records omit record-level identity/time, `control_eligible`, and `details`. Historical stored rows containing those fields remain valid evidence.
+- `/capabilities` is a static compile-time/profile manifest of identity, `can_water`, control authority, pinout, configured active states, shared provider topology, module inventory, installed state, connections, and declared control roles. Requesting it performs no sensor reads, GPIO health reads, I2C scans, mux scans, live detection, or provider conversions.
+- `/status` reports current runtime operation through nested `network`, `cloud_reporting`, `watering`, and `system` objects. Permanent watering authority and configured inventory do not belong in status.
+- The periodic heartbeat is the flattened cloud representation of the same active runtime semantics. Hosted diagnostics remain read-only and do not expose local IP/MAC or command authority.
+- Optional configured sensors may be absent or uninstalled without breaking device operation. Uninstalled inventory belongs in `/capabilities`; it is not emitted as a measurement observation.
+- Display validity remains separate from watering-control eligibility. Control eligibility remains internal firmware/control evidence and is not part of the cleaned external measurement record.
+- GPIO5 remains retired from Gen2 relay/pump designs.
 - Supabase remains telemetry/history/diagnostics/evidence storage only.
 
-ADR 0017 defines Gen2 measurement batch storage: one append-only raw batch row per complete `/measurements` package in `public.sensor_measurement_batches`, with `public.sensor_measurements_flat` as the derived flat query view. ADR 0018 defines control-quality gates that future firmware/control work must respect.
+ADR 0017 continues to define one append-only raw batch row per complete `/measurements` package in `public.sensor_measurement_batches`, with `public.sensor_measurements_flat` as the derived flat query view. Flattened rows receive batch-level `device_id` and `measured_at`. ADR 0018 continues to define control-quality gates that firmware/control work must respect.
 
 ## Data And Evidence Paths
 
@@ -90,7 +93,7 @@ ADR 0020 defines the customer/site/device assignment boundary: customers see the
 
 ADR 0014 defines diagnostics and heartbeat architecture. `device_heartbeats` is separate from `sensor_logs` and `sensor_events`. Local `/status` is diagnostic-only and must not control watering, alter runtime state, or expose command authority.
 
-ADR 0019 extends diagnostics with runtime Wi-Fi/network recovery evidence. Hosted diagnostics remain read-only evidence through limited views such as `public.hosted_device_diagnostics` and protected customer/support variants.
+ADR 0019 extends diagnostics with runtime Wi-Fi/network recovery evidence. ADR 0022 aligns nested local `/status` semantics with flattened heartbeat/storage fields for network recovery, cloud reporting, watering runtime evidence, and heap evidence. Hosted diagnostics remain read-only through limited views such as `public.hosted_device_diagnostics` and protected customer/support variants, and they do not expose local IP/MAC or static watering authority.
 
 ## Customer Access, Site Membership, And Support Boundary
 
@@ -108,7 +111,7 @@ The active architecture favors a dedicated append-only `watering_events` evidenc
 
 - Production provisioning flow and device-storage/programming-station ID assignment.
 - Customer account lifecycle, invites, billing/account administration, and provisioning UI.
-- Sensor inventory and physical sensor assignment tracking.
+- Database-backed sensor inventory and physical sensor assignment administration; ADR 0022 permits optional runtime `physical_sensor_id` where a known physical identity already exists.
 - Calibration, filtering, invalid-read rejection, advanced sensor health, and alert policy.
 - Future hardware safety maturity beyond currently approved local firmware safety gates.
 - Any Remote Water Now, hosted local ESP32 call, or Supabase command/control proposal requires a new explicit ADR and is currently prohibited.
@@ -151,3 +154,4 @@ Load raw ADRs only for the specific topic under change. Load raw SQL artifacts o
 | 0019 | Present in repo; active runtime Wi-Fi recovery and network self-healing architecture. |
 | 0020 | Active customer setup/access/local-control boundary. |
 | 0021 | Active watering event evidence and cadence separation architecture. |
+| 0022 | Active Gen2 endpoint responsibility, cleaned measurement record, static capability manifest, nested status, and heartbeat-alignment contract. |
