@@ -1,6 +1,8 @@
 # Phase 8B Gen2 Endpoint Contract Cleanup
 
-- Status: Approved contract freeze
+- Phase 8B `/measurements` slice: COMPLETE / END-TO-END VALIDATED
+- Phase 8B overall endpoint cleanup: IN PROGRESS
+- Next slice: `/capabilities`
 - Date: 2026-07-15
 - Device profile under primary validation: `balcony02-gen2`
 - Device label: `Balcony02`
@@ -12,7 +14,47 @@
 
 This document freezes the approved external contracts and coordinated cloud/frontend semantics for the Gen2 endpoint cleanup before implementation begins.
 
+The `/measurements` contract is now implemented and production validated. The remaining `/capabilities`, `/status`, and integrated endpoint closeout slices are not complete.
+
 It is the implementation specification for this phase. It does not authorize unrelated refactoring, pin changes, sensor changes, timing changes, watering changes, or control-policy changes.
+
+## `/measurements` production closeout — 2026-07-16
+
+Implementation commits `b17bf1a` (`Document Gen2 endpoint contract cleanup`) and `2096394` (`Implement Gen2 measurement contract cleanup`) were pushed to `main`.
+
+Cloudflare Pages deployed the hosted frontend. Before the coordinated Supabase migration was applied, the hosted frontend temporarily could not query measurements. After Jeremy manually applied [`phase8b-measurement-contract-cleanup.sql`](../sql/phase8b-measurement-contract-cleanup.sql) through the Supabase SQL Editor on 2026-07-16, the hosted Support View recovered and displayed current data normally. This was the expected contract deployment boundary, not a defect.
+
+The applied schema preserves the append-only `sensor_measurement_batches` table, `schema_version:1`, and all base measurement-table columns. `sensor_measurements_flat` derives `device_id` and `measured_at` from the batch, exposes `physical_sensor_id`, prefers the top-level value, and falls back to historical `details.physical_sensor_id`. Privileged flat evidence retains historical `details` and `control_eligible`; hosted-safe public, customer, and support views expose `physical_sensor_id` but not `details` or `control_eligible`. Existing read-only customer/support boundaries remain intact, and no Supabase command/control was introduced.
+
+All four PlatformIO environments built successfully: `balcony02-gen2`, `bench-proto-gen2`, `balcony-installed-gen2`, and `balcony-sensor-scout-01`. Only `balcony02-gen2` was uploaded. The validated unit was `Balcony02`, UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, firmware `phase8b-balcony02-proveout`, build profile `balcony02-gen2`, on `COM5` at `10.0.0.69`.
+
+Normal boot detected the BME280 and one DS18B20, initialized WL01 on GPIO26 as `INPUT`, reported SEN0562-L01 missing and SEN0562-L02/L03 detected, enabled the active-low GPIO32 physical button with 50 ms debounce and 15000 ms maximum hold, connected Wi-Fi, and started the web server without a reboot loop.
+
+The PowerShell validator passed every `/measurements` assertion against `http://10.0.0.69`. The exact 11-record order is:
+
+1. `bme280_air` / `air_temperature`
+2. `bme280_air` / `relative_humidity`
+3. `bme280_air` / `barometric_pressure`
+4. `ds18b20_temperature` / `soil temp`
+5. `sen0308_m01` / `raw_adc`
+6. `sen0308_m02` / `raw_adc`
+7. `sen0308_m03` / `raw_adc`
+8. `sen0562_l01` / `ambient_light`
+9. `sen0562_l02` / `ambient_light`
+10. `sen0562_l03` / `ambient_light`
+11. `sen0204_wl01` / `reservoir_liquid_detected`
+
+M04 emits no measurement. New records contain only `sensor_key`, `sensor_type`, optional `physical_sensor_id`, `measurement_name`, `measurement_value`, `measurement_unit`, `valid`, `quality`, and `reason`. They omit record-level `device_id`, record-level `measured_at`, `details`, `control_eligible`, null `physical_sensor_id`, and empty details objects. Physical IDs `SEN0308-M01`, `SEN0308-M02`, `SEN0308-M03`, `SEN0562-L01`, `SEN0562-L02`, `SEN0562-L03`, and `WL01` were validated; BME280 and DS18B20 omit `physical_sensor_id`.
+
+SEN0562-L01 remains explicit missing evidence: `measurement_value:null`, `valid:false`, `quality:missing`, `reason:sensor_not_detected_on_selected_channel`, and `physical_sensor_id:SEN0562-L01`. It is not healthy and is not classified as uninstalled.
+
+Repeated 15-minute production batches were stored at `2026-07-16 16:16:58+00`, `2026-07-16 16:31:58+00`, and `2026-07-16 16:46:58+00`. Each recorded firmware `phase8b-balcony02-proveout`, build profile `balcony02-gen2`, and `record_count:11`. The following heartbeat reported `last_supabase_http_status:201`, `consecutive_supabase_failures:0`, and `last_supabase_error_category:none`.
+
+Hosted validation passed: current Balcony02 samples displayed; Soil Temperature appeared as one card; historical DS18B20 `temperature` compatibility worked; air temperature, humidity, and pressure displayed normally; hosted views loaded without errors; watering history remained read-only; no Water Now control appeared; and no hosted local-device control or Supabase command/control was introduced.
+
+Deferred beyond this slice are merging or hiding legacy `reservoir_liquid_state`; making `reservoir_liquid_detected` the canonical new name; an obvious hosted warning when liquid is not detected; final M01/M02/M03 and L01/L02/L03 customer/support card presentation; local browser UI retirement; and remaining local Water Now retirement.
+
+WL01 semantics remain unchanged: HIGH means liquid detected, LOW means liquid not detected, LOW blocks watering, and a HIGH-to-LOW transition during watering stops the relay.
 
 ## Locked implementation boundaries
 
@@ -888,22 +930,22 @@ New firmware writes the new active field names only after the database accepts t
 
 ## Measurements
 
-- [ ] Exactly 11 successful Balcony02 records.
-- [ ] Record order matches the frozen order.
-- [ ] No M04 measurement.
-- [ ] No `details`.
-- [ ] No `control_eligible`.
-- [ ] No record-level `device_id`.
-- [ ] No record-level `measured_at`.
-- [ ] Correct physical sensor IDs.
-- [ ] BME280 and DS18B20 omit `physical_sensor_id`.
-- [ ] DS18B20 uses `soil temp`.
-- [ ] SEN0204 uses `reservoir_liquid_detected`.
-- [ ] Reservoir values remain 0/1 with unchanged meaning.
-- [ ] Specific provider failures appear directly in `reason`.
-- [ ] Flattened rows retain batch device ID and time.
-- [ ] Hosted and local displays still work.
-- [ ] Historical DS18B20 `temperature` rows still display correctly.
+- [x] Exactly 11 Balcony02 records, including explicit L01 missing evidence.
+- [x] Record order matches the frozen order.
+- [x] No M04 measurement.
+- [x] No `details`.
+- [x] No `control_eligible`.
+- [x] No record-level `device_id`.
+- [x] No record-level `measured_at`.
+- [x] Correct physical sensor IDs.
+- [x] BME280 and DS18B20 omit `physical_sensor_id`.
+- [x] DS18B20 uses `soil temp`.
+- [x] SEN0204 uses `reservoir_liquid_detected`.
+- [x] Reservoir values remain 0/1 with unchanged meaning.
+- [x] Specific provider failures appear directly in `reason`.
+- [x] Flattened rows retain batch device ID and time.
+- [x] Hosted Support View works and the local `/measurements` endpoint validates.
+- [x] Historical DS18B20 `temperature` rows display correctly.
 
 ## Capabilities
 

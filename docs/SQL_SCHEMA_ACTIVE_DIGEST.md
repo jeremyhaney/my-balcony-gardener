@@ -23,6 +23,7 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - [`docs/sql/phase7k6-hosted-runtime-diagnostics-view.sql`](./sql/phase7k6-hosted-runtime-diagnostics-view.sql)
 - [`docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`](./sql/phase7l4-customer-auth-garden-membership-rls.sql)
 - [`docs/sql/phase7o1-watering-events.sql`](./sql/phase7o1-watering-events.sql)
+- [`docs/sql/phase8b-measurement-contract-cleanup.sql`](./sql/phase8b-measurement-contract-cleanup.sql)
 
 ## Tables And Views
 
@@ -88,8 +89,8 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Authenticated SELECT: Needs verification from applied Supabase state; customer/support views read through projections rather than base-table browser grants.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0016, 0017, 0018, 0021.
-- Related SQL artifacts: `docs/sql/phase7d-sensor-measurement-batches.sql`, `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
-- Notes: Stores valid, invalid, degraded, failed, missing, diagnostic, and control-ineligible records as evidence. Storage does not mean usable for watering control.
+- Related SQL artifacts: `docs/sql/phase7d-sensor-measurement-batches.sql`, `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`, `docs/sql/phase8b-measurement-contract-cleanup.sql`.
+- Notes: Jeremy manually applied the Phase 8B artifact on 2026-07-16. The base table remains append-only at schema version `1`; no base measurement-table columns changed. Stores valid, invalid, degraded, failed, missing, diagnostic, and control-ineligible records as evidence. Storage does not mean usable for watering control.
 
 ### sensor_measurements_flat
 
@@ -101,8 +102,8 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Authenticated SELECT: Needs verification from applied Supabase state; protected views are the browser-readable surface.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0016, 0017, 0018.
-- Related SQL artifacts: `docs/sql/phase7d-sensor-measurement-batches.sql`, `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
-- Notes: Includes `control_eligible` as local firmware evidence; hosted/client code must not treat it as command/control.
+- Related SQL artifacts: `docs/sql/phase7d-sensor-measurement-batches.sql`, `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`, `docs/sql/phase8b-measurement-contract-cleanup.sql`.
+- Notes: The applied Phase 8B view derives `device_id` and `measured_at` from the batch; exposes `physical_sensor_id` by preferring the top-level record value and falling back to historical `details.physical_sensor_id`; and retains historical `details` plus `control_eligible` as privileged flat evidence. Hosted/client code must not treat control eligibility as command/control.
 
 ### hosted_gen2_measurements
 
@@ -114,8 +115,8 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Authenticated SELECT: Yes, granted by Phase 7F artifact.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0009, 0015, 0016, 0017, 0020.
-- Related SQL artifacts: `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7g1-control-validation-readonly-queries.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
-- Notes: Does not expose raw `details` or `batch_details` in the MVP view and does not grant anon SELECT on Gen2 base tables or registry.
+- Related SQL artifacts: `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7g1-control-validation-readonly-queries.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`, `docs/sql/phase8b-measurement-contract-cleanup.sql`.
+- Notes: The applied Phase 8B view exposes `physical_sensor_id` but not `details` or `control_eligible`; it does not grant anon SELECT on Gen2 base tables or registry. Hosted validation recovered after the coordinated migration and remained read-only.
 
 ### hosted_device_diagnostics
 
@@ -231,8 +232,8 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Authenticated SELECT: Yes, with `auth.uid()` membership filtering.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0016, 0017, 0020.
-- Related SQL artifacts: `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
-- Notes: Projects hosted-safe Gen2 fields; does not expose raw base table details.
+- Related SQL artifacts: `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`, `docs/sql/phase8b-measurement-contract-cleanup.sql`.
+- Notes: Projects `physical_sensor_id` and other hosted-safe Gen2 fields; does not expose `details` or `control_eligible`. Customer access remains read-only and membership-filtered.
 
 ### support_hosted_gen2_measurements
 
@@ -244,8 +245,8 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Authenticated SELECT: Yes, with `auth.uid()` support/admin filtering.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0016, 0017, 0020.
-- Related SQL artifacts: `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
-- Notes: Read-only support evidence.
+- Related SQL artifacts: `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`, `docs/sql/phase8b-measurement-contract-cleanup.sql`.
+- Notes: Read-only support evidence exposes `physical_sensor_id` but not `details` or `control_eligible`.
 
 ### customer_hosted_device_diagnostics
 
