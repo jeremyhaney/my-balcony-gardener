@@ -43,7 +43,7 @@ String sen0308Reason(const Gen2Ads1115Read &read) {
   if (read.readOk) {
     return "read_ok";
   }
-  return sen0308NotDetected(read) ? "not_detected" : "read_failed";
+  return String(read.failureDetail).length() > 0 ? String(read.failureDetail) : String(sen0308NotDetected(read) ? "not_detected" : "read_failed");
 }
 
 String sen0308DetailsJson(const Gen2Ads1115Read *read, const Sen0308SensorConfig &sensor) {
@@ -106,11 +106,12 @@ String sen0308NotInstalledCapabilityJson(const Sen0308SensorConfig &sensor) {
 }
 
 String sen0308MeasurementJson(const String &deviceId, const String &measuredAt, const Sen0308SensorConfig &sensor, const Gen2Ads1115Read &read) {
+  (void)deviceId;
+  (void)measuredAt;
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"" + String(sensor.sensorKey) + "\",";
   response += "\"sensor_type\":\"sen0308\",";
+  response += "\"physical_sensor_id\":\"" + String(sensor.physicalSensorId) + "\",";
   response += "\"measurement_name\":\"raw_adc\",";
   response += "\"measurement_value\":";
   response += read.readOk ? String(read.rawAdc) : String("null");
@@ -118,9 +119,7 @@ String sen0308MeasurementJson(const String &deviceId, const String &measuredAt, 
   response += "\"measurement_unit\":\"count\",";
   response += "\"valid\":" + boolString(read.readOk) + ",";
   response += "\"quality\":\"" + sen0308Quality(read) + "\",";
-  response += "\"reason\":\"" + sen0308Reason(read) + "\",";
-  response += "\"control_eligible\":false,";
-  response += "\"details\":" + sen0308DetailsJson(&read, sensor);
+  response += "\"reason\":\"" + sen0308Reason(read) + "\"";
   response += "}";
   return response;
 }
@@ -168,15 +167,15 @@ String gen2Sen0308CapabilityJson() {
 String gen2Sen0308MeasurementsJson(const String &deviceId, const String &measuredAt) {
 #if MBG_HAS_ADS1115 && MBG_HAS_I2C_MUX
   String response = "";
+  bool hasAny = false;
   for (size_t i = 0; i < SEN0308_SENSOR_COUNT; i++) {
-    if (i > 0) {
-      response += ",";
-    }
     if (SEN0308_SENSORS[i].installed) {
+      if (hasAny) {
+        response += ",";
+      }
       Gen2Ads1115Read read = gen2Ads1115ReadChannel(SEN0308_SENSORS[i].adsChannel);
       response += sen0308MeasurementJson(deviceId, measuredAt, SEN0308_SENSORS[i], read);
-    } else {
-      response += sen0308NotInstalledMeasurementJson(deviceId, measuredAt, SEN0308_SENSORS[i]);
+      hasAny = true;
     }
   }
   return response;

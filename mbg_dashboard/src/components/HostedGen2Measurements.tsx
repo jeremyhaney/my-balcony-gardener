@@ -279,6 +279,13 @@ const MeasurementCard = ({
           <dt>Sensor type</dt>
           <dd>{formatNullableText(latestRow.sensor_type)}</dd>
 
+          {latestRow.physical_sensor_id ? (
+            <>
+              <dt>Physical sensor ID</dt>
+              <dd>{latestRow.physical_sensor_id}</dd>
+            </>
+          ) : null}
+
           <dt>Latest valid</dt>
           <dd>{formatNullableBoolean(latestRow.valid)}</dd>
 
@@ -288,15 +295,6 @@ const MeasurementCard = ({
           <dt>Latest reason</dt>
           <dd>{formatNullableText(latestRow.reason)}</dd>
 
-          <dt>Latest control eligible</dt>
-          <dd>{formatControlEligible(latestRow.control_eligible)}</dd>
-
-          {model.mode === 'recent-good' ? (
-            <>
-              <dt>Displayed control eligible</dt>
-              <dd>{formatControlEligible(displayRow?.control_eligible)}</dd>
-            </>
-          ) : null}
         </dl>
       </details>
     </article>
@@ -483,7 +481,10 @@ const getMeasurementGroup = (
     return 'light'
   }
 
-  if (measurementName === 'temperature' && sensorType.includes('ds18b20')) {
+  if (
+    (measurementName === 'temperature' || measurementName === 'soil temp') &&
+    (sensorType.includes('ds18b20') || normalizeText(row.sensor_key) === 'ds18b20_temperature')
+  ) {
     return 'soil'
   }
 
@@ -491,7 +492,8 @@ const getMeasurementGroup = (
     measurementName === 'air_temperature' ||
     measurementName === 'relative_humidity' ||
     measurementName === 'barometric_pressure' ||
-    measurementName === 'temperature'
+    measurementName === 'temperature' ||
+    measurementName === 'soil temp'
   ) {
     return 'air'
   }
@@ -521,6 +523,7 @@ const getMeasurementCardRank = (card: MeasurementCardDescriptor): number => {
     case 'moisture_index':
       return 0
     case 'temperature':
+    case 'soil temp':
       return 1
     case 'ambient_light':
       return 0
@@ -697,9 +700,6 @@ const formatNullableText = (value: string | null | undefined): string =>
 
 const normalizeText = (value: string | null | undefined): string =>
   value?.trim().toLowerCase() ?? ''
-
-const formatControlEligible = (value: boolean | null | undefined): string =>
-  `${formatNullableBoolean(value)} - garden unit evidence only`
 
 const formatTrustFlags = (values: string[]): string =>
   values.length > 0 ? values.join(', ') : 'None'

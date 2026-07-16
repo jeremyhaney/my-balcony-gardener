@@ -29,9 +29,9 @@ String dhtMeasurementJson(
   const String &quality,
   const String &reason
 ) {
+  (void)deviceId;
+  (void)measuredAt;
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"dht11_air\",";
   response += "\"sensor_type\":\"DHT11\",";
   response += "\"measurement_name\":\"" + name + "\",";
@@ -41,9 +41,7 @@ String dhtMeasurementJson(
   response += "\"measurement_unit\":\"" + unit + "\",";
   response += "\"valid\":" + String(valid ? "true" : "false") + ",";
   response += "\"quality\":\"" + quality + "\",";
-  response += "\"reason\":\"" + reason + "\",";
-  response += "\"control_eligible\":false,";
-  response += "\"details\":" + dhtDetailsJson();
+  response += "\"reason\":\"" + reason + "\"";
   response += "}";
   return response;
 }

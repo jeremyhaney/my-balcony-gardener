@@ -133,7 +133,7 @@ const getMeasurementIdentity = (row: HostedGen2MeasurementRow): string =>
     row.device_id,
     normalizeText(row.sensor_key),
     normalizeText(row.sensor_type),
-    normalizeText(row.measurement_name),
+    getCompatibleMeasurementName(row),
     normalizeText(row.measurement_unit),
   ].join('|')
 
@@ -144,6 +144,7 @@ const getDeadband = (row: HostedGen2MeasurementRow, earliestValue: number): numb
   if (
     measurementName === 'air_temperature' ||
     measurementName === 'temperature' ||
+    measurementName === 'soil temp' ||
     sensorType.includes('ds18b20')
   ) {
     return 1
@@ -170,6 +171,17 @@ const getDeadband = (row: HostedGen2MeasurementRow, earliestValue: number): numb
   }
 
   return Math.max(1, Math.abs(earliestValue) * 0.02)
+}
+
+const getCompatibleMeasurementName = (row: HostedGen2MeasurementRow): string => {
+  const measurementName = normalizeText(row.measurement_name)
+  const sensorType = normalizeText(row.sensor_type)
+  const sensorKey = normalizeText(row.sensor_key)
+
+  return measurementName === 'temperature' &&
+    (sensorType.includes('ds18b20') || sensorKey === 'ds18b20_temperature')
+    ? 'soil temp'
+    : measurementName
 }
 
 const formatDeltaLabel = (

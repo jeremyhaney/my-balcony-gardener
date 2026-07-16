@@ -69,21 +69,20 @@ String gen2Sen0204CapabilityJson() {
 }
 
 String gen2Sen0204MeasurementsJson(const String &deviceId, const String &measuredAt) {
+  (void)deviceId;
+  (void)measuredAt;
 #if MBG_HAS_SEN0204
   int rawState = digitalRead(MBG_SEN0204_PIN);
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"sen0204_wl01\",";
   response += "\"sensor_type\":\"sen0204\",";
-  response += "\"measurement_name\":\"reservoir_liquid_state\",";
+  response += "\"physical_sensor_id\":\"WL01\",";
+  response += "\"measurement_name\":\"reservoir_liquid_detected\",";
   response += "\"measurement_value\":" + String(rawState) + ",";
   response += "\"measurement_unit\":\"state\",";
   response += "\"valid\":true,";
   response += "\"quality\":\"good\",";
-  response += "\"reason\":\"read_ok\",";
-  response += "\"control_eligible\":true,";
-  response += "\"details\":" + sen0204DetailsJson(rawState);
+  response += "\"reason\":\"read_ok\"";
   response += "}";
   return response;
 #else

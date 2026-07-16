@@ -106,7 +106,7 @@ type SupabaseSensorLogRow = {
 const DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT = 1000
 const HOSTED_GEN2_MEASUREMENT_BATCH_SIZE = 1000
 const HOSTED_GEN2_MEASUREMENT_COLUMNS =
-  'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, measurement_name, measurement_value, measurement_unit, valid, quality, reason, control_eligible, batch_created_at'
+  'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, physical_sensor_id, measurement_name, measurement_value, measurement_unit, valid, quality, reason, batch_created_at'
 const DEVICE_DIAGNOSTICS_COLUMNS =
   'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_reconnect_attempt_count, last_supabase_http_status, consecutive_supabase_failures, last_supabase_error_category, last_successful_telemetry_post_at, last_successful_diagnostics_post_at, free_heap, min_free_heap, currently_watering, last_watering_duration, pump_control_available, device_can_water, wifi_begin_recovery_attempt_count, wifi_disconnect_event_count, wifi_got_ip_event_count, last_wifi_status_code, last_wifi_disconnect_reason, last_wifi_disconnected_uptime_seconds, last_wifi_reconnected_uptime_seconds, last_network_recovery_action'
 const WATERING_EVENT_COLUMNS =

@@ -401,7 +401,9 @@ const buildChartData = (
 }
 
 const getChartReadyRows = (rows: HostedGen2MeasurementRow[]): HostedGen2MeasurementRow[] => {
-  const filteredRows = rows.filter((row) => !shouldExcludeHostedChartRow(row))
+  const filteredRows = rows
+    .filter((row) => !shouldExcludeHostedChartRow(row))
+    .map(getCompatibleChartRow)
   const derivedMoistureRows = rows
     .filter(isDisplayablePrimarySen0308RawAdcRow)
     .map((row) => ({
@@ -414,6 +416,19 @@ const getChartReadyRows = (rows: HostedGen2MeasurementRow[]): HostedGen2Measurem
     }))
 
   return [...filteredRows, ...derivedMoistureRows]
+}
+
+const getCompatibleChartRow = (
+  row: HostedGen2MeasurementRow,
+): HostedGen2MeasurementRow => {
+  const measurementName = normalizeText(row.measurement_name)
+  const sensorType = normalizeText(row.sensor_type)
+  const sensorKey = normalizeText(row.sensor_key)
+
+  return measurementName === 'temperature' &&
+    (sensorType.includes('ds18b20') || sensorKey === 'ds18b20_temperature')
+    ? { ...row, measurement_name: 'soil temp' }
+    : row
 }
 
 const shouldExcludeHostedChartRow = (row: HostedGen2MeasurementRow): boolean => {
@@ -577,6 +592,7 @@ const formatTooltipMeasurementValue = (value: number, measurementName: string): 
       return `${value.toLocaleString([], { maximumFractionDigits: 1 })}%`
     case 'air_temperature':
     case 'temperature':
+    case 'soil temp':
       return `${value.toLocaleString([], { maximumFractionDigits: 2 })} F`
     case 'barometric_pressure':
       return `${value.toLocaleString([], { maximumFractionDigits: 2 })} hPa`

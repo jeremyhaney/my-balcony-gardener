@@ -174,9 +174,20 @@ const getMeasurementIdentity = (row: HostedGen2MeasurementRow): string =>
     row.device_id,
     normalizeText(row.sensor_key),
     normalizeText(row.sensor_type),
-    normalizeText(row.measurement_name),
+    getCompatibleMeasurementName(row),
     normalizeText(row.measurement_unit),
   ].join('|')
+
+const getCompatibleMeasurementName = (row: HostedGen2MeasurementRow): string => {
+  const measurementName = normalizeText(row.measurement_name)
+  const sensorType = normalizeText(row.sensor_type)
+  const sensorKey = normalizeText(row.sensor_key)
+
+  return measurementName === 'temperature' &&
+    (sensorType.includes('ds18b20') || sensorKey === 'ds18b20_temperature')
+    ? 'soil temp'
+    : measurementName
+}
 
 const normalizeText = (value: string | null | undefined): string =>
   value?.trim().toLowerCase() ?? ''

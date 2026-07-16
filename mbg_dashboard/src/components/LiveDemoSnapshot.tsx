@@ -28,7 +28,7 @@ const SNAPSHOT_MEASUREMENTS = [
   "moisture_index",
   "air_temperature",
   "relative_humidity",
-  "temperature",
+  "soil temp",
 ];
 
 const demoDevice = DEVICE_REGISTRY.find((device) => device.key === DEMO_DEVICE_KEY);
@@ -177,10 +177,29 @@ const getDisplayModel = (
   measurementName: string,
   models: HostedGen2MeasurementDisplayModel[],
 ): HostedGen2MeasurementDisplayModel | null =>
-  models.find(
-    (model) =>
-      normalizeText(model.latestRow.measurement_name) === normalizeText(measurementName),
+  models.find((model) =>
+    isCompatibleSnapshotMeasurement(measurementName, model.latestRow),
   ) ?? null;
+
+const isCompatibleSnapshotMeasurement = (
+  requestedMeasurementName: string,
+  row: HostedGen2MeasurementRow,
+): boolean => {
+  const requestedName = normalizeText(requestedMeasurementName);
+  const actualName = normalizeText(row.measurement_name);
+  const sensorType = normalizeText(row.sensor_type);
+  const sensorKey = normalizeText(row.sensor_key);
+
+  if (requestedName === "soil temp") {
+    return (
+      actualName === "soil temp" ||
+      (actualName === "temperature" &&
+        (sensorType.includes("ds18b20") || sensorKey === "ds18b20_temperature"))
+    );
+  }
+
+  return actualName === requestedName;
+};
 
 const getLatestMeasuredAt = (rows: HostedGen2MeasurementRow[]): string | null => {
   const latestRow = [...rows].sort(

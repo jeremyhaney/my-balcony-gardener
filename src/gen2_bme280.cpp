@@ -122,9 +122,9 @@ String bmeMeasurementJson(
   const String &quality,
   const String &reason
 ) {
+  (void)deviceId;
+  (void)measuredAt;
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"bme280_air\",";
   response += "\"sensor_type\":\"BME280\",";
   response += "\"measurement_name\":\"" + name + "\",";
@@ -134,9 +134,7 @@ String bmeMeasurementJson(
   response += "\"measurement_unit\":\"" + unit + "\",";
   response += "\"valid\":" + String(valid ? "true" : "false") + ",";
   response += "\"quality\":\"" + quality + "\",";
-  response += "\"reason\":\"" + reason + "\",";
-  response += "\"control_eligible\":false,";
-  response += "\"details\":" + bmeDetailsJson();
+  response += "\"reason\":\"" + reason + "\"";
   response += "}";
   return response;
 }
@@ -196,12 +194,13 @@ String gen2Bme280MeasurementsJson(const String &deviceId, const String &measured
   }
 
   if (!bme280Present) {
+    String reason = String(bme280FailureDetail).length() > 0 ? String(bme280FailureDetail) : String("not_detected");
     String response = "[";
-    response += bmeMeasurementJson(deviceId, measuredAt, "air_temperature", "F", 0, false, "missing", "not_detected");
+    response += bmeMeasurementJson(deviceId, measuredAt, "air_temperature", "F", 0, false, "missing", reason);
     response += ",";
-    response += bmeMeasurementJson(deviceId, measuredAt, "relative_humidity", "%", 0, false, "missing", "not_detected");
+    response += bmeMeasurementJson(deviceId, measuredAt, "relative_humidity", "%", 0, false, "missing", reason);
     response += ",";
-    response += bmeMeasurementJson(deviceId, measuredAt, "barometric_pressure", "hPa", 0, false, "missing", "not_detected");
+    response += bmeMeasurementJson(deviceId, measuredAt, "barometric_pressure", "hPa", 0, false, "missing", reason);
     response += "]";
     return response;
   }

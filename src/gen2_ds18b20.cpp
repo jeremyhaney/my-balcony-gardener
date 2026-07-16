@@ -55,6 +55,8 @@ String gen2Ds18b20CapabilityJson() {
 }
 
 String gen2Ds18b20MeasurementsJson(const String &deviceId, const String &measuredAt) {
+  (void)deviceId;
+  (void)measuredAt;
 #if MBG_HAS_DS18B20
   if (ds18b20DeviceCount <= 0) {
     gen2Ds18b20Begin();
@@ -72,20 +74,16 @@ String gen2Ds18b20MeasurementsJson(const String &deviceId, const String &measure
 
   float tempF = (tempC * 1.8) + 32;
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"ds18b20_temperature\",";
   response += "\"sensor_type\":\"DS18B20\",";
-  response += "\"measurement_name\":\"temperature\",";
+  response += "\"measurement_name\":\"soil temp\",";
   response += "\"measurement_value\":";
   response += valid ? String(tempF, 2) : "null";
   response += ",";
   response += "\"measurement_unit\":\"F\",";
   response += "\"valid\":" + String(valid ? "true" : "false") + ",";
   response += "\"quality\":\"" + String(valid ? "good" : (present ? "failed" : "missing")) + "\",";
-  response += "\"reason\":\"" + String(valid ? "read_ok" : (present ? "read_failed" : "not_detected")) + "\",";
-  response += "\"control_eligible\":false,";
-  response += "\"details\":" + dsDetailsJson();
+  response += "\"reason\":\"" + String(valid ? "read_ok" : (present ? "read_failed" : "not_detected")) + "\"";
   response += "}";
   return response;
 #else

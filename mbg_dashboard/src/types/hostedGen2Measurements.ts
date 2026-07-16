@@ -9,12 +9,12 @@ export type HostedGen2MeasurementRow = {
   record_index: number
   sensor_key: string | null
   sensor_type: string | null
+  physical_sensor_id: string | null
   measurement_name: string | null
   measurement_value: number | null
   measurement_unit: string | null
   valid: boolean | null
   quality: string | null
   reason: string | null
-  control_eligible: boolean | null
   batch_created_at: string | null
 }

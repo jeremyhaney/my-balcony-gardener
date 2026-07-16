@@ -24,13 +24,13 @@ select
   record_index,
   sensor_key,
   sensor_type,
+  physical_sensor_id,
   measurement_name,
   measurement_value,
   measurement_unit,
   valid,
   quality,
   reason,
-  control_eligible,
   batch_created_at
 from public.hosted_gen2_measurements
 where device_id in (
@@ -52,8 +52,7 @@ select
   measurement_unit,
   valid,
   quality,
-  reason,
-  control_eligible
+  reason
 from public.hosted_gen2_measurements
 where device_id in (
   '550e8400-e29b-41d4-a716-446655440000',
@@ -74,13 +73,13 @@ select
   record_index,
   sensor_key,
   sensor_type,
+  physical_sensor_id,
   measurement_name,
   measurement_value,
   measurement_unit,
   valid,
   quality,
-  reason,
-  control_eligible
+  reason
 from public.hosted_gen2_measurements
 where device_id in (
   '550e8400-e29b-41d4-a716-446655440000',
@@ -136,13 +135,13 @@ select
   rows.record_index,
   rows.sensor_key,
   rows.sensor_type,
+  rows.physical_sensor_id,
   rows.measurement_name,
   rows.measurement_value,
   rows.measurement_unit,
   rows.valid,
   rows.quality,
-  rows.reason,
-  rows.control_eligible
+  rows.reason
 from public.hosted_gen2_measurements rows
 join ranked_samples
   on ranked_samples.device_id = rows.device_id
@@ -157,11 +156,14 @@ where ranked_samples.sample_number <= 3
   )
 order by rows.device_label, rows.measured_at, rows.record_index;
 
--- 5. Control-eligible moisture rows for Balcony01 only.
--- Balcony01 moisture_index is local firmware evidence only, not Supabase control.
+-- 5. Privileged historical control-evidence compatibility query.
+-- sensor_measurements_flat is owner/admin analysis only, not a hosted-safe surface.
 select
   device_id,
-  device_label,
+  coalesce(
+    nullif(batch_details ->> 'device_label', ''),
+    device_id
+  ) as device_label,
   measured_at,
   measurement_name,
   measurement_value as moisture_index,
@@ -171,7 +173,7 @@ select
   reason,
   control_eligible,
   batch_created_at
-from public.hosted_gen2_measurements
+from public.sensor_measurements_flat
 where device_id = '550e8400-e29b-41d4-a716-446655440000'
   and measurement_name = 'moisture_index'
   and control_eligible is true
@@ -188,13 +190,13 @@ select
   measured_at,
   sensor_key,
   sensor_type,
+  physical_sensor_id,
   measurement_name,
   measurement_value,
   measurement_unit,
   valid,
   quality,
-  reason,
-  control_eligible
+  reason
 from public.hosted_gen2_measurements
 where device_id = '28f4e6e3-5979-4af4-9753-34e185d8e47e'
   and measured_at >= '2026-06-01T00:00:00Z'::timestamptz
@@ -205,6 +207,7 @@ where device_id = '28f4e6e3-5979-4af4-9753-34e185d8e47e'
     'air_temperature',
     'relative_humidity',
     'barometric_pressure',
+    'soil temp',
     'temperature'
   )
 order by measured_at, measurement_name;
@@ -258,6 +261,7 @@ select
   record_index,
   sensor_key,
   sensor_type,
+  physical_sensor_id,
   measurement_name,
   measurement_value,
   measurement_unit,

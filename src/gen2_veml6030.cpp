@@ -76,6 +76,8 @@ String gen2Veml6030CapabilityJson() {
 }
 
 String gen2Veml6030MeasurementsJson(const String &deviceId, const String &measuredAt) {
+  (void)deviceId;
+  (void)measuredAt;
 #if MBG_HAS_VEML6030
   if (!veml6030Present) {
     gen2Veml6030Begin();
@@ -86,8 +88,6 @@ String gen2Veml6030MeasurementsJson(const String &deviceId, const String &measur
   float lux = raw * 0.0576F;
 
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"veml6030_light\",";
   response += "\"sensor_type\":\"VEML6030\",";
   response += "\"measurement_name\":\"ambient_light\",";
@@ -97,9 +97,7 @@ String gen2Veml6030MeasurementsJson(const String &deviceId, const String &measur
   response += "\"measurement_unit\":\"lux\",";
   response += "\"valid\":" + String(valid ? "true" : "false") + ",";
   response += "\"quality\":\"" + String(valid ? "good" : (veml6030Present ? "failed" : "missing")) + "\",";
-  response += "\"reason\":\"" + String(valid ? "read_ok" : (veml6030Present ? "read_failed" : "not_detected")) + "\",";
-  response += "\"control_eligible\":false,";
-  response += "\"details\":" + vemlDetailsJson();
+  response += "\"reason\":\"" + String(valid ? "read_ok" : (veml6030Present ? "read_failed" : "not_detected")) + "\"";
   response += "}";
   return response;
 #else

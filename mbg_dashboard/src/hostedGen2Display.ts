@@ -51,6 +51,15 @@ const MEASUREMENT_DISPLAY: Record<string, HostedGen2MeasurementDisplay> = {
     defaultSelected: false,
     diagnostic: false,
   },
+  'soil temp': {
+    name: 'soil temp',
+    label: 'Soil Temperature',
+    unitLabel: 'F',
+    axisGroup: 'temperature',
+    color: '#9a3412',
+    defaultSelected: false,
+    diagnostic: false,
+  },
   relative_humidity: {
     name: 'relative_humidity',
     label: 'Relative Humidity',
@@ -103,6 +112,7 @@ const MEASUREMENT_ORDER = [
   'air_temperature',
   'relative_humidity',
   'temperature',
+  'soil temp',
   'barometric_pressure',
   'ambient_light',
   'raw_adc',
@@ -208,6 +218,7 @@ export const getHostedGen2MeasurementStatus = ({
   switch (measurementName?.trim()) {
     case 'air_temperature':
     case 'temperature':
+    case 'soil temp':
       return getRangeStatus(measurementValue, {
         good: [55, 90],
         lowWatch: [45, 55],

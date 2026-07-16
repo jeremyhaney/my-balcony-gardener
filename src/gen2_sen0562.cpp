@@ -42,7 +42,7 @@ String sen0562Reason(const Gen2Bh1750Read &read) {
   if (read.readOk) {
     return "read_ok";
   }
-  return sen0562NotDetected(read) ? "not_detected" : "read_failed";
+  return String(read.failureDetail).length() > 0 ? String(read.failureDetail) : String(sen0562NotDetected(read) ? "not_detected" : "read_failed");
 }
 
 String sen0562DetailsJson(const Gen2Bh1750Read *read, const Sen0562SensorConfig &sensor) {
@@ -108,11 +108,12 @@ String sen0562NotInstalledCapabilityJson(const Sen0562SensorConfig &sensor) {
 }
 
 String sen0562MeasurementJson(const String &deviceId, const String &measuredAt, const Sen0562SensorConfig &sensor, const Gen2Bh1750Read &read) {
+  (void)deviceId;
+  (void)measuredAt;
   String response = "{";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"measured_at\":\"" + measuredAt + "\",";
   response += "\"sensor_key\":\"" + String(sensor.sensorKey) + "\",";
   response += "\"sensor_type\":\"sen0562\",";
+  response += "\"physical_sensor_id\":\"" + String(sensor.physicalSensorId) + "\",";
   response += "\"measurement_name\":\"ambient_light\",";
   response += "\"measurement_value\":";
   response += read.readOk ? String(read.lux, 2) : String("null");
@@ -120,9 +121,7 @@ String sen0562MeasurementJson(const String &deviceId, const String &measuredAt, 
   response += "\"measurement_unit\":\"lux\",";
   response += "\"valid\":" + boolString(read.readOk) + ",";
   response += "\"quality\":\"" + sen0562Quality(read) + "\",";
-  response += "\"reason\":\"" + sen0562Reason(read) + "\",";
-  response += "\"control_eligible\":false,";
-  response += "\"details\":" + sen0562DetailsJson(&read, sensor);
+  response += "\"reason\":\"" + sen0562Reason(read) + "\"";
   response += "}";
   return response;
 }
@@ -187,15 +186,15 @@ String gen2Sen0562CapabilityJson() {
 String gen2Sen0562MeasurementsJson(const String &deviceId, const String &measuredAt) {
 #if MBG_HAS_SEN0562 && MBG_HAS_I2C_MUX
   String response = "";
+  bool hasAny = false;
   for (size_t i = 0; i < SEN0562_SENSOR_COUNT; i++) {
-    if (i > 0) {
-      response += ",";
-    }
     if (SEN0562_SENSORS[i].installed) {
+      if (hasAny) {
+        response += ",";
+      }
       Gen2Bh1750Read read = gen2Bh1750ReadMuxed(SEN0562_SENSORS[i].muxChannel, SEN0562_SENSORS[i].sensorAddress);
       response += sen0562MeasurementJson(deviceId, measuredAt, SEN0562_SENSORS[i], read);
-    } else {
-      response += sen0562NotInstalledMeasurementJson(deviceId, measuredAt, SEN0562_SENSORS[i]);
+      hasAny = true;
     }
   }
   return response;
