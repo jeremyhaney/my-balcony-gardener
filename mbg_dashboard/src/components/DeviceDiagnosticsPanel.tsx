@@ -30,7 +30,6 @@ const DeviceDiagnosticsPanel = ({
     getFreshnessSummary(diagnostics),
     getCloudSummary(diagnostics),
     getConnectionSummary(diagnostics),
-    getWateringCapabilitySummary(diagnostics),
   ]
   const pillSummary = getPillSummary(summaries)
   const showPillStatus = pillSummary.tone !== 'good'
@@ -89,6 +88,12 @@ const DeviceDiagnosticsPanel = ({
             <dt>Device role</dt>
             <dd>{formatNullableText(diagnostics?.device_role)}</dd>
 
+            <dt>Firmware version</dt>
+            <dd>{formatRecordedText(diagnostics?.firmware_version)}</dd>
+
+            <dt>Build profile</dt>
+            <dd>{formatRecordedText(diagnostics?.build_profile)}</dd>
+
             <dt>Last heard</dt>
             <dd>{formatLastHeard(diagnostics)}</dd>
 
@@ -104,62 +109,79 @@ const DeviceDiagnosticsPanel = ({
             <dt>Wi-Fi RSSI</dt>
             <dd>{formatRssi(diagnostics?.wifi_rssi)}</dd>
 
-            <dt>Wi-Fi reconnect attempts</dt>
-            <dd>{formatInteger(diagnostics?.wifi_reconnect_attempt_count)}</dd>
+            <dt>Wi-Fi status</dt>
+            <dd>{formatLabeledCode(diagnostics?.wifi_status_label, diagnostics?.wifi_status_code)}</dd>
 
-            <dt>Wi-Fi begin-recovery attempts</dt>
-            <dd>{formatInteger(diagnostics?.wifi_begin_recovery_attempt_count)}</dd>
+            <dt>Wi-Fi reconnect attempts since boot</dt>
+            <dd>{formatInteger(diagnostics?.wifi_reconnect_attempts_since_boot)}</dd>
 
-            <dt>Wi-Fi disconnect events</dt>
-            <dd>{formatInteger(diagnostics?.wifi_disconnect_event_count)}</dd>
+            <dt>Full Wi-Fi recovery attempts since boot</dt>
+            <dd>{formatInteger(diagnostics?.wifi_full_recovery_attempts_since_boot)}</dd>
 
-            <dt>Wi-Fi got-IP events</dt>
-            <dd>{formatInteger(diagnostics?.wifi_got_ip_event_count)}</dd>
+            <dt>Wi-Fi disconnects since boot</dt>
+            <dd>{formatInteger(diagnostics?.wifi_disconnects_since_boot)}</dd>
 
-            <dt>Last Wi-Fi status code</dt>
-            <dd>{formatInteger(diagnostics?.last_wifi_status_code)}</dd>
+            <dt>Wi-Fi IP acquisitions since boot</dt>
+            <dd>{formatInteger(diagnostics?.wifi_ip_acquisitions_since_boot)}</dd>
 
             <dt>Last Wi-Fi disconnect reason</dt>
-            <dd>{formatInteger(diagnostics?.last_wifi_disconnect_reason)}</dd>
+            <dd>{formatLabeledCode(
+              diagnostics?.last_wifi_disconnect_reason_label,
+              diagnostics?.last_wifi_disconnect_reason,
+            )}</dd>
 
-            <dt>Last Wi-Fi disconnected uptime</dt>
-            <dd>{formatDurationSeconds(diagnostics?.last_wifi_disconnected_uptime_seconds)}</dd>
+            <dt>Last Wi-Fi disconnect uptime</dt>
+            <dd>{formatRecordedDuration(diagnostics?.last_wifi_disconnect_uptime_seconds)}</dd>
 
-            <dt>Last Wi-Fi reconnected uptime</dt>
-            <dd>{formatDurationSeconds(diagnostics?.last_wifi_reconnected_uptime_seconds)}</dd>
+            <dt>Last Wi-Fi IP-acquired uptime</dt>
+            <dd>{formatRecordedDuration(diagnostics?.last_wifi_ip_acquired_uptime_seconds)}</dd>
 
-            <dt>Last recovery action</dt>
-            <dd>{formatNullableText(diagnostics?.last_network_recovery_action)}</dd>
+            <dt>Last Wi-Fi activity</dt>
+            <dd>{formatRecordedLabel(diagnostics?.last_wifi_activity)}</dd>
 
-            <dt>Supabase HTTP status</dt>
-            <dd>{formatInteger(diagnostics?.last_supabase_http_status)}</dd>
+            <dt>Last cloud HTTP result</dt>
+            <dd>{formatLabeledCode(diagnostics?.last_http_status_label, diagnostics?.last_http_status, false)}</dd>
 
             <dt>Consecutive cloud failures</dt>
-            <dd>{formatInteger(diagnostics?.consecutive_supabase_failures)}</dd>
+            <dd>{formatInteger(diagnostics?.consecutive_failures)}</dd>
 
-            <dt>Cloud error category</dt>
-            <dd>{formatNullableText(diagnostics?.last_supabase_error_category)}</dd>
+            <dt>Last cloud error category</dt>
+            <dd>{formatRecordedLabel(diagnostics?.last_error_category)}</dd>
 
-            <dt>Successful reading post</dt>
-            <dd>{formatTimestamp(diagnostics?.last_successful_telemetry_post_at)}</dd>
+            <dt>Last successful measurement post</dt>
+            <dd>{formatTimestamp(diagnostics?.last_successful_measurement_post_at)}</dd>
 
-            <dt>Successful diagnostics post</dt>
-            <dd>{formatTimestamp(diagnostics?.last_successful_diagnostics_post_at)}</dd>
+            <dt>Measurement-post uptime</dt>
+            <dd>{formatRecordedDuration(
+              diagnostics?.last_successful_measurement_post_uptime_seconds,
+            )}</dd>
 
-            <dt>Heap</dt>
-            <dd>{formatHeap(diagnostics)}</dd>
+            <dt>Last successful status post</dt>
+            <dd>{formatTimestamp(diagnostics?.last_successful_status_post_at)}</dd>
+
+            <dt>Status-post uptime</dt>
+            <dd>{formatRecordedDuration(diagnostics?.last_successful_status_post_uptime_seconds)}</dd>
 
             <dt>Watering evidence</dt>
             <dd>{formatWateringEvidence(diagnostics?.currently_watering)}</dd>
 
+            <dt>Active watering trigger</dt>
+            <dd>{formatActiveTrigger(
+              diagnostics?.currently_watering,
+              diagnostics?.active_trigger_source,
+            )}</dd>
+
+            <dt>Last watering time</dt>
+            <dd>{formatTimestamp(diagnostics?.last_watering_at)}</dd>
+
             <dt>Last watering duration</dt>
-            <dd>{formatDurationSeconds(diagnostics?.last_watering_duration)}</dd>
+            <dd>{formatRecordedDuration(diagnostics?.last_watering_duration_seconds)}</dd>
 
-            <dt>Pump control available</dt>
-            <dd>{formatBoolean(diagnostics?.pump_control_available)}</dd>
+            <dt>Free heap</dt>
+            <dd>{formatBytes(diagnostics?.free_heap_bytes)}</dd>
 
-            <dt>Device can water</dt>
-            <dd>{formatBoolean(diagnostics?.device_can_water)}</dd>
+            <dt>Minimum free heap</dt>
+            <dd>{formatBytes(diagnostics?.minimum_free_heap_bytes)}</dd>
           </dl>
         </details>
       </div>
@@ -233,11 +255,11 @@ const getCloudSummary = (diagnostics: DeviceDiagnostics | null): DiagnosticsSumm
     }
   }
 
-  const errorCategory = normalizeText(diagnostics.last_supabase_error_category)
-  const failureCount = diagnostics.consecutive_supabase_failures ?? 0
-  const httpStatus = diagnostics.last_supabase_http_status
+  const errorCategory = normalizeText(diagnostics.last_error_category)
+  const failureCount = diagnostics.consecutive_failures ?? 0
+  const httpStatus = diagnostics.last_http_status
   const hasErrorCategory = Boolean(errorCategory && errorCategory !== 'none')
-  const hasHttpProblem = httpStatus !== null && httpStatus !== 201
+  const hasHttpProblem = httpStatus !== null && (httpStatus < 200 || httpStatus >= 300)
 
   if (failureCount > 0 || hasErrorCategory || hasHttpProblem) {
     return {
@@ -247,7 +269,7 @@ const getCloudSummary = (diagnostics: DeviceDiagnostics | null): DiagnosticsSumm
     }
   }
 
-  if (httpStatus === 201) {
+  if (httpStatus !== null && httpStatus >= 200 && httpStatus < 300) {
     return {
       tone: 'good',
       label: 'Cloud reporting healthy',
@@ -292,13 +314,11 @@ const getConnectionSummary = (
     }
   }
 
-  const reconnectAttempts = diagnostics.wifi_reconnect_attempt_count ?? 0
-  const beginRecoveryAttempts = diagnostics.wifi_begin_recovery_attempt_count ?? 0
-  const recoveryAction = normalizeText(diagnostics.last_network_recovery_action)
+  const reconnectAttempts = diagnostics.wifi_reconnect_attempts_since_boot ?? 0
+  const beginRecoveryAttempts = diagnostics.wifi_full_recovery_attempts_since_boot ?? 0
+  const recoveryAction = normalizeText(diagnostics.last_wifi_activity)
   const hasRecoveryAction =
-    recoveryAction === 'wifi_reconnect' ||
-    recoveryAction === 'wifi_begin_recovery' ||
-    recoveryAction === 'wifi_begin_recovery_attempt'
+    recoveryAction === 'reconnect_requested' || recoveryAction === 'full_recovery_started'
 
   if (reconnectAttempts > 0 || beginRecoveryAttempts > 0 || hasRecoveryAction) {
     return {
@@ -315,43 +335,11 @@ const getConnectionSummary = (
   }
 }
 
-const getWateringCapabilitySummary = (
-  diagnostics: DeviceDiagnostics | null,
-): DiagnosticsSummary => {
-  if (!diagnostics?.last_heartbeat_at) {
-    return {
-      tone: 'neutral',
-      label: 'Watering evidence unknown',
-      message: 'No latest heartbeat evidence is available for watering capability.',
-    }
-  }
-
-  if (diagnostics.device_can_water === true && diagnostics.pump_control_available === true) {
-    return {
-      tone: 'neutral',
-      label: 'Watering capable',
-      message:
-        'Latest garden unit evidence says this unit can water itself; the online dashboard remains read-only.',
-    }
-  }
-
-  if (diagnostics.device_can_water === false && diagnostics.pump_control_available === false) {
-    return {
-      tone: 'neutral',
-      label: 'No watering authority',
-      message: 'Latest garden unit evidence says this unit does not have watering authority.',
-    }
-  }
-
-  return {
-    tone: 'watch',
-    label: 'Watering evidence needs review',
-    message: 'Latest pump capability and device watering evidence are incomplete or mixed.',
-  }
-}
-
 const formatNullableText = (value: string | null | undefined): string =>
   value?.trim() ? value : 'Not available'
+
+const formatRecordedText = (value: string | null | undefined): string =>
+  value?.trim() ? value : 'Not recorded'
 
 const formatLastHeard = (diagnostics: DeviceDiagnostics | null): string => {
   if (!diagnostics?.last_heartbeat_at) {
@@ -370,12 +358,15 @@ const formatLastHeard = (diagnostics: DeviceDiagnostics | null): string => {
 
 const formatTimestamp = (value: string | null | undefined): string => {
   if (!value) {
-    return 'Not available'
+    return 'Not recorded'
   }
 
   const parsedValue = new Date(value)
   return Number.isFinite(parsedValue.getTime()) ? parsedValue.toLocaleString() : value
 }
+
+const formatRecordedDuration = (value: number | null | undefined): string =>
+  value === null || value === undefined ? 'Not recorded' : formatDurationSeconds(value)
 
 const formatDurationSeconds = (value: number | null | undefined): string => {
   if (value === null || value === undefined || value < 0 || !Number.isFinite(value)) {
@@ -448,23 +439,50 @@ const getRssiQualityLabel = (value: number): string => {
   return 'Very Weak'
 }
 
-const formatHeap = (diagnostics: DeviceDiagnostics | null): string => {
-  if (!diagnostics) {
-    return 'Not available'
-  }
-
-  const freeHeap = formatBytes(diagnostics.free_heap)
-  const minFreeHeap = formatBytes(diagnostics.min_free_heap)
-
-  return `${freeHeap} free, ${minFreeHeap} minimum free`
-}
-
 const formatBytes = (value: number | null | undefined): string => {
   if (value === null || value === undefined || value < 0 || !Number.isFinite(value)) {
-    return 'not available'
+    return 'Not recorded'
   }
 
   return `${Math.round(value / 1024).toLocaleString()} KB`
+}
+
+const formatLabeledCode = (
+  label: string | null | undefined,
+  code: number | null | undefined,
+  includeCodeWord = true,
+): string => {
+  if (code === null || code === undefined || normalizeText(label) === 'not_recorded') {
+    return 'Not recorded'
+  }
+
+  const readableLabel = formatSnakeCase(label)
+  const codeLabel = includeCodeWord ? `code ${code}` : String(code)
+  return `${readableLabel} (${codeLabel})`
+}
+
+const formatRecordedLabel = (value: string | null | undefined): string =>
+  value?.trim() ? formatSnakeCase(value) : 'Not recorded'
+
+const formatSnakeCase = (value: string | null | undefined): string => {
+  const normalized = value?.trim().replace(/_/g, ' ')
+
+  if (!normalized) {
+    return 'Unknown'
+  }
+
+  return (normalized.charAt(0).toUpperCase() + normalized.slice(1)).replace(/^Ip\b/, 'IP')
+}
+
+const formatActiveTrigger = (
+  currentlyWatering: boolean | null | undefined,
+  triggerSource: string | null | undefined,
+): string => {
+  if (currentlyWatering === false) {
+    return 'None'
+  }
+
+  return triggerSource?.trim() ? formatSnakeCase(triggerSource) : 'Not recorded'
 }
 
 const formatWateringEvidence = (value: boolean | null | undefined): string => {

@@ -38,32 +38,39 @@ export type DeviceDiagnostics = {
   device_label: string
   device_role: string
   hosted_visible: boolean
+  firmware_version: string | null
+  build_profile: string | null
   last_heartbeat_at: string | null
   heartbeat_age_seconds: number | null
   heartbeat_reason: string | null
   uptime_seconds: number | null
   wifi_connected: boolean | null
   wifi_rssi: number | null
-  wifi_reconnect_attempt_count: number | null
-  last_supabase_http_status: number | null
-  consecutive_supabase_failures: number | null
-  last_supabase_error_category: string | null
-  last_successful_telemetry_post_at: string | null
-  last_successful_diagnostics_post_at: string | null
-  free_heap: number | null
-  min_free_heap: number | null
-  currently_watering: boolean | null
-  last_watering_duration: number | null
-  pump_control_available: boolean | null
-  device_can_water: boolean | null
-  wifi_begin_recovery_attempt_count: number | null
-  wifi_disconnect_event_count: number | null
-  wifi_got_ip_event_count: number | null
-  last_wifi_status_code: number | null
+  wifi_status_code: number | null
+  wifi_status_label: string | null
   last_wifi_disconnect_reason: number | null
-  last_wifi_disconnected_uptime_seconds: number | null
-  last_wifi_reconnected_uptime_seconds: number | null
-  last_network_recovery_action: string | null
+  last_wifi_disconnect_reason_label: string | null
+  wifi_reconnect_attempts_since_boot: number | null
+  wifi_full_recovery_attempts_since_boot: number | null
+  wifi_disconnects_since_boot: number | null
+  wifi_ip_acquisitions_since_boot: number | null
+  last_wifi_disconnect_uptime_seconds: number | null
+  last_wifi_ip_acquired_uptime_seconds: number | null
+  last_wifi_activity: string | null
+  last_http_status: number | null
+  last_http_status_label: string | null
+  consecutive_failures: number | null
+  last_error_category: string | null
+  last_successful_measurement_post_at: string | null
+  last_successful_measurement_post_uptime_seconds: number | null
+  last_successful_status_post_at: string | null
+  last_successful_status_post_uptime_seconds: number | null
+  currently_watering: boolean | null
+  active_trigger_source: string | null
+  last_watering_at: string | null
+  last_watering_duration_seconds: number | null
+  free_heap_bytes: number | null
+  minimum_free_heap_bytes: number | null
 }
 
 type DeviceDiagnosticsFetchResult = {
@@ -108,7 +115,7 @@ const HOSTED_GEN2_MEASUREMENT_BATCH_SIZE = 1000
 const HOSTED_GEN2_MEASUREMENT_COLUMNS =
   'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, physical_sensor_id, measurement_name, measurement_value, measurement_unit, valid, quality, reason, batch_created_at'
 const DEVICE_DIAGNOSTICS_COLUMNS =
-  'device_id, device_key, device_label, device_role, hosted_visible, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_reconnect_attempt_count, last_supabase_http_status, consecutive_supabase_failures, last_supabase_error_category, last_successful_telemetry_post_at, last_successful_diagnostics_post_at, free_heap, min_free_heap, currently_watering, last_watering_duration, pump_control_available, device_can_water, wifi_begin_recovery_attempt_count, wifi_disconnect_event_count, wifi_got_ip_event_count, last_wifi_status_code, last_wifi_disconnect_reason, last_wifi_disconnected_uptime_seconds, last_wifi_reconnected_uptime_seconds, last_network_recovery_action'
+  'device_id, device_key, device_label, device_role, hosted_visible, firmware_version, build_profile, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_status_code, wifi_status_label, last_wifi_disconnect_reason, last_wifi_disconnect_reason_label, wifi_reconnect_attempts_since_boot, wifi_full_recovery_attempts_since_boot, wifi_disconnects_since_boot, wifi_ip_acquisitions_since_boot, last_wifi_disconnect_uptime_seconds, last_wifi_ip_acquired_uptime_seconds, last_wifi_activity, last_http_status, last_http_status_label, consecutive_failures, last_error_category, last_successful_measurement_post_at, last_successful_measurement_post_uptime_seconds, last_successful_status_post_at, last_successful_status_post_uptime_seconds, currently_watering, active_trigger_source, last_watering_at, last_watering_duration_seconds, free_heap_bytes, minimum_free_heap_bytes'
 const WATERING_EVENT_COLUMNS =
   'id, device_id, device_key, device_label, event_at, event_type, trigger_source, duration_seconds, reason, firmware_version, build_profile, details, created_at'
 
