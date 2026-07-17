@@ -126,6 +126,11 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Known deferred wart: startup Gen2 DHT11 reads may briefly show suspicious values around `32.72°F / 0%`; later reads and `/logs` are plausible, and this does not affect watering control because DHT11 records are not control-eligible.
 - A two-device field capture for future watering-response analysis is ongoing and outside the Phase 7E closeout.
 
+- Phase 8B.3 Gen2 `/capabilities` Static Contract Cleanup is COMPLETE / LIVE DEVICE VALIDATED on Balcony02; Phase 8B remains IN PROGRESS, Phase 8B.4 `/status` Nested Diagnostics Contract Cleanup is CURRENT / next, and Phase 8B.5 integrated endpoint closeout remains planned.
+- Balcony02 build profile `balcony02-gen2` now returns a static configured-hardware and control-feature manifest from `/capabilities`. The isolated path uses existing compile-time/profile flags for installed state and performs no sensor reads, GPIO reads, I2C or mux scans, detection probes, or provider conversions; existing non-Balcony02 capability behavior is unchanged.
+- Live validation at `10.0.0.69` against `Balcony02` (`7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, firmware `phase8b-balcony02-proveout`) confirmed ten ordered capability modules, M04 `installed:false`, L01 `installed:true`, and WL01 as the only `control_role:"watering_interlock"`. Two responses matched after normalizing only `reported_at`.
+- All four Gen2 profiles built successfully; only Balcony02 was uploaded. The frozen `/measurements` contract passed regression validation unchanged, `/status` remains unchanged for Phase 8B.4, and no frontend, SQL, Supabase, Cloudflare, hardware, sensor, watering, cadence, threshold, duration, cooldown, relay, button, or interlock behavior changed.
+
 ## Authoritative Repo Areas
 
 - Firmware: [`platformio.ini`](./platformio.ini), [`src`](./src), [`include`](./include)
@@ -235,7 +240,7 @@ Modular local measurements path:
 
 - `Live Measurements`
 - `GET /status` - read-only local diagnostics
-- `GET /capabilities` - Gen2 module/capability and I2C scan diagnostics
+- `GET /capabilities` - Gen2 configured-hardware and control-feature manifest; Balcony02 uses the validated static contract without hardware reads or scans
 - `GET /measurements` - authoritative Gen2 measurement-list payload
 
 - Field-unit Gen2 endpoints include compile-time `device_label`, `firmware_version`, and `build_profile` provenance for quick local inspection.

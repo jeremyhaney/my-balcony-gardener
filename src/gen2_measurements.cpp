@@ -54,6 +54,67 @@ String i2cScanJson() {
   return "{\"enabled\":false,\"addresses_found\":[]}";
 #endif
 }
+
+#if defined(MBG_SEN0204_PIN) && defined(MBG_PHYSICAL_BUTTON_PIN)
+// Builds the Balcony02 configured-hardware manifest without consulting runtime
+// detection, measurement quality, GPIO state, or any sensor/provider read path.
+// Property and module order are part of the approved Phase 8B.3 wire contract.
+String balcony02StaticCapabilitiesJson(const String &deviceId, const String &reportedAt) {
+  String response = "{";
+  response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
+  response += "\"device_id\":\"" + deviceId + "\",";
+  response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  response += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
+  response += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
+  response += "\"reported_at\":\"" + reportedAt + "\",";
+  response += "\"can_water\":" + boolString(MBG_PUMP_CONTROL_AVAILABLE && MBG_DEVICE_CAN_WATER) + ",";
+  response += "\"control_authority\":\"local_firmware\",";
+
+  // Pin assignments use the existing profile constants so this manifest stays
+  // coupled to the compiled Balcony02 hardware definition rather than literals.
+  response += "\"pinout\":{";
+  response += "\"pump_relay\":" + String(RELAY_PIN) + ",";
+  response += "\"physical_button\":" + String(MBG_PHYSICAL_BUTTON_PIN) + ",";
+  response += "\"reservoir_level\":" + String(MBG_SEN0204_PIN) + ",";
+  response += "\"soil_temperature\":" + String(MBG_DS18B20_PIN) + ",";
+  response += "\"i2c_sda\":" + String(MBG_I2C_SDA_PIN) + ",";
+  response += "\"i2c_scl\":" + String(MBG_I2C_SCL_PIN);
+  response += "},";
+
+  // Active-state declarations describe configured electrical semantics only;
+  // no GPIO is sampled while constructing this object.
+  response += "\"control_configuration\":{";
+  response += "\"pump_relay_active_state\":\"HIGH\",";
+  response += "\"physical_button_active_state\":\"LOW\",";
+  response += "\"reservoir_liquid_detected_state\":\"HIGH\"";
+  response += "},";
+
+  // Shared I2C topology is emitted from compile-time profile constants without
+  // scanning the bus, selecting a mux channel, or probing either device.
+  response += "\"i2c\":{";
+  response += "\"mux_address\":" + hexAddress(MBG_I2C_MUX_ADDRESS) + ",";
+  response += "\"ads1115_address\":" + hexAddress(MBG_ADS1115_ADDRESS) + ",";
+  response += "\"ads1115_mux_channel\":" + String(MBG_ADS1115_MUX_CHANNEL);
+  response += "},";
+
+  // The inventory below is intentionally explicit and ordered. Installed state
+  // is configured profile truth and is independent of current sensor detection.
+  response += "\"modules\":[";
+  response += "{\"sensor_key\":\"bme280_air\",\"sensor_type\":\"BME280\",\"installed\":" + boolString(MBG_HAS_BME280 != 0) + ",\"connection\":{";
+  response += "\"bus\":\"i2c_mux\",\"mux_channel\":" + String(MBG_BME280_MUX_CHANNEL) + ",\"address\":\"0x76\"}},";
+  response += "{\"sensor_key\":\"ds18b20_temperature\",\"sensor_type\":\"DS18B20\",\"installed\":" + boolString(MBG_HAS_DS18B20 != 0) + ",\"connection\":{\"bus\":\"onewire\"}},";
+  response += "{\"sensor_key\":\"sen0308_m01\",\"sensor_type\":\"SEN0308\",\"installed\":" + boolString(MBG_SEN0308_A0_INSTALLED != 0) + ",\"physical_sensor_id\":\"" + String(MBG_SEN0308_A0_PHYSICAL_SENSOR_ID) + "\",\"connection\":{\"provider\":\"ads1115\",\"channel\":\"A0\"}},";
+  response += "{\"sensor_key\":\"sen0308_m02\",\"sensor_type\":\"SEN0308\",\"installed\":" + boolString(MBG_SEN0308_A1_INSTALLED != 0) + ",\"physical_sensor_id\":\"" + String(MBG_SEN0308_A1_PHYSICAL_SENSOR_ID) + "\",\"connection\":{\"provider\":\"ads1115\",\"channel\":\"A1\"}},";
+  response += "{\"sensor_key\":\"sen0308_m03\",\"sensor_type\":\"SEN0308\",\"installed\":" + boolString(MBG_SEN0308_A2_INSTALLED != 0) + ",\"physical_sensor_id\":\"" + String(MBG_SEN0308_A2_PHYSICAL_SENSOR_ID) + "\",\"connection\":{\"provider\":\"ads1115\",\"channel\":\"A2\"}},";
+  response += "{\"sensor_key\":\"sen0308_m04\",\"sensor_type\":\"SEN0308\",\"installed\":" + boolString(MBG_SEN0308_A3_INSTALLED != 0) + ",\"physical_sensor_id\":\"" + String(MBG_SEN0308_A3_PHYSICAL_SENSOR_ID) + "\",\"connection\":{\"provider\":\"ads1115\",\"channel\":\"A3\"}},";
+  response += "{\"sensor_key\":\"sen0562_l01\",\"sensor_type\":\"SEN0562\",\"installed\":" + boolString(MBG_SEN0562_L01_INSTALLED != 0) + ",\"physical_sensor_id\":\"SEN0562-L01\",\"connection\":{\"bus\":\"i2c_mux\",\"mux_channel\":" + String(MBG_SEN0562_L01_MUX_CHANNEL) + ",\"address\":" + hexAddress(MBG_SEN0562_ADDRESS) + "}},";
+  response += "{\"sensor_key\":\"sen0562_l02\",\"sensor_type\":\"SEN0562\",\"installed\":" + boolString(MBG_SEN0562_L02_INSTALLED != 0) + ",\"physical_sensor_id\":\"SEN0562-L02\",\"connection\":{\"bus\":\"i2c_mux\",\"mux_channel\":" + String(MBG_SEN0562_L02_MUX_CHANNEL) + ",\"address\":" + hexAddress(MBG_SEN0562_ADDRESS) + "}},";
+  response += "{\"sensor_key\":\"sen0562_l03\",\"sensor_type\":\"SEN0562\",\"installed\":" + boolString(MBG_SEN0562_L03_INSTALLED != 0) + ",\"physical_sensor_id\":\"SEN0562-L03\",\"connection\":{\"bus\":\"i2c_mux\",\"mux_channel\":" + String(MBG_SEN0562_L03_MUX_CHANNEL) + ",\"address\":" + hexAddress(MBG_SEN0562_ADDRESS) + "}},";
+  response += "{\"sensor_key\":\"sen0204_wl01\",\"sensor_type\":\"SEN0204\",\"installed\":" + boolString(MBG_HAS_SEN0204 != 0) + ",\"physical_sensor_id\":\"WL01\",\"connection\":{\"gpio\":" + String(MBG_SEN0204_PIN) + "},\"control_role\":\"watering_interlock\"}";
+  response += "]}";
+  return response;
+}
+#endif
 }
 
 void gen2Begin() {
@@ -70,6 +131,14 @@ void gen2Begin() {
 }
 
 String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
+#if defined(MBG_SEN0204_PIN) && defined(MBG_PHYSICAL_BUTTON_PIN)
+  // Balcony02 uses the approved static contract; all other compiled profiles
+  // continue through the existing capability aggregation path unchanged.
+  if (String(MBG_BUILD_PROFILE) == "balcony02-gen2") {
+    return balcony02StaticCapabilitiesJson(deviceId, reportedAt);
+  }
+#endif
+
   String response = "{";
   response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   response += "\"device_id\":\"" + deviceId + "\",";

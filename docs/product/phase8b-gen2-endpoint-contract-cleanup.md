@@ -1,9 +1,10 @@
 # Phase 8B Gen2 Endpoint Contract Cleanup
 
 - Phase 8B `/measurements` slice: COMPLETE / END-TO-END VALIDATED
+- Phase 8B `/capabilities` slice: COMPLETE / LIVE DEVICE VALIDATED
 - Phase 8B overall endpoint cleanup: IN PROGRESS
-- Next slice: `/capabilities`
-- Date: 2026-07-15
+- Next slice: `/status` Nested Diagnostics Contract Cleanup
+- Date: 2026-07-16
 - Device profile under primary validation: `balcony02-gen2`
 - Device label: `Balcony02`
 - Device UUID: `7e5bd328-ad68-4389-a71a-fa5cd01b3813`
@@ -14,7 +15,7 @@
 
 This document freezes the approved external contracts and coordinated cloud/frontend semantics for the Gen2 endpoint cleanup before implementation begins.
 
-The `/measurements` contract is now implemented and production validated. The remaining `/capabilities`, `/status`, and integrated endpoint closeout slices are not complete.
+The `/measurements` contract is implemented and production validated, and the `/capabilities` contract is implemented and live-device validated. The remaining `/status` and integrated endpoint closeout slices are not complete.
 
 It is the implementation specification for this phase. It does not authorize unrelated refactoring, pin changes, sensor changes, timing changes, watering changes, or control-policy changes.
 
@@ -55,6 +56,31 @@ Hosted validation passed: current Balcony02 samples displayed; Soil Temperature 
 Deferred beyond this slice are merging or hiding legacy `reservoir_liquid_state`; making `reservoir_liquid_detected` the canonical new name; an obvious hosted warning when liquid is not detected; final M01/M02/M03 and L01/L02/L03 customer/support card presentation; local browser UI retirement; and remaining local Water Now retirement.
 
 WL01 semantics remain unchanged: HIGH means liquid detected, LOW means liquid not detected, LOW blocks watering, and a HIGH-to-LOW transition during watering stops the relay.
+
+## `/capabilities` live-device closeout — 2026-07-16
+
+Phase 8B.3 Gen2 `/capabilities` Static Contract Cleanup is COMPLETE / LIVE DEVICE VALIDATED. Phase 8B remains IN PROGRESS; Phase 8B.4 `/status` Nested Diagnostics Contract Cleanup is CURRENT / next, and Phase 8B.5 integrated endpoint closeout remains planned.
+
+All four Gen2 profiles built successfully: `balcony02-gen2`, `bench-proto-gen2`, `balcony-installed-gen2`, and `balcony-sensor-scout-01`. Only Balcony02 was uploaded. Live validation used label `Balcony02`, UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, firmware `phase8b-balcony02-proveout`, profile `balcony02-gen2`, and IP `10.0.0.69`.
+
+The exact cleaned response is isolated to `balcony02-gen2`; existing non-Balcony02 capability behavior remains unchanged. Balcony02 `/capabilities` is a static configured-hardware and control-feature response whose installed values come from existing compile-time/profile flags. Its request path performs no sensor reads, GPIO reads, I2C scans, mux scans, detection probes, or provider conversions.
+
+The live response contained exactly ten modules in this order:
+
+1. `bme280_air`
+2. `ds18b20_temperature`
+3. `sen0308_m01`
+4. `sen0308_m02`
+5. `sen0308_m03`
+6. `sen0308_m04`
+7. `sen0562_l01`
+8. `sen0562_l02`
+9. `sen0562_l03`
+10. `sen0204_wl01`
+
+M04 was configured with `installed:false`. L01 remained `installed:true` independently of current live detection. WL01 was the only module with `control_role:"watering_interlock"`. Two live responses were identical after normalizing only `reported_at`, and the validator ended with `All /measurements and /capabilities contract assertions passed.`
+
+The frozen `/measurements` contract remained unchanged and passed regression validation. `/status` remained unchanged and is deferred to Phase 8B.4. No frontend, SQL, Supabase, Cloudflare, pin, sensor, watering, cadence, threshold, duration, cooldown, relay, button, or interlock behavior changed.
 
 ## Locked implementation boundaries
 
@@ -548,47 +574,47 @@ details
   },
   {
     "sensor_key": "sen0308_m01",
-    "sensor_type": "sen0308",
+    "sensor_type": "SEN0308",
     "installed": true,
     "physical_sensor_id": "SEN0308-M01",
     "connection": {
       "provider": "ads1115",
-      "provider_channel": "A0"
+      "channel": "A0"
     }
   },
   {
     "sensor_key": "sen0308_m02",
-    "sensor_type": "sen0308",
+    "sensor_type": "SEN0308",
     "installed": true,
     "physical_sensor_id": "SEN0308-M02",
     "connection": {
       "provider": "ads1115",
-      "provider_channel": "A1"
+      "channel": "A1"
     }
   },
   {
     "sensor_key": "sen0308_m03",
-    "sensor_type": "sen0308",
+    "sensor_type": "SEN0308",
     "installed": true,
     "physical_sensor_id": "SEN0308-M03",
     "connection": {
       "provider": "ads1115",
-      "provider_channel": "A2"
+      "channel": "A2"
     }
   },
   {
     "sensor_key": "sen0308_m04",
-    "sensor_type": "sen0308",
+    "sensor_type": "SEN0308",
     "installed": false,
     "physical_sensor_id": "SEN0308-M04",
     "connection": {
       "provider": "ads1115",
-      "provider_channel": "A3"
+      "channel": "A3"
     }
   },
   {
     "sensor_key": "sen0562_l01",
-    "sensor_type": "sen0562",
+    "sensor_type": "SEN0562",
     "installed": true,
     "physical_sensor_id": "SEN0562-L01",
     "connection": {
@@ -599,7 +625,7 @@ details
   },
   {
     "sensor_key": "sen0562_l02",
-    "sensor_type": "sen0562",
+    "sensor_type": "SEN0562",
     "installed": true,
     "physical_sensor_id": "SEN0562-L02",
     "connection": {
@@ -610,7 +636,7 @@ details
   },
   {
     "sensor_key": "sen0562_l03",
-    "sensor_type": "sen0562",
+    "sensor_type": "SEN0562",
     "installed": true,
     "physical_sensor_id": "SEN0562-L03",
     "connection": {
@@ -621,11 +647,10 @@ details
   },
   {
     "sensor_key": "sen0204_wl01",
-    "sensor_type": "sen0204",
+    "sensor_type": "SEN0204",
     "installed": true,
     "physical_sensor_id": "WL01",
     "connection": {
-      "bus": "gpio",
       "gpio": 26
     },
     "control_role": "watering_interlock"

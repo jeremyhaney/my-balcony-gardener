@@ -1213,7 +1213,7 @@ void handleStatus() {
 }
 
 #ifdef MBG_GEN2_ENABLED
-// Capabilities endpoint handler - returns local Gen2 module configuration and detection state
+// Capabilities endpoint handler - returns the device's configured hardware and control features
 void handleCapabilities() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", gen2CapabilitiesJson(String(DEVICE_ID), getUtcIsoTimestamp()));
