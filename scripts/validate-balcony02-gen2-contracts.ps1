@@ -1,7 +1,19 @@
 [CmdletBinding()]
 param(
   [Parameter()]
-  [string] $BaseUrl
+  [string] $BaseUrl,
+  [Parameter()]
+  [switch] $StatusOnly,
+  [Parameter()]
+  [string] $ExpectedDeviceLabel = 'Balcony02',
+  [Parameter()]
+  [string] $ExpectedDeviceId = '7e5bd328-ad68-4389-a71a-fa5cd01b3813',
+  [Parameter()]
+  [string] $ExpectedDeviceRole = 'controller',
+  [Parameter()]
+  [string] $ExpectedBuildProfile = 'balcony02-gen2',
+  [Parameter()]
+  [string] $ExpectedFirmwareVersion = 'phase8b4-gen2-status-contract'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,10 +28,11 @@ function Test-Contract {
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
   Write-Host '[PASS] Script parsed; live /measurements validation skipped because no BaseUrl was supplied.'
   Write-Host '[PASS] Script parsed; live /capabilities validation skipped because no BaseUrl was supplied.'
-  Write-Host '[DEFERRED] /status validation belongs to a later approved slice.'
+  Write-Host '[PASS] Script parsed; live /status validation skipped because no BaseUrl was supplied.'
   exit 0
 }
 
+if (-not $StatusOnly) {
 $uri = "$($BaseUrl.TrimEnd('/'))/measurements"
 Write-Host "GET $uri"
 $raw = (Invoke-WebRequest -UseBasicParsing -Method Get -Uri $uri).Content
@@ -109,11 +122,11 @@ Test-Contract (
 
 # Identity and provenance are fixed for the compiled Balcony02 profile except
 # reported_at, which is generated for each endpoint snapshot.
-Test-Contract ($capabilities1.device_label -ceq 'Balcony02') 'device_label is Balcony02'
-Test-Contract ($capabilities1.device_id -ceq '7e5bd328-ad68-4389-a71a-fa5cd01b3813') 'device_id is the approved Balcony02 UUID'
-Test-Contract ($capabilities1.device_role -ceq 'controller') 'device_role is controller'
-Test-Contract ($capabilities1.firmware_version -ceq 'phase8b-balcony02-proveout') 'firmware_version preserves the Balcony02 provenance value'
-Test-Contract ($capabilities1.build_profile -ceq 'balcony02-gen2') 'build_profile is balcony02-gen2'
+Test-Contract ($capabilities1.device_label -ceq $ExpectedDeviceLabel) "device_label is $ExpectedDeviceLabel"
+Test-Contract ($capabilities1.device_id -ceq $ExpectedDeviceId) 'device_id is the expected UUID'
+Test-Contract ($capabilities1.device_role -ceq $ExpectedDeviceRole) "device_role is $ExpectedDeviceRole"
+Test-Contract ($capabilities1.firmware_version -ceq $ExpectedFirmwareVersion) 'firmware_version is the expected Gen2 contract version'
+Test-Contract ($capabilities1.build_profile -ceq $ExpectedBuildProfile) "build_profile is $ExpectedBuildProfile"
 Test-Contract (-not [string]::IsNullOrWhiteSpace($capabilities1.reported_at)) 'reported_at is present'
 Test-Contract ($capabilities1.can_water -ceq $true) 'can_water is true when both compile-time watering gates are true'
 Test-Contract ($capabilities1.control_authority -ceq 'local_firmware') 'control_authority is local_firmware'
@@ -205,7 +218,201 @@ $normalized2.reported_at = '<normalized>'
 Test-Contract (
   ($normalized1 | ConvertTo-Json -Depth 10 -Compress) -ceq ($normalized2 | ConvertTo-Json -Depth 10 -Compress)
 ) 'two /capabilities GET responses are identical after normalizing only reported_at'
+}
 
-Write-Host '[DEFERRED] /status validation belongs to a later approved slice.'
+$statusUri = "$($BaseUrl.TrimEnd('/'))/status"
+Write-Host "GET $statusUri (request 1)"
+$statusRaw1 = (Invoke-WebRequest -UseBasicParsing -Method Get -Uri $statusUri).Content
+Write-Host "GET $statusUri (request 2)"
+$statusRaw2 = (Invoke-WebRequest -UseBasicParsing -Method Get -Uri $statusUri).Content
+try {
+  $status1 = $statusRaw1 | ConvertFrom-Json
+  $status2 = $statusRaw2 | ConvertFrom-Json
+  Test-Contract $true 'both /status responses parse as JSON'
+}
+catch { Write-Error "/status response was not valid JSON: $($_.Exception.Message)"; exit 1 }
+
+$expectedStatusTopLevelOrder = @(
+  'device_label','device_id','device_role','firmware_version','build_profile','reported_at',
+  'uptime_seconds','network','cloud_reporting','watering','system'
+)
+$expectedNetworkOrder = @(
+  'wifi_connected','wifi_rssi','wifi_status_code','wifi_status_label','ip_address','mac_address',
+  'last_wifi_disconnect_reason','last_wifi_disconnect_reason_label',
+  'wifi_reconnect_attempts_since_boot','wifi_full_recovery_attempts_since_boot',
+  'wifi_disconnects_since_boot','wifi_ip_acquisitions_since_boot',
+  'last_wifi_disconnect_uptime_seconds','last_wifi_ip_acquired_uptime_seconds',
+  'last_wifi_activity'
+)
+$expectedCloudOrder = @(
+  'last_http_status','last_http_status_label','consecutive_failures','last_error_category',
+  'last_successful_measurement_post_at','last_successful_measurement_post_uptime_seconds',
+  'last_successful_status_post_at','last_successful_status_post_uptime_seconds'
+)
+$expectedWateringOrder = @(
+  'currently_watering','active_trigger_source','last_watering_at',
+  'last_watering_duration_seconds'
+)
+$expectedSystemOrder = @('free_heap_bytes','minimum_free_heap_bytes')
+
+foreach ($status in @($status1, $status2)) {
+  Test-Contract (
+    (@($status.PSObject.Properties.Name) -join '|') -ceq ($expectedStatusTopLevelOrder -join '|')
+  ) '/status has the exact approved top-level property order'
+  Test-Contract (
+    (@($status.network.PSObject.Properties.Name) -join '|') -ceq ($expectedNetworkOrder -join '|')
+  ) '/status network has the exact approved property order'
+  Test-Contract (
+    (@($status.cloud_reporting.PSObject.Properties.Name) -join '|') -ceq ($expectedCloudOrder -join '|')
+  ) '/status cloud_reporting has the exact approved property order'
+  Test-Contract (
+    (@($status.watering.PSObject.Properties.Name) -join '|') -ceq ($expectedWateringOrder -join '|')
+  ) '/status watering has the exact approved property order'
+  Test-Contract (
+    (@($status.system.PSObject.Properties.Name) -join '|') -ceq ($expectedSystemOrder -join '|')
+  ) '/status system has the exact approved property order'
+
+  Test-Contract ($status.device_label -ceq $ExpectedDeviceLabel) 'status device_label matches expected identity'
+  Test-Contract ($status.device_id -ceq $ExpectedDeviceId) 'status device_id matches expected identity'
+  Test-Contract ($status.device_role -ceq $ExpectedDeviceRole) 'status device_role matches expected identity'
+  Test-Contract ($status.build_profile -ceq $ExpectedBuildProfile) 'status build_profile matches expected provenance'
+  Test-Contract ($status.firmware_version -ceq $ExpectedFirmwareVersion) 'status firmware_version matches expected provenance'
+  Test-Contract (-not [string]::IsNullOrWhiteSpace($status.reported_at)) 'status reported_at is present'
+  Test-Contract ($status.uptime_seconds -ge 0) 'status uptime is nonnegative'
+
+  $wifiLabels = @{
+    255='no_shield'; 0='idle'; 1='no_ssid_available'; 2='scan_completed';
+    3='connected'; 4='connection_failed'; 5='connection_lost'; 6='disconnected'
+  }
+  $expectedWifiLabel = if ($wifiLabels.ContainsKey([int]$status.network.wifi_status_code)) {
+    $wifiLabels[[int]$status.network.wifi_status_code]
+  } else { 'unknown' }
+  Test-Contract ($status.network.wifi_status_label -ceq $expectedWifiLabel) 'Wi-Fi status code and label are consistent'
+  if ($status.network.wifi_connected) {
+    Test-Contract ($null -ne $status.network.wifi_rssi) 'connected Wi-Fi has RSSI evidence'
+    Test-Contract (
+      $null -eq $status.network.ip_address -or
+      (-not [string]::IsNullOrWhiteSpace($status.network.ip_address) -and
+        $status.network.ip_address -cne '0.0.0.0')
+    ) 'connected Wi-Fi IP is null or a valid address'
+  } else {
+    Test-Contract ($null -eq $status.network.wifi_rssi) 'disconnected Wi-Fi has null RSSI'
+    Test-Contract ($null -eq $status.network.ip_address) 'disconnected Wi-Fi has null IP address'
+  }
+  Test-Contract (
+    ($null -eq $status.network.last_wifi_disconnect_reason -and
+      $status.network.last_wifi_disconnect_reason_label -ceq 'not_recorded') -or
+    ($null -ne $status.network.last_wifi_disconnect_reason -and
+      $status.network.last_wifi_disconnect_reason_label -cne 'not_recorded')
+  ) 'disconnect reason and label have consistent recorded-state semantics'
+
+  foreach ($counterName in @(
+    'wifi_reconnect_attempts_since_boot','wifi_full_recovery_attempts_since_boot',
+    'wifi_disconnects_since_boot','wifi_ip_acquisitions_since_boot'
+  )) {
+    Test-Contract ($status.network.$counterName -ge 0) "$counterName is nonnegative"
+  }
+  foreach ($uptimeName in @(
+    'last_wifi_disconnect_uptime_seconds','last_wifi_ip_acquired_uptime_seconds'
+  )) {
+    Test-Contract (
+      $null -eq $status.network.$uptimeName -or $status.network.$uptimeName -ge 0
+    ) "$uptimeName is null or nonnegative"
+  }
+  Test-Contract ($status.network.last_wifi_activity -cin @(
+    'none','connected','ip_acquired','disconnected','disconnect_detected',
+    'reconnect_requested','full_recovery_started'
+  )) 'last_wifi_activity is an approved normalized value'
+
+  $httpStatus = $status.cloud_reporting.last_http_status
+  $expectedHttpLabel = if ($null -eq $httpStatus) { 'not_recorded' }
+    elseif ($httpStatus -eq 0) { 'no_http_response' }
+    elseif ($httpStatus -lt 0) { 'client_error' }
+    else {
+      $httpLabels = @{
+        200='ok'; 201='created'; 204='no_content'; 400='bad_request'; 401='unauthorized';
+        403='forbidden'; 404='not_found'; 409='conflict'; 429='too_many_requests';
+        500='internal_server_error'; 502='bad_gateway'; 503='service_unavailable'
+      }
+      if ($httpLabels.ContainsKey([int]$httpStatus)) { $httpLabels[[int]$httpStatus] } else { 'unknown' }
+    }
+  Test-Contract ($status.cloud_reporting.last_http_status_label -ceq $expectedHttpLabel) 'HTTP status and label are consistent'
+  Test-Contract ($status.cloud_reporting.consecutive_failures -ge 0) 'cloud failure count is nonnegative'
+  Test-Contract (
+    ($null -eq $status.cloud_reporting.last_successful_measurement_post_at) -eq
+    ($null -eq $status.cloud_reporting.last_successful_measurement_post_uptime_seconds)
+  ) 'measurement success timestamp and uptime evidence are paired'
+  Test-Contract (
+    ($null -eq $status.cloud_reporting.last_successful_status_post_at) -eq
+    ($null -eq $status.cloud_reporting.last_successful_status_post_uptime_seconds)
+  ) 'status success timestamp and uptime evidence are paired'
+  foreach ($successUptimeName in @(
+    'last_successful_measurement_post_uptime_seconds',
+    'last_successful_status_post_uptime_seconds'
+  )) {
+    Test-Contract (
+      $null -eq $status.cloud_reporting.$successUptimeName -or
+      $status.cloud_reporting.$successUptimeName -ge 0
+    ) "$successUptimeName is null or nonnegative"
+  }
+
+  if ($status.watering.currently_watering) {
+    Test-Contract ($status.watering.active_trigger_source -cin @(
+      'physical_button','automatic','manual_local','firmware_safety'
+    )) 'active watering trigger is approved'
+  } else {
+    Test-Contract ($null -eq $status.watering.active_trigger_source) 'idle watering trigger is null'
+  }
+  Test-Contract (
+    $null -eq $status.watering.last_watering_at -or
+    -not [string]::IsNullOrWhiteSpace(
+      [string]$status.watering.last_watering_at
+    )
+  ) 'last_watering_at is null or nonempty'
+  Test-Contract (
+    $null -eq $status.watering.last_watering_duration_seconds -or
+    $status.watering.last_watering_duration_seconds -ge 0
+  ) 'watering duration is null or nonnegative'
+  Test-Contract ($status.system.free_heap_bytes -ge 0) 'free heap is nonnegative'
+  Test-Contract ($status.system.minimum_free_heap_bytes -ge 0) 'minimum free heap is nonnegative'
+}
+
+Test-Contract ($status2.uptime_seconds -ge $status1.uptime_seconds) 'status uptime is nondecreasing across requests'
+
+$forbiddenStatusFields = @(
+  'last_wifi_status_code','wifi_reconnect_attempt_count','wifi_begin_recovery_attempt_count',
+  'wifi_disconnect_event_count','wifi_got_ip_event_count','last_wifi_disconnected_uptime_seconds',
+  'last_wifi_reconnected_uptime_seconds','last_network_recovery_action',
+  'last_supabase_http_status','consecutive_supabase_failures','last_supabase_error_category',
+  'last_successful_telemetry_post_at','last_successful_telemetry_post_uptime_seconds',
+  'last_successful_diagnostics_post_at','last_successful_diagnostics_post_uptime_seconds',
+  'pump_control_available','device_can_water','lastWateredTime','lastWateringDuration',
+  'hasLastGoodDht','free_heap','min_free_heap','ssid','details'
+)
+function Find-ForbiddenStatusField {
+  param([object] $Value, [string] $Path = '$')
+  $hits = [System.Collections.Generic.List[string]]::new()
+  if ($null -eq $Value -or $Value -is [string] -or $Value -is [ValueType]) { return $hits }
+  if ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [pscustomobject]) {
+    $index = 0
+    foreach ($item in $Value) {
+      foreach ($hit in @(Find-ForbiddenStatusField -Value $item -Path "$Path[$index]")) { $hits.Add($hit) }
+      $index++
+    }
+    return $hits
+  }
+  foreach ($property in $Value.PSObject.Properties) {
+    $propertyPath = "$Path.$($property.Name)"
+    if ($property.Name -in $forbiddenStatusFields) { $hits.Add($propertyPath) }
+    if ($property.Name -in @('ip_address','mac_address') -and $Path -cne '$.network') {
+      $hits.Add($propertyPath)
+    }
+    foreach ($hit in @(Find-ForbiddenStatusField -Value $property.Value -Path $propertyPath)) { $hits.Add($hit) }
+  }
+  return $hits
+}
+$forbiddenStatusHits = @(Find-ForbiddenStatusField -Value $status1)
+Test-Contract ($forbiddenStatusHits.Count -eq 0) "no forbidden status fields appear recursively$(if ($forbiddenStatusHits.Count) { ': ' + ($forbiddenStatusHits -join ', ') })"
+
 if ($failures.Count -gt 0) { Write-Error "$($failures.Count) contract assertion(s) failed."; exit 1 }
-Write-Host 'All /measurements and /capabilities contract assertions passed.' -ForegroundColor Green
+Write-Host 'All requested Gen2 endpoint contract assertions passed.' -ForegroundColor Green

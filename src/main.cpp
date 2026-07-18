@@ -97,6 +97,16 @@ int automaticControlSampleCount = 0;
 int automaticControlQualifiedSampleCount = 0;
 #ifdef MBG_GEN2_ENABLED
 unsigned long lastGen2MeasurementPostTime = 0;
+String lastSuccessfulMeasurementPostAt = "";
+unsigned long lastSuccessfulMeasurementPostUptimeSeconds = 0;
+bool hasLastSuccessfulMeasurementPost = false;
+String lastSuccessfulStatusPostAt = "";
+unsigned long lastSuccessfulStatusPostUptimeSeconds = 0;
+bool hasLastSuccessfulStatusPost = false;
+String lastWateringAt = "";
+bool hasLastWateringStarted = false;
+bool hasCompletedWateringSinceBoot = false;
+bool hasWiFiDisconnectReasonSinceBoot = false;
 #endif
 String lastWateredTime = "N/A";
 bool hasLastGoodDht = false;
@@ -174,6 +184,13 @@ void stopPhysicalButtonWatering(
 void handlePhysicalButton(unsigned long now);
 #endif
 #ifdef MBG_GEN2_ENABLED
+void recordGen2MeasurementPostSuccess(int httpCode);
+void recordGen2StatusPostSuccess(int httpCode);
+void recordGen2WateringStart();
+const char* gen2WiFiStatusLabel(int statusCode);
+const char* gen2HttpStatusLabel(bool hasStatus, int statusCode);
+const char* gen2NetworkActivityLabel(const String &internalActivity);
+const char* gen2WiFiDisconnectReasonLabel(bool hasReason, int reasonCode);
 void sendGen2MeasurementsToSupabase();
 #endif
 void handleRoot();
@@ -272,6 +289,119 @@ void recordSupabasePostFailure(int httpCode, const String &category) {
   lastSupabaseErrorCategory = category.length() == 0 ? "unknown" : category;
 }
 
+#ifdef MBG_GEN2_ENABLED
+// Record measurement-specific success separately from legacy telemetry success;
+// watering-event posts intentionally never call this helper.
+void recordGen2MeasurementPostSuccess(int httpCode) {
+  recordSupabasePostSuccess(false, httpCode);
+  String postedAt = getUtcIsoTimestamp();
+  lastSuccessfulMeasurementPostAt = postedAt == "TIME_ERROR" ? "" : postedAt;
+  lastSuccessfulMeasurementPostUptimeSeconds = millis() / 1000;
+  hasLastSuccessfulMeasurementPost = true;
+}
+
+// Record status success only after the heartbeat POST has returned HTTP 201.
+// The heartbeat already sent therefore truthfully describes the prior success.
+void recordGen2StatusPostSuccess(int httpCode) {
+  recordSupabasePostSuccess(true, httpCode);
+  String postedAt = getUtcIsoTimestamp();
+  lastSuccessfulStatusPostAt = postedAt == "TIME_ERROR" ? "" : postedAt;
+  lastSuccessfulStatusPostUptimeSeconds = millis() / 1000;
+  hasLastSuccessfulStatusPost = true;
+}
+
+// Capture UTC evidence for the same real start already recorded in local time.
+void recordGen2WateringStart() {
+  String startedAt = getUtcIsoTimestamp();
+  lastWateringAt = startedAt == "TIME_ERROR" ? "" : startedAt;
+  hasLastWateringStarted = true;
+}
+
+// Public labels intentionally use stable contract text rather than framework names.
+const char* gen2WiFiStatusLabel(int statusCode) {
+  switch (statusCode) {
+    case 255: return "no_shield";
+    case 0: return "idle";
+    case 1: return "no_ssid_available";
+    case 2: return "scan_completed";
+    case 3: return "connected";
+    case 4: return "connection_failed";
+    case 5: return "connection_lost";
+    case 6: return "disconnected";
+    default: return "unknown";
+  }
+}
+
+const char* gen2HttpStatusLabel(bool hasStatus, int statusCode) {
+  if (!hasStatus) return "not_recorded";
+  if (statusCode == 0) return "no_http_response";
+  if (statusCode < 0) return "client_error";
+  switch (statusCode) {
+    case 200: return "ok";
+    case 201: return "created";
+    case 204: return "no_content";
+    case 400: return "bad_request";
+    case 401: return "unauthorized";
+    case 403: return "forbidden";
+    case 404: return "not_found";
+    case 409: return "conflict";
+    case 429: return "too_many_requests";
+    case 500: return "internal_server_error";
+    case 502: return "bad_gateway";
+    case 503: return "service_unavailable";
+    default: return "unknown";
+  }
+}
+
+const char* gen2NetworkActivityLabel(const String &internalActivity) {
+  if (internalActivity == "wifi_connected_event") return "connected";
+  if (internalActivity == "wifi_got_ip_event") return "ip_acquired";
+  if (internalActivity == "wifi_disconnected_event") return "disconnected";
+  if (internalActivity == "wifi_not_connected_detected") return "disconnect_detected";
+  if (internalActivity == "wifi_reconnect") return "reconnect_requested";
+  if (internalActivity == "wifi_disconnect_begin") return "full_recovery_started";
+  return "none";
+}
+
+// Numeric cases mirror the installed ESP-IDF header and the Phase 8B.4 SQL view.
+// Numeric literals keep builds compatible when a framework omits newer symbols.
+const char* gen2WiFiDisconnectReasonLabel(bool hasReason, int reasonCode) {
+  if (!hasReason) return "not_recorded";
+  switch (reasonCode) {
+    case 1: return "unspecified"; case 2: return "auth_expire";
+    case 3: return "auth_leave"; case 4: return "assoc_expire";
+    case 5: return "assoc_too_many"; case 6: return "not_authed";
+    case 7: return "not_assoced"; case 8: return "assoc_leave";
+    case 9: return "assoc_not_authed"; case 10: return "disassoc_power_capability_bad";
+    case 11: return "disassoc_supported_channel_bad"; case 12: return "bss_transition_disassoc";
+    case 13: return "ie_invalid"; case 14: return "mic_failure";
+    case 15: return "four_way_handshake_timeout"; case 16: return "group_key_update_timeout";
+    case 17: return "ie_in_4way_differs"; case 18: return "group_cipher_invalid";
+    case 19: return "pairwise_cipher_invalid"; case 20: return "akmp_invalid";
+    case 21: return "unsupported_rsn_ie_version"; case 22: return "invalid_rsn_ie_capability";
+    case 23: return "802_1x_auth_failed"; case 24: return "cipher_suite_rejected";
+    case 25: return "tdls_peer_unreachable"; case 26: return "tdls_unspecified";
+    case 27: return "ssp_requested_disassoc"; case 28: return "no_ssp_roaming_agreement";
+    case 29: return "bad_cipher_or_akm"; case 30: return "not_authorized_this_location";
+    case 31: return "service_change_precludes_ts"; case 32: return "unspecified_qos";
+    case 33: return "not_enough_bandwidth"; case 34: return "missing_acks";
+    case 35: return "exceeded_txop"; case 36: return "sta_leaving";
+    case 37: return "end_ba"; case 38: return "unknown_ba";
+    case 39: return "timeout"; case 46: return "peer_initiated";
+    case 47: return "ap_initiated"; case 48: return "invalid_ft_action_frame_count";
+    case 49: return "invalid_pmkid"; case 50: return "invalid_mde";
+    case 51: return "invalid_fte"; case 67: return "transmission_link_establish_failed";
+    case 68: return "alternative_channel_occupied"; case 200: return "beacon_timeout";
+    case 201: return "no_ap_found"; case 202: return "auth_fail";
+    case 203: return "assoc_fail"; case 204: return "handshake_timeout";
+    case 205: return "connection_fail"; case 206: return "ap_tsf_reset";
+    case 207: return "roaming"; case 208: return "assoc_comeback_time_too_long";
+    case 209: return "sa_query_timeout";
+    default: return "unknown";
+  }
+}
+#endif
+
 void handleWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
   lastWiFiStatusCode = (int)WiFi.status();
 
@@ -291,6 +421,9 @@ void handleWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
       lastWiFiDisconnectedMillis = millis();
       lastWiFiDisconnectedUptimeSeconds = millis() / 1000;
       lastWiFiDisconnectReason = info.wifi_sta_disconnected.reason;
+#ifdef MBG_GEN2_ENABLED
+      hasWiFiDisconnectReasonSinceBoot = true;
+#endif
       lastNetworkRecoveryAction = "wifi_disconnected_event";
       break;
     default:
@@ -458,6 +591,9 @@ bool maybeStartAutomaticWatering(float moisture) {
     wateringStartTime = millis();
     activeWateringTriggerSource = "automatic";
     lastWateredTime = getFormattedTime();
+#ifdef MBG_GEN2_ENABLED
+    recordGen2WateringStart();
+#endif
     Serial.println("💧 Auto-watering triggered (low moisture)");
 #ifdef MBG_GEN2_ENABLED
     sendWateringEventToSupabase(
@@ -533,6 +669,9 @@ void startPhysicalButtonWatering(unsigned long now) {
   wateringStartTime = now;
   activeWateringTriggerSource = "physical_button";
   lastWateredTime = getFormattedTime();
+#ifdef MBG_GEN2_ENABLED
+  recordGen2WateringStart();
+#endif
   Serial.println("Physical button watering started");
 
   queuePhysicalButtonWateringEvent(
@@ -556,6 +695,9 @@ void stopPhysicalButtonWatering(
   isWatering = false;
   lastWateringEndTime = now;
   lastWateringDuration = wateringDuration / 1000;
+#ifdef MBG_GEN2_ENABLED
+  hasCompletedWateringSinceBoot = true;
+#endif
 
   queuePhysicalButtonWateringEvent(
     eventType,
@@ -968,6 +1110,63 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
   postData += "\"wifi_rssi\":";
   postData += wifiConnected ? String(WiFi.RSSI()) : "null";
   postData += ",";
+#ifdef MBG_GEN2_ENABLED
+  int wifiStatusCode = (int)WiFi.status();
+  lastWiFiStatusCode = wifiStatusCode;
+  postData += "\"wifi_status_code\":" + String(wifiStatusCode) + ",";
+  postData += "\"wifi_status_label\":\"" + String(gen2WiFiStatusLabel(wifiStatusCode)) + "\",";
+  postData += "\"last_wifi_disconnect_reason\":";
+  postData += hasWiFiDisconnectReasonSinceBoot ? String(lastWiFiDisconnectReason) : "null";
+  postData += ",";
+  postData += "\"last_wifi_disconnect_reason_label\":\"" +
+    String(gen2WiFiDisconnectReasonLabel(hasWiFiDisconnectReasonSinceBoot, lastWiFiDisconnectReason)) + "\",";
+  postData += "\"wifi_reconnect_attempts_since_boot\":" + String(wifiReconnectAttemptCount) + ",";
+  postData += "\"wifi_full_recovery_attempts_since_boot\":" + String(wifiBeginRecoveryAttemptCount) + ",";
+  postData += "\"wifi_disconnects_since_boot\":" + String(wifiDisconnectEventCount) + ",";
+  postData += "\"wifi_ip_acquisitions_since_boot\":" + String(wifiGotIpEventCount) + ",";
+  postData += "\"last_wifi_disconnect_uptime_seconds\":";
+  postData += hasWiFiDisconnectedSinceBoot ? String(lastWiFiDisconnectedUptimeSeconds) : "null";
+  postData += ",";
+  postData += "\"last_wifi_ip_acquired_uptime_seconds\":";
+  postData += wifiGotIpEventCount > 0 ? String(lastWiFiReconnectedUptimeSeconds) : "null";
+  postData += ",";
+  postData += "\"last_wifi_activity\":\"" + String(gen2NetworkActivityLabel(lastNetworkRecoveryAction)) + "\",";
+  postData += "\"last_http_status\":";
+  postData += hasLastSupabaseHttpStatus ? String(lastSupabaseHttpStatus) : "null";
+  postData += ",";
+  postData += "\"last_http_status_label\":\"" +
+    String(gen2HttpStatusLabel(hasLastSupabaseHttpStatus, lastSupabaseHttpStatus)) + "\",";
+  postData += "\"consecutive_failures\":" + String(consecutiveSupabaseFailures) + ",";
+  postData += "\"last_error_category\":\"" + lastSupabaseErrorCategory + "\",";
+  postData += "\"last_successful_measurement_post_at\":";
+  postData += hasLastSuccessfulMeasurementPost && lastSuccessfulMeasurementPostAt.length() > 0
+    ? jsonStringOrNull(lastSuccessfulMeasurementPostAt) : "null";
+  postData += ",";
+  postData += "\"last_successful_measurement_post_uptime_seconds\":";
+  postData += hasLastSuccessfulMeasurementPost && lastSuccessfulMeasurementPostAt.length() > 0
+    ? String(lastSuccessfulMeasurementPostUptimeSeconds) : "null";
+  postData += ",";
+  postData += "\"last_successful_status_post_at\":";
+  postData += hasLastSuccessfulStatusPost && lastSuccessfulStatusPostAt.length() > 0
+    ? jsonStringOrNull(lastSuccessfulStatusPostAt) : "null";
+  postData += ",";
+  postData += "\"last_successful_status_post_uptime_seconds\":";
+  postData += hasLastSuccessfulStatusPost && lastSuccessfulStatusPostAt.length() > 0
+    ? String(lastSuccessfulStatusPostUptimeSeconds) : "null";
+  postData += ",";
+  postData += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
+  postData += "\"active_trigger_source\":";
+  postData += isWatering ? "\"" + String(activeWateringTriggerSource) + "\"" : "null";
+  postData += ",";
+  postData += "\"last_watering_at\":";
+  postData += hasLastWateringStarted ? jsonStringOrNull(lastWateringAt) : "null";
+  postData += ",";
+  postData += "\"last_watering_duration_seconds\":";
+  postData += hasCompletedWateringSinceBoot ? String(lastWateringDuration) : "null";
+  postData += ",";
+  postData += "\"free_heap_bytes\":" + String(ESP.getFreeHeap()) + ",";
+  postData += "\"minimum_free_heap_bytes\":" + String(ESP.getMinFreeHeap());
+#else
   postData += "\"wifi_reconnect_attempt_count\":" + String(wifiReconnectAttemptCount) + ",";
   postData += "\"last_supabase_http_status\":";
   postData += hasLastSupabaseHttpStatus ? String(lastSupabaseHttpStatus) : "null";
@@ -994,6 +1193,7 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
   postData += "\"last_wifi_reconnected_uptime_seconds\":" + String(lastWiFiReconnectedUptimeSeconds) + ",";
   postData += "\"last_network_recovery_action\":\"" + lastNetworkRecoveryAction + "\"";
   postData += "}";
+#endif
   postData += "}";
 
   Serial.println("Device heartbeat payload: " + postData);
@@ -1002,7 +1202,11 @@ void sendDeviceHeartbeatToSupabase(String heartbeatReason) {
 
   if (httpCode > 0) {
     if (httpCode == 201) {
+#ifdef MBG_GEN2_ENABLED
+      recordGen2StatusPostSuccess(httpCode);
+#else
       recordSupabasePostSuccess(true, httpCode);
+#endif
       Serial.println("Device heartbeat sent to Supabase");
     } else {
       Serial.print("Device heartbeat Supabase response code: ");
@@ -1134,7 +1338,7 @@ void sendGen2MeasurementsToSupabase() {
 
   if (httpCode > 0) {
     if (httpCode == 201) {
-      recordSupabasePostSuccess(false, httpCode);
+      recordGen2MeasurementPostSuccess(httpCode);
       Serial.println("Gen2 measurement batch sent to Supabase");
     } else {
       Serial.print("Gen2 measurement batch Supabase response code: ");
@@ -1168,6 +1372,92 @@ void handleStatus() {
   bool wifiConnected = wifiStatus == WL_CONNECTED;
   lastWiFiStatusCode = (int)wifiStatus;
 
+#ifdef MBG_GEN2_ENABLED
+  IPAddress localIp = WiFi.localIP();
+  String ipAddress = localIp.toString();
+  bool hasValidIpAddress = wifiConnected && ipAddress != "0.0.0.0";
+  String macAddress = WiFi.macAddress();
+  bool hasMacAddress = macAddress.length() > 0 && macAddress != "00:00:00:00:00:00";
+
+  String response = "{";
+  response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
+  response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+  response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
+  response += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
+  response += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
+  response += "\"reported_at\":\"" + getUtcIsoTimestamp() + "\",";
+  response += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
+  response += "\"network\":{";
+  response += "\"wifi_connected\":" + String(wifiConnected ? "true" : "false") + ",";
+  response += "\"wifi_rssi\":";
+  response += wifiConnected ? String(WiFi.RSSI()) : "null";
+  response += ",";
+  response += "\"wifi_status_code\":" + String((int)wifiStatus) + ",";
+  response += "\"wifi_status_label\":\"" + String(gen2WiFiStatusLabel((int)wifiStatus)) + "\",";
+  response += "\"ip_address\":";
+  response += hasValidIpAddress ? "\"" + ipAddress + "\"" : "null";
+  response += ",";
+  response += "\"mac_address\":";
+  response += hasMacAddress ? "\"" + macAddress + "\"" : "null";
+  response += ",";
+  response += "\"last_wifi_disconnect_reason\":";
+  response += hasWiFiDisconnectReasonSinceBoot ? String(lastWiFiDisconnectReason) : "null";
+  response += ",";
+  response += "\"last_wifi_disconnect_reason_label\":\"" +
+    String(gen2WiFiDisconnectReasonLabel(hasWiFiDisconnectReasonSinceBoot, lastWiFiDisconnectReason)) + "\",";
+  response += "\"wifi_reconnect_attempts_since_boot\":" + String(wifiReconnectAttemptCount) + ",";
+  response += "\"wifi_full_recovery_attempts_since_boot\":" + String(wifiBeginRecoveryAttemptCount) + ",";
+  response += "\"wifi_disconnects_since_boot\":" + String(wifiDisconnectEventCount) + ",";
+  response += "\"wifi_ip_acquisitions_since_boot\":" + String(wifiGotIpEventCount) + ",";
+  response += "\"last_wifi_disconnect_uptime_seconds\":";
+  response += hasWiFiDisconnectedSinceBoot ? String(lastWiFiDisconnectedUptimeSeconds) : "null";
+  response += ",";
+  response += "\"last_wifi_ip_acquired_uptime_seconds\":";
+  response += wifiGotIpEventCount > 0 ? String(lastWiFiReconnectedUptimeSeconds) : "null";
+  response += ",";
+  response += "\"last_wifi_activity\":\"" + String(gen2NetworkActivityLabel(lastNetworkRecoveryAction)) + "\"";
+  response += "},";
+  response += "\"cloud_reporting\":{";
+  response += "\"last_http_status\":";
+  response += hasLastSupabaseHttpStatus ? String(lastSupabaseHttpStatus) : "null";
+  response += ",";
+  response += "\"last_http_status_label\":\"" +
+    String(gen2HttpStatusLabel(hasLastSupabaseHttpStatus, lastSupabaseHttpStatus)) + "\",";
+  response += "\"consecutive_failures\":" + String(consecutiveSupabaseFailures) + ",";
+  response += "\"last_error_category\":\"" + lastSupabaseErrorCategory + "\",";
+  response += "\"last_successful_measurement_post_at\":";
+  response += hasLastSuccessfulMeasurementPost && lastSuccessfulMeasurementPostAt.length() > 0
+    ? jsonStringOrNull(lastSuccessfulMeasurementPostAt) : "null";
+  response += ",";
+  response += "\"last_successful_measurement_post_uptime_seconds\":";
+  response += hasLastSuccessfulMeasurementPost && lastSuccessfulMeasurementPostAt.length() > 0
+    ? String(lastSuccessfulMeasurementPostUptimeSeconds) : "null";
+  response += ",";
+  response += "\"last_successful_status_post_at\":";
+  response += hasLastSuccessfulStatusPost && lastSuccessfulStatusPostAt.length() > 0
+    ? jsonStringOrNull(lastSuccessfulStatusPostAt) : "null";
+  response += ",";
+  response += "\"last_successful_status_post_uptime_seconds\":";
+  response += hasLastSuccessfulStatusPost && lastSuccessfulStatusPostAt.length() > 0
+    ? String(lastSuccessfulStatusPostUptimeSeconds) : "null";
+  response += "},";
+  response += "\"watering\":{";
+  response += "\"currently_watering\":" + String(isWatering ? "true" : "false") + ",";
+  response += "\"active_trigger_source\":";
+  response += isWatering ? "\"" + String(activeWateringTriggerSource) + "\"" : "null";
+  response += ",";
+  response += "\"last_watering_at\":";
+  response += hasLastWateringStarted ? jsonStringOrNull(lastWateringAt) : "null";
+  response += ",";
+  response += "\"last_watering_duration_seconds\":";
+  response += hasCompletedWateringSinceBoot ? String(lastWateringDuration) : "null";
+  response += "},";
+  response += "\"system\":{";
+  response += "\"free_heap_bytes\":" + String(ESP.getFreeHeap()) + ",";
+  response += "\"minimum_free_heap_bytes\":" + String(ESP.getMinFreeHeap());
+  response += "}";
+  response += "}";
+#else
   String response = "{";
   response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   response += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
@@ -1208,6 +1498,7 @@ void handleStatus() {
   response += "\"ip_address\":\"" + String(wifiConnected ? WiFi.localIP().toString() : "0.0.0.0") + "\",";
   response += "\"mac_address\":\"" + WiFi.macAddress() + "\"";
   response += "}";
+#endif
 
   server.send(200, "application/json", response);
 }
@@ -1303,6 +1594,9 @@ void handleWaterNow() {
     wateringStartTime = millis();
     activeWateringTriggerSource = "manual_local";
     lastWateredTime = getFormattedTime();
+#ifdef MBG_GEN2_ENABLED
+    recordGen2WateringStart();
+#endif
     Serial.println("💧 Manual watering triggered");
 #ifdef MBG_GEN2_ENABLED
     sendWateringEventToSupabase(
@@ -1403,6 +1697,7 @@ void loop() {
       lastWateringDuration = wateringDuration / 1000; // Convert to seconds
 
 #ifdef MBG_GEN2_ENABLED
+      hasCompletedWateringSinceBoot = true;
       const char* completionTriggerSource = "firmware_safety";
       const char* completionReason = "watering_completed_trigger_source_fallback";
       if (strcmp(activeWateringTriggerSource, "manual_local") == 0) {

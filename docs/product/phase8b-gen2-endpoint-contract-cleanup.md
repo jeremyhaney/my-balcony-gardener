@@ -2,20 +2,22 @@
 
 - Phase 8B `/measurements` slice: COMPLETE / END-TO-END VALIDATED
 - Phase 8B `/capabilities` slice: COMPLETE / LIVE DEVICE VALIDATED
+- Phase 8B `/status` slice: COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED
 - Phase 8B overall endpoint cleanup: IN PROGRESS
-- Next slice: `/status` Nested Diagnostics Contract Cleanup
-- Date: 2026-07-16
+- Phase 8B parent: CURRENT
+- Next slice: Phase 8B.5 Gen2 Endpoint Integration and Closeout
+- Date: 2026-07-17
 - Device profile under primary validation: `balcony02-gen2`
 - Device label: `Balcony02`
 - Device UUID: `7e5bd328-ad68-4389-a71a-fa5cd01b3813`
-- Firmware version: `phase8b-balcony02-proveout`
+- Firmware version: `phase8b4-gen2-status-contract`
 - Governing ADR: [`0022-gen2-endpoint-responsibility-and-contract-cleanup.md`](../adr/0022-gen2-endpoint-responsibility-and-contract-cleanup.md)
 
 ## Purpose
 
 This document freezes the approved external contracts and coordinated cloud/frontend semantics for the Gen2 endpoint cleanup before implementation begins.
 
-The `/measurements` contract is implemented and production validated, and the `/capabilities` contract is implemented and live-device validated. The remaining `/status` and integrated endpoint closeout slices are not complete.
+The `/measurements`, `/capabilities`, and `/status` contracts are implemented and validated at their recorded evidence levels. Phase 8B.5 integrated endpoint closeout remains CURRENT / NEXT.
 
 It is the implementation specification for this phase. It does not authorize unrelated refactoring, pin changes, sensor changes, timing changes, watering changes, or control-policy changes.
 
@@ -82,6 +84,26 @@ M04 was configured with `installed:false`. L01 remained `installed:true` indepen
 
 The frozen `/measurements` contract remained unchanged and passed regression validation. `/status` remained unchanged and is deferred to Phase 8B.4. No frontend, SQL, Supabase, Cloudflare, pin, sensor, watering, cadence, threshold, duration, cooldown, relay, button, or interlock behavior changed.
 
+## /status live-device, cloud, and hosted-diagnostics closeout — 2026-07-17
+
+Phase 8B.4 is COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED. Phase 8B remains CURRENT, the overall endpoint cleanup remains IN PROGRESS, and Phase 8B.5 Gen2 Endpoint Integration and Closeout is CURRENT / NEXT.
+
+Firmware `phase8b4-gen2-status-contract` built successfully in all seven environments: `esp32doit-devkit-v1`, `balcony-installed`, `balcony-installed-gen2`, `bench-prototype`, `bench-proto-gen2`, `balcony02-gen2`, and `balcony-sensor-scout-01`. The firmware version applies to all four Gen2 profiles (`balcony-installed-gen2`, `bench-proto-gen2`, `balcony02-gen2`, and `balcony-sensor-scout-01`); Gen1 behavior remains unchanged.
+
+Primary validation used Balcony02, UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, profile `balcony02-gen2`, IP `10.0.0.69`, on `COM5`. Prototype01, UUID `318fab98-89ad-4f36-9100-3134a04e0be5`, role `bench`, profile `bench-proto-gen2`, passed status-only validation. The validator added parse-only mode, `-StatusOnly`, expected identity/provenance parameters, exact property-order assertions, code/label consistency checks, null-semantics checks, nonnegative uptime checks, and recursive forbidden-field checks. Both the Balcony02 full validator and Prototype01 status-only validator ended with `All requested Gen2 endpoint contract assertions passed.`
+
+The current Balcony02 boot detected the BME280, reported a DS18B20 device count of `1`, initialized SEN0204 WL01 on GPIO26 as `INPUT`, detected SEN0562-L01, SEN0562-L02, and SEN0562-L03, enabled the GPIO32 physical button as active-low with `50 ms` debounce and `15000 ms` maximum hold, connected Wi-Fi, and started the web server. The full `/measurements` validator separately confirmed working SEN0308 M01, M02, and M03 measurement records. L01 was repaired on 2026-07-17 by replacing its bad connector; the distribution board was not at fault. The Phase 8B.2 L01-missing observations above remain correct historical evidence.
+
+The live response passed its exact top-level order and exact nested `network`, `cloud_reporting`, `watering`, and `system` order. Cold-boot evidence reported `last_http_status:null` with `last_http_status_label:"not_recorded"`, null measurement-success and status-success timestamp/uptime pairs, `currently_watering:false`, `active_trigger_source:null`, `last_watering_at:null`, and `last_watering_duration_seconds:null`. Network evidence showed connected status code `3`, one startup disconnect with reason code `2` / `auth_expire`, one IP acquisition, zero lightweight reconnect attempts, zero full-recovery attempts, and activity `ip_acquired`. This closeout does not claim a forced disconnected state, a nonzero reconnect, or a full-recovery test.
+
+At local uptime `1709`, the response retained the last successful measurement post at `2026-07-17T23:07:39Z`, uptime `905`, separately from the last successful status post at `2026-07-17T23:07:41Z`, uptime `907`. The raw heartbeat at `2026-07-17 23:22:38.285407+00`, uptime `1802`, recorded the next measurement success at `2026-07-17T23:22:36Z`, uptime `1802`, while carrying the prior status success at `2026-07-17T23:07:41Z`, uptime `907`. HTTP result was `201` / `created`, consecutive failures were `0`, and error category was `none`. This proves measurement and status success evidence remain separate, watering does not become a measurement success, and a heartbeat does not self-claim a successful status post. No failed-cloud-post test is claimed.
+
+WL01 reported value `1`, valid, `good`, and `read_ok`. Active physical-button watering reported `active_trigger_source:physical_button` and retained last-watering time and duration; idle status returned a null active trigger while preserving the last completed watering evidence. The six current-firmware/current-profile event rows were: start `2026-07-17T22:53:58+00:00` (`physical_button`, `physical_button_pressed`, null duration), completion `22:54:09` (`physical_button`, `physical_button_released`, `11` seconds), start `22:55:31` (`physical_button`, null duration), completion `22:55:39` (`physical_button`, `7` seconds), start `22:57:24` (`physical_button`, null duration), and completion `22:57:35` (`physical_button`, `11` seconds). All reported `Balcony02`, firmware `phase8b4-gen2-status-contract`, and profile `balcony02-gen2`.
+
+The latest raw heartbeat carried current firmware/profile, uptime `1802`, reason `periodic`, RSSI `-47`, HTTP `201` / `created`, zero failures, error `none`, idle watering with a null trigger, last watering at `2026-07-17T22:57:24Z` for `11` seconds, free heap `232720`, minimum free heap `176876`, and `details:{}`. Hosted normalized diagnostics matched the raw heartbeat for the contract fields while excluding local IP and MAC. This is a data-contract validation; no new hosted browser review is claimed.
+
+This firmware/runtime checkpoint made no further changes to the already-applied Phase 8B.4 SQL/frontend contract: the base columns, normalized output columns, hosted-view joins, filters, grants, RLS boundaries, and historical fallbacks remained unchanged during this checkpoint. It also changed no pin, sensor assignment, GPIO mode/polarity, I2C/mux topology, threshold, duration, cooldown, cadence, relay, button, reservoir interlock, local firmware watering ownership, or Gen1 endpoint contract. No automatic SEN0308 watering, Supabase command/control, hosted Water Now, or hosted IP/MAC exposure was introduced.
+
 ## Locked implementation boundaries
 
 Do not change:
@@ -125,7 +147,7 @@ The top-level envelope remains:
   "device_label": "Balcony02",
   "device_id": "7e5bd328-ad68-4389-a71a-fa5cd01b3813",
   "device_role": "controller",
-  "firmware_version": "phase8b-balcony02-proveout",
+  "firmware_version": "phase8b4-gen2-status-contract",
   "build_profile": "balcony02-gen2",
   "measured_at": "2026-07-15T21:45:00Z",
   "records": []
@@ -331,7 +353,7 @@ Do not change GPIO26, input mode, polarity, or pump-interlock behavior.
   "device_label": "Balcony02",
   "device_id": "7e5bd328-ad68-4389-a71a-fa5cd01b3813",
   "device_role": "controller",
-  "firmware_version": "phase8b-balcony02-proveout",
+  "firmware_version": "phase8b4-gen2-status-contract",
   "build_profile": "balcony02-gen2",
   "measured_at": "2026-07-15T21:45:00Z",
   "records": [
@@ -495,7 +517,7 @@ Historical rows are not rewritten. Older records may retain legacy fields and th
   "device_label": "Balcony02",
   "device_id": "7e5bd328-ad68-4389-a71a-fa5cd01b3813",
   "device_role": "controller",
-  "firmware_version": "phase8b-balcony02-proveout",
+  "firmware_version": "phase8b4-gen2-status-contract",
   "build_profile": "balcony02-gen2",
   "reported_at": "2026-07-15T21:45:00Z",
   "can_water": true,
@@ -702,7 +724,7 @@ Normal string construction and reading compile-time/profile constants are allowe
   "device_label": "Balcony02",
   "device_id": "7e5bd328-ad68-4389-a71a-fa5cd01b3813",
   "device_role": "controller",
-  "firmware_version": "phase8b-balcony02-proveout",
+  "firmware_version": "phase8b4-gen2-status-contract",
   "build_profile": "balcony02-gen2",
   "reported_at": "2026-07-15T21:45:00Z",
   "uptime_seconds": 0,
@@ -974,50 +996,54 @@ New firmware writes the new active field names only after the database accepts t
 
 ## Capabilities
 
-- [ ] No sensor reads.
-- [ ] No GPIO health read.
-- [ ] No I2C scan.
-- [ ] No mux detection scan.
-- [ ] Correct pins.
-- [ ] Correct channels and addresses.
-- [ ] M04 is configured but uninstalled.
-- [ ] Only SEN0204 declares `watering_interlock`.
-- [ ] No old diagnostic/prove-out fields.
-- [ ] Other profiles produce valid generic manifests.
+- [x] No sensor reads.
+- [x] No GPIO health read.
+- [x] No I2C scan.
+- [x] No mux detection scan.
+- [x] Correct pins.
+- [x] Correct channels and addresses.
+- [x] M04 is configured but uninstalled.
+- [x] Only SEN0204 declares `watering_interlock`.
+- [x] No old diagnostic/prove-out fields.
+- [x] Other profiles produce valid generic manifests.
 
 ## Status and heartbeat
 
-- [ ] Connected state.
+- [x] Connected state.
 - [ ] Disconnected state.
-- [ ] Readable Wi-Fi status labels.
-- [ ] Readable disconnect labels.
-- [ ] Never-recorded null behavior.
+- [x] Readable Wi-Fi status labels.
+- [x] Readable disconnect labels.
+- [x] Never-recorded null behavior.
 - [ ] Lightweight reconnect counting.
 - [ ] Full recovery counting.
-- [ ] IP acquisition counting.
-- [ ] Successful cloud post.
+- [x] IP acquisition counting.
+- [x] Successful cloud post.
 - [ ] Failed cloud post.
-- [ ] Idle watering state.
-- [ ] Active watering state.
-- [ ] Correct active trigger.
-- [ ] Last watering time and duration evidence.
-- [ ] Heap evidence.
-- [ ] Local status and hosted heartbeat alignment.
-- [ ] Local IP/MAC are not exposed through hosted-safe views.
+- [x] Idle watering state.
+- [x] Active watering state.
+- [x] Correct active trigger.
+- [x] Last watering time and duration evidence.
+- [x] Heap evidence.
+- [x] Local status and hosted heartbeat alignment.
+- [x] Local IP/MAC are not exposed through hosted-safe views.
+
+Deferred: controlled disconnected state, nonzero lightweight reconnect counting, full recovery, and failed cloud-post evidence.
 
 ## Watering regression
 
-- [ ] Relay remains GPIO25.
-- [ ] Physical button remains GPIO32.
-- [ ] Reservoir input remains GPIO26.
-- [ ] DS18B20 remains GPIO27.
-- [ ] I2C SDA/SCL remain GPIO21/GPIO22.
-- [ ] Physical-button watering still works.
+- [x] Relay remains GPIO25.
+- [x] Physical button remains GPIO32.
+- [x] Reservoir input remains GPIO26.
+- [x] DS18B20 remains GPIO27.
+- [x] I2C SDA/SCL remain GPIO21/GPIO22.
+- [x] Physical-button watering still works.
 - [ ] Reservoir absence still blocks watering.
 - [ ] Reservoir loss still stops watering.
-- [ ] No automatic SEN0308 watering is introduced.
+- [x] No automatic SEN0308 watering is introduced.
 - [ ] Wi-Fi loss does not block local watering.
 - [ ] Cloud failures remain best-effort.
+
+Deferred: reservoir-absence blocking, reservoir-loss cutoff, Wi-Fi-loss watering, and cloud-failure watering regression evidence.
 
 # Review and commit discipline
 
