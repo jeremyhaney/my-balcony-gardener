@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type CSSProperties, type ReactNode, useMemo, useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -12,13 +12,13 @@ import {
 } from 'recharts'
 import {
   calculateGardenerMoistureIndex,
-  DEFAULT_HOSTED_GEN2_CHART_GROUP,
   doesHostedGen2RowMatchCard,
   getHostedGen2ChartSeriesDescriptors,
   getHostedGen2ChartSeriesIdentity,
   HOSTED_GEN2_CARD_CATALOG,
   HOSTED_GEN2_CHART_GROUPS,
   normalizeHostedGen2ComparisonText,
+  type HostedGen2CardKey,
   type HostedGen2ChartGroupKey,
   type HostedGen2ChartSeriesDescriptor,
 } from '../hostedGen2Presentation'
@@ -49,6 +49,7 @@ type HostedGen2ChartSeries = {
   label: string
   unit: string
   color: string
+  axisId: HostedGen2AxisId
   rows: HostedGen2MeasurementRow[]
 }
 
@@ -61,8 +62,26 @@ type AxisDomainValue = number | ((value: number) => number)
 type AxisDomain = [AxisDomainValue, AxisDomainValue]
 type TimeDomain = [number, number]
 
-const ACTIVE_FAMILY_AXIS_ID = 'active-family'
+type HostedGen2AxisId = 'F' | '%' | 'index' | 'hPa' | 'lux'
+
+type HostedGen2AxisConfig = {
+  id: HostedGen2AxisId
+  order: number
+  fullLabel: string
+  compactLabel: string
+  color: string
+  domain?: AxisDomain
+}
+
 const MAX_WATERING_MARKER_COUNT = 6
+const LEFT_AXIS_WIDTH = 52
+const RIGHT_AXIS_WIDTH = 54
+const MINIMUM_PLOT_WIDTH = 560
+
+const DEFAULT_SELECTED_CARD_KEYS: readonly HostedGen2CardKey[] = [
+  'air-temperature',
+  'humidity',
+]
 
 const CHART_USABLE_QUALITY_VALUES = new Set([
   'good',
@@ -85,6 +104,8 @@ const SERIES_COLORS: Record<HostedGen2ChartSeriesDescriptor['cardKey'], string> 
   'reservoir-water': '#64748b',
 }
 
+const CHART_SERIES_DESCRIPTORS = getHostedGen2ChartSeriesDescriptors()
+
 const withDefaultAxisDomain = (
   lowerBound: number,
   upperBound: number,
@@ -92,6 +113,29 @@ const withDefaultAxisDomain = (
   (dataMin: number) => Math.min(lowerBound, Math.floor(dataMin)),
   (dataMax: number) => Math.max(upperBound, Math.ceil(dataMax)),
 ]
+
+const AXIS_CONFIGS: Record<HostedGen2AxisId, HostedGen2AxisConfig> = {
+  F: {
+    id: 'F', order: 1, fullLabel: 'Temperature (F)', compactLabel: 'Temperature',
+    color: '#ef4444', domain: withDefaultAxisDomain(20, 100),
+  },
+  '%': {
+    id: '%', order: 2, fullLabel: 'Humidity (%)', compactLabel: 'Humidity',
+    color: '#2563eb', domain: [0, 100],
+  },
+  index: {
+    id: 'index', order: 3, fullLabel: 'Moisture Index', compactLabel: 'Moisture',
+    color: '#16a34a', domain: withDefaultAxisDomain(0, 100),
+  },
+  hPa: {
+    id: 'hPa', order: 4, fullLabel: 'Pressure (hPa)', compactLabel: 'Pressure',
+    color: '#7c3aed', domain: withDefaultAxisDomain(950, 1050),
+  },
+  lux: {
+    id: 'lux', order: 5, fullLabel: 'Light (lux)', compactLabel: 'Light',
+    color: '#ca8a04',
+  },
+}
 
 const HostedGen2TrendChart = ({
   rows,
@@ -101,19 +145,27 @@ const HostedGen2TrendChart = ({
   className = '',
   wateringCycles = [],
 }: HostedGen2TrendChartProps) => {
-  const [activeGroup, setActiveGroup] =
-    useState<HostedGen2ChartGroupKey>(DEFAULT_HOSTED_GEN2_CHART_GROUP)
-
-  // Frozen families always use the shared catalog and descriptor order.
-  const activeDescriptors = useMemo(
-    () => getHostedGen2ChartSeriesDescriptors(activeGroup),
-    [activeGroup],
+  const [selectedCardKeys, setSelectedCardKeys] = useState<HostedGen2CardKey[]>(
+    () => [...DEFAULT_SELECTED_CARD_KEYS],
   )
+  const selectedCardKeySet = useMemo(() => new Set(selectedCardKeys), [selectedCardKeys])
   const chartSeries = useMemo(
-    () => buildChartSeries(rows, activeDescriptors),
-    [activeDescriptors, rows],
+    () => buildChartSeries(rows, CHART_SERIES_DESCRIPTORS),
+    [rows],
   )
-  const chartData = useMemo(() => buildChartData(chartSeries), [chartSeries])
+  const selectedSeries = useMemo(
+    () => chartSeries.filter((series) => selectedCardKeySet.has(series.descriptor.cardKey)),
+    [chartSeries, selectedCardKeySet],
+  )
+  const availableCardKeys = useMemo(
+    () => new Set(chartSeries.map((series) => series.descriptor.cardKey)),
+    [chartSeries],
+  )
+  const unavailableSelectedDescriptors = CHART_SERIES_DESCRIPTORS.filter(
+    (descriptor) =>
+      selectedCardKeySet.has(descriptor.cardKey) && !availableCardKeys.has(descriptor.cardKey),
+  )
+  const chartData = useMemo(() => buildChartData(selectedSeries), [selectedSeries])
   const chartTimeDomain = useMemo(
     () => getChartTimeDomain(chartData, wateringCycles),
     [chartData, wateringCycles],
@@ -122,12 +174,46 @@ const HostedGen2TrendChart = ({
     () => getVisibleWateringMarkers(wateringCycles, chartTimeDomain),
     [chartTimeDomain, wateringCycles],
   )
-  const activeUnit = chartSeries[0]?.unit ?? ''
-  const activeGroupLabel =
-    HOSTED_GEN2_CHART_GROUPS.find((group) => group.key === activeGroup)?.label ?? activeGroup
-  const axisDomain = getAxisDomain(activeGroup, activeUnit)
+  const selectedAxes = getSelectedAxes(selectedSeries)
+  const primaryAxisId = selectedAxes[0]?.id
+  const rightAxisCount = Math.max(0, selectedAxes.length - 1)
+  const minimumCanvasWidth =
+    MINIMUM_PLOT_WIDTH + LEFT_AXIS_WIDTH + rightAxisCount * RIGHT_AXIS_WIDTH
   const hasRows = rows.length > 0
   const isBlockingLoad = isLoading && !hasRows
+
+  const handleToggleSeries = (cardKey: HostedGen2CardKey) => {
+    setSelectedCardKeys((currentKeys) =>
+      currentKeys.includes(cardKey)
+        ? currentKeys.filter((currentKey) => currentKey !== cardKey)
+        : CHART_SERIES_DESCRIPTORS
+            .filter(
+              (descriptor) =>
+                currentKeys.includes(descriptor.cardKey) || descriptor.cardKey === cardKey,
+            )
+            .map((descriptor) => descriptor.cardKey),
+    )
+  }
+
+  const handleToggleFamily = (group: HostedGen2ChartGroupKey) => {
+    const familyKeys = CHART_SERIES_DESCRIPTORS
+      .filter((descriptor) => descriptor.group === group)
+      .map((descriptor) => descriptor.cardKey)
+    const allSelected = familyKeys.every((cardKey) => selectedCardKeySet.has(cardKey))
+
+    setSelectedCardKeys((currentKeys) => {
+      const nextKeys = new Set(currentKeys)
+
+      familyKeys.forEach((cardKey) => {
+        if (allSelected) nextKeys.delete(cardKey)
+        else nextKeys.add(cardKey)
+      })
+
+      return CHART_SERIES_DESCRIPTORS
+        .filter((descriptor) => nextKeys.has(descriptor.cardKey))
+        .map((descriptor) => descriptor.cardKey)
+    })
+  }
 
   return (
     <section
@@ -143,39 +229,97 @@ const HostedGen2TrendChart = ({
         <p className="hosted-gen2-trend-chart-note">Loading Gen2 trend data...</p>
       ) : null}
 
-      <div
-        aria-label="Trend measurement family"
-        className="hosted-gen2-trend-chart-toggles"
-        role="group"
-      >
-        {HOSTED_GEN2_CHART_GROUPS.map((group) => (
-          <button
-            aria-pressed={activeGroup === group.key}
-            className={[
-              'hosted-gen2-trend-chart-toggle',
-              activeGroup === group.key ? 'is-selected' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            key={group.key}
-            onClick={() => setActiveGroup(group.key)}
-            type="button"
-          >
-            {group.label}
-          </button>
-        ))}
+      <div className="hosted-gen2-trend-chart-family-shortcuts">
+        <span className="hosted-gen2-trend-chart-control-label">Select families</span>
+        <div aria-label="Trend measurement family shortcuts" role="group">
+          {HOSTED_GEN2_CHART_GROUPS.map((group) => {
+            const familyDescriptors = CHART_SERIES_DESCRIPTORS.filter(
+              (descriptor) => descriptor.group === group.key,
+            )
+            const selectedCount = familyDescriptors.filter((descriptor) =>
+              selectedCardKeySet.has(descriptor.cardKey),
+            ).length
+            const pressedState: boolean | 'mixed' =
+              selectedCount === 0
+                ? false
+                : selectedCount === familyDescriptors.length
+                  ? true
+                  : 'mixed'
+
+            return (
+              <button
+                aria-pressed={pressedState}
+                className={[
+                  'hosted-gen2-trend-chart-family-shortcut',
+                  selectedCount > 0 ? 'is-selected' : '',
+                ].filter(Boolean).join(' ')}
+                key={group.key}
+                onClick={() => handleToggleFamily(group.key)}
+                type="button"
+              >
+                {group.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {!isBlockingLoad && chartSeries.length === 0 ? (
-        <p className="hosted-gen2-trend-chart-note">
-          No usable {activeGroupLabel} readings are available for this device/window yet.
+      <fieldset className="hosted-gen2-trend-chart-series-controls">
+        <legend>Readings</legend>
+        <div className="hosted-gen2-trend-chart-series-toggles">
+          {CHART_SERIES_DESCRIPTORS.map((descriptor) => {
+            const isSelected = selectedCardKeySet.has(descriptor.cardKey)
+
+            return (
+              <label
+                className={[
+                  'hosted-gen2-trend-chart-toggle',
+                  isSelected ? 'is-selected' : '',
+                ].filter(Boolean).join(' ')}
+                key={descriptor.cardKey}
+                style={{
+                  '--hosted-gen2-series-color': SERIES_COLORS[descriptor.cardKey],
+                } as CSSProperties}
+              >
+                <input
+                  checked={isSelected}
+                  onChange={() => handleToggleSeries(descriptor.cardKey)}
+                  type="checkbox"
+                />
+                <span>{descriptor.label}</span>
+              </label>
+            )
+          })}
+        </div>
+      </fieldset>
+
+      {selectedCardKeys.length > 0 && selectedSeries.length > 0 && unavailableSelectedDescriptors.length > 0 ? (
+        <p className="hosted-gen2-trend-chart-series-status">
+          Unavailable in this window: {unavailableSelectedDescriptors.map((descriptor) => descriptor.label).join(', ')}
         </p>
       ) : null}
 
-      {!isBlockingLoad && chartSeries.length > 0 ? (
+      {!isBlockingLoad && selectedCardKeys.length === 0 ? (
+        <p className="hosted-gen2-trend-chart-note">
+          Select one or more readings to chart.
+        </p>
+      ) : null}
+
+      {!isBlockingLoad && selectedCardKeys.length > 0 && selectedSeries.length === 0 ? (
+        <p className="hosted-gen2-trend-chart-note">
+          Selected readings are unavailable in this window.
+        </p>
+      ) : null}
+
+      {!isBlockingLoad && selectedSeries.length > 0 ? (
         <div className="hosted-gen2-trend-chart-frame">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 20, right: 12, left: 12, bottom: 5 }}>
+          <div className="hosted-gen2-trend-chart-frame-scroll">
+            <div
+              className="hosted-gen2-trend-chart-canvas"
+              style={{ minWidth: `${minimumCanvasWidth}px` }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 20, right: 12, left: 12, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="timestampMs"
@@ -185,41 +329,51 @@ const HostedGen2TrendChart = ({
                 tickFormatter={formatAxisTimestamp}
                 minTickGap={28}
               />
-              <YAxis
-                yAxisId={ACTIVE_FAMILY_AXIS_ID}
-                orientation="left"
-                width={52}
-                tickMargin={3}
-                domain={axisDomain}
-                axisLine={{ stroke: chartSeries[0].color }}
-                tickLine={{ stroke: chartSeries[0].color }}
-                tick={{ fill: chartSeries[0].color, fontSize: 12 }}
-                label={{
-                  value: activeUnit,
-                  angle: -90,
-                  position: 'insideLeft',
-                  dx: -5,
-                  fill: chartSeries[0].color,
-                  style: { textAnchor: 'middle' },
-                }}
-              />
+              {selectedAxes.map((axis, index) => {
+                const isLeftAxis = index === 0
+                const isOutermostRightAxis = index === selectedAxes.length - 1
+
+                return (
+                  <YAxis
+                    axisLine={{ stroke: axis.color }}
+                    domain={axis.domain}
+                    key={axis.id}
+                    label={{
+                      value: isLeftAxis ? axis.fullLabel : axis.compactLabel,
+                      angle: isLeftAxis ? -90 : 90,
+                      position: isLeftAxis ? 'insideLeft' : 'insideRight',
+                      dx: isLeftAxis ? -5 : isOutermostRightAxis ? 4 : -10,
+                      fill: axis.color,
+                      style: { textAnchor: 'middle' },
+                    }}
+                    orientation={isLeftAxis ? 'left' : 'right'}
+                    tick={{ fill: axis.color, fontSize: 12 }}
+                    tickLine={{ stroke: axis.color }}
+                    tickMargin={3}
+                    width={isLeftAxis ? LEFT_AXIS_WIDTH : RIGHT_AXIS_WIDTH}
+                    yAxisId={axis.id}
+                  />
+                )
+              })}
               <Tooltip
-                formatter={(value, name) => {
-                  const series = chartSeries.find((candidate) => candidate.label === String(name))
+                formatter={(value, _name, item) => {
+                  const series = selectedSeries.find(
+                    (candidate) => candidate.dataKey === String(item.dataKey),
+                  )
                   return [
-                    formatTooltipValue(Number(value), activeGroup, series?.unit ?? activeUnit),
-                    series?.label ?? String(name),
+                    formatTooltipValue(Number(value), series),
+                    series?.label ?? String(item.name),
                   ]
                 }}
                 labelFormatter={(label) => formatTooltipTimestamp(Number(label))}
                 labelStyle={{ color: '#111827', fontWeight: 700, marginBottom: '0.25rem' }}
               />
               <Legend />
-              {visibleWateringMarkers.map((cycle) => (
+              {primaryAxisId ? visibleWateringMarkers.map((cycle) => (
                 <ReferenceLine
                   key={cycle.id}
                   x={cycle.startTimestampMs}
-                  yAxisId={ACTIVE_FAMILY_AXIS_ID}
+                  yAxisId={primaryAxisId}
                   stroke="#2563eb"
                   strokeDasharray="4 4"
                   strokeWidth={1.5}
@@ -232,12 +386,12 @@ const HostedGen2TrendChart = ({
                     fontWeight: 800,
                   }}
                 />
-              ))}
-              {chartSeries.map((series) => (
+              )) : null}
+              {selectedSeries.map((series) => (
                 <Line
                   key={series.dataKey}
                   name={series.label}
-                  yAxisId={ACTIVE_FAMILY_AXIS_ID}
+                  yAxisId={series.axisId}
                   type="monotone"
                   dataKey={series.dataKey}
                   stroke={series.color}
@@ -247,8 +401,10 @@ const HostedGen2TrendChart = ({
                   isAnimationActive={false}
                 />
               ))}
-            </LineChart>
-          </ResponsiveContainer>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
       ) : null}
     </section>
@@ -277,27 +433,15 @@ const buildChartSeries = (
     return plottedRows.length > 0 ? [{ descriptor, rows: plottedRows }] : []
   })
 
-  const firstPreparedSeries = preparedSeries[0]
-
-  if (!firstPreparedSeries) {
-    return []
-  }
-
-  const activeUnit = getNewestRow(firstPreparedSeries.rows)?.measurement_unit ?? ''
-  const normalizedActiveUnit = normalizeHostedGen2ComparisonText(activeUnit)
-
   return preparedSeries.flatMap(({ descriptor, rows: candidateRows }) => {
-    const compatibleCandidateRows = candidateRows.filter(
-      (row) => normalizeHostedGen2ComparisonText(row.measurement_unit) === normalizedActiveUnit,
-    )
-    const identityRow = getNewestRow(compatibleCandidateRows)
+    const identityRow = getNewestRow(candidateRows)
 
     if (!identityRow) {
       return []
     }
 
     const compoundIdentity = getHostedGen2ChartSeriesIdentity(identityRow)
-    const compatibleRows = compatibleCandidateRows.filter(
+    const compatibleRows = candidateRows.filter(
       (row) => getHostedGen2ChartSeriesIdentity(row) === compoundIdentity,
     )
     const rows = resolveDuplicateSeriesRows(compatibleRows)
@@ -309,13 +453,20 @@ const buildChartSeries = (
 
     // Compound identity keeps same-name physical sensors in separate Recharts data keys.
     const dataKey = `series:${getHostedGen2ChartSeriesIdentity(representativeRow)}`
+    const unit = representativeRow.measurement_unit?.trim() ?? ''
+    const axisId = getAxisIdForUnit(unit)
+
+    if (!axisId) {
+      return []
+    }
 
     return [{
       descriptor,
       dataKey,
       label: descriptor.label,
-      unit: representativeRow.measurement_unit?.trim() ?? '',
+      unit,
       color: SERIES_COLORS[descriptor.cardKey],
+      axisId,
       rows,
     }]
   })
@@ -470,32 +621,32 @@ const buildChartData = (series: HostedGen2ChartSeries[]): HostedGen2ChartPoint[]
   return Array.from(points.values()).sort((left, right) => left.timestampMs - right.timestampMs)
 }
 
-// One active compatible family uses one left-side axis and its actual unit.
-const getAxisDomain = (
-  group: HostedGen2ChartGroupKey,
-  unit: string,
-): AxisDomain | undefined => {
-  const normalizedUnit = normalizeHostedGen2ComparisonText(unit)
-
-  switch (group) {
-    case 'moisture':
-      return withDefaultAxisDomain(0, 100)
-    case 'temperature':
-      return isFahrenheitUnit(normalizedUnit) ? withDefaultAxisDomain(20, 100) : undefined
-    case 'humidity':
-      return isPercentUnit(normalizedUnit) ? [0, 100] : undefined
-    case 'pressure':
-      return normalizedUnit === 'hpa' ? withDefaultAxisDomain(950, 1050) : undefined
-    case 'light':
-      return undefined
+const getAxisIdForUnit = (unit: string): HostedGen2AxisId | null => {
+  switch (normalizeHostedGen2ComparisonText(unit)) {
+    case 'f':
+      return 'F'
+    case '%':
+      return '%'
+    case 'index':
+      return 'index'
+    case 'hpa':
+      return 'hPa'
+    case 'lux':
+      return 'lux'
+    default:
+      return null
   }
 }
 
-const isFahrenheitUnit = (unit: string): boolean =>
-  ['f', '°f', 'deg f', 'fahrenheit'].includes(unit)
+const getSelectedAxes = (
+  series: HostedGen2ChartSeries[],
+): HostedGen2AxisConfig[] => {
+  const selectedAxisIds = new Set(series.map((chartSeries) => chartSeries.axisId))
 
-const isPercentUnit = (unit: string): boolean =>
-  ['%', 'percent', 'percentage', 'pct'].includes(unit)
+  return Object.values(AXIS_CONFIGS)
+    .filter((axis) => selectedAxisIds.has(axis.id))
+    .sort((left, right) => left.order - right.order)
+}
 
 const getChartTimeDomain = (
   chartData: HostedGen2ChartPoint[],
@@ -554,15 +705,16 @@ const formatTooltipTimestamp = (timestampMs: number): string =>
 
 const formatTooltipValue = (
   value: number,
-  group: HostedGen2ChartGroupKey,
-  unit: string,
+  series: HostedGen2ChartSeries | undefined,
 ): string => {
   if (!Number.isFinite(value)) {
     return 'Not available'
   }
 
-  const maximumFractionDigits = group === 'moisture' ? 1 : 2
+  const maximumFractionDigits =
+    series?.descriptor.derivedValue === 'relative-moisture-index' ? 1 : 2
   const formattedValue = value.toLocaleString([], { maximumFractionDigits })
+  const unit = series?.unit ?? ''
 
   return unit ? `${formattedValue} ${unit}` : formattedValue
 }

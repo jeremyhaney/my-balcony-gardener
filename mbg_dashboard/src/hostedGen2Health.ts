@@ -385,17 +385,17 @@ const getAttentionItems = ({
   const add = (key: string, message: string) => items.push({ key, message })
 
   if (rows.length === 0) add('no-history', 'No measurement history was returned for this device and window.')
-  else if (!latestSample) add('no-timestamp', 'Returned measurement rows have no parseable package timestamp.')
+  else if (!latestSample) add('no-timestamp', 'Returned garden readings have no parseable reading time.')
   if (readingAge.latestAgeMs !== null && readingAge.latestAgeMs < 0) {
     add(
       'future-timestamp',
-      'The latest measurement package timestamp is later than the current dashboard time.',
+      'The latest reading time is later than the current dashboard time.',
     )
   } else if (
     readingAge.latestAgeMs !== null &&
     readingAge.latestAgeMs > FRESHNESS_THRESHOLD_MS
   ) {
-    add('not-current', 'The latest measurement package is older than 45 minutes.')
+    add('not-current', 'The latest reading is older than 45 minutes.')
   }
   if (latestSample && sensorAvailability.absentEntryCount > 0) {
     add('absent-entries', `Expected readings not reported: ${sensorAvailability.absentEntryLabels.join(', ')}.`)
@@ -413,19 +413,19 @@ const getAttentionItems = ({
     )
   }
   if (readingHistory.hasCoverageWarning) {
-    add('coverage', 'The selected window contains less than 70% of the expected report packages.')
+    add('coverage', 'The selected window contains less than 70% of the expected reading updates.')
   }
   if (readingHistory.hasGapWarning) {
-    add('gap', 'The selected window contains a gap between report packages longer than 45 minutes.')
+    add('gap', 'The selected window contains a gap between reading updates longer than 45 minutes.')
   }
   if (latestReadingChecks.invalidEntryCount > 0) {
-    add('invalid', `${latestReadingChecks.invalidEntryCount} expected latest-package readings report valid as false.`)
+    add('invalid', `${latestReadingChecks.invalidEntryCount} expected latest readings report valid as false.`)
   }
   if (latestReadingChecks.qualityWarningEntryCount > 0) {
-    add('quality', `${latestReadingChecks.qualityWarningEntryCount} expected latest-package readings report quality metadata requiring review.`)
+    add('quality', `${latestReadingChecks.qualityWarningEntryCount} expected latest readings report quality metadata requiring review.`)
   }
   if (latestReadingChecks.missingValueEntryCount > 0) {
-    add('missing-values', `${latestReadingChecks.missingValueEntryCount} expected latest-package readings have no finite numeric value.`)
+    add('missing-values', `${latestReadingChecks.missingValueEntryCount} expected latest readings have no finite numeric value.`)
   }
   if (latestReadingChecks.sensorNotDetectedEntryCount > 0) {
     add('not-detected', `${latestReadingChecks.sensorNotDetectedEntryCount} expected installed sensors report explicit not-detected evidence.`)
@@ -435,7 +435,7 @@ const getAttentionItems = ({
     latestReadingChecks.matchedEntryCount > latestReadingChecks.profileNotInstalledEntryCount &&
     latestReadingChecks.usableEntryCount === 0
   ) {
-    add('no-usable', 'The latest package contains no usable expected readings.')
+    add('no-usable', 'The latest reading update contains no usable expected readings.')
   }
 
   return items

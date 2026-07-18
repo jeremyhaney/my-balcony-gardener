@@ -49,6 +49,21 @@
   padding: 0.45rem 0.7rem;
 }
 
+/* Hosted status controls share one stable closed silhouette. */
+.hosted-route .sensor-health-summary {
+  box-sizing: border-box;
+  width: 240px;
+  min-width: 240px;
+  height: 58px;
+  min-height: 58px;
+  padding: 0.45rem 0.7rem;
+  justify-content: center;
+}
+
+.hosted-route .sensor-health-summary-healthy {
+  padding: 0.45rem 0.7rem;
+}
+
 .sensor-health-summary::-webkit-details-marker {
   display: none;
 }
@@ -281,6 +296,11 @@
     width: min(185px, 100%);
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .hosted-route .sensor-health-summary {
+    width: min(240px, 100%);
+    min-width: 0;
   }
 
   .sensor-health-details {

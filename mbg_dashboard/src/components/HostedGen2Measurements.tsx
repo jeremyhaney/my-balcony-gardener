@@ -107,8 +107,8 @@ const HostedGen2Measurements = ({
           <h2>Garden Readings</h2>
           <p className="hosted-gen2-measurements-updated">
             {latestPackage
-              ? `Latest package ${formatTimestamp(latestPackage.measuredAt)}`
-              : 'Latest package not available'}
+              ? `Latest reading ${formatTimestamp(latestPackage.measuredAt)}`
+              : 'Latest reading not available'}
           </p>
         </div>
         {isRefreshing ? (
@@ -210,7 +210,7 @@ const MeasurementDetails = ({ card }: { card: HostedGen2CatalogCardModel }) => {
         <dt>Expected measurement</dt>
         <dd>{card.descriptor.canonicalMeasurementName}</dd>
 
-        <dt>Latest package timestamp</dt>
+        <dt>Latest reading time</dt>
         <dd>{formatTimestamp(card.latestPackageMeasuredAt)}</dd>
 
         {card.displayRow ? (
@@ -662,8 +662,8 @@ const isFiniteRowValue = (
 
 const formatDisplaySource = (card: HostedGen2CatalogCardModel): string => {
   if (card.recentGoodRow) return 'Recent good reading'
-  if (card.state === 'Not Current') return 'Latest non-current package reading'
-  return 'Latest package reading'
+  if (card.state === 'Not Current') return 'Latest non-current reading'
+  return 'Latest reading'
 }
 
 const formatRecentGoodEvidence = (

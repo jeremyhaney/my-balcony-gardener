@@ -88,10 +88,10 @@ export const HOSTED_GEN2_ELEMENT_SECTIONS: ReadonlyArray<{
   key: HostedGen2ElementSectionKey
   label: string
 }> = [
-  { key: 'fire', label: 'Fire · Light' },
-  { key: 'wind', label: 'Wind · Air' },
-  { key: 'water', label: 'Water · Reservoir' },
-  { key: 'earth', label: 'Earth · Soil' },
+  { key: 'fire', label: 'Light' },
+  { key: 'wind', label: 'Air' },
+  { key: 'water', label: 'Water' },
+  { key: 'earth', label: 'Soil' },
 ]
 
 // Frozen 11-card catalog.
