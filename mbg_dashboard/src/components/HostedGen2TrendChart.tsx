@@ -73,10 +73,38 @@ type HostedGen2AxisConfig = {
   domain?: AxisDomain
 }
 
+type WateringLabelAnchor = 'start' | 'middle' | 'end'
+
+type HostedGen2WateringMarkerPresentation = {
+  cycle: HostedWateringCycle
+  label: string
+  lane: number
+  anchor: WateringLabelAnchor
+}
+
+type WateringMarkerLabelProps = {
+  label: string
+  lane: number
+  anchor: WateringLabelAnchor
+  markerId: string
+  viewBox?: {
+    x?: number
+    y?: number
+  }
+}
+
 const MAX_WATERING_MARKER_COUNT = 6
 const LEFT_AXIS_WIDTH = 52
 const RIGHT_AXIS_WIDTH = 54
 const MINIMUM_PLOT_WIDTH = 560
+const BASE_CHART_TOP_MARGIN = 20
+const WATERING_LABEL_LANE_HEIGHT = 15
+const WATERING_LABEL_BASE_OFFSET = 8
+const WATERING_LABEL_ESTIMATED_CHARACTER_WIDTH = 6.5
+const WATERING_LABEL_HORIZONTAL_PADDING = 12
+const WATERING_LABEL_MINIMUM_WIDTH = 54
+const WATERING_LABEL_MINIMUM_GAP = 10
+const WATERING_LABEL_EDGE_THRESHOLD = 0.14
 
 const DEFAULT_SELECTED_CARD_KEYS: readonly HostedGen2CardKey[] = [
   'air-temperature',
@@ -90,17 +118,18 @@ const CHART_USABLE_QUALITY_VALUES = new Set([
   'okay',
 ])
 
+// Frozen series colors keep controls, lines, legends, and tooltips visually distinct.
 const SERIES_COLORS: Record<HostedGen2ChartSeriesDescriptor['cardKey'], string> = {
-  'light-l01': '#ca8a04',
-  'light-l02': '#7c3aed',
-  'light-l03': '#0f766e',
-  'moisture-m01': '#0f766e',
-  'moisture-m02': '#7c3aed',
-  'moisture-m03': '#ca8a04',
-  'air-temperature': '#ef4444',
-  'soil-temperature': '#374151',
+  'light-l01': '#d97706',
+  'light-l02': '#db2777',
+  'light-l03': '#0891b2',
+  'moisture-m01': '#16a34a',
+  'moisture-m02': '#2563eb',
+  'moisture-m03': '#7c3aed',
+  'air-temperature': '#dc2626',
+  'soil-temperature': '#78350f',
   humidity: '#0f766e',
-  'atmospheric-pressure': '#7c3aed',
+  'atmospheric-pressure': '#a21caf',
   'reservoir-water': '#64748b',
 }
 
@@ -174,6 +203,19 @@ const HostedGen2TrendChart = ({
     () => getVisibleWateringMarkers(wateringCycles, chartTimeDomain),
     [chartTimeDomain, wateringCycles],
   )
+  const wateringMarkerPresentations = useMemo(
+    () => prepareWateringMarkerPresentations(
+      visibleWateringMarkers,
+      chartTimeDomain,
+      MINIMUM_PLOT_WIDTH,
+    ),
+    [chartTimeDomain, visibleWateringMarkers],
+  )
+  const wateringLabelLaneCount = wateringMarkerPresentations.length === 0
+    ? 0
+    : Math.max(...wateringMarkerPresentations.map((marker) => marker.lane)) + 1
+  const chartTopMargin =
+    BASE_CHART_TOP_MARGIN + wateringLabelLaneCount * WATERING_LABEL_LANE_HEIGHT
   const selectedAxes = getSelectedAxes(selectedSeries)
   const primaryAxisId = selectedAxes[0]?.id
   const rightAxisCount = Math.max(0, selectedAxes.length - 1)
@@ -319,7 +361,10 @@ const HostedGen2TrendChart = ({
               style={{ minWidth: `${minimumCanvasWidth}px` }}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 20, right: 12, left: 12, bottom: 5 }}>
+                <LineChart
+                  data={chartData}
+                  margin={{ top: chartTopMargin, right: 12, left: 12, bottom: 5 }}
+                >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="timestampMs"
@@ -369,7 +414,12 @@ const HostedGen2TrendChart = ({
                 labelStyle={{ color: '#111827', fontWeight: 700, marginBottom: '0.25rem' }}
               />
               <Legend />
-              {primaryAxisId ? visibleWateringMarkers.map((cycle) => (
+              {primaryAxisId ? wateringMarkerPresentations.map(({
+                cycle,
+                label,
+                lane,
+                anchor,
+              }) => (
                 <ReferenceLine
                   key={cycle.id}
                   x={cycle.startTimestampMs}
@@ -378,13 +428,14 @@ const HostedGen2TrendChart = ({
                   strokeDasharray="4 4"
                   strokeWidth={1.5}
                   ifOverflow="visible"
-                  label={{
-                    value: formatWateringCycleMarkerLabel(cycle),
-                    position: 'insideTop',
-                    fill: '#1d4ed8',
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
+                  label={
+                    <WateringMarkerLabel
+                      anchor={anchor}
+                      label={label}
+                      lane={lane}
+                      markerId={cycle.id}
+                    />
+                  }
                 />
               )) : null}
               {selectedSeries.map((series) => (
@@ -646,6 +697,101 @@ const getSelectedAxes = (
   return Object.values(AXIS_CONFIGS)
     .filter((axis) => selectedAxisIds.has(axis.id))
     .sort((left, right) => left.order - right.order)
+}
+
+// Chronological collision planning assigns the first reusable vertical label lane.
+const prepareWateringMarkerPresentations = (
+  wateringCycles: HostedWateringCycle[],
+  chartTimeDomain: TimeDomain,
+  plotWidth: number,
+): HostedGen2WateringMarkerPresentation[] => {
+  const laneRightEdges: number[] = []
+  const domainWidth = chartTimeDomain[1] - chartTimeDomain[0]
+
+  return [...wateringCycles]
+    .sort(
+      (left, right) =>
+        left.startTimestampMs - right.startTimestampMs || left.id.localeCompare(right.id),
+    )
+    .map((cycle) => {
+      const label = formatWateringCycleMarkerLabel(cycle)
+      const normalizedPosition = Math.min(
+        1,
+        Math.max(0, (cycle.startTimestampMs - chartTimeDomain[0]) / domainWidth),
+      )
+      const horizontalPosition = normalizedPosition * plotWidth
+      const labelWidth = Math.max(
+        WATERING_LABEL_MINIMUM_WIDTH,
+        label.length * WATERING_LABEL_ESTIMATED_CHARACTER_WIDTH +
+          WATERING_LABEL_HORIZONTAL_PADDING,
+      )
+      const anchor: WateringLabelAnchor = normalizedPosition <= WATERING_LABEL_EDGE_THRESHOLD
+        ? 'start'
+        : normalizedPosition >= 1 - WATERING_LABEL_EDGE_THRESHOLD
+          ? 'end'
+          : 'middle'
+      const estimatedLeft = anchor === 'start'
+        ? horizontalPosition
+        : anchor === 'end'
+          ? horizontalPosition - labelWidth
+          : horizontalPosition - labelWidth / 2
+      const estimatedRight = anchor === 'start'
+        ? horizontalPosition + labelWidth
+        : anchor === 'end'
+          ? horizontalPosition
+          : horizontalPosition + labelWidth / 2
+      const intervalLeft = Math.max(0, estimatedLeft)
+      const intervalRight = Math.min(plotWidth, estimatedRight)
+      let lane = laneRightEdges.findIndex(
+        (rightEdge) => rightEdge + WATERING_LABEL_MINIMUM_GAP <= intervalLeft,
+      )
+
+      if (lane === -1) {
+        lane = laneRightEdges.length
+      }
+
+      laneRightEdges[lane] = intervalRight
+
+      return { cycle, label, lane, anchor }
+    })
+}
+
+// Recharts supplies each marker coordinate to this lane-aware SVG label.
+const WateringMarkerLabel = ({
+  label,
+  lane,
+  anchor,
+  markerId,
+  viewBox,
+}: WateringMarkerLabelProps) => {
+  const x = viewBox?.x
+  const plotTop = viewBox?.y
+
+  if (
+    typeof x !== 'number' ||
+    typeof plotTop !== 'number' ||
+    !Number.isFinite(x) ||
+    !Number.isFinite(plotTop)
+  ) {
+    return null
+  }
+
+  return (
+    <text
+      className="hosted-gen2-trend-chart-watering-label"
+      data-watering-label-lane={lane}
+      data-watering-marker-id={markerId}
+      fill="#1d4ed8"
+      fontSize={11}
+      fontWeight={800}
+      pointerEvents="none"
+      textAnchor={anchor}
+      x={x}
+      y={plotTop - WATERING_LABEL_BASE_OFFSET - lane * WATERING_LABEL_LANE_HEIGHT}
+    >
+      {label}
+    </text>
+  )
 }
 
 const getChartTimeDomain = (
