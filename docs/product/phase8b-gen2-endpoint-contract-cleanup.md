@@ -3,9 +3,9 @@
 - Phase 8B `/measurements` slice: COMPLETE / END-TO-END VALIDATED
 - Phase 8B `/capabilities` slice: COMPLETE / LIVE DEVICE VALIDATED
 - Phase 8B `/status` slice: COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED
-- Phase 8B overall endpoint cleanup: FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH
-- Phase 8B parent: FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH
-- Phase 8B.5 Gen2 Endpoint Integration and Closeout: FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH
+- Phase 8B overall endpoint cleanup: COMPLETE
+- Phase 8B parent: COMPLETE
+- Phase 8B.5 Gen2 Endpoint Integration and Closeout: COMPLETE / PRODUCTION VALIDATED
 - Date: 2026-07-18
 - Device profile under primary validation: `balcony02-gen2`
 - Device label: `Balcony02`
@@ -15,9 +15,9 @@
 
 ## Purpose
 
-This document freezes the approved external contracts and coordinated cloud/frontend semantics for the Gen2 endpoint cleanup before implementation begins.
+This document freezes the approved external contracts and coordinated cloud/frontend semantics for the completed Gen2 endpoint cleanup.
 
-The `/measurements`, `/capabilities`, and `/status` contracts are implemented and validated at their recorded evidence levels. Phase 8B.5 integrated hosted frontend closeout is FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH; production deployment validation remains pending.
+The `/measurements`, `/capabilities`, and `/status` contracts are implemented and validated at their recorded evidence levels. The Phase 8B.5 integrated hosted frontend closeout is complete, deployed, and production validated.
 
 It is the implementation specification for this phase. It does not authorize unrelated refactoring, pin changes, sensor changes, timing changes, watering changes, or control-policy changes.
 
@@ -61,7 +61,7 @@ WL01 semantics remain unchanged: HIGH means liquid detected, LOW means liquid no
 
 ## `/capabilities` live-device closeout — 2026-07-16
 
-Phase 8B.3 Gen2 `/capabilities` Static Contract Cleanup is COMPLETE / LIVE DEVICE VALIDATED. Phase 8B remains IN PROGRESS; Phase 8B.4 `/status` Nested Diagnostics Contract Cleanup is CURRENT / next, and Phase 8B.5 integrated endpoint closeout remains planned.
+Phase 8B.3 Gen2 `/capabilities` Static Contract Cleanup is COMPLETE / LIVE DEVICE VALIDATED. At this 2026-07-16 checkpoint, Phase 8B remained IN PROGRESS; Phase 8B.4 `/status` Nested Diagnostics Contract Cleanup was next, and Phase 8B.5 integrated endpoint closeout remained planned.
 
 All four Gen2 profiles built successfully: `balcony02-gen2`, `bench-proto-gen2`, `balcony-installed-gen2`, and `balcony-sensor-scout-01`. Only Balcony02 was uploaded. Live validation used label `Balcony02`, UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, firmware `phase8b-balcony02-proveout`, profile `balcony02-gen2`, and IP `10.0.0.69`.
 
@@ -82,7 +82,7 @@ The live response contained exactly ten modules in this order:
 
 M04 was configured with `installed:false`. L01 remained `installed:true` independently of current live detection. WL01 was the only module with `control_role:"watering_interlock"`. Two live responses were identical after normalizing only `reported_at`, and the validator ended with `All /measurements and /capabilities contract assertions passed.`
 
-The frozen `/measurements` contract remained unchanged and passed regression validation. `/status` remained unchanged and is deferred to Phase 8B.4. No frontend, SQL, Supabase, Cloudflare, pin, sensor, watering, cadence, threshold, duration, cooldown, relay, button, or interlock behavior changed.
+The frozen `/measurements` contract remained unchanged and passed regression validation. At this checkpoint, `/status` remained unchanged and was deferred to Phase 8B.4. No frontend, SQL, Supabase, Cloudflare, pin, sensor, watering, cadence, threshold, duration, cooldown, relay, button, or interlock behavior changed.
 
 ## /status live-device, cloud, and hosted-diagnostics closeout — 2026-07-17
 
@@ -106,17 +106,43 @@ This firmware/runtime checkpoint made no further changes to the already-applied 
 
 ## Phase 8B.5 integrated hosted frontend closeout — 2026-07-18
 
-Phase 8B.5 is FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH. A shared presentation contract defines the four Garden Reading sections, eleven deterministic cards, five compatible chart families, physical-series identity, historical DS18B20 `temperature` compatibility, and the unchanged Relative Moisture Index formula. Hosted Device selection appears before the status and interpretation path, while Window selection remains associated with the trend chart.
+Phase 8B.5 is COMPLETE / PRODUCTION VALIDATED. Final frontend commits `a291be6` (`Refine hosted readings and restore multi-axis trends`) and `a8b282e` (`Polish hosted trend colors and watering labels`) were pushed to `main`, deployed through the established production path, and visually validated in production on 2026-07-18.
 
-`Garden Reading Quality` reports Reading Age, Sensor Availability, Reading History, and Latest Reading Checks independently. `MBG Diagnostics` independently reports Device Reporting, Wi-Fi Connection, and Hosted Reporting. Garden Reading cards use explicit evidence states rather than generic trust prose. M01, M02, and M03 each derive an independent, unclamped Relative Moisture Index; raw ADC remains supporting evidence. Reservoir presentation requires current usable exact `0` or `1` evidence.
+### Final Garden Readings presentation
 
-The trend chart displays one compatible family at a time in exact Light, Moisture, Temperature, Humidity, and Pressure order, defaulting to Moisture. Compound chart identity keeps same-name physical sensors separate. Responsive layout was corrected across mobile, tablet, desktop, and wide desktop.
+The main title is `Garden Readings`, visible freshness wording uses `Latest reading`, and no customer-visible package terminology remains. The visible sections are Light, Air, Water, and Soil in that order. The frozen eleven cards remain Light L01, Light L02, Light L03, Air Temperature, Humidity, Atmospheric Pressure, Reservoir Water, Moisture M01, Moisture M02, Moisture M03, and Soil Temperature. Device selection remains before the interpretation path and Window remains within the chart. No chart disclaimer or light-level interpretation labels were added.
 
-Frontend lint passed, the TypeScript/Vite production build passed, and both final `git diff --check` runs passed. Local public `/demo` returned HTTP `200`; hosted DOM checks found every required title, section, family, and Window label in frozen order and found no Water Now. Microsoft Edge screenshots were captured and independently visually reviewed at `360`, `460`, `820`, and `1280` pixels. The visible hosted layout passed at all four widths without page-level horizontal overflow or overlapping panels. The public demo had no usable Moisture series, so its factual empty state was reviewed rather than a populated chart frame; the closed status disclosures meant their internal grids were confirmed by source/CSS and build validation rather than visible screenshot content.
+### Quality and diagnostics
 
-The original local validation attempt launched Vite in its default legacy mode. That was a validation-command configuration issue, not a source defect. The successful rerun used `VITE_MBG_DASHBOARD_MODE=hosted-readonly` only in the child Vite process. No `.env`, parent/system environment, source, or Vite configuration was changed.
+`Garden Reading Quality` and `MBG Diagnostics` remain separate evidence contracts whose closed hosted controls share a stable `240px × 58px` silhouette. Quality reports Reading Age, Sensor Availability, Reading History, and Latest Reading Checks. Diagnostics reports Device Reporting, Wi-Fi Connection, and Hosted Reporting. Their calculations were neither merged nor changed, and legacy/local generic control styling was not changed.
 
-No production deployment validation or customer/support credentialed browser validation occurred. No SQL, schema, Supabase, firmware, upload, device, watering-policy, or control-authority change occurred. No commit or push has occurred yet, and legacy local-dashboard retirement remains a separate unapproved future slice.
+### Final chart interaction and identity
+
+The chart exposes exactly ten independent native checkbox controls in descriptor order: Light L01, Light L02, Light L03, Moisture M01, Moisture M02, Moisture M03, Air Temperature, Soil Temperature, Humidity, and Atmospheric Pressure. Five non-exclusive family shortcuts appear in Light, Moisture, Temperature, Humidity, and Pressure order; partial families expose a mixed state. Air Temperature and Humidity are selected by default, no selection maximum is imposed, and arbitrary incoming measurements cannot create controls. Reservoir Water and Raw ADC are not customer chart series.
+
+Selections persist across row refreshes, Window and Device changes, temporary evidence loss, and in-place query changes; a full route reload restores the defaults. Selected unavailable readings stay selected and are reported factually. Compound physical-series keys keep L01/L02/L03 and M01/M02/M03 independent. DS18B20 uses canonical `soil temp` with historical `temperature` compatibility only for that sensor. Strict filtering excludes invalid, failed, missing, unavailable, stale-quality, profile-not-installed, sensor-not-detected, and non-finite evidence. Numeric timestamps merge equivalent instants, duplicate choice is deterministic, tooltips use actual prepared units, and legends use friendly labels.
+
+### Unit-driven axes
+
+Axis assignment is driven by the actual normalized prepared unit. `F` is shared by Air Temperature and Soil Temperature; `%` is used by Humidity; `index` is shared by Moisture M01/M02/M03; `hPa` is used by Atmospheric Pressure; and `lux` is shared by Light L01/L02/L03. Unsupported or missing units are omitted rather than plotted against a misleading axis. The first present unit axis appears on the left and additional unit axes appear on the right. Multiple families and units can be viewed simultaneously, with local horizontal scrolling when required instead of page-level overflow. Window remains inside the chart.
+
+### Relative Moisture Index
+
+M01, M02, and M03 independently derive `90 * (14820 - raw_adc) / (14820 - 11230)`. Chart values remain internally unrounded and unclamped, and domains may expand below `0` or above `100`. Raw ADC remains supporting evidence, is not presented as a percent, and grants no watering authority.
+
+### Chart polish and watering markers
+
+All ten customer-chart series have unique stable colors; each series color drives its checkbox/control, line, and legend identity while axis colors remain independent and unit-based. Selection behavior did not change with this polish.
+
+The existing maximum of six watering markers remains. Marker timestamps, wording, and blue dashed lines are unchanged. Labels sort deterministically by watering timestamp with event ID as the tie-breaker, and closely spaced labels are assigned reusable vertical lanes. Chart top margin grows with lane count; marker lines are never shifted horizontally. Production screenshots showed separated labels on populated 24-hour and 7-day charts. This is production visual evidence, not a claim of formal automated production rectangle-intersection proof.
+
+### Validation and production evidence
+
+ESLint, TypeScript/Vite production builds, and `git diff --check` passed. Local hosted-readonly review covered approximately `360`, `460`, `820`, and `1280` pixels. Production visual review confirmed Light/Air/Water/Soil, `Latest reading`, equal Quality and Diagnostics controls, ten series controls, five family shortcuts, mixed-family selection, simultaneous five-unit axes, unique series colors, actual tooltip units, friendly legends, separated watering labels on populated 24-hour and 7-day charts, no page-level horizontal overflow, and no hosted Water Now.
+
+### Unchanged boundaries
+
+Phase 8B.5 made no firmware modification or upload; no SQL, schema, Supabase, pin, sensor assignment, I2C/mux topology, threshold, cadence, duration, cooldown, watering-policy, control-authority, hosted command/control, Water Now, or Gen1 behavior change. Local firmware remains the watering authority. The recent mux/I2C interruption was neither resolved nor investigated by this phase.
 
 ## Locked implementation boundaries
 
