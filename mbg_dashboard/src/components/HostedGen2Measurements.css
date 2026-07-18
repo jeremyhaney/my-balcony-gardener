@@ -338,29 +338,42 @@
     grid-template-columns: 1fr;
   }
 
+  .hosted-gen2-measurements-trend {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .hosted-gen2-measurements-sparkline {
+    margin-left: auto;
+  }
+
 }
 
+/* Tablet sections use a predictable two-card grid without asymmetric group widths. */
 @media (min-width: 641px) and (max-width: 980px) {
-  .hosted-gen2-measurements-card-grid {
+  .hosted-gen2-measurements-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .hosted-gen2-measurements-group .hosted-gen2-measurements-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 641px) {
+/* Desktop sections follow their frozen one-, three-, and four-card catalog shapes. */
+@media (min-width: 981px) {
   .hosted-gen2-measurements-groups {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     align-items: start;
   }
 
-  .hosted-gen2-measurements-group.is-air {
-    grid-column: 1 / -1;
-  }
-
-  .hosted-gen2-measurements-group .hosted-gen2-measurements-card-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-
-  .hosted-gen2-measurements-group.is-air .hosted-gen2-measurements-card-grid {
+  .hosted-gen2-measurements-group.is-fire .hosted-gen2-measurements-card-grid,
+  .hosted-gen2-measurements-group.is-wind .hosted-gen2-measurements-card-grid,
+  .hosted-gen2-measurements-group.is-water .hosted-gen2-measurements-card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hosted-gen2-measurements-group.is-earth .hosted-gen2-measurements-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

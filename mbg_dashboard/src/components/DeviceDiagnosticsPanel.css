@@ -125,7 +125,7 @@
 
 .device-diagnostics-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
@@ -206,6 +206,16 @@
 
 .device-diagnostics-advanced {
   margin-top: 0.7rem;
+}
+
+.device-diagnostics-advanced section + section {
+  margin-top: 0.85rem;
+}
+
+.device-diagnostics-advanced section h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.2;
 }
 
 .device-diagnostics-advanced summary {

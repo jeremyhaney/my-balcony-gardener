@@ -1,4 +1,8 @@
 import { FRESHNESS_THRESHOLD_MS } from './deviceStatusHealth'
+import {
+  getHostedGen2CompoundIdentity,
+  normalizeHostedGen2ComparisonText,
+} from './hostedGen2Presentation'
 import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
 
 export type HostedGen2DisplayMode = 'latest' | 'recent-good' | 'unavailable'
@@ -22,14 +26,16 @@ const UNUSABLE_QUALITY_VALUES = new Set([
   'not installed',
   'unavailable',
 ])
+const RECENT_GOOD_QUALITY_VALUES = new Set(['good', 'diagnostic', 'ok', 'okay'])
 
 export const getHostedGen2MeasurementDisplayModels = (
   rows: HostedGen2MeasurementRow[],
 ): HostedGen2MeasurementDisplayModel[] => {
   const rowsByIdentity = new Map<string, HostedGen2MeasurementRow[]>()
 
+  // Generic display models share the approved compound device/sensor/measurement/unit identity.
   rows.forEach((row) => {
-    const identity = getMeasurementIdentity(row)
+    const identity = getHostedGen2CompoundIdentity(row)
     const existingRows = rowsByIdentity.get(identity)
 
     if (existingRows) {
@@ -43,6 +49,37 @@ export const getHostedGen2MeasurementDisplayModels = (
   return Array.from(rowsByIdentity.values())
     .map((identityRows) => getDisplayModelForIdentity(identityRows))
     .filter((model): model is HostedGen2MeasurementDisplayModel => Boolean(model))
+}
+
+// Catalog cards use a strict exact-identity recent-good lookup for an unusable latest row.
+export const getHostedGen2RecentGoodRow = (
+  latestRow: HostedGen2MeasurementRow,
+  rows: readonly HostedGen2MeasurementRow[],
+): HostedGen2MeasurementRow | null => {
+  if (isApprovedRecentGoodCandidate(latestRow)) {
+    return null
+  }
+
+  const latestMs = getTimestampMs(latestRow.measured_at)
+  if (!Number.isFinite(latestMs)) {
+    return null
+  }
+
+  const identity = getHostedGen2CompoundIdentity(latestRow)
+
+  return (
+    rows
+      .filter((row) => getHostedGen2CompoundIdentity(row) === identity)
+      .filter(isApprovedRecentGoodCandidate)
+      .map((row) => ({ row, measuredAtMs: getTimestampMs(row.measured_at) }))
+      .filter(
+        ({ measuredAtMs }) =>
+          Number.isFinite(measuredAtMs) &&
+          measuredAtMs <= latestMs &&
+          latestMs - measuredAtMs <= FRESHNESS_THRESHOLD_MS,
+      )
+      .sort((left, right) => right.measuredAtMs - left.measuredAtMs)[0]?.row ?? null
+  )
 }
 
 export const isDisplayableHostedGen2Row = (
@@ -169,25 +206,13 @@ const getTimestampMs = (value: string): number => {
   return Number.isFinite(timestampMs) ? timestampMs : Number.NaN
 }
 
-const getMeasurementIdentity = (row: HostedGen2MeasurementRow): string =>
-  [
-    row.device_id,
-    normalizeText(row.sensor_key),
-    normalizeText(row.sensor_type),
-    getCompatibleMeasurementName(row),
-    normalizeText(row.measurement_unit),
-  ].join('|')
-
-const getCompatibleMeasurementName = (row: HostedGen2MeasurementRow): string => {
-  const measurementName = normalizeText(row.measurement_name)
-  const sensorType = normalizeText(row.sensor_type)
-  const sensorKey = normalizeText(row.sensor_key)
-
-  return measurementName === 'temperature' &&
-    (sensorType.includes('ds18b20') || sensorKey === 'ds18b20_temperature')
-    ? 'soil temp'
-    : measurementName
-}
+const isApprovedRecentGoodCandidate = (
+  row: HostedGen2MeasurementRow,
+): row is HostedGen2MeasurementRow & { measurement_value: number } =>
+  typeof row.measurement_value === 'number' &&
+  Number.isFinite(row.measurement_value) &&
+  row.valid === true &&
+  RECENT_GOOD_QUALITY_VALUES.has(normalizeHostedGen2ComparisonText(row.quality))
 
 const normalizeText = (value: string | null | undefined): string =>
   value?.trim().toLowerCase() ?? ''

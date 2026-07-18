@@ -3,10 +3,10 @@
 - Phase 8B `/measurements` slice: COMPLETE / END-TO-END VALIDATED
 - Phase 8B `/capabilities` slice: COMPLETE / LIVE DEVICE VALIDATED
 - Phase 8B `/status` slice: COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED
-- Phase 8B overall endpoint cleanup: IN PROGRESS
-- Phase 8B parent: CURRENT
-- Next slice: Phase 8B.5 Gen2 Endpoint Integration and Closeout
-- Date: 2026-07-17
+- Phase 8B overall endpoint cleanup: FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH
+- Phase 8B parent: FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH
+- Phase 8B.5 Gen2 Endpoint Integration and Closeout: FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH
+- Date: 2026-07-18
 - Device profile under primary validation: `balcony02-gen2`
 - Device label: `Balcony02`
 - Device UUID: `7e5bd328-ad68-4389-a71a-fa5cd01b3813`
@@ -17,7 +17,7 @@
 
 This document freezes the approved external contracts and coordinated cloud/frontend semantics for the Gen2 endpoint cleanup before implementation begins.
 
-The `/measurements`, `/capabilities`, and `/status` contracts are implemented and validated at their recorded evidence levels. Phase 8B.5 integrated endpoint closeout remains CURRENT / NEXT.
+The `/measurements`, `/capabilities`, and `/status` contracts are implemented and validated at their recorded evidence levels. Phase 8B.5 integrated hosted frontend closeout is FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH; production deployment validation remains pending.
 
 It is the implementation specification for this phase. It does not authorize unrelated refactoring, pin changes, sensor changes, timing changes, watering changes, or control-policy changes.
 
@@ -86,7 +86,7 @@ The frozen `/measurements` contract remained unchanged and passed regression val
 
 ## /status live-device, cloud, and hosted-diagnostics closeout — 2026-07-17
 
-Phase 8B.4 is COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED. Phase 8B remains CURRENT, the overall endpoint cleanup remains IN PROGRESS, and Phase 8B.5 Gen2 Endpoint Integration and Closeout is CURRENT / NEXT.
+Phase 8B.4 is COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED. At this checkpoint, Phase 8B.5 had not yet begun; its later integrated hosted frontend closeout is recorded below.
 
 Firmware `phase8b4-gen2-status-contract` built successfully in all seven environments: `esp32doit-devkit-v1`, `balcony-installed`, `balcony-installed-gen2`, `bench-prototype`, `bench-proto-gen2`, `balcony02-gen2`, and `balcony-sensor-scout-01`. The firmware version applies to all four Gen2 profiles (`balcony-installed-gen2`, `bench-proto-gen2`, `balcony02-gen2`, and `balcony-sensor-scout-01`); Gen1 behavior remains unchanged.
 
@@ -103,6 +103,20 @@ WL01 reported value `1`, valid, `good`, and `read_ok`. Active physical-button wa
 The latest raw heartbeat carried current firmware/profile, uptime `1802`, reason `periodic`, RSSI `-47`, HTTP `201` / `created`, zero failures, error `none`, idle watering with a null trigger, last watering at `2026-07-17T22:57:24Z` for `11` seconds, free heap `232720`, minimum free heap `176876`, and `details:{}`. Hosted normalized diagnostics matched the raw heartbeat for the contract fields while excluding local IP and MAC. This is a data-contract validation; no new hosted browser review is claimed.
 
 This firmware/runtime checkpoint made no further changes to the already-applied Phase 8B.4 SQL/frontend contract: the base columns, normalized output columns, hosted-view joins, filters, grants, RLS boundaries, and historical fallbacks remained unchanged during this checkpoint. It also changed no pin, sensor assignment, GPIO mode/polarity, I2C/mux topology, threshold, duration, cooldown, cadence, relay, button, reservoir interlock, local firmware watering ownership, or Gen1 endpoint contract. No automatic SEN0308 watering, Supabase command/control, hosted Water Now, or hosted IP/MAC exposure was introduced.
+
+## Phase 8B.5 integrated hosted frontend closeout — 2026-07-18
+
+Phase 8B.5 is FRONTEND VALIDATED / COMPLETE PENDING COMMIT AND PUSH. A shared presentation contract defines the four Garden Reading sections, eleven deterministic cards, five compatible chart families, physical-series identity, historical DS18B20 `temperature` compatibility, and the unchanged Relative Moisture Index formula. Hosted Device selection appears before the status and interpretation path, while Window selection remains associated with the trend chart.
+
+`Garden Reading Quality` reports Reading Age, Sensor Availability, Reading History, and Latest Reading Checks independently. `MBG Diagnostics` independently reports Device Reporting, Wi-Fi Connection, and Hosted Reporting. Garden Reading cards use explicit evidence states rather than generic trust prose. M01, M02, and M03 each derive an independent, unclamped Relative Moisture Index; raw ADC remains supporting evidence. Reservoir presentation requires current usable exact `0` or `1` evidence.
+
+The trend chart displays one compatible family at a time in exact Light, Moisture, Temperature, Humidity, and Pressure order, defaulting to Moisture. Compound chart identity keeps same-name physical sensors separate. Responsive layout was corrected across mobile, tablet, desktop, and wide desktop.
+
+Frontend lint passed, the TypeScript/Vite production build passed, and both final `git diff --check` runs passed. Local public `/demo` returned HTTP `200`; hosted DOM checks found every required title, section, family, and Window label in frozen order and found no Water Now. Microsoft Edge screenshots were captured and independently visually reviewed at `360`, `460`, `820`, and `1280` pixels. The visible hosted layout passed at all four widths without page-level horizontal overflow or overlapping panels. The public demo had no usable Moisture series, so its factual empty state was reviewed rather than a populated chart frame; the closed status disclosures meant their internal grids were confirmed by source/CSS and build validation rather than visible screenshot content.
+
+The original local validation attempt launched Vite in its default legacy mode. That was a validation-command configuration issue, not a source defect. The successful rerun used `VITE_MBG_DASHBOARD_MODE=hosted-readonly` only in the child Vite process. No `.env`, parent/system environment, source, or Vite configuration was changed.
+
+No production deployment validation or customer/support credentialed browser validation occurred. No SQL, schema, Supabase, firmware, upload, device, watering-policy, or control-authority change occurred. No commit or push has occurred yet, and legacy local-dashboard retirement remains a separate unapproved future slice.
 
 ## Locked implementation boundaries
 

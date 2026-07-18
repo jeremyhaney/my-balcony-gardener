@@ -360,6 +360,56 @@ const SensorLogViewer = ({
       .filter(Boolean)
       .join(' ')
 
+  // Reusable selector markup shared by hosted and legacy control placement.
+  const deviceControl = (
+    <label
+      className={getDemoGuideTargetClass('device')}
+      data-guide-target="device"
+      style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
+    >
+      <span>{isHostedReadonly ? 'Device' : 'Device History'}</span>
+      <select
+        value={selectedDevice.key}
+        onChange={handleDeviceChange}
+        style={{
+          minWidth: isHostedReadonly ? '180px' : '220px',
+          padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
+        }}
+      >
+        {deviceOptions.map((option) => (
+          <option key={option.key} value={option.key}>
+            {isHostedReadonly ? option.hostedLabel : option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+
+  const windowControl = (
+    <label
+      className={getDemoGuideTargetClass('window')}
+      data-guide-target="window"
+      style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
+    >
+      <span>Window</span>
+      <select
+        value={selectedWindow.key}
+        onChange={handleWindowChange}
+        style={{
+          minWidth: isHostedReadonly ? '140px' : '160px',
+          padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
+        }}
+      >
+        {HISTORY_WINDOW_OPTIONS.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+
+  // Legacy history keeps the existing combined Device History and Window controls.
   const historyControls = (
     <div
       aria-label="Sensor history controls"
@@ -372,49 +422,41 @@ const SensorLogViewer = ({
         marginBottom: isHostedReadonly ? 0 : '1rem',
       }}
     >
-      <label
-        className={getDemoGuideTargetClass('device')}
-        data-guide-target="device"
-        style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
-      >
-        <span>Device History</span>
-        <select
-          value={selectedDevice.key}
-          onChange={handleDeviceChange}
-          style={{
-            minWidth: isHostedReadonly ? '180px' : '220px',
-            padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
-          }}
-        >
-          {deviceOptions.map((option) => (
-            <option key={option.key} value={option.key}>
-              {isHostedReadonly ? option.hostedLabel : option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      {deviceControl}
+      {windowControl}
+    </div>
+  )
 
-      <label
-        className={getDemoGuideTargetClass('window')}
-        data-guide-target="window"
-        style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
-      >
-        <span>Window</span>
-        <select
-          value={selectedWindow.key}
-          onChange={handleWindowChange}
-          style={{
-            minWidth: isHostedReadonly ? '140px' : '160px',
-            padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
-          }}
-        >
-          {HISTORY_WINDOW_OPTIONS.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+  // Hosted layout separates device context from the chart-associated Window control.
+  const hostedDeviceControl = (
+    <div
+      aria-label="Device selection"
+      className="sensor-history-controls hosted-device-control"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.6rem',
+        alignItems: 'flex-end',
+        marginBottom: 0,
+      }}
+    >
+      {deviceControl}
+    </div>
+  )
+
+  const hostedWindowControl = (
+    <div
+      aria-label="History window control"
+      className="sensor-history-controls"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.6rem',
+        alignItems: 'flex-end',
+        marginBottom: 0,
+      }}
+    >
+      {windowControl}
     </div>
   )
 
@@ -505,6 +547,7 @@ const SensorLogViewer = ({
               assignedDevices={deviceOptions}
             />
           ) : null}
+          {hostedDeviceControl}
           {deviceStatusPanels}
           <HostedGen2Measurements
             rows={hostedGen2Rows}
@@ -517,7 +560,7 @@ const SensorLogViewer = ({
             rows={hostedGen2Rows}
             isLoading={isHostedGen2Loading}
             error={hostedGen2Error}
-            controls={historyControls}
+            controls={hostedWindowControl}
             className={getDemoGuideTargetClass('chart')}
             wateringCycles={isProtectedHostedScope ? wateringCycles : []}
           />

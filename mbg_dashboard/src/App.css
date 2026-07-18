@@ -99,6 +99,28 @@
   padding: 0;
 }
 
+/* Hosted device context stays separate from chart controls. */
+.hosted-device-control {
+  padding-bottom: 0.75rem;
+}
+
+.hosted-device-control label {
+  flex: 1 1 12rem;
+  max-width: 17rem;
+  font-weight: 700;
+}
+
+.hosted-device-control select {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: 2rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
 .hosted-access-state {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid #d9e5dc;

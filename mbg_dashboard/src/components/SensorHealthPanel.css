@@ -40,6 +40,11 @@
   text-align: center;
 }
 
+.sensor-health-summary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
 .sensor-health-summary-healthy {
   padding: 0.45rem 0.7rem;
 }
@@ -204,6 +209,24 @@
   margin-top: 0.7rem;
 }
 
+.sensor-health-details > section.sensor-health-advanced h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.sensor-health-details > section.sensor-health-advanced ul {
+  margin: 0.45rem 0 0;
+  padding-left: 1.1rem;
+  color: #1e293b;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.sensor-health-details > section.sensor-health-advanced li + li {
+  margin-top: 0.25rem;
+}
+
 .sensor-health-advanced summary {
   width: fit-content;
   cursor: pointer;
@@ -269,7 +292,7 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 560px) {
   .sensor-health-summary-grid,
   .sensor-health-list {
     grid-template-columns: 1fr;

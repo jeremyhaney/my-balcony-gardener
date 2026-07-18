@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { DeviceStatusHealth, DeviceStatusHealthStatus } from '../deviceStatusHealth'
+import type { HostedGen2Health } from '../hostedGen2Health'
 import './SensorHealthPanel.css'
 
 type SensorHealthPanelProps = {
@@ -57,6 +58,16 @@ const statusStyles: Record<
 }
 
 const SensorHealthPanel = ({ health, isOpen, onOpenChange }: SensorHealthPanelProps) => {
+  if (isHostedGen2Health(health)) {
+    return (
+      <HostedGen2HealthPanel
+        health={health}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+      />
+    )
+  }
+
   const styles = statusStyles[health.status]
   const statusMessage = getStatusMessage(health.status)
   const statusTone = getStatusTone(health.status)
@@ -158,6 +169,189 @@ const SensorHealthPanel = ({ health, isOpen, onOpenChange }: SensorHealthPanelPr
     </div>
   )
 }
+
+// Hosted Gen2 rendering keeps the four quality dimensions independent from legacy status output.
+const HostedGen2HealthPanel = ({
+  health,
+  isOpen,
+  onOpenChange,
+}: {
+  health: HostedGen2Health
+  isOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
+}) => {
+  const styles = statusStyles[health.status]
+  const summaries: StatusSummary[] = [
+    {
+      tone: health.readingAge.tone,
+      label: 'Reading Age',
+      message: formatHostedReadingAge(health),
+    },
+    {
+      tone: health.sensorAvailability.tone,
+      label: 'Sensor Availability',
+      message: `${health.sensorAvailability.reportedEntryCount} of ${health.sensorAvailability.expectedEntryCount} expected readings reported; ${health.sensorAvailability.representedPhysicalSensorCount} of ${health.sensorAvailability.expectedPhysicalSensorCount} physical sensors represented.`,
+    },
+    {
+      tone: health.readingHistory.tone,
+      label: 'Reading History',
+      message: formatHostedReadingHistory(health),
+    },
+    {
+      tone: health.latestReadingChecks.tone,
+      label: 'Latest Reading Checks',
+      message: formatHostedLatestReadingChecks(health),
+    },
+  ]
+  const panelStyle = {
+    '--sensor-health-background': styles.background,
+    '--sensor-health-border': styles.border,
+    '--sensor-health-color': styles.color,
+    '--sensor-health-dot': styles.dot,
+    '--sensor-health-shadow': styles.shadow,
+  } as CSSProperties
+
+  return (
+    <div
+      aria-label="Garden Reading Quality"
+      className={`sensor-health-panel${isOpen ? ' is-open' : ''}`}
+      style={panelStyle}
+    >
+      <button
+        aria-controls="device-status-details"
+        aria-expanded={isOpen ?? false}
+        className={`sensor-health-summary sensor-health-summary-${health.status}`}
+        onClick={() => onOpenChange?.(!isOpen)}
+        type="button"
+      >
+        <span className="sensor-health-title">
+          <span aria-hidden="true" className="sensor-health-dot" />
+          Garden Reading Quality
+        </span>
+        {health.attentionItems.length > 0 ? (
+          <span className="sensor-health-message">Needs Attention</span>
+        ) : null}
+      </button>
+
+      {isOpen ? (
+        <div className="sensor-health-details" id="device-status-details">
+          <div className="sensor-health-heading">
+            <div>
+              <h2>Garden Reading Quality</h2>
+              <p>See how current, complete, and usable the reported garden readings are.</p>
+            </div>
+          </div>
+
+          <div className="sensor-health-summary-grid">
+            {summaries.map((summary) => (
+              <article
+                className={`sensor-health-summary-card is-${summary.tone}`}
+                key={summary.label}
+              >
+                <h3>{summary.label}</h3>
+                <p>{summary.message}</p>
+              </article>
+            ))}
+          </div>
+
+          {health.attentionItems.length > 0 ? (
+            <section className="sensor-health-advanced">
+              <h3>Needs Attention</h3>
+              <ul>
+                {health.attentionItems.map((item) => (
+                  <li key={item.key}>{item.message}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <details className="sensor-health-advanced">
+            <summary>Advanced status evidence</summary>
+            <dl className="sensor-health-list">
+              <dt>Expected readings</dt>
+              <dd>{health.sensorAvailability.expectedEntryCount}</dd>
+              <dt>Expected physical sensors</dt>
+              <dd>{health.sensorAvailability.expectedPhysicalSensorCount}</dd>
+              <dt>Profile not installed</dt>
+              <dd>{health.sensorAvailability.profileNotInstalledEntryCount}</dd>
+              <dt>History coverage</dt>
+              <dd>{formatNullablePercent(health.readingHistory.coveragePercent)}</dd>
+              <dt>Latest reported reasons</dt>
+              <dd>{formatHostedReasons(health.latestReadingChecks.reasons)}</dd>
+            </dl>
+          </details>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+const isHostedGen2Health = (
+  health: DeviceStatusHealth<unknown>,
+): health is HostedGen2Health =>
+  'kind' in health && health.kind === 'hosted-gen2'
+
+// Hosted Gen2 formatters convert structured evidence into factual customer-facing summaries.
+const formatHostedReadingAge = (health: HostedGen2Health): string => {
+  if (!health.readingAge.hasTimestamp || health.readingAge.latestAgeMs === null) {
+    return 'No report timestamp is available for this window.'
+  }
+
+  if (health.readingAge.latestAgeMs < 0) {
+    return 'Latest report timestamp is later than the current dashboard time.'
+  }
+
+  const age = formatDuration(health.readingAge.latestAgeMs).replace(/ ago$/, '')
+  return health.readingAge.isCurrent
+    ? `Latest report received ${age.toLowerCase()} ago.`
+    : `Latest report is ${age.toLowerCase()} ago and is not current.`
+}
+
+const formatHostedReadingHistory = (health: HostedGen2Health): string => {
+  const history = health.readingHistory
+  if (history.packageCount === 0) {
+    return 'No report history is available for this device and window.'
+  }
+
+  if (history.expectedPackageCount === null) {
+    return `${history.packageCount.toLocaleString()} reports are present. Coverage is not evaluated for this window.`
+  }
+
+  return `${history.packageCount.toLocaleString()} of ${Math.round(history.expectedPackageCount).toLocaleString()} expected reports are present. Largest gap: ${formatElapsedDuration(history.largestGapMs).toLowerCase()}.`
+}
+
+const formatHostedLatestReadingChecks = (health: HostedGen2Health): string => {
+  const checks = health.latestReadingChecks
+  if (
+    checks.usableEntryCount === checks.expectedEntryCount &&
+    checks.absentEntryCount === 0
+  ) {
+    return `${checks.expectedEntryCount} expected readings checked; all ${checks.expectedEntryCount} are usable.`
+  }
+
+  const facts = [
+    `${checks.usableEntryCount} usable`,
+    checks.invalidEntryCount > 0 ? `${checks.invalidEntryCount} invalid` : null,
+    checks.qualityWarningEntryCount > 0
+      ? `${checks.qualityWarningEntryCount} with quality metadata requiring review`
+      : null,
+    checks.missingValueEntryCount > 0
+      ? `${checks.missingValueEntryCount} value${checks.missingValueEntryCount === 1 ? '' : 's'} unavailable`
+      : null,
+    checks.sensorNotDetectedEntryCount > 0
+      ? `${checks.sensorNotDetectedEntryCount} with not-detected evidence`
+      : null,
+    checks.profileNotInstalledEntryCount > 0
+      ? `${checks.profileNotInstalledEntryCount} marked not installed`
+      : null,
+    checks.absentEntryCount > 0 ? `${checks.absentEntryCount} not reported` : null,
+  ].filter((fact): fact is string => Boolean(fact))
+
+  return `${checks.expectedEntryCount} expected readings checked: ${facts.join(', ')}.`
+}
+
+const formatHostedReasons = (reasons: string[]): string =>
+  reasons.length > 0 ? `Reported reasons: ${reasons.join(', ')}.` : 'No endpoint reasons were reported.'
 
 const getStatusTone = (status: DeviceStatusHealthStatus): StatusSummaryTone => {
   if (status === 'healthy') {

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { DeviceDiagnostics } from '../api'
 import './DeviceDiagnosticsPanel.css'
 
@@ -6,6 +7,7 @@ export const DIAGNOSTIC_HEARTBEAT_WARNING_THRESHOLD_SECONDS = 35 * 60
 type SummaryTone = 'good' | 'watch' | 'check' | 'neutral'
 
 type DiagnosticsSummary = {
+  heading: 'Device Reporting' | 'Wi-Fi Connection' | 'Hosted Reporting'
   tone: SummaryTone
   label: string
   message: string
@@ -28,15 +30,15 @@ const DeviceDiagnosticsPanel = ({
 }: DeviceDiagnosticsPanelProps) => {
   const summaries = [
     getFreshnessSummary(diagnostics),
-    getCloudSummary(diagnostics),
     getConnectionSummary(diagnostics),
+    getCloudSummary(diagnostics),
   ]
   const pillSummary = getPillSummary(summaries)
   const showPillStatus = pillSummary.tone !== 'good'
 
   return (
     <div
-      aria-label="Device diagnostics"
+      aria-label="MBG Diagnostics"
       className="device-diagnostics-panel"
     >
       <button
@@ -47,7 +49,7 @@ const DeviceDiagnosticsPanel = ({
         type="button"
       >
         <span aria-hidden="true" className="device-diagnostics-dot" />
-        <span className="device-diagnostics-pill-title">Device Diagnostics</span>
+        <span className="device-diagnostics-pill-title">MBG Diagnostics</span>
         {showPillStatus ? (
           <span className="device-diagnostics-pill-status">{pillSummary.label}</span>
         ) : null}
@@ -57,7 +59,7 @@ const DeviceDiagnosticsPanel = ({
         <div className="device-diagnostics-popover" id="device-diagnostics-details">
           <div className="device-diagnostics-heading">
             <div>
-              <h2>Device Diagnostics</h2>
+              <h2>MBG Diagnostics</h2>
               <p>{diagnostics?.device_label ?? fallbackDeviceLabel}</p>
             </div>
             <span className={`device-diagnostics-overall is-${pillSummary.tone}`}>
@@ -70,126 +72,85 @@ const DeviceDiagnosticsPanel = ({
           <div className="device-diagnostics-summary-grid">
             {summaries.map((summary) => (
               <article
-                key={summary.label}
+                key={summary.heading}
                 className={`device-diagnostics-summary-card is-${summary.tone}`}
               >
-                <h3>{summary.label}</h3>
-                <p>{summary.message}</p>
+                <h3>{summary.heading}</h3>
+                <p><strong>{summary.label}.</strong> {summary.message}</p>
               </article>
             ))}
           </div>
 
           <details className="device-diagnostics-advanced">
             <summary>Advanced diagnostics evidence</summary>
-            <dl className="device-diagnostics-list">
-            <dt>Device key</dt>
-            <dd>{formatNullableText(diagnostics?.device_key)}</dd>
+            <DiagnosticEvidenceGroup heading="Device">
+              <dt>Device key</dt><dd>{formatNullableText(diagnostics?.device_key)}</dd>
+              <dt>Device role</dt><dd>{formatNullableText(diagnostics?.device_role)}</dd>
+              <dt>Firmware version</dt><dd>{formatRecordedText(diagnostics?.firmware_version)}</dd>
+              <dt>Build profile</dt><dd>{formatRecordedText(diagnostics?.build_profile)}</dd>
+              <dt>Last heard</dt><dd>{formatLastHeard(diagnostics)}</dd>
+              <dt>Heartbeat reason</dt><dd>{formatNullableText(diagnostics?.heartbeat_reason)}</dd>
+            </DiagnosticEvidenceGroup>
 
-            <dt>Device role</dt>
-            <dd>{formatNullableText(diagnostics?.device_role)}</dd>
+            <DiagnosticEvidenceGroup heading="Wi-Fi recovery">
+              <dt>Wi-Fi connected</dt><dd>{formatBoolean(diagnostics?.wifi_connected)}</dd>
+              <dt>Wi-Fi RSSI</dt><dd>{formatRssi(diagnostics?.wifi_rssi)}</dd>
+              <dt>Wi-Fi status</dt><dd>{formatLabeledCode(diagnostics?.wifi_status_label, diagnostics?.wifi_status_code)}</dd>
+              <dt>Wi-Fi reconnect attempts since boot</dt><dd>{formatInteger(diagnostics?.wifi_reconnect_attempts_since_boot)}</dd>
+              <dt>Full Wi-Fi recovery attempts since boot</dt><dd>{formatInteger(diagnostics?.wifi_full_recovery_attempts_since_boot)}</dd>
+              <dt>Wi-Fi disconnects since boot</dt><dd>{formatInteger(diagnostics?.wifi_disconnects_since_boot)}</dd>
+              <dt>Wi-Fi IP acquisitions since boot</dt><dd>{formatInteger(diagnostics?.wifi_ip_acquisitions_since_boot)}</dd>
+              <dt>Last Wi-Fi disconnect reason</dt>
+              <dd>{formatLabeledCode(diagnostics?.last_wifi_disconnect_reason_label, diagnostics?.last_wifi_disconnect_reason)}</dd>
+              <dt>Last Wi-Fi disconnect uptime</dt><dd>{formatRecordedDuration(diagnostics?.last_wifi_disconnect_uptime_seconds)}</dd>
+              <dt>Last Wi-Fi IP-acquired uptime</dt><dd>{formatRecordedDuration(diagnostics?.last_wifi_ip_acquired_uptime_seconds)}</dd>
+              <dt>Last Wi-Fi activity</dt><dd>{formatRecordedLabel(diagnostics?.last_wifi_activity)}</dd>
+            </DiagnosticEvidenceGroup>
 
-            <dt>Firmware version</dt>
-            <dd>{formatRecordedText(diagnostics?.firmware_version)}</dd>
+            <DiagnosticEvidenceGroup heading="Hosted reporting">
+              <dt>Last hosted HTTP result</dt><dd>{formatLabeledCode(diagnostics?.last_http_status_label, diagnostics?.last_http_status, false)}</dd>
+              <dt>Consecutive hosted-post failures</dt><dd>{formatInteger(diagnostics?.consecutive_failures)}</dd>
+              <dt>Last hosted error category</dt><dd>{formatRecordedLabel(diagnostics?.last_error_category)}</dd>
+              <dt>Last successful measurement post</dt><dd>{formatTimestamp(diagnostics?.last_successful_measurement_post_at)}</dd>
+              <dt>Measurement-post uptime</dt><dd>{formatRecordedDuration(diagnostics?.last_successful_measurement_post_uptime_seconds)}</dd>
+              <dt>Last successful status post</dt><dd>{formatTimestamp(diagnostics?.last_successful_status_post_at)}</dd>
+              <dt>Status-post uptime</dt><dd>{formatRecordedDuration(diagnostics?.last_successful_status_post_uptime_seconds)}</dd>
+            </DiagnosticEvidenceGroup>
 
-            <dt>Build profile</dt>
-            <dd>{formatRecordedText(diagnostics?.build_profile)}</dd>
+            <DiagnosticEvidenceGroup heading="Runtime">
+              <dt>Uptime</dt><dd>{formatDurationSeconds(diagnostics?.uptime_seconds)}</dd>
+              <dt>Free heap</dt><dd>{formatBytes(diagnostics?.free_heap_bytes)}</dd>
+              <dt>Minimum free heap</dt><dd>{formatBytes(diagnostics?.minimum_free_heap_bytes)}</dd>
+            </DiagnosticEvidenceGroup>
 
-            <dt>Last heard</dt>
-            <dd>{formatLastHeard(diagnostics)}</dd>
-
-            <dt>Heartbeat reason</dt>
-            <dd>{formatNullableText(diagnostics?.heartbeat_reason)}</dd>
-
-            <dt>Uptime</dt>
-            <dd>{formatDurationSeconds(diagnostics?.uptime_seconds)}</dd>
-
-            <dt>Wi-Fi connected</dt>
-            <dd>{formatBoolean(diagnostics?.wifi_connected)}</dd>
-
-            <dt>Wi-Fi RSSI</dt>
-            <dd>{formatRssi(diagnostics?.wifi_rssi)}</dd>
-
-            <dt>Wi-Fi status</dt>
-            <dd>{formatLabeledCode(diagnostics?.wifi_status_label, diagnostics?.wifi_status_code)}</dd>
-
-            <dt>Wi-Fi reconnect attempts since boot</dt>
-            <dd>{formatInteger(diagnostics?.wifi_reconnect_attempts_since_boot)}</dd>
-
-            <dt>Full Wi-Fi recovery attempts since boot</dt>
-            <dd>{formatInteger(diagnostics?.wifi_full_recovery_attempts_since_boot)}</dd>
-
-            <dt>Wi-Fi disconnects since boot</dt>
-            <dd>{formatInteger(diagnostics?.wifi_disconnects_since_boot)}</dd>
-
-            <dt>Wi-Fi IP acquisitions since boot</dt>
-            <dd>{formatInteger(diagnostics?.wifi_ip_acquisitions_since_boot)}</dd>
-
-            <dt>Last Wi-Fi disconnect reason</dt>
-            <dd>{formatLabeledCode(
-              diagnostics?.last_wifi_disconnect_reason_label,
-              diagnostics?.last_wifi_disconnect_reason,
-            )}</dd>
-
-            <dt>Last Wi-Fi disconnect uptime</dt>
-            <dd>{formatRecordedDuration(diagnostics?.last_wifi_disconnect_uptime_seconds)}</dd>
-
-            <dt>Last Wi-Fi IP-acquired uptime</dt>
-            <dd>{formatRecordedDuration(diagnostics?.last_wifi_ip_acquired_uptime_seconds)}</dd>
-
-            <dt>Last Wi-Fi activity</dt>
-            <dd>{formatRecordedLabel(diagnostics?.last_wifi_activity)}</dd>
-
-            <dt>Last cloud HTTP result</dt>
-            <dd>{formatLabeledCode(diagnostics?.last_http_status_label, diagnostics?.last_http_status, false)}</dd>
-
-            <dt>Consecutive cloud failures</dt>
-            <dd>{formatInteger(diagnostics?.consecutive_failures)}</dd>
-
-            <dt>Last cloud error category</dt>
-            <dd>{formatRecordedLabel(diagnostics?.last_error_category)}</dd>
-
-            <dt>Last successful measurement post</dt>
-            <dd>{formatTimestamp(diagnostics?.last_successful_measurement_post_at)}</dd>
-
-            <dt>Measurement-post uptime</dt>
-            <dd>{formatRecordedDuration(
-              diagnostics?.last_successful_measurement_post_uptime_seconds,
-            )}</dd>
-
-            <dt>Last successful status post</dt>
-            <dd>{formatTimestamp(diagnostics?.last_successful_status_post_at)}</dd>
-
-            <dt>Status-post uptime</dt>
-            <dd>{formatRecordedDuration(diagnostics?.last_successful_status_post_uptime_seconds)}</dd>
-
-            <dt>Watering evidence</dt>
-            <dd>{formatWateringEvidence(diagnostics?.currently_watering)}</dd>
-
-            <dt>Active watering trigger</dt>
-            <dd>{formatActiveTrigger(
-              diagnostics?.currently_watering,
-              diagnostics?.active_trigger_source,
-            )}</dd>
-
-            <dt>Last watering time</dt>
-            <dd>{formatTimestamp(diagnostics?.last_watering_at)}</dd>
-
-            <dt>Last watering duration</dt>
-            <dd>{formatRecordedDuration(diagnostics?.last_watering_duration_seconds)}</dd>
-
-            <dt>Free heap</dt>
-            <dd>{formatBytes(diagnostics?.free_heap_bytes)}</dd>
-
-            <dt>Minimum free heap</dt>
-            <dd>{formatBytes(diagnostics?.minimum_free_heap_bytes)}</dd>
-          </dl>
-        </details>
-      </div>
+            <DiagnosticEvidenceGroup heading="Watering runtime">
+              <dt>Watering evidence</dt><dd>{formatWateringEvidence(diagnostics?.currently_watering)}</dd>
+              <dt>Active watering trigger</dt><dd>{formatActiveTrigger(diagnostics?.currently_watering, diagnostics?.active_trigger_source)}</dd>
+              <dt>Last watering time</dt><dd>{formatTimestamp(diagnostics?.last_watering_at)}</dd>
+              <dt>Last watering duration</dt><dd>{formatRecordedDuration(diagnostics?.last_watering_duration_seconds)}</dd>
+            </DiagnosticEvidenceGroup>
+          </details>
+        </div>
       ) : null}
     </div>
   )
 }
 
+// Advanced diagnostics remain grouped by evidence domain without changing source fields.
+const DiagnosticEvidenceGroup = ({
+  heading,
+  children,
+}: {
+  heading: 'Device' | 'Wi-Fi recovery' | 'Hosted reporting' | 'Runtime' | 'Watering runtime'
+  children: ReactNode
+}) => (
+  <section>
+    <h3>{heading}</h3>
+    <dl className="device-diagnostics-list">{children}</dl>
+  </section>
+)
+
+// Diagnostics summary helpers report independent heartbeat, Wi-Fi, and hosted-post evidence.
 const getPillSummary = (summaries: DiagnosticsSummary[]): DiagnosticsSummary => {
   const checkSummary = summaries.find((summary) => summary.tone === 'check')
 
@@ -197,8 +158,9 @@ const getPillSummary = (summaries: DiagnosticsSummary[]): DiagnosticsSummary => 
     return checkSummary.label === 'No recent diagnostics'
       ? checkSummary
       : {
+          heading: checkSummary.heading,
           tone: 'check',
-          label: 'Check diagnostics',
+          label: 'Evidence needs review',
           message: checkSummary.message,
         }
   }
@@ -207,16 +169,18 @@ const getPillSummary = (summaries: DiagnosticsSummary[]): DiagnosticsSummary => 
 
   if (watchSummary) {
     return {
+      heading: watchSummary.heading,
       tone: 'watch',
-      label: 'Check diagnostics',
+      label: 'Evidence needs review',
       message: watchSummary.message,
     }
   }
 
   return {
+    heading: 'Device Reporting',
     tone: 'good',
-    label: 'Diagnostics fresh',
-    message: 'The device has reported heartbeat evidence recently.',
+    label: 'Recent evidence received',
+    message: 'A heartbeat was received within the current threshold.',
   }
 }
 
@@ -225,33 +189,37 @@ const getFreshnessSummary = (
 ): DiagnosticsSummary => {
   if (!diagnostics?.last_heartbeat_at || diagnostics.heartbeat_age_seconds === null) {
     return {
+      heading: 'Device Reporting',
       tone: 'check',
-      label: 'No recent diagnostics',
-      message: 'The online dashboard has not received heartbeat evidence from this garden unit yet.',
+      label: 'No heartbeat recorded',
+      message: 'No heartbeat timestamp is available for this garden unit.',
     }
   }
 
   if (diagnostics.heartbeat_age_seconds > DIAGNOSTIC_HEARTBEAT_WARNING_THRESHOLD_SECONDS) {
     return {
+      heading: 'Device Reporting',
       tone: 'watch',
-      label: 'Diagnostics stale',
-      message: 'The online dashboard has not received a recent heartbeat from this garden unit.',
+      label: 'Heartbeat not current',
+      message: `Latest heartbeat received ${formatDurationSeconds(diagnostics.heartbeat_age_seconds)} ago.`,
     }
   }
 
   return {
+    heading: 'Device Reporting',
     tone: 'good',
-    label: 'Diagnostics fresh',
-    message: 'The device has reported heartbeat evidence recently.',
+    label: 'Heartbeat current',
+    message: `Latest heartbeat received ${formatDurationSeconds(diagnostics.heartbeat_age_seconds)} ago.`,
   }
 }
 
 const getCloudSummary = (diagnostics: DeviceDiagnostics | null): DiagnosticsSummary => {
   if (!diagnostics?.last_heartbeat_at) {
     return {
+      heading: 'Hosted Reporting',
       tone: 'neutral',
-      label: 'Cloud reporting unknown',
-      message: 'No garden unit heartbeat evidence is available to judge cloud reporting yet.',
+      label: 'Hosted-post evidence unavailable',
+      message: 'No heartbeat evidence is available for hosted-post reporting.',
     }
   }
 
@@ -262,25 +230,48 @@ const getCloudSummary = (diagnostics: DeviceDiagnostics | null): DiagnosticsSumm
   const hasHttpProblem = httpStatus !== null && (httpStatus < 200 || httpStatus >= 300)
 
   if (failureCount > 0 || hasErrorCategory || hasHttpProblem) {
+    const facts = [
+      failureCount > 0
+        ? `${failureCount.toLocaleString()} consecutive hosted-post failure${
+            failureCount === 1 ? '' : 's'
+          } recorded.`
+        : null,
+      httpStatus !== null
+        ? `Latest hosted HTTP result: ${formatLabeledCode(
+            diagnostics.last_http_status_label,
+            httpStatus,
+            false,
+          )}.`
+        : null,
+      hasErrorCategory
+        ? `Last hosted error category: ${formatRecordedLabel(
+            diagnostics.last_error_category,
+          )}.`
+        : null,
+    ].filter((fact): fact is string => Boolean(fact))
+
     return {
+      heading: 'Hosted Reporting',
       tone: 'check',
-      label: 'Cloud reporting needs review',
-      message: 'The device is reachable, but recent cloud post evidence shows a reporting problem.',
+      label: 'Hosted-post evidence needs review',
+      message: facts.join(' '),
     }
   }
 
   if (httpStatus !== null && httpStatus >= 200 && httpStatus < 300) {
     return {
+      heading: 'Hosted Reporting',
       tone: 'good',
-      label: 'Cloud reporting healthy',
-      message: 'The latest device report reached the cloud successfully.',
+      label: 'Hosted post accepted',
+      message: `Latest hosted post returned ${formatLabeledCode(diagnostics.last_http_status_label, httpStatus, false)}.`,
     }
   }
 
   return {
+    heading: 'Hosted Reporting',
     tone: 'neutral',
-    label: 'Cloud reporting unknown',
-    message: 'The latest heartbeat does not include cloud post status evidence yet.',
+    label: 'Hosted-post result unavailable',
+    message: 'The latest heartbeat does not include an HTTP result.',
   }
 }
 
@@ -289,16 +280,18 @@ const getConnectionSummary = (
 ): DiagnosticsSummary => {
   if (!diagnostics?.last_heartbeat_at) {
     return {
+      heading: 'Wi-Fi Connection',
       tone: 'neutral',
-      label: 'Connection unknown',
-      message: 'No garden unit heartbeat evidence is available to judge connection state yet.',
+      label: 'Wi-Fi evidence unavailable',
+      message: 'No heartbeat evidence is available for Wi-Fi connection state.',
     }
   }
 
   if (diagnostics.heartbeat_age_seconds === null) {
     return {
+      heading: 'Wi-Fi Connection',
       tone: 'neutral',
-      label: 'Connection unknown',
+      label: 'Wi-Fi evidence unavailable',
       message: 'The latest heartbeat age is unavailable.',
     }
   }
@@ -308,9 +301,22 @@ const getConnectionSummary = (
     diagnostics.wifi_connected === false
   ) {
     return {
+      heading: 'Wi-Fi Connection',
       tone: 'check',
-      label: 'Connection needs review',
-      message: 'The latest garden unit evidence is stale or reports Wi-Fi as disconnected.',
+      label: 'Wi-Fi evidence needs review',
+      message:
+        diagnostics.wifi_connected === false
+          ? 'Latest heartbeat reports Wi-Fi disconnected.'
+          : 'Latest heartbeat is older than the current diagnostics threshold.',
+    }
+  }
+
+  if (diagnostics.wifi_connected !== true) {
+    return {
+      heading: 'Wi-Fi Connection',
+      tone: 'neutral',
+      label: 'Wi-Fi state unavailable',
+      message: 'The latest heartbeat does not include a Wi-Fi connected state.',
     }
   }
 
@@ -322,16 +328,18 @@ const getConnectionSummary = (
 
   if (reconnectAttempts > 0 || beginRecoveryAttempts > 0 || hasRecoveryAction) {
     return {
+      heading: 'Wi-Fi Connection',
       tone: 'watch',
-      label: 'Connection recovered',
-      message: 'The device reported Wi-Fi recovery activity and is reporting again.',
+      label: 'Wi-Fi recovery activity recorded',
+      message: `Latest heartbeat reports Wi-Fi ${diagnostics.wifi_connected === true ? 'connected' : 'state unavailable'}; ${reconnectAttempts.toLocaleString()} reconnect attempts and ${beginRecoveryAttempts.toLocaleString()} full recovery attempts are recorded since boot.`,
     }
   }
 
   return {
+    heading: 'Wi-Fi Connection',
     tone: 'good',
-    label: 'Connection stable',
-    message: 'The device has not reported Wi-Fi recovery attempts since the latest boot.',
+    label: 'Wi-Fi connected',
+    message: 'Latest heartbeat reports Wi-Fi connected. No reconnect attempts have been recorded since this boot.',
   }
 }
 
