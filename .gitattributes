@@ -1,11 +1,200 @@
+# -----------------------------------------------------------------------------
+# Default text detection
+# -----------------------------------------------------------------------------
+
+# Automatically detect text files unless a more specific rule below applies.
 * text=auto
 
-*.ts  text eol=lf
-*.tsx text eol=lf
-*.js  text eol=lf
-*.jsx text eol=lf
-*.json text eol=lf
-*.css text eol=lf
-*.md  text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
+
+# -----------------------------------------------------------------------------
+# Repository metadata and extensionless configuration files
+# -----------------------------------------------------------------------------
+
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+.editorconfig  text eol=lf
+
+Dockerfile     text eol=lf
+Dockerfile.*   text eol=lf
+Makefile       text eol=lf
+CMakeLists.txt text eol=lf
+
+
+# -----------------------------------------------------------------------------
+# ESP32, Arduino, C, and C++ source
+# -----------------------------------------------------------------------------
+
+*.c    text eol=lf
+*.cc   text eol=lf
+*.cpp  text eol=lf
+*.cxx  text eol=lf
+
+*.h    text eol=lf
+*.hh   text eol=lf
+*.hpp  text eol=lf
+*.hxx  text eol=lf
+
+*.ino  text eol=lf
+*.ipp  text eol=lf
+*.tpp  text eol=lf
+
+# My Balcony Gardener uses .bak files as plain-text firmware snapshots.
+*.bak  text eol=lf
+
+
+# -----------------------------------------------------------------------------
+# React, TypeScript, JavaScript, and frontend source
+# -----------------------------------------------------------------------------
+
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+
+*.html  text eol=lf
+*.htm   text eol=lf
+
+*.css   text eol=lf
+*.scss  text eol=lf
+*.sass  text eol=lf
+*.less  text eol=lf
+
+# SVG is XML-based text and benefits from normal text diffs.
+*.svg   text eol=lf
+
+
+# -----------------------------------------------------------------------------
+# Structured data, configuration, and database files
+# -----------------------------------------------------------------------------
+
+*.json        text eol=lf
+*.jsonc       text eol=lf
+*.lock        text eol=lf
+
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.toml        text eol=lf
+*.ini         text eol=lf
+*.cfg         text eol=lf
+*.conf        text eol=lf
+*.properties  text eol=lf
+
+*.xml         text eol=lf
+*.csv         text eol=lf
+*.tsv         text eol=lf
+
+*.sql         text eol=lf
+*.graphql     text eol=lf
+*.gql         text eol=lf
+
+.env*         text eol=lf
+
+
+# -----------------------------------------------------------------------------
+# Documentation and review artifacts
+# -----------------------------------------------------------------------------
+
+*.md     text eol=lf
+*.mdx    text eol=lf
+*.txt    text eol=lf
+*.rst    text eol=lf
+*.adoc   text eol=lf
+
+*.patch  text eol=lf
+*.diff   text eol=lf
+
+
+# -----------------------------------------------------------------------------
+# Scripts and automation
+# -----------------------------------------------------------------------------
+
+*.ps1   text eol=lf
+*.psm1  text eol=lf
+*.psd1  text eol=lf
+
+*.py    text eol=lf
+
+*.sh    text eol=lf
+*.bash  text eol=lf
+*.zsh   text eol=lf
+
+# Native Windows command scripts retain conventional Windows line endings.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+*.cmake text eol=lf
+
+
+# -----------------------------------------------------------------------------
+# Binary images and design assets
+# -----------------------------------------------------------------------------
+
+*.png   -text
+*.jpg   -text
+*.jpeg  -text
+*.gif   -text
+*.webp  -text
+*.bmp   -text
+*.ico   -text
+*.tif   -text
+*.tiff  -text
+
+# Preserve CAD files byte-for-byte. DXF may be ASCII or binary.
+*.dxf   -text
+
+
+# -----------------------------------------------------------------------------
+# Binary office documents and archives
+# -----------------------------------------------------------------------------
+
+*.pdf   -text
+*.doc   -text
+*.docx  -text
+*.xls   -text
+*.xlsx  -text
+*.ppt   -text
+*.pptx  -text
+
+*.zip   -text
+*.7z    -text
+*.rar   -text
+*.tar   -text
+*.gz    -text
+*.tgz   -text
+
+
+# -----------------------------------------------------------------------------
+# Compiled firmware, build products, and libraries
+# -----------------------------------------------------------------------------
+
+*.bin   -text
+*.elf   -text
+*.hex   -text
+*.a     -text
+*.o     -text
+*.obj   -text
+*.so    -text
+*.dll   -text
+*.exe   -text
+
+
+# -----------------------------------------------------------------------------
+# Fonts and media
+# -----------------------------------------------------------------------------
+
+*.woff  -text
+*.woff2 -text
+*.ttf   -text
+*.otf   -text
+
+*.mp3   -text
+*.wav   -text
+*.mp4   -text
+*.mov   -text
+*.webm  -text
+
+# Preserve vendored third-party library files as supplied upstream.
+# Do not apply the repository-wide text/EOL policy inside lib/.
+lib/** !text !eol
