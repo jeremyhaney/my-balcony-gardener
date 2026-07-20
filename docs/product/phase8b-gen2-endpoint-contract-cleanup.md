@@ -6,6 +6,8 @@
 - Phase 8B overall endpoint cleanup: COMPLETE
 - Phase 8B parent: COMPLETE
 - Phase 8B.5 Gen2 Endpoint Integration and Closeout: COMPLETE / PRODUCTION VALIDATED
+- Phase 8B.6 Hosted Short History Window Expansion: COMPLETE / PRODUCTION VALIDATED
+- Phase 8B.6 closeout date: 2026-07-20
 - Date: 2026-07-18
 - Device profile under primary validation: `balcony02-gen2`
 - Device label: `Balcony02`
@@ -143,6 +145,46 @@ ESLint, TypeScript/Vite production builds, and `git diff --check` passed. Local 
 ### Unchanged boundaries
 
 Phase 8B.5 made no firmware modification or upload; no SQL, schema, Supabase, pin, sensor assignment, I2C/mux topology, threshold, cadence, duration, cooldown, watering-policy, control-authority, hosted command/control, Water Now, or Gen1 behavior change. Local firmware remains the watering authority. The recent mux/I2C interruption was neither resolved nor investigated by this phase.
+
+## Phase 8B.6 hosted short history window closeout — 2026-07-20
+
+Phase 8B.6 Hosted Short History Window Expansion is COMPLETE / PRODUCTION VALIDATED. Implementation commit `9b8eb0f` (`Add short hosted history windows`) was pushed to `main`, deployed through the established production path, and visually confirmed by Jeremy on 2026-07-20.
+
+### Implementation
+
+The shared Window contract gained `3h`, `6h`, and `12h` without duplicating hosted-only definitions. Query limits are `25`, `50`, and `100`. Existing parsing, URL update, `pushState`/`popstate`, timestamp-query, sorting, pagination, and longer-window limits remain unchanged. Missing, empty, malformed, case-mismatched, or otherwise invalid Window values still fall back internally to `24h`; valid Device and Window state survives refresh, each control preserves the other, and Back/Forward retains the existing URL-state behavior. Local-clock subtraction followed by ISO conversion remains intentional, and `all` applies no lower timestamp bound.
+
+### Final Window contract
+
+Exact keys are `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`. Visible order is `3 hours`, `6 hours`, `12 hours`, `24 hours`, `7 days`, `1 month`, `3 months`, `6 months`, `1 year`, and `all-time`. `24h` remains the default, and every existing longer Window remains unchanged.
+
+Hosted Gen2 `3h`, `6h`, and `12h` chart ticks use local hour/minute labels; `24h` and longer retain the existing hosted month/day/hour format. The legacy/shared chart uses time-only labels for `3h`, `6h`, `12h`, and `24h`, month/day/hour for `7d`, and month/day for `1m`, `3m`, `6m`, `1y`, and `all`. Tooltip timestamps retain full date/time. No chart series, physical-series identity, family shortcut, Air Temperature plus Humidity default, Y axis/domain, color, line, time-domain, horizontal-scrolling, watering-marker, watering-label, or label-lane behavior changed.
+
+### Expected package and health behavior
+
+At the unchanged normal 15-minute cadence, expected counts are `3h = 12`, `6h = 24`, `12h = 48`, `24h = 96`, and `7d = 672`; `all` has no expected count. No endpoint-inclusive extra sample is added. Hosted Gen2 coverage counts unique `measured_at` report packages rather than flattened measurement rows. The existing greater-than-45-minute gap predicate now applies exactly to `3h`, `6h`, `12h`, `24h`, and `7d`; longer Windows remain excluded. Freshness remains 45 minutes and the coverage-warning threshold remains 70%.
+
+### Local and hosted-readonly validation
+
+Shared/local-default validation on `/demo`, `/mygarden`, `/app`, and `/support` confirmed exact selector order, `24h` fallback/default, valid Window URL and refresh behavior, Device/Window preservation, Back/Forward behavior, expected counts, short query limits, and local-clock subtraction followed by ISO conversion. Those local history queries legitimately returned no rows, so legacy ticks and tooltips were not visually exercised; no Phase 8B.6 defect was found.
+
+A process-scoped, nonpersistent `hosted-readonly` launch changed no `.env`, package, Vite, endpoint, or persistent environment setting and validated public `/demo`. Observed results were `3h = 12 of 12`, `6h = 24 of 24`, `12h = 48 of 48`, `24h = 96 of 96`, `7d = 672 of 672`, and `all` with no expected count or lower bound. The sampled 3-hour response contained 60 flattened rows and 12 unique `measured_at` packages; the UI correctly displayed `12 of 12`. Observed labels included `09:19 AM` for short time-only ticks, `Jul 19, 1 PM` for existing longer-window formatting, and `Jul 20, 2026, 09:34 AM` for the full tooltip timestamp.
+
+At approximately 360, 460, 820, and 1280 pixels, validation found no page-level horizontal overflow, kept all ten options usable, kept Device outside the chart and Window with chart controls, and confirmed chart-local scrolling at narrow widths. No local ESP32 request, Water Now control, JavaScript exception, or failed hosted request occurred. The natural largest gap was 15 minutes, so a positive greater-than-45-minute warning case was not naturally available and was not generated.
+
+### Deployed production confirmation
+
+Jeremy visually confirmed the deployed production site after commit `9b8eb0f`. The evidence showed the full ten-option selector including `3 hours`, `6 hours`, and `12 hours`; `12 hours` selected; time-only short-window labels; the populated existing hosted Gen2 multi-axis chart; an existing watering-history marker; and no reviewed chart-area visual regression. The tested `3h`, `6h`, `12h`, `24h`, `7d`, and `all` behavior was validated locally in hosted-readonly mode; production confirmation does not claim every authenticated route or every Window was separately exercised there.
+
+### Preserved boundaries
+
+Phase 8B.6 changed no firmware, PlatformIO profile, endpoint payload or frozen `/measurements`, `/capabilities`, or `/status` contract, SQL/schema/table/view/RLS/grant, Supabase command/control, Cloudflare or environment configuration, device identity, sensor, pin, I2C/mux topology, threshold, duration, cooldown, sampling or telemetry cadence, relay, physical button, reservoir interlock, automatic watering authority, local firmware ownership, hosted command/control, Water Now availability, card presentation, Garden Reading Quality, MBG Diagnostics, or chart-series/axis contract. It did not investigate mux behavior or remove Gen1.
+
+### Validation limitations
+
+Authenticated customer/support routes were not bypassed or fabricated. `/mygarden`, `/app`, and `/support` remained properly authentication-gated, so protected authenticated watering queries were not independently exercised. No naturally occurring greater-than-45-minute hosted gap was available. These limitations are not discovered Phase 8B.6 defects.
+
+The initial broad generated-bundle scan surfaced pre-existing local/Gen1 chunks containing local-control strings; review classified them as a pre-existing Gen1 condition, not code introduced by Phase 8B.6. No unrelated Gen1, route, build-configuration, or generated-bundle cleanup was pulled into this slice.
 
 ## Locked implementation boundaries
 

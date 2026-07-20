@@ -56,7 +56,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Future sensors should move toward a measurement-list/table model before adding more fixed fields.
 - Hosted read-only mode renders Sensor History and read-only Device Status from Supabase, supports Device and Window selectors, and does not render `LiveStats`, Water Now, local `/logs`, or local `/water-now`.
 - Hosted read-only Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`) and Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`).
-- Hosted read-only Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
+- Hosted read-only Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
 - Hosted read-only URL query state supports links such as `?device=balcony&window=24h` and `?device=bench&window=7d`; invalid values safely fall back to Installed Balcony Unit / `24h`.
 - Hosted read-only Supabase history queries filter server-side by selected `device_id` and by selected timestamp lower bound except for `all`.
 - Device Status is based on already-fetched Supabase `sensor_logs` rows for the selected device/window.
@@ -128,6 +128,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 - Phase 8B is COMPLETE, and Phase 8B.5 Gen2 Endpoint Integration and Closeout is COMPLETE / PRODUCTION VALIDATED in commits `a291be6` and `a8b282e`.
 - Phase 8B.5 delivers deterministic Garden Readings, separate Garden Reading Quality and MBG Diagnostics surfaces, ten independent chart series with five family shortcuts, mixed-family unit-driven multi-axis trends, unique stable series colors, deterministic watering-label lanes, and responsive production validation while preserving hosted read-only behavior and local firmware watering authority. Detailed evidence is recorded in [`docs/product/phase8b-gen2-endpoint-contract-cleanup.md`](./docs/product/phase8b-gen2-endpoint-contract-cleanup.md).
+- Phase 8B.6 Hosted Short History Window Expansion is COMPLETE / PRODUCTION VALIDATED in commit `9b8eb0f`: `3h`, `6h`, and `12h` were added ahead of the unchanged longer Windows with `24h` preserved as default; short hosted chart ticks use local hour/minute labels, expected package counts are `12`, `24`, and `48`, and Jeremy visually confirmed the deployed ten-option selector, selected 12-hour chart, existing multi-axis presentation, and watering marker on 2026-07-20. Hosted history remains read-only and local firmware retains all watering authority.
 - Balcony02 build profile `balcony02-gen2` now returns a static configured-hardware and control-feature manifest from `/capabilities`. The isolated path uses existing compile-time/profile flags for installed state and performs no sensor reads, GPIO reads, I2C or mux scans, detection probes, or provider conversions; existing non-Balcony02 capability behavior is unchanged.
 - Live validation at `10.0.0.69` against `Balcony02` (`7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, firmware `phase8b-balcony02-proveout`) confirmed ten ordered capability modules, M04 `installed:false`, L01 `installed:true`, and WL01 as the only `control_role:"watering_interlock"`. Two responses matched after normalizing only `reported_at`.
 - Phase 8B.4 firmware `phase8b4-gen2-status-contract` built in all seven environments and was live-validated on Balcony02 plus a status-only Prototype01 check. The nested `/status`, heartbeat, cloud storage, and hosted diagnostics contracts align; all three SEN0562 light sensors are now detected after replacing the bad L01 connector, and full `/measurements` validation confirms SEN0308 M01/M02/M03. This firmware/runtime checkpoint made no further frontend or SQL changes and changed no hosted command/control, hardware assignment, watering policy, cadence, threshold, duration, cooldown, relay, button, interlock, or Gen1 contract behavior.
@@ -168,7 +169,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device when no valid `device` query value is present.
 - Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
 - Hosted Device selector currently supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
-- Hosted Window selector supports `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`.
+- Hosted Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
 - Hosted query-string state supports `?device=balcony&window=24h`, `?device=bench&window=7d`, and similar valid combinations.
 - Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
 - Hosted Supabase history reads filter server-side by selected `device_id`.
