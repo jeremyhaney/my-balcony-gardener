@@ -26,11 +26,13 @@ import {
   formatWateringCycleMarkerLabel,
   type HostedWateringCycle,
 } from '../hostedWateringCycles'
+import type { HistoryWindowKey } from '../historyControls'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import './HostedGen2TrendChart.css'
 
 type HostedGen2TrendChartProps = {
   rows: HostedGen2MeasurementRow[]
+  historyWindowKey: HistoryWindowKey
   isLoading: boolean
   error: string | null
   controls?: ReactNode
@@ -168,6 +170,7 @@ const AXIS_CONFIGS: Record<HostedGen2AxisId, HostedGen2AxisConfig> = {
 
 const HostedGen2TrendChart = ({
   rows,
+  historyWindowKey,
   isLoading,
   error,
   controls,
@@ -371,7 +374,7 @@ const HostedGen2TrendChart = ({
                 type="number"
                 scale="time"
                 domain={chartTimeDomain}
-                tickFormatter={formatAxisTimestamp}
+                tickFormatter={(timestampMs) => formatAxisTimestamp(timestampMs, historyWindowKey)}
                 minTickGap={28}
               />
               {selectedAxes.map((axis, index) => {
@@ -833,12 +836,28 @@ const getVisibleWateringMarkers = (
     )
     .slice(0, MAX_WATERING_MARKER_COUNT)
 
-const formatAxisTimestamp = (timestampMs: number): string =>
-  new Date(timestampMs).toLocaleString([], {
+const formatAxisTimestamp = (
+  timestampMs: number,
+  historyWindowKey: HistoryWindowKey,
+): string => {
+  // Short hosted windows use time-only labels to keep nearby samples readable.
+  if (
+    historyWindowKey === '3h' ||
+    historyWindowKey === '6h' ||
+    historyWindowKey === '12h'
+  ) {
+    return new Date(timestampMs).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  return new Date(timestampMs).toLocaleString([], {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
   })
+}
 
 const formatTooltipTimestamp = (timestampMs: number): string =>
   new Date(timestampMs).toLocaleString([], {

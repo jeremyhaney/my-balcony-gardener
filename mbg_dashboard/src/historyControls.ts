@@ -1,7 +1,8 @@
 import { DEVICE_REGISTRY, type DeviceKey } from './deviceRegistry'
 
 export type HistoryDeviceKey = DeviceKey
-export type HistoryWindowKey = '24h' | '7d' | '1m' | '3m' | '6m' | '1y' | 'all'
+export type HistoryWindowKey =
+  '3h' | '6h' | '12h' | '24h' | '7d' | '1m' | '3m' | '6m' | '1y' | 'all'
 
 export type HistoryDeviceOption = {
   key: HistoryDeviceKey
@@ -29,6 +30,24 @@ export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = DEVICE_REGISTRY.map
 }))
 
 export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
+  {
+    key: '3h',
+    label: '3 hours',
+    limit: 25,
+    getLowerBoundIso: (now) => subtractHours(now, 3).toISOString(),
+  },
+  {
+    key: '6h',
+    label: '6 hours',
+    limit: 50,
+    getLowerBoundIso: (now) => subtractHours(now, 6).toISOString(),
+  },
+  {
+    key: '12h',
+    label: '12 hours',
+    limit: 100,
+    getLowerBoundIso: (now) => subtractHours(now, 12).toISOString(),
+  },
   {
     key: '24h',
     label: '24 hours',

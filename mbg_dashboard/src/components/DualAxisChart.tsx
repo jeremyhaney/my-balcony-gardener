@@ -57,7 +57,12 @@ const DualAxisChart: React.FC<Props> = ({ sensorLogs, historyWindowKey }) => {
       day: 'numeric',
     })
   const formatXAxisTick = (timestampMs: number) => {
-    if (historyWindowKey === '24h') {
+    if (
+      historyWindowKey === '3h' ||
+      historyWindowKey === '6h' ||
+      historyWindowKey === '12h' ||
+      historyWindowKey === '24h'
+    ) {
       return formatTimeOnly(timestampMs)
     }
 

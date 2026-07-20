@@ -105,7 +105,11 @@ export const calculateTelemetryHealth = (
   if (
     largestGapMs !== null &&
     largestGapMs > FRESHNESS_THRESHOLD_MS &&
-    (historyWindowKey === '24h' || historyWindowKey === '7d')
+    (historyWindowKey === '3h' ||
+      historyWindowKey === '6h' ||
+      historyWindowKey === '12h' ||
+      historyWindowKey === '24h' ||
+      historyWindowKey === '7d')
   ) {
     notes.push('There is a long gap between reports in this history window.')
   }
@@ -185,7 +189,11 @@ const getStatus = ({
   if (
     largestGapMs !== null &&
     largestGapMs > FRESHNESS_THRESHOLD_MS &&
-    (historyWindowKey === '24h' || historyWindowKey === '7d')
+    (historyWindowKey === '3h' ||
+      historyWindowKey === '6h' ||
+      historyWindowKey === '12h' ||
+      historyWindowKey === '24h' ||
+      historyWindowKey === '7d')
   ) {
     return 'warning'
   }

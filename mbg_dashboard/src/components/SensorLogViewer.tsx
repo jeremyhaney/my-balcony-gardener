@@ -558,6 +558,7 @@ const SensorLogViewer = ({
           />
           <HostedGen2TrendChart
             rows={hostedGen2Rows}
+            historyWindowKey={selectedWindow.key}
             isLoading={isHostedGen2Loading}
             error={hostedGen2Error}
             controls={hostedWindowControl}
