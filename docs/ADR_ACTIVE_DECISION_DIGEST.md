@@ -24,6 +24,7 @@ The original files in [`docs/adr`](./adr) remain the historical decision log and
 - Manual Water Now remains local and supervised.
 - Gen2 measurements remain separate from the legacy `SensorLogRow` compatibility contract.
 - Control eligibility remains an internal firmware/control-design concern and historical evidence field; it is not part of new cleaned Gen2 `/measurements` records and is never hosted command/control.
+- ADR 0023 locks the MBG internal short-range I2C wire-color convention as RED = 3.3V, BLACK = GND, GREEN = GPIO21 / SDA, and WHITE = GPIO22 / SCL. GPIO21 remains SDA and GPIO22 remains SCL. Factory SEN0562 lead colors, including BLUE = GND and YELLOW = SCL, are cable exceptions and do not redefine the MBG internal convention.
 
 ## Local Runtime And Watering Control Boundary
 
@@ -155,3 +156,4 @@ Load raw ADRs only for the specific topic under change. Load raw SQL artifacts o
 | 0020 | Active customer setup/access/local-control boundary. |
 | 0021 | Active watering event evidence and cadence separation architecture. |
 | 0022 | Active Gen2 endpoint responsibility, cleaned measurement record, static capability manifest, nested status, and heartbeat-alignment contract. |
+| 0023 | Active MBG internal I2C wire-color convention: GREEN = GPIO21 / SDA and WHITE = GPIO22 / SCL; supersedes earlier WHT = SDA / GRN = SCL documentation without changing GPIO assignments. |

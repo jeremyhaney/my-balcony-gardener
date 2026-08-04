@@ -1,5 +1,7 @@
 # My Balcony Gardener Phase Backlog
 
+> **Current I2C wiring authority (effective 2026-07-03):** MBG internal short-range I2C wiring uses RED = 3.3V, BLACK = GND, GREEN = GPIO21 / SDA, and WHITE = GPIO22 / SCL. GPIO21 remains SDA and GPIO22 remains SCL. Factory SEN0562 leads are exceptions, including BLUE = GND and YELLOW = SCL; they do not redefine the MBG internal convention. See ADR 0023.
+
 This document captures deferred work that should not be mixed into the current implementation phase.
 
 It is a planning guide, not an implementation approval. Each item still requires normal inspection, design, review, validation, and commit discipline before implementation.
@@ -1598,7 +1600,7 @@ Out of scope:
 Scope:
 
 - Create product/design decision matrix [`docs/product/phase7m-sensor-upgrade-decision-matrix.md`](./product/phase7m-sensor-upgrade-decision-matrix.md).
-- Create proposed Balcony02 wiring/build-out planning artifact [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md`](./production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md), labeled proposed/not-as-built/not-implemented.
+- Maintain the proposed Balcony02 wiring/build-out planning artifact as [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.2_2026-08-04.md`](./production/MBG_Balcony02_Buildout_Wiring_Plan_v0.2_2026-08-04.md), reissued from its June 4, 2026 planning baseline and still labeled proposed/not-as-built/not-implemented.
 - Inspect the existing current/as-built Gen2 production workbook without modifying it.
 - Compare incoming sensors before deep calibration work or hardware modification.
 - Record incoming Digi-Key parts as not yet installed: 4x DFRobot SEN0308 waterproof capacitive moisture, 5x DFRobot SEN0562 IP68 I2C ambient light, 2x DFRobot SEN0390 ambient light / optical module, and 2x DFRobot SEN0204 non-contact liquid level.
@@ -2156,4 +2158,3 @@ Hydraulic prove-out and watering scheduling remain useful future physical/produc
 - Auth/login, settings/provisioning, alerts, and commercial production hardening.
 - Full production provisioning.
 - Full commercial multi-device fleet management.
-

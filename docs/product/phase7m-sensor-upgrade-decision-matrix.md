@@ -50,13 +50,13 @@ Phase 7M does not create ADR 0021 because this matrix does not lock a new archit
 
 Phase 7M includes a separate proposed wiring/build-out planning artifact:
 
-- [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md`](../production/MBG_Balcony02_Buildout_Wiring_Plan_v0.1_2026-06-04.md)
+- [`docs/production/MBG_Balcony02_Buildout_Wiring_Plan_v0.2_2026-08-04.md`](../production/MBG_Balcony02_Buildout_Wiring_Plan_v0.2_2026-08-04.md)
 
 That artifact is explicitly labeled `PROPOSED / NOT AS-BUILT / NOT IMPLEMENTED`.
 
-The existing current/as-built Gen2 production workbook remains unchanged:
+The current controlled Gen2 production workbook is:
 
-- [`docs/production/MBG_Gen2_Pinout_From-To_v1.1_2026-06-02.xlsx`](../production/MBG_Gen2_Pinout_From-To_v1.1_2026-06-02.xlsx)
+- [`docs/production/MBG_Gen2_Pinout_From-To_v1.2_2026-08-04.xlsx`](../production/MBG_Gen2_Pinout_From-To_v1.2_2026-08-04.xlsx)
 
 The proposed Balcony02 wiring artifact is used to reason through planning-level GPIO allocation, I2C topology, ADC expansion, connectors, cable glands, enclosure penetrations, power distribution, and physical placement needs before any physical build or firmware implementation is approved.
 

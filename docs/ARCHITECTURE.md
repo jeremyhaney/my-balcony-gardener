@@ -135,7 +135,7 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - GPIO5 is retired from Gen2 relay/pump control designs.
 - The standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature.
 - I2C SDA/SCL is approved as a short-range local sensor-module bus, not the long-distance field wiring strategy.
-- The Gen2 4-conductor local I2C sensor-module cable color standard is RED = 3.3V, BLK = GND, WHT = GPIO21 / I2C SDA, and GRN = GPIO22 / I2C SCL. This color standard applies only to short-range local I2C sensor-module wiring and is not the approved long-distance field wiring strategy.
+- The Gen2 4-conductor local I2C sensor-module cable color standard is RED = 3.3V, BLK = GND, GRN = GPIO21 / I2C SDA, and WHT = GPIO22 / I2C SCL. This July 3, 2026 convention supersedes the earlier WHT = SDA / GRN = SCL documentation; GPIO21 remains SDA and GPIO22 remains SCL. This color standard applies only to short-range local I2C sensor-module wiring and is not the approved long-distance field wiring strategy. Factory SEN0562 leads remain a documented cable exception, including BLUE = GND and YELLOW = SCL, and do not redefine the MBG internal convention.
 - Local ESP32 firmware remains the owner of watering decisions and pump shutoff.
 - Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
 - Phase 7B implements the Gen2 bench profile as `bench-proto-gen2`; the retained `bench-prototype` profile remains Gen1 fallback/reference.
