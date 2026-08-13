@@ -42,7 +42,7 @@ Legend:
 | ✅ COMPLETE | Phase 8A.1 | Prototype01 Installed Sensor Profile Cleanup | Prototype01 reports expected installed/not-installed sensor truth; no watering authority changed. |
 | ✅ COMPLETE | Phase 8A | Relative Moisture Index and Hosted Card Cleanup | Hosted Support View uses the accepted display-only gardener moisture index and cleaned trust/card/chart behavior. |
 | ✅ COMPLETE | Phase 8B | Balcony02 Gen2 Controller Deployment and Endpoint Contract Cleanup | Phase 8B.1 through Phase 8B.6 are complete at their recorded evidence levels; Phases 8B.5 and 8B.6 are production validated. |
-| ✅ COMPLETE | Phase 8B.1 | Balcony02 Gen2 Physical Buildout and Runtime Prove-Out | Balcony02 hardware, locked sensor topology, physical button, WL01 interlock, local endpoints, and runtime bring-up were proven. |
+| ✅ COMPLETE | Phase 8B.1 | Balcony02 Gen2 Physical Buildout and Runtime Prove-Out | Physical build and commissioning closed August 12, 2026; installed soak, measurement, hydraulic, metadata, storage, and retirement/refactor evidence continue as follow-on streams. |
 | ✅ COMPLETE | Phase 8B.2 | Gen2 `/measurements` Contract Cleanup and End-to-End Deployment | Clean 11-record contract deployed and validated locally, through Supabase storage/views, and on the hosted Support View. |
 | ✅ COMPLETE | Phase 8B.3 | Gen2 `/capabilities` Static Contract Cleanup | Live-device-validated static configured-hardware manifest performs no reads or scans and preserves installed-state and control-authority boundaries. |
 | ✅ COMPLETE | Phase 8B.4 | Gen2 `/status` Nested Diagnostics Contract Cleanup | LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED on 2026-07-17 without changing watering ownership. |
@@ -88,7 +88,8 @@ Legend:
 
 #### Phase 8B - Balcony02 Gen2 Controller Deployment and Endpoint Contract Cleanup — COMPLETE
 
-- Phase 8B.1 Balcony02 Gen2 Physical Buildout and Runtime Prove-Out — COMPLETE.
+- Phase 8B.1 Balcony02 Gen2 Physical Buildout and Runtime Prove-Out — COMPLETE. Physical commissioning closed August 12, 2026. Authoritative record: [`docs/production/MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md`](./production/MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md); fillable BOM: [`docs/production/MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx`](./production/MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx).
+- Phase 8B.1 follow-on evidence streams remain open and are not construction punch-list: installed soak and reliability observation; intermittent DS18B20 missing-reading investigation; SEN0308 moisture measurement-system/dry-down/manual-watering evaluation; WL01 elevation optimization during natural reservoir drawdown; one-gallon reservoir marking/calibration; hydraulic delivered-volume and distribution characterization; bogus-reading/plausibility handling; customer-facing sensor/location metadata; Supabase storage-growth investigation; evidence-based Gen1-remnant retirement/refactor review; and a later major website redesign. This closeout does not claim any of these field prove-out items complete.
 - Phase 8B.2 Gen2 `/measurements` Contract Cleanup and End-to-End Deployment — COMPLETE / END-TO-END VALIDATED. Commits `b17bf1a` and `2096394` were pushed to `main`; the coordinated SQL migration was manually applied on 2026-07-16; local, repeated storage, heartbeat, and hosted Support View validation passed.
 - Phase 8B.3 Gen2 `/capabilities` Static Contract Cleanup — COMPLETE / LIVE DEVICE VALIDATED.
 - Phase 8B.4 Gen2 `/status` Nested Diagnostics Contract Cleanup — COMPLETE / LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED on 2026-07-17.

@@ -6,6 +6,8 @@ Date: 2026-08-04
 
 Revision history: v0.2 reissues the original June 4, 2026 v0.1 planning document with the July 3, 2026 I2C wire-color supersession; its proposed/not-as-built/not-implemented classification is unchanged.
 
+> **Historical planning notice — superseded August 12, 2026:** This document preserves the original proposed/not-as-built/not-implemented planning claims as historical evidence. For the installed Balcony02 configuration, commissioning status, and service cross-reference, use [`MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md`](./MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md).
+
 > **Supersession notice — 2026-07-03:** For all implementation or service use, the authoritative MBG internal short-range I2C convention is RED = 3.3V, BLACK = GND, GREEN = GPIO21 / SDA, and WHITE = GPIO22 / SCL. GPIO21 remains SDA and GPIO22 remains SCL. Factory SEN0562 leads are cable exceptions, including BLUE = GND and YELLOW = SCL, and do not redefine the MBG internal convention. See ADR 0023.
 
 Phase: Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan

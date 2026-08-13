@@ -10,11 +10,16 @@ The authoritative convention effective July 3, 2026 is RED = 3.3V, BLACK = GND, 
 
 That workbook combines the official Gen2 pinout, from-to wiring, current device sensor inventory, BOM cross-reference, future/deferred wiring notes, and install/service validation checklist.
 
-Phase 7M adds a proposed Balcony02 build-out wiring logic artifact:
+The authoritative Balcony02 physical closeout artifacts are:
+
+- [`MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md`](./MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md)
+- [`MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx`](./MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx) — fillable inventory/pricing record; blank manufacturer, model, serial, supplier, and cost fields do not block commissioning closeout
+
+Phase 7M added the historical proposed Balcony02 build-out wiring logic artifact:
 
 - `MBG_Balcony02_Buildout_Wiring_Plan_v0.2_2026-08-04.md`
 
-The Balcony02 artifact is explicitly `PROPOSED / NOT AS-BUILT / NOT IMPLEMENTED`. It is a planning document for sensor topology, ADC/I2C expansion, connectors, enclosure penetrations, power distribution, physical placement, and serviceability. It does not modify the current Gen2 production wiring workbook and does not approve physical installation.
+The planning artifact remains explicitly `PROPOSED / NOT AS-BUILT / NOT IMPLEMENTED` as historical evidence and is superseded for implementation and service use by the August 12, 2026 as-built commissioning record. Its original planning claims are intentionally preserved.
 
 The old support-folder BOM and From-To workbooks are historical references only. Current repo code, profile definitions, architecture docs, current-state docs, and ADRs are authoritative for current Gen2 pins, profiles, device identities, and control boundaries.
 

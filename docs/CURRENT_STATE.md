@@ -561,6 +561,29 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Physical-button watering produced three start/completion pairs with durations `11`, `7`, and `11` seconds. Active status used trigger `physical_button`; idle status returned a null active trigger while preserving last-watering time and duration. WL01 remained valid/read-ok with value `1`. Watering events did not become measurement successes, and heartbeats did not self-claim status success.
 - The latest raw heartbeat retained current firmware/profile, uptime `1802`, reason `periodic`, RSSI `-47`, idle watering with null active trigger, last watering `2026-07-17T22:57:24Z` for `11` seconds, free heap `232720`, minimum free heap `176876`, and empty details. Protected hosted diagnostics matched the raw evidence while excluding local IP and MAC. No new browser review is claimed.
 - Phase 8B.4 changed no pins, installed-sensor assignments, GPIO modes/polarity, I2C/mux topology, thresholds, watering duration/cooldown/cadence, relay/button/interlock behavior, automatic SEN0308 authority, Supabase command/control, hosted Water Now, hosted IP/MAC exposure, or Gen1 endpoint contract.
+- Phase 8B.1 physical commissioning closeout completed August 12, 2026 for `Balcony02`, UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`, firmware `phase8b4-gen2-status-contract`, profile `balcony02-gen2`. The authoritative record is [`docs/production/MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md`](./production/MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md); its fillable BOM is [`docs/production/MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx`](./production/MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx). Final photographs remain in `_support/Photos/Balcony02 - Gen2`, including `B02 Complete.zip`.
+- Controller and relay/reservoir enclosures are mounted, dressed, sealed, and presented. All installed sensors produced valid final commissioning readings. WL01, the physical button, relay, actual pump, reservoir-present permission, low-water blocking/active-cycle interruption, and the 15-second cutoff were functionally proven. Pump power is routed through COM/NO so relay-power loss leaves the pump off; the pump-power extension is 16 AWG stranded copper with sealed splices.
+- The original long BME extension was abandoned and the BME moved near the controller on a short cable. The intermittently faulty original BME that produced values near 362 °F was discarded and replaced. `sen0308_m04` remains intentionally `installed:false`, not incomplete installation.
+
+### Balcony02 authoritative installed sensor map
+
+Basket numbering follows the CAD drawing from left to right. Physical markings, stable firmware/telemetry identities, and customer-facing locations remain separate and must not be conflated or renamed.
+
+| Actual location | Function | Physical marking | Balcony02 identity | Connection | Customer-facing label |
+|---|---|---|---|---|---|
+| Basket 1 | Ambient light | `L02` | `sen0562_l01` / L01 | mux channel 1, `0x23` | Basket 1 Sunlight |
+| Basket 1 | Soil moisture | `M1` | `sen0308_m01` / M01 | ADS1115 A0 | Basket 1 Soil Moisture |
+| Basket 3 | Ambient light | `L03` | `sen0562_l02` / L02 | mux channel 2, `0x23` | Basket 3 Sunlight |
+| Basket 3 | Soil moisture | `M4` | `sen0308_m02` / M02 | ADS1115 A1 | Basket 3 Soil Moisture |
+| Basket 3 | Soil temperature | `ST04` | `ds18b20_temperature` / ST | OneWire GPIO27 | Basket 3 Soil Temperature |
+| Basket 6 | Ambient light | `L01` | `sen0562_l03` / L03 | mux channel 3, `0x23` | Basket 6 Sunlight |
+| Basket 6 | Soil moisture | `M3` | `sen0308_m03` / M03 | ADS1115 A2 | Basket 6 Soil Moisture |
+| Near controller | Air conditions | red Sharpie on PCB edges | `bme280_air` | mux channel 4, `0x76` | Balcony Air Conditions |
+| Reservoir | Minimum-water interlock | unlabeled | `sen0204_wl01` / WL01 | GPIO26 | Reservoir Water Available |
+
+### Balcony02 open field prove-out
+
+Physical construction and commissioning are closed. Installed soak and reliability observation; intermittent DS18B20 missing-reading investigation; SEN0308 dry-down/manual-watering measurement-system evaluation; WL01 elevation optimization during natural drawdown; one-gallon reservoir marking/calibration; hydraulic delivered-volume and distribution characterization; bogus-reading/plausibility handling; customer-facing sensor/location metadata; Supabase storage-growth investigation; evidence-based Gen1-remnant retirement/refactor review; and a later major website redesign remain open follow-on evidence streams, not construction punch-list. No field prove-out item is claimed complete by this closeout.
 - Phase 8B.5 implements deterministic `Garden Readings` in Light, Air, Water, and Soil order with customer-facing `Latest reading` wording; four independent Garden Reading Quality dimensions; separate MBG Diagnostics; equal closed status-control sizing; Device selection before the interpretation path; and Window selection within the chart. Its ten independent series and five non-exclusive family shortcuts default to Air Temperature plus Humidity and support mixed-family, actual-unit multi-axis trends with unique stable series colors and deterministic watering-label lanes. Compound physical identity, strict and deterministic usable-evidence handling, and independent unrounded/unclamped M01/M02/M03 Relative Moisture Index behavior remain preserved. Lint, TypeScript/Vite build, and final diff checks passed. Local hosted-readonly browser validation covered `360`, `460`, `820`, and `1280` pixels, and production visual review confirmed the final responsive, chart, color, axis, and populated watering-label presentation with no hosted Water Now. No `.env`, persistent environment, source configuration, SQL, Supabase, firmware, upload, device, watering-policy, or control-authority change occurred.
 - MVP v1.0 bench test passed.
 - MVP v1.0 balcony field commissioning test passed.
