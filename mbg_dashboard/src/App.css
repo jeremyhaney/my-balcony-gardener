@@ -121,6 +121,35 @@
   color: #0f172a;
 }
 
+.history-refresh-control {
+  align-items: flex-start;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.history-refresh-control button {
+  background: #123326;
+  border: 0;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 800;
+  min-height: 2rem;
+  padding: 0.3rem 0.75rem;
+}
+
+.history-refresh-control button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.history-last-refreshed {
+  color: #4d6056;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
 .hosted-access-state {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid #d9e5dc;

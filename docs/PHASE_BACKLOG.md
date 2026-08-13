@@ -6,6 +6,17 @@ This document captures deferred work that should not be mixed into the current i
 
 It is a planning guide, not an implementation approval. Each item still requires normal inspection, design, review, validation, and commit discipline before implementation.
 
+## Hosted history polling correction
+
+- Reduced scheduled Supabase history refreshes from every 10 seconds to every 5 minutes while visible.
+- Hidden tabs do not start or retain a scheduled refresh timer; becoming visible performs one immediate complete refresh and resumes one timer.
+- Added a non-overlapping manual Refresh control and local-time last-refreshed status without changing query paths, chart selection behavior, or local watering authority.
+- Diagnosis separated I/O pressure from storage and device writes: Supabase warned of Disk IO Budget depletion, but the database was approximately `82 MB` with low storage utilization, while normal B02 and P01 writes matched the intended 15-minute cadence at approximately four measurement batches and four heartbeats per active device per hour.
+- Storage matched ADR 0017: one physical `sensor_measurement_batches` row held each batch, including B02's eleven nested records, and a conventional SQL view flattened those records. Repeated 10-second hosted Support View polling across multiple tabs dominated instead; PostgreSQL statistics showed approximately `197,000` leading protected Gen2 query executions and approximately `185 GB` of cumulative temporary-file activity.
+- The correction reduces visible scheduled refresh cycles by `30x`, eliminates scheduled hidden-tab polling, and retains immediate refresh after visibility return and Device/Window changes. This reduces spill opportunities but cannot guarantee that an individual complex query will not spill.
+- Local B02 Gen2 Support View validation covered manual Refresh, local timestamp, Device/Window changes, hidden/visible behavior, responsive layout, lint, TypeScript/Vite production build, and `git diff --check`. Temporary control placement is accepted pending the broader frontend redesign and Gen1-remnant retirement.
+- No SQL, schema, indexes, retention, firmware, telemetry/heartbeat cadence, device identity, authentication/RLS, watering behavior, or local control authority changed. This correction remains pending Jeremy approval and is not claimed committed, pushed, deployed, or production-validated.
+
 ## Phase 8.0 - Product Direction and Backlog Visual Rebaseline
 
 Phase 8 reframes My Balcony Gardener around a schedule-first customer product, with sensor evidence used carefully and progressively instead of treating every new sensor as immediate watering authority.

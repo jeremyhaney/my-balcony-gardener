@@ -44,7 +44,7 @@ const sanitizePercent = (value: number): number | null => (isValidPercent(value)
 const hasUsableTimestamp = (timestamp: string): boolean =>
   Number.isFinite(new Date(timestamp).getTime())
 
-const HISTORY_REFRESH_INTERVAL_MS = 10000
+const HISTORY_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 const HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE = 8
 
 type SensorLogViewerProps = {
@@ -96,6 +96,10 @@ const SensorLogViewer = ({
   const [wateringEventsError, setWateringEventsError] = useState<string | null>(null)
   const [isWateringEventsLoading, setIsWateringEventsLoading] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null)
+  const manualRefreshRef = useRef<(() => Promise<void>) | null>(null)
+  const refreshGenerationRef = useRef(0)
   const [openDeviceStatusPanel, setOpenDeviceStatusPanel] =
     useState<DeviceStatusPanelKey | null>(null)
   const deviceOptions = isProtectedHostedScope ? authorizedDeviceOptions : demoDeviceOptions
@@ -155,8 +159,15 @@ const SensorLogViewer = ({
 
   useEffect(() => {
     let isMounted = true
+    let refreshTimer: number | null = null
+    let isRefreshRunning = false
+    const refreshGeneration = ++refreshGenerationRef.current
 
     const loadHistory = async () => {
+      if (isRefreshRunning) {
+        return
+      }
+
       if (isProtectedHostedScope && isAuthorizedDevicesLoading) {
         return
       }
@@ -173,8 +184,19 @@ const SensorLogViewer = ({
         setWateringEventsError(null)
         setIsWateringEventsLoading(false)
         setIsLoading(false)
+        setLastRefreshedAt(new Date())
         return
       }
+
+      if (
+        isProtectedHostedScope &&
+        !deviceOptions.some((device) => device.key === selectedDevice.key)
+      ) {
+        return
+      }
+
+      isRefreshRunning = true
+      setIsRefreshing(true)
 
       const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
       const hostedGen2Request = isHostedReadonly
@@ -205,49 +227,96 @@ const SensorLogViewer = ({
         setIsWateringEventsLoading(true)
       }
 
-      const [historyResult, diagnosticsResult, hostedGen2Result, wateringEventsResult] =
-        await Promise.all([
-          hostedDataScope === 'demo'
-            ? fetchHistoryLogs(
-                selectedWindow.limit,
-                selectedDevice.deviceId,
-                lowerBoundIso,
-              )
-            : Promise.resolve({ rows: [] as SensorLogRow[], error: null }),
-          fetchDeviceDiagnostics(selectedDevice.deviceId, hostedDataScope),
-          hostedGen2Request,
-          wateringEventsRequest,
-        ])
+      try {
+        const [historyResult, diagnosticsResult, hostedGen2Result, wateringEventsResult] =
+          await Promise.all([
+            hostedDataScope === 'demo'
+              ? fetchHistoryLogs(
+                  selectedWindow.limit,
+                  selectedDevice.deviceId,
+                  lowerBoundIso,
+                )
+              : Promise.resolve({ rows: [] as SensorLogRow[], error: null }),
+            fetchDeviceDiagnostics(selectedDevice.deviceId, hostedDataScope),
+            hostedGen2Request,
+            wateringEventsRequest,
+          ])
 
-      if (!isMounted) {
+        if (!isMounted || refreshGeneration !== refreshGenerationRef.current) {
+          return
+        }
+
+        setLogs(historyResult.rows)
+        setHistoryError(historyResult.error)
+        setDiagnostics(diagnosticsResult.diagnostics)
+        setDiagnosticsError(diagnosticsResult.error)
+        setHostedGen2Rows(hostedGen2Result.rows)
+        setHostedGen2Error(hostedGen2Result.error)
+        setWateringEventRows(wateringEventsResult.rows)
+        setWateringEventsError(wateringEventsResult.error)
+      } finally {
+        isRefreshRunning = false
+
+        if (isMounted && refreshGeneration === refreshGenerationRef.current) {
+          setIsHostedGen2Loading(false)
+          setIsWateringEventsLoading(false)
+          setIsLoading(false)
+          setIsRefreshing(false)
+          setLastRefreshedAt(new Date())
+        }
+      }
+    }
+
+    const clearRefreshTimer = () => {
+      if (refreshTimer !== null) {
+        window.clearInterval(refreshTimer)
+        refreshTimer = null
+      }
+    }
+
+    const startRefreshTimer = () => {
+      clearRefreshTimer()
+
+      if (document.hidden) {
         return
       }
 
-      setLogs(historyResult.rows)
-      setHistoryError(historyResult.error)
-      setDiagnostics(diagnosticsResult.diagnostics)
-      setDiagnosticsError(diagnosticsResult.error)
-      setHostedGen2Rows(hostedGen2Result.rows)
-      setHostedGen2Error(hostedGen2Result.error)
-      setIsHostedGen2Loading(false)
-      setWateringEventRows(wateringEventsResult.rows)
-      setWateringEventsError(wateringEventsResult.error)
-      setIsWateringEventsLoading(false)
-      setIsLoading(false)
+      refreshTimer = window.setInterval(() => {
+        if (!document.hidden) {
+          void loadHistory()
+        }
+      }, HISTORY_REFRESH_INTERVAL_MS)
     }
 
-    void loadHistory()
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearRefreshTimer()
+        return
+      }
 
-    const refreshTimer = window.setInterval(() => {
       void loadHistory()
-    }, HISTORY_REFRESH_INTERVAL_MS)
+      startRefreshTimer()
+    }
+
+    manualRefreshRef.current = loadHistory
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    if (!document.hidden) {
+      void loadHistory()
+      startRefreshTimer()
+    }
 
     return () => {
       isMounted = false
-      window.clearInterval(refreshTimer)
+      clearRefreshTimer()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+
+      if (manualRefreshRef.current === loadHistory) {
+        manualRefreshRef.current = null
+      }
     }
   }, [
-    deviceOptions.length,
+    deviceOptions,
     hostedDataScope,
     isAuthorizedDevicesLoading,
     isHostedReadonly,
@@ -319,6 +388,10 @@ const SensorLogViewer = ({
 
     setSelectedWindow(nextWindow)
     updateHistoryControlUrl(selectedDevice.key, nextWindow.key)
+  }
+
+  const handleManualRefresh = () => {
+    void manualRefreshRef.current?.()
   }
 
   const chartLogs = [...logs]
@@ -409,6 +482,29 @@ const SensorLogViewer = ({
     </label>
   )
 
+  const refreshControl = (
+    <div className="history-refresh-control">
+      <button type="button" disabled={isRefreshing} onClick={handleManualRefresh}>
+        {isRefreshing ? 'Refreshing…' : 'Refresh'}
+      </button>
+      <p aria-live="polite" className="history-last-refreshed">
+        {lastRefreshedAt ? (
+          <>
+            Last refreshed:{' '}
+            <time dateTime={lastRefreshedAt.toISOString()}>
+              {lastRefreshedAt.toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+            </time>
+          </>
+        ) : (
+          'Not refreshed yet'
+        )}
+      </p>
+    </div>
+  )
+
   // Legacy history keeps the existing combined Device History and Window controls.
   const historyControls = (
     <div
@@ -424,6 +520,7 @@ const SensorLogViewer = ({
     >
       {deviceControl}
       {windowControl}
+      {refreshControl}
     </div>
   )
 
@@ -441,6 +538,7 @@ const SensorLogViewer = ({
       }}
     >
       {deviceControl}
+      {refreshControl}
     </div>
   )
 
