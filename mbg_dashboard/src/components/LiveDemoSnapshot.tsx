@@ -4,10 +4,13 @@ import {
   fetchHostedGen2Measurements,
   type DeviceDiagnostics,
 } from "../api";
+import { PHASE_7L1_PILOT_CUSTOMER_SITE } from "../customerSites";
 import { DEVICE_REGISTRY } from "../deviceRegistry";
 import { formatHostedGen2MeasurementLabel } from "../hostedGen2Display";
+import { calculateGardenerMoistureIndex } from "../hostedGen2Presentation";
 import {
   getHostedGen2MeasurementDisplayModels,
+  isDisplayableHostedGen2Row,
   type HostedGen2MeasurementDisplayModel,
 } from "../hostedGen2RecentValue";
 import type { HostedGen2MeasurementRow } from "../types/hostedGen2Measurements";
@@ -20,10 +23,11 @@ type SnapshotState = {
   isLoading: boolean;
 };
 
-const DEMO_DEVICE_KEY = "balcony";
+const DEMO_DEVICE_KEY = PHASE_7L1_PILOT_CUSTOMER_SITE.primaryDeviceKey;
 const SNAPSHOT_WINDOW_HOURS = 24;
 const SNAPSHOT_LIMIT = 1000;
 const SYSTEM_REPORTING_FRESH_SECONDS = 35 * 60;
+const SNAPSHOT_MOISTURE_SENSOR_KEY = "sen0308_m02";
 const SNAPSHOT_MEASUREMENTS = [
   "moisture_index",
   "air_temperature",
@@ -157,7 +161,7 @@ const SnapshotMeasurement = ({
 }: SnapshotMeasurementProps) => (
   <SnapshotTile
     label={formatHostedGen2MeasurementLabel(measurementName)}
-    value={isLoading ? "Loading" : formatMeasurementValue(model?.displayRow)}
+    value={isLoading ? "Loading" : formatMeasurementValue(measurementName, model?.displayRow)}
   />
 );
 
@@ -176,10 +180,35 @@ const SnapshotTile = ({ label, value }: SnapshotTileProps) => (
 const getDisplayModel = (
   measurementName: string,
   models: HostedGen2MeasurementDisplayModel[],
-): HostedGen2MeasurementDisplayModel | null =>
-  models.find((model) =>
+): HostedGen2MeasurementDisplayModel | null => {
+  if (normalizeText(measurementName) === "moisture_index") {
+    // M02 is the intentionally selected temporary representative channel for the public
+    // landing snapshot; broader presentation belongs in the capability-driven frontend redesign.
+    const model = models.find(
+      (candidate) => normalizeText(candidate.latestRow.sensor_key) === SNAPSHOT_MOISTURE_SENSOR_KEY,
+    );
+
+    if (!model) {
+      return null;
+    }
+
+    return {
+      ...model,
+      displayRow: isDisplayableHostedGen2Row(model.displayRow)
+        ? {
+            ...model.displayRow,
+            measurement_name: "moisture_index",
+            measurement_unit: "index",
+            measurement_value: calculateGardenerMoistureIndex(model.displayRow.measurement_value),
+          }
+        : null,
+    };
+  }
+
+  return models.find((model) =>
     isCompatibleSnapshotMeasurement(measurementName, model.latestRow),
   ) ?? null;
+};
 
 const isCompatibleSnapshotMeasurement = (
   requestedMeasurementName: string,
@@ -217,13 +246,20 @@ const getSnapshotLowerBoundIso = (): string => {
 };
 
 const formatMeasurementValue = (
+  measurementName: string,
   row: HostedGen2MeasurementRow | null | undefined,
 ): string => {
   if (!row || row.measurement_value === null || !Number.isFinite(row.measurement_value)) {
     return "Unavailable";
   }
 
-  return `${row.measurement_value.toLocaleString()} ${row.measurement_unit ?? ""}`.trim();
+  const fractionDigits = normalizeText(measurementName) === "moisture_index" ? 0 : 1;
+  const formattedValue = row.measurement_value.toLocaleString(undefined, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+
+  return `${formattedValue} ${row.measurement_unit ?? ""}`.trim();
 };
 
 const formatTimestamp = (value: string | null): string => {

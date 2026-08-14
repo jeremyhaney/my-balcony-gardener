@@ -21,7 +21,7 @@ export const PHASE_7L1_PILOT_CUSTOMER_SITE: CustomerSite = {
   siteName: 'Jeremy Balcony Pilot',
   siteLocationLabel: "Jeremy's Balcony",
   accessMode: 'pilot-simulation',
-  deviceKeys: ['balcony', 'scout01'],
-  primaryDeviceKey: 'balcony',
+  deviceKeys: ['balcony02'],
+  primaryDeviceKey: 'balcony02',
   supportRoleLabel: 'site-owner / support-admin simulation',
 }

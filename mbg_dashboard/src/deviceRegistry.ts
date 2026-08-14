@@ -1,4 +1,4 @@
-export type DeviceKey = 'balcony' | 'bench' | 'scout01'
+export type DeviceKey = 'balcony' | 'balcony02' | 'bench' | 'scout01'
 export type DeviceRole = 'controller' | 'bench' | 'sensor-scout'
 
 export type RegisteredDevice = {
@@ -18,6 +18,14 @@ export const DEVICE_REGISTRY: RegisteredDevice[] = [
     deviceId: '550e8400-e29b-41d4-a716-446655440000',
     role: 'controller',
     description: 'Real installed balcony watering controller.',
+  },
+  {
+    key: 'balcony02',
+    label: 'Balcony02',
+    hostedLabel: 'Balcony02',
+    deviceId: '7e5bd328-ad68-4389-a71a-fa5cd01b3813',
+    role: 'controller',
+    description: 'Production balcony watering controller.',
   },
   {
     key: 'bench',

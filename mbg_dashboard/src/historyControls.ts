@@ -20,14 +20,11 @@ export type HistoryWindowOption = {
   getLowerBoundIso: (now: Date) => string | undefined
 }
 
-export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = DEVICE_REGISTRY.map((device) => ({
-  key: device.key,
-  label: device.label,
-  hostedLabel: device.hostedLabel,
-  deviceId: device.deviceId,
-  role: device.role,
-  description: device.description,
-}))
+const HISTORY_DEVICE_KEYS: HistoryDeviceKey[] = ['balcony', 'bench', 'scout01']
+
+export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = DEVICE_REGISTRY.filter((device) =>
+  HISTORY_DEVICE_KEYS.includes(device.key),
+).map(mapRegisteredDeviceToHistoryOption)
 
 export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
   {
@@ -109,7 +106,9 @@ export const getHistoryDeviceOptionsForDeviceKeys = (
   deviceKeys: readonly HistoryDeviceKey[],
 ): HistoryDeviceOption[] =>
   deviceKeys
-    .map((deviceKey) => getHistoryDeviceOption(deviceKey))
+    .map((deviceKey) => DEVICE_REGISTRY.find((device) => device.key === deviceKey))
+    .filter((device): device is (typeof DEVICE_REGISTRY)[number] => Boolean(device))
+    .map(mapRegisteredDeviceToHistoryOption)
     .filter((option): option is HistoryDeviceOption => Boolean(option))
 
 export const getHistoryWindowOption = (key: string | null): HistoryWindowOption | undefined =>
@@ -185,4 +184,17 @@ const subtractYears = (date: Date, years: number): Date => {
   const nextDate = new Date(date)
   nextDate.setFullYear(nextDate.getFullYear() - years)
   return nextDate
+}
+
+function mapRegisteredDeviceToHistoryOption(
+  device: (typeof DEVICE_REGISTRY)[number],
+): HistoryDeviceOption {
+  return {
+    key: device.key,
+    label: device.label,
+    hostedLabel: device.hostedLabel,
+    deviceId: device.deviceId,
+    role: device.role,
+    description: device.description,
+  }
 }

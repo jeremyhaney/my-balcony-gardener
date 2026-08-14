@@ -1606,6 +1606,8 @@ Out of scope:
 - Hosted routes remain read-only. No Remote Water Now, Supabase command/control, local ESP32 calls, firmware changes, firmware upload, or manual deploy command occurred.
 - During production-validation closeout, no SQL was run, no firmware was touched, and no manual deploy command was run. Cloudflare production deployment came from pushing `main`.
 - Before adding external customer devices, public demo visibility should be narrowed so public demo views cannot accidentally expose non-demo customer data.
+- Short-term Demo containment temporarily uses live Balcony02 for both the public landing snapshot and `/demo`, intentionally retaining the Demo's single-option Device selector and existing guide. This correction changes no SQL, firmware, polling, authentication, watering, or broader UI behavior.
+- A separate future deterministic interactive sample Demo should consider curated Balcony02-derived data, guided interactions, representative watering history, controlled failure examples, no live-device dependency, and a possible separate Live Garden route.
 
 ## Phase 7M - Sensor Upgrade Decision Matrix and Balcony02 Build-Out Plan
 

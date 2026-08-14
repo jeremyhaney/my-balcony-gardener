@@ -73,7 +73,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
 - Phase 6E custom-domain validation confirmed Garden check-in mode is visible, `LiveStats` and Water Now are hidden, Sensor History is visible, Supabase `sensor_logs` requests are visible, and there are no `/logs`, `/water-now`, or `10.0.0.200` requests.
 - Phase 7L.3 hosted-readonly routing is implemented pending validation and review: `/` is a minimal public landing page with an embedded real-data snapshot, `/demo` is the fuller public read-only demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` is the customer `My Garden` dashboard shell without the prominent site-assignment shell, `/app` remains a backward-compatible alias, `/login` opens the landing page with a placeholder login dialog, and `/support` is a temporary read-only support view reachable by direct URL.
-- The Phase 7L.3 landing snapshot uses real hosted telemetry from Balcony01 and does not introduce fake telemetry, fake `sensor_logs` rows, or ghost devices.
+- As a short-term containment correction, the public landing snapshot and `/demo` temporarily use live Balcony02 (`balcony02`, `7e5bd328-ad68-4389-a71a-fa5cd01b3813`) data. The Demo's single-option Device selector and existing guide are intentionally retained; a deterministic interactive sample Demo is deferred to its own future phase.
+- The Phase 7L.3 landing snapshot uses real hosted telemetry from Balcony02 and does not introduce fake telemetry, fake `sensor_logs` rows, or ghost devices.
 - Local/default dashboard behavior remains unchanged; Manual Water Now remains available only through the local/default path.
 - Remote command/control (Remote Water Now) is not part of MVP.
 - Supabase remains read-only for telemetry and history; it is not used for command/control.
@@ -178,6 +179,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted Device selector currently supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
 - Hosted Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
 - Hosted query-string state supports `?device=balcony&window=24h`, `?device=bench&window=7d`, and similar valid combinations.
+- This Demo containment changes no SQL, firmware, polling, authentication, watering, or broader UI behavior. Future Demo ideas include curated Balcony02-derived data, guided interactions, representative watering history, controlled failure examples, no live-device dependency, and a possible separate Live Garden route.
 - Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
 - Hosted Supabase history reads filter server-side by selected `device_id`.
 - Hosted Supabase history reads apply a selected timestamp lower bound except for `all`, which applies no lower timestamp bound.
