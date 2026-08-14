@@ -32,7 +32,7 @@ Phase 8 reframes My Balcony Gardener around a schedule-first customer product, w
 
 ## Current Roadmap Snapshot
 
-- ADR 0024 is accepted. The next independently reviewed slice is Supabase hosted capability-contract design only: propose positive lifecycle-based commissioned-capability storage and protected read surfaces, including constraints, RLS, grants, provisioning/seed, rollback, and validation, without execution. Firmware, frontend cards/adapters, assignments, and automatic reconciliation remain later slices.
+- ADR 0024 is accepted. The narrowed Phase 8C Supabase design package proposes positive lifecycle storage plus only protected customer capability and Support lifecycle views, with separate Balcony02 provisioning, rollback, and validation. Measurement-derived Support diagnostics remain deferred pending bounded-query design and production read-only `EXPLAIN`. The package remains unexecuted and unprovisioned; the next gate is review and separate explicit prerequisite/SQL-execution approval. Firmware, frontend work, assignments, runtime-capability evidence storage, and automatic reconciliation remain later slices.
 
 The compact roadmap near the top is the current planning view. The detailed phase history below remains historical evidence and may be reorganized in a later Phase 8F documentation cleanup.
 
