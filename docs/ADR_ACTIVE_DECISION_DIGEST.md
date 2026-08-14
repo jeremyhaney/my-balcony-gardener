@@ -102,6 +102,16 @@ ADR 0020 remains active for MVP customer setup/access/local-control boundaries. 
 
 Phase 7L.4 SQL artifacts add `profiles`, `gardens`, `garden_devices`, `garden_memberships`, `support_memberships`, and protected customer/support views. These views filter already-hosted-safe measurement/diagnostics surfaces by `auth.uid()` membership. Base metadata tables are not intended to become broad browser-read tables.
 
+## Hosted Capability And Presentation Boundary
+
+ADR 0024 makes provisioned per-device capability configuration in Supabase the hosted source of truth for commissioned logical sensors. Declarations are positive and lifecycle-based: presence means the hosted frontend should expect the sensor; absence does not require negative records for every possible connector, module, or unsupported sensor. A physical accommodation such as Balcony02 M04 is not commissioned merely because it exists.
+
+Firmware `/capabilities` is runtime/build evidence, and measurements from `sensor_logs`, `sensor_measurement_batches`, flattened views, heartbeats, or diagnostics are value/evidence sources. Neither runtime declarations nor measurements may silently create or remove customer cards. Provisioning/runtime mismatches and undeclared measurements are Support diagnostics.
+
+Current customer cards join currently commissioned capabilities to the best available measurement state. Commissioned sensors remain visible when stale, invalid, missing, unavailable, absent from the latest batch, or not yet reported. Stable generic labels, units, formatting, charts, and visual styling remain frontend responsibilities; installation-specific friendly/location names may accompany provisioning. Gen1 and Gen2 adapters feed a common presentation model without turning storage into configuration.
+
+Local pages may consume directly connected runtime capabilities. Demo temporarily remains Balcony02-only, My Garden uses authorized commissioned customer-relevant capabilities, Support may expose discrepancies and physical/runtime evidence, and History may include formerly commissioned logical sensors where lifecycle overlaps actual history. Device eligibility remains assignment/access policy, separate from sensor health or capability presentation.
+
 ## Watering Event Evidence And Cadence Separation
 
 ADR 0021 remains active for watering event evidence and cadence separation. `sensor_logs` remains legacy/current environmental telemetry and historical watering-marker compatibility. `sensor_events` remains manual human context. `device_heartbeats` can show latest watering diagnostics but is not a complete event history.
@@ -112,7 +122,7 @@ The active architecture favors a dedicated append-only `watering_events` evidenc
 
 - Production provisioning flow and device-storage/programming-station ID assignment.
 - Customer account lifecycle, invites, billing/account administration, and provisioning UI.
-- Database-backed sensor inventory and physical sensor assignment administration; ADR 0022 permits optional runtime `physical_sensor_id` where a known physical identity already exists.
+- Exact hosted capability schema, provisioning, SQL/RLS/grants, frontend adapters/cards, history controls, Support mismatch UI, and automatic reconciliation per ADR 0024. ADR 0022 continues to permit optional runtime `physical_sensor_id` where a known physical identity already exists.
 - Calibration, filtering, invalid-read rejection, advanced sensor health, and alert policy.
 - Future hardware safety maturity beyond currently approved local firmware safety gates.
 - Any Remote Water Now, hosted local ESP32 call, or Supabase command/control proposal requires a new explicit ADR and is currently prohibited.
@@ -157,3 +167,4 @@ Load raw ADRs only for the specific topic under change. Load raw SQL artifacts o
 | 0021 | Active watering event evidence and cadence separation architecture. |
 | 0022 | Active Gen2 endpoint responsibility, cleaned measurement record, static capability manifest, nested status, and heartbeat-alignment contract. |
 | 0023 | Active MBG internal I2C wire-color convention: GREEN = GPIO21 / SDA and WHITE = GPIO22 / SCL; supersedes earlier WHT = SDA / GRN = SCL documentation without changing GPIO assignments. |
+| 0024 | Active hosted commissioned-capability source-of-truth, runtime/measurement evidence, lifecycle, and presentation boundary. |

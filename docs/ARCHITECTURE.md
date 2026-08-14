@@ -191,6 +191,19 @@ ADR 0022 in [`docs/adr/0022-gen2-endpoint-responsibility-and-contract-cleanup.md
 - Balcony02 emits 11 successful observation records. SEN0308 M04 remains configured but uninstalled capability inventory and is not emitted as a measurement.
 - SEN0204 is the only current sensor module with declared `control_role: watering_interlock`. No automatic SEN0308 watering is approved.
 
+### ADR 0024 Hosted Capability and Presentation Boundary
+
+ADR 0024 in [`docs/adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md`](./adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md) defines the hosted commissioned-capability authority without selecting or implementing a schema.
+
+- Provisioned per-device capability configuration in Supabase is the hosted source of truth for commissioned logical sensors and remains subject to authentication, garden/device membership, customer isolation, and support access.
+- Declarations are positive and lifecycle-based. Connector accommodation or possible hardware, including Balcony02 M04, is not commissioned merely because it exists; negative records for every absent sensor are not required.
+- Firmware `/capabilities` is runtime/build evidence. Mismatches with provisioning are Support-visible commissioning/configuration discrepancies and never silently add or remove customer cards.
+- Measurements, flattened views, heartbeats, and diagnostics supply values and evidence; they never create or retire capabilities.
+- Current cards start from currently commissioned capabilities and retain visible stale, invalid, missing, unavailable, or not-yet-reported states. Undeclared measurements remain diagnostic and do not become ordinary customer cards.
+- Stable generic display definitions remain frontend-owned; installation-specific friendly/location names may accompany provisioning. Gen1 and Gen2 adapters feed a common presentation model without making measurement storage capability configuration.
+- Local, Demo, My Garden, Support, History, and diagnostic panels apply shared definitions with route-specific policy rather than duplicated card catalogs. Device/route eligibility remains assignment/access policy, independent of sensor health.
+- Exact SQL/RLS/grants, provisioning, adapters, cards, history controls, diagnostics UI, friendly-name styling, derived readings, and deterministic Demo work remain separately reviewed implementation slices.
+
 ## Hosted Read-Only Device Diagnostics
 
 Phase 6J.6 adds a limited hosted diagnostics read path through `public.hosted_device_diagnostics`.

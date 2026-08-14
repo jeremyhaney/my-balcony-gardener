@@ -8,7 +8,7 @@ Use this file to decide which raw ADRs to load for future ChatGPT/Codex phases. 
 
 ## Inventory
 
-ADR files found in `docs/adr`: 23. ADR 0001 through ADR 0023 are all present in this repo, including ADR 0001, ADR 0002, and ADR 0019. No ADR numbers are missing in the current 0001-0023 range.
+ADR files found in `docs/adr`: 24. ADR 0001 through ADR 0024 are all present in this repo, including ADR 0001, ADR 0002, and ADR 0019. No ADR numbers are missing in the current 0001-0024 range.
 
 | ADR | Title | Date | Repo status | Current relevance | Amended / superseded / implemented by | Source-pack treatment |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -35,12 +35,13 @@ ADR files found in `docs/adr`: 23. ADR 0001 through ADR 0023 are all present in 
 | 0021 | Watering Event Evidence and Cadence Separation | 2026-06-07 | Present, accepted | Active watering event evidence and cadence-separation architecture | Implemented/proposed by Phase 7O.1 artifacts; hosted display later/current per backlog state | Active architecture anchor |
 | 0022 | Gen2 Endpoint Responsibility and Contract Cleanup | 2026-07-15 | Present, accepted | Active `/measurements`, `/capabilities`, `/status`, heartbeat-alignment, and compatibility contract | Refines endpoint-shape portions of ADR 0016/0017; preserves batch storage, watering ownership, and read-only boundaries | Active architecture anchor |
 | 0023 | MBG I2C Wire-Color Convention | 2026-07-03 | Present, accepted | Authoritative internal short-range I2C wire-color convention | Supersedes earlier WHT = SDA / GRN = SCL documentation; preserves GPIO21 = SDA and GPIO22 = SCL | Active wiring authority |
+| 0024 | Hosted Device Capability Source of Truth and Presentation Boundary | 2026-08-14 | Present, accepted | Active hosted commissioned-capability, runtime-evidence, measurement, and presentation boundary | Extends ADR 0016, 0017, 0020, and 0022 without changing their storage, access, endpoint, or watering boundaries | Active architecture anchor |
 
 ## Source-Pack Guidance
 
 - For general planning: load the digest, this index, architecture, current state, phase backlog, and SQL schema digest.
 - For watering/control work: also load ADR 0006, 0011, 0016, 0018, 0020, and 0021.
-- For hosted/customer work: also load ADR 0009, 0013, 0020, and relevant Phase 7L/7O docs.
+- For hosted/customer or capability-driven presentation work: also load ADR 0009, 0013, 0020, 0024, and relevant Phase 7L/7O docs.
 - For SQL/RLS/storage work: load [`docs/SQL_SCHEMA_ACTIVE_DIGEST.md`](./SQL_SCHEMA_ACTIVE_DIGEST.md) first, then raw SQL artifacts only for the affected table/view.
 - For Gen2 endpoint or measurement work: load ADR 0016, 0017, and 0022, plus raw SQL for `sensor_measurement_batches` or hosted Gen2 views when changing storage/read behavior.
 - For wiring, pinout, I2C, or sensor-cable work: load ADR 0016 and ADR 0023, plus the production wiring workbook and any sensor-specific factory-lead evidence.
