@@ -108,6 +108,8 @@ ADR 0024 makes provisioned per-device capability configuration in Supabase the h
 
 Firmware `/capabilities` is runtime/build evidence, and measurements from `sensor_logs`, `sensor_measurement_batches`, flattened views, heartbeats, or diagnostics are value/evidence sources. Neither runtime declarations nor measurements may silently create or remove customer cards. Provisioning/runtime mismatches and undeclared measurements are Support diagnostics.
 
+Phase 8C implemented the hosted contract in production on 2026-08-14: `device_capabilities` stores the positive lifecycle, and separate authenticated `security_barrier` customer-current and Support-lifecycle views preserve the authorization boundary. Balcony02 has nine current declarations with eleven expected measurement names and remains Support-visible/customer-hidden. No public capability view, browser write path, frontend consumer, or command/control authority was introduced.
+
 Current customer cards join currently commissioned capabilities to the best available measurement state. Commissioned sensors remain visible when stale, invalid, missing, unavailable, absent from the latest batch, or not yet reported. Stable generic labels, units, formatting, charts, and visual styling remain frontend responsibilities; installation-specific friendly/location names may accompany provisioning. Gen1 and Gen2 adapters feed a common presentation model without turning storage into configuration.
 
 Local pages may consume directly connected runtime capabilities. Demo temporarily remains Balcony02-only, My Garden uses authorized commissioned customer-relevant capabilities, Support may expose discrepancies and physical/runtime evidence, and History may include formerly commissioned logical sensors where lifecycle overlaps actual history. Device eligibility remains assignment/access policy, separate from sensor health or capability presentation.
@@ -122,7 +124,7 @@ The active architecture favors a dedicated append-only `watering_events` evidenc
 
 - Production provisioning flow and device-storage/programming-station ID assignment.
 - Customer account lifecycle, invites, billing/account administration, and provisioning UI.
-- Exact hosted capability schema, provisioning, SQL/RLS/grants, frontend adapters/cards, history controls, Support mismatch UI, and automatic reconciliation per ADR 0024. ADR 0022 continues to permit optional runtime `physical_sensor_id` where a known physical identity already exists.
+- Hosted capability frontend adapters/cards, history controls, Support mismatch UI, and automatic reconciliation per ADR 0024. The exact schema, SQL/RLS/grants, and initial Balcony02 provisioning are implemented and production-validated. ADR 0022 continues to permit optional runtime `physical_sensor_id` where a known physical identity already exists.
 - Calibration, filtering, invalid-read rejection, advanced sensor health, and alert policy.
 - Future hardware safety maturity beyond currently approved local firmware safety gates.
 - Any Remote Water Now, hosted local ESP32 call, or Supabase command/control proposal requires a new explicit ADR and is currently prohibited.

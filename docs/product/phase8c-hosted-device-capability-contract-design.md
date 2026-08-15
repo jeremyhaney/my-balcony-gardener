@@ -1,7 +1,9 @@
 # Phase 8C Hosted Device-Capability Contract Design
 
-Status: design and SQL proposal only; not executed, deployed, or provisioned
+Status: design accepted; production schema and Balcony02 provisioning executed and validated on 2026-08-14
 Authority: ADR 0024
+
+Execution evidence: [`phase8c-hosted-device-capability-production-execution-evidence.md`](./phase8c-hosted-device-capability-production-execution-evidence.md)
 
 ## Decision summary
 
@@ -18,7 +20,7 @@ constraints/indexes. The review package is:
 - `docs/sql/phase8c-hosted-device-capability-contract-validation.sql`; and
 - `docs/sql/phase8c-hosted-device-capability-contract-rollback.sql`.
 
-All are proposals. No SQL has been executed.
+The filenames and `PROPOSAL ONLY` headers preserve the package's pre-execution review origin. Jeremy subsequently executed the exact committed forward-contract and Balcony02 provisioning statement bodies in production on 2026-08-14. They remain unchanged as execution-source evidence; the execution and validation results are recorded in the linked closeout.
 
 ## Current-state evidence
 
@@ -31,7 +33,7 @@ All are proposals. No SQL has been executed.
 - The Balcony02 commissioning record separates physical markings, stable firmware/telemetry identity, and customer label. It proves nine installed logical sensors and explicitly says `sen0308_m04` is uninstalled accommodation.
 - No relational table currently stores firmware `/capabilities`. Runtime/provisioning mismatch diagnostics cannot yet compare that manifest in hosted SQL.
 
-The checked-in schema snapshot and executable migrations agree on these relevant contracts. Production metadata was not introspected; no authenticated read-only database connection was used.
+The checked-in active schema documentation now records the verified production objects and access posture. No database connection was used during this documentation closeout; the production facts come from Jeremy's 2026-08-14 manual execution and validation.
 
 ## Selected relational model
 
@@ -113,11 +115,11 @@ Gen1 `sensor_logs` remains intact. A later frontend adapter must define Gen1-to-
 
 ## Demo boundary
 
-No public capability view is proposed. The current public Demo containment remains unchanged and continues using its existing public measurement/diagnostic surfaces. Deterministic Demo capability data belongs to the separate Demo phase.
+No public capability view was created. The current public Demo containment remains unchanged and continues using its existing public measurement/diagnostic surfaces. Deterministic Demo capability data belongs to the separate Demo phase.
 
-## Balcony02 later provisioning plan
+## Balcony02 production provisioning
 
-The separate proposal contains exactly nine positive rows using the existing device UUID. Jeremy explicitly accepted `2026-08-12T17:03:41Z` as Balcony02's administrative commissioning-effective instant because it represents the final successful commissioning verification of the complete installed sensor complement. This is a deliberate provisioning decision, not automatic inference from telemetry, and measurements remain evidence rather than provisioning authority.
+The separate source was executed with exactly nine positive rows using the existing device UUID. Jeremy explicitly accepted `2026-08-12T17:03:41Z` as Balcony02's administrative commissioning-effective instant because it represents the final successful commissioning verification of the complete installed sensor complement. This is a deliberate provisioning decision, not automatic inference from telemetry, and measurements remain evidence rather than provisioning authority.
 
 | Logical key | Channel | Family | Expected stored measurements | Friendly name / location |
 | --- | --- | --- | --- | --- |
@@ -152,15 +154,14 @@ The exclusion constraint's GiST index supports device/key interval enforcement a
 
 Deferred Support diagnostic joins over the existing flattened JSON path may still expand many measurement batches. They require production read-only `EXPLAIN`, a bounded device/time query contract, and review of the corrected long polling cadence before implementation. No new JSON GIN index is proposed without evidence. The initial migration never scans measurements to determine or read capabilities, which avoids adding to the existing Disk IO concern.
 
-## Migration sequence
+## Executed migration sequence
 
-1. Reconfirm production metadata and object-name absence read-only; run the read-only extension preflight against `pg_extension` and `pg_available_extensions`.
-2. If `btree_gist` is absent and permitted, obtain explicit approval for a prerequisite extension-install action in the later execution slice. The main migration does not install extensions.
-3. Apply the forward proposal in one transaction: empty table, constraints/indexes, RLS/revokes, then two views/grants.
-4. Run catalog/grant/isolation validation before provisioning.
-5. After separate SQL-execution approval, apply the accepted Balcony02 administrative effective instant and provisioning rows in their own transaction.
-6. Validate exact rows, M04 absence, lifecycle selection, customer isolation, and Support lifecycle access without telemetry scans.
-7. Only after production proof, approve a frontend dependency slice. Do not add a build-profile fallback.
+1. Jeremy installed `btree_gist` version `1.7` and confirmed the public text GiST operator class.
+2. Jeremy applied the exact committed forward proposal statement body in one transaction.
+3. Catalog, constraint, index, RLS, grant, dependency, and isolation validation passed.
+4. Jeremy applied the exact committed Balcony02 provisioning statement body in its own transaction.
+5. Exact rows, prohibited-row absence, lifecycle values, customer isolation, and Support lifecycle access were validated without making telemetry authoritative.
+6. Frontend dependency remains a later separately reviewed slice. Do not add a build-profile fallback.
 
 No historical measurement or runtime manifest is imported.
 
@@ -172,8 +173,6 @@ After provisioning or frontend dependency, do not run the simple rollback. First
 
 ## Deferred work
 
-- SQL execution, Supabase changes, and Balcony02 provisioning;
-- production read-only metadata verification and JWT/API isolation proof;
 - frontend capability types, Gen1/Gen2 adapters, current cards, history controls, names, formatting, ordering, and styling;
 - runtime `/capabilities` evidence storage and firmware/provisioning mismatch SQL/UI;
 - firmware changes or reconciliation;
@@ -182,6 +181,6 @@ After provisioning or frontend dependency, do not run the simple rollback. First
 - physical-identity inventory governance; and
 - any watering, cadence, retention, or cleanup change.
 
-## Pre-execution question
+## Execution closeout
 
-Before SQL execution, confirm through the proposed read-only preflight whether `btree_gist` is installed and available in the production Supabase project. If absent and permitted, installation requires an explicit prerequisite action in the later execution slice. If unavailable, replace the exclusion constraint with a separately reviewed trigger/locking design; do not weaken overlap protection silently. Jeremy has accepted `2026-08-12T17:03:41Z` as the administrative commissioning-effective instant, but provisioning still requires separate explicit SQL-execution approval.
+Production execution and rollback-only authorization validation are complete at the evidence level recorded in the linked closeout. The simple rollback artifact is no longer appropriate for routine use because production lifecycle evidence now exists; any removal requires a dedicated reviewed migration that preserves that evidence.

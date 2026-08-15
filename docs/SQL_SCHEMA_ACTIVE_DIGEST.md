@@ -24,6 +24,9 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - [`docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`](./sql/phase7l4-customer-auth-garden-membership-rls.sql)
 - [`docs/sql/phase7o1-watering-events.sql`](./sql/phase7o1-watering-events.sql)
 - [`docs/sql/phase8b-measurement-contract-cleanup.sql`](./sql/phase8b-measurement-contract-cleanup.sql)
+- [`docs/sql/phase8c-hosted-device-capability-contract-proposal.sql`](./sql/phase8c-hosted-device-capability-contract-proposal.sql)
+- [`docs/sql/phase8c-balcony02-capability-provisioning-proposal.sql`](./sql/phase8c-balcony02-capability-provisioning-proposal.sql)
+- [`docs/product/phase8c-hosted-device-capability-production-execution-evidence.md`](./product/phase8c-hosted-device-capability-production-execution-evidence.md)
 
 ## Tables And Views
 
@@ -78,6 +81,21 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Related ADRs: ADR 0010, 0015, 0016, 0020.
 - Related SQL artifacts: `docs/sql/phase6j5-device-registry.sql`, `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7k6-hosted-runtime-diagnostics-view.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
 - Notes: Seeded device keys include `balcony`, `bench`, and `scout01` in repo artifacts.
+
+### device_capabilities
+
+- Purpose: Positive per-device commissioned logical-sensor lifecycle and hosted provisioning authority. Presence means a hosted consumer may expect the sensor; absence makes no negative assertion.
+- Production status: Created and validated on 2026-08-14 from the exact committed Phase 8C forward statement body after installation of `btree_gist` `1.7`. Balcony02 has nine current rows containing eleven expected measurement names.
+- Columns: `id uuid not null default gen_random_uuid()`; `device_id text not null`; `logical_sensor_key text not null`; `logical_channel text not null`; `sensor_family text not null`; `expected_measurement_names text[] not null`; nullable `physical_sensor_id`, `friendly_name`, `location_label`, `effective_to`, and `provisioning_note`; `effective_from timestamptz not null`; `created_at timestamptz not null default now()`.
+- Primary/foreign keys: Primary key `id`; `device_id` references `device_registry(device_id)`.
+- Checks: Required logical key, channel, and family are nonblank; expected measurement arrays are nonempty and contain neither null nor exact empty-string members; optional scalar metadata is null or nonblank; `effective_to` is null or greater than `effective_from`.
+- Uniqueness/lifecycle: Unique `(device_id, logical_sensor_key, effective_from)`. A GiST exclusion constraint prevents overlapping `[effective_from, effective_to)` intervals for the same device/logical key, treating null end as infinity.
+- Indexes: `device_capabilities_pkey`; `device_capabilities_device_key_start_unique`; `device_capabilities_device_key_no_overlap`; partial `device_capabilities_current_device_idx` on `(device_id, logical_sensor_key)` where `effective_to is null`.
+- RLS/policies: RLS enabled, forced RLS false, zero base-table policies. All privileges are revoked from `public`, `anon`, and `authenticated`; no browser reads or writes exist on the base table.
+- Read path: Authenticated clients use the separate customer and Support protected views below. No anon/public capability view exists.
+- Balcony02: Exactly nine positive current declarations at the accepted administrative effective instant `2026-08-12T17:03:41Z`; `sen0308_m04`, `sen0562_l04`, and `lux04` are absent. Balcony02 is Support-visible and customer-hidden under its unchanged assignment.
+- Command/control: No. Commissioning metadata only; it creates no hosted watering authority and cannot alter firmware watering behavior.
+- Related ADR/artifacts: ADR 0024; the four Phase 8C SQL package files; Phase 8C production execution evidence. Proposal-only file headers preserve pre-execution provenance while active docs record subsequent execution.
 
 ### sensor_measurement_batches
 
@@ -209,6 +227,28 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Related SQL artifacts: `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
 - Notes: Bench/support-only devices are expected to be hidden from normal customer rows.
 
+### customer_device_capabilities
+
+- Purpose: Current commissioned capabilities for devices authorized and customer-visible through existing garden membership.
+- Source objects: `device_capabilities` joined to `customer_garden_devices`; no measurement, heartbeat, or firmware-manifest dependency.
+- Lifecycle behavior: Current-only filter (`effective_from <= now()` and null/future `effective_to`). Physical identity, provisioning notes, capability row UUID, creation time, and retired history are omitted.
+- View security: Owner-executed protected view with `security_barrier=true`; mandatory membership filtering is inherited from `customer_garden_devices`.
+- Anon SELECT: No.
+- Authenticated SELECT: Yes.
+- Production result for Balcony02: Zero rows, correctly, because its current assignment has `customer_visible=false`.
+- Command/control: No. Read-only commissioned configuration.
+
+### support_device_capabilities
+
+- Purpose: Authorized Support lifecycle history and provisioning metadata.
+- Source objects: `device_capabilities` joined to `support_garden_devices`; no measurement, heartbeat, or firmware-manifest dependency.
+- Lifecycle behavior: Full authorized lifecycle history, including capability UUID, physical identity, effective interval, provisioning note, and creation time.
+- View security: Owner-executed protected view with `security_barrier=true`; mandatory Support membership filtering is inherited from `support_garden_devices`.
+- Anon SELECT: No.
+- Authenticated SELECT: Yes.
+- Production result for the validated Support identity: All nine Balcony02 rows with correct device key and lifecycle values.
+- Command/control: No. Read-only commissioned configuration/history.
+
 ### support_garden_devices
 
 - Purpose: Authenticated support/admin read view for support-visible garden/device metadata.
@@ -321,3 +361,4 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Browser/customer read access should use limited public/demo views or protected membership-filtered views, not raw base tables.
 - Applied live Supabase state can only be proven by Supabase inspection/API validation, not by repo artifacts alone.
 - Phase 7S.1 live catalog inspection found all observed public base tables have RLS enabled; object-level grants alone do not describe effective browser access without the observed RLS policies.
+- Phase 8C production execution/validation on 2026-08-14 proves the capability table, protected views, `btree_gist` `1.7`, access posture, and Balcony02 provisioning described above. It did not create a public capability view, browser write path, or command/control authority.

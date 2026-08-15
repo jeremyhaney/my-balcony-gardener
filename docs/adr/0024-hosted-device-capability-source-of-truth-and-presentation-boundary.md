@@ -4,6 +4,8 @@
 
 Accepted
 
+Implementation note: The Phase 8C hosted capability schema and Balcony02 provisioning were executed and production-validated on 2026-08-14. See [`../product/phase8c-hosted-device-capability-production-execution-evidence.md`](../product/phase8c-hosted-device-capability-production-execution-evidence.md). The original decision rationale and staged implementation sequence below are retained as design history.
+
 ## Date
 
 2026-08-14
@@ -131,7 +133,7 @@ The customer presentation becomes device-specific and honest under missing or ba
 
 The tradeoff is a new provisioned lifecycle that must be designed, secured, seeded, maintained, and validated. Frontend adapters must reconcile multiple storage generations and measurement aliases. Runtime/provisioning mismatches become explicit operational work rather than silently self-healing.
 
-Until the Supabase capability contract is implemented and provisioned, existing hosted cards remain transitional. This ADR does not approve a production build-profile fallback or claim capability-driven cards are implemented.
+The Supabase capability contract and initial Balcony02 declarations are now implemented, but existing hosted cards remain transitional because no frontend consumes the protected capability views. This ADR does not approve a production build-profile fallback or claim capability-driven cards are implemented.
 
 ## Implementation Sequence
 

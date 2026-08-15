@@ -1,10 +1,10 @@
 # Supabase Schema Snapshot
 
-Status: Phase 7S.1 documentation-only live schema snapshot.
-Snapshot date: 2026-06-11.
-Source: Approved read-only Supabase catalog result sets pasted by Jeremy on 2026-06-11.
+Status: Active live schema snapshot, updated through Phase 8C production validation.
+Snapshot dates: 2026-06-11 full public-schema catalog inspection; 2026-08-14 Phase 8C capability-object execution and focused validation.
+Source: Approved read-only Supabase catalog result sets pasted by Jeremy on 2026-06-11, plus Jeremy's manually executed and verified Phase 8C production results from 2026-08-14.
 Scope: Live Supabase `public` schema inventory only.
-Important warning: This is an observed live Supabase public-schema snapshot based on approved read-only catalog result sets pasted by Jeremy on 2026-06-11. It is documentation, not a migration, not a schema-change script, and not proof that every REST/client access path was separately exercised.
+Important warning: This is an observed live Supabase public-schema snapshot based on the dated evidence above. It is documentation, not a migration or schema-change script. Phase 8C authenticated-role isolation was exercised in rollback-only SQL Editor transactions; no claim is made that every REST/client access path was separately exercised.
 Maintenance rule: This snapshot must be updated whenever an approved SQL/schema phase changes public tables, views, functions, RLS policies, grants, indexes, constraints, or triggers.
 
 ## Purpose
@@ -31,10 +31,13 @@ Jeremy ran approved read-only catalog inspection queries and pasted the result s
 
 No SQL in this document was run by Codex. No SQL/schema/data/runtime/firmware/frontend/hosted behavior changed in this documentation phase.
 
+On 2026-08-14 Jeremy separately installed `btree_gist` `1.7`, executed the exact committed Phase 8C forward-contract and Balcony02 provisioning statement bodies, and supplied the focused catalog, grant, dependency, row-count, and rollback-only authenticated-role validation facts recorded below. The source files retain their pre-execution `PROPOSAL ONLY` headers as historical provenance; [`../product/phase8c-hosted-device-capability-production-execution-evidence.md`](../product/phase8c-hosted-device-capability-production-execution-evidence.md) reconciles that labeling with subsequent execution.
+
 ## Object Summary
 
 Observed live public base tables:
 
+- `device_capabilities`
 - `device_heartbeats`
 - `device_registry`
 - `garden_devices`
@@ -49,6 +52,7 @@ Observed live public base tables:
 
 Observed live public views:
 
+- `customer_device_capabilities`
 - `customer_garden_devices`
 - `customer_hosted_device_diagnostics`
 - `customer_hosted_gen2_measurements`
@@ -57,6 +61,7 @@ Observed live public views:
 - `hosted_gen2_measurements`
 - `sensor_measurements_flat`
 - `support_garden_devices`
+- `support_device_capabilities`
 - `support_hosted_device_diagnostics`
 - `support_hosted_gen2_measurements`
 - `support_watering_events`
@@ -75,7 +80,44 @@ Observed live user/event triggers:
 
 All observed public base tables have RLS enabled.
 
+Observed live extension relevant to Phase 8C:
+
+- `btree_gist` version `1.7`; `public.gist_text_ops` supplies the GiST text operator class used by the capability lifecycle exclusion constraint.
+
 ## Public Tables
+
+### device_capabilities
+
+- Purpose: Positive commissioned logical-sensor lifecycle per device. It is hosted provisioning authority, not runtime evidence and not an absence catalog.
+- Related repo artifacts: `phase8c-hosted-device-capability-contract-proposal.sql`, `phase8c-balcony02-capability-provisioning-proposal.sql`, `phase8c-hosted-device-capability-contract-validation.sql`, `phase8c-hosted-device-capability-contract-rollback.sql`, ADR 0024, and the Phase 8C production execution evidence.
+- Command/control status: Commissioning configuration only. No command/control or watering authority.
+- Primary key: `id`.
+- Foreign key: `device_id` references `device_registry(device_id)`.
+- Unique rule: `(device_id, logical_sensor_key, effective_from)`.
+- Check rules: Required logical key, channel, and family values are nonblank; `expected_measurement_names` is nonempty and has neither null nor exact empty-string members; optional physical ID, friendly name, location, and provisioning note are null or nonblank; `effective_to` is null or later than `effective_from`.
+- Exclusion rule: `device_capabilities_device_key_no_overlap` uses GiST equality for `device_id` and `logical_sensor_key` plus overlap on inclusive-start/exclusive-end `tstzrange`, with null end treated as infinity. This prevents overlapping service intervals for the same logical sensor.
+- Indexes: `device_capabilities_pkey`, `device_capabilities_device_key_start_unique`, `device_capabilities_device_key_no_overlap`, and partial `device_capabilities_current_device_idx` on `(device_id, logical_sensor_key)` where `effective_to is null`.
+- RLS: Enabled; forced RLS false.
+- Policies: Zero.
+- Grants: All privileges revoked from `public`, `anon`, and `authenticated`; neither browser role can SELECT or write the base table.
+- Production provisioning: Nine current Balcony02 rows and eleven total expected measurement names. All effective starts are `2026-08-12T17:03:41Z`; all effective ends are null. `sen0308_m04`, `sen0562_l04`, and `lux04` are absent, and no other device was provisioned.
+- Notes: Missing, stale, invalid, unavailable, or never-reported measurements cannot create, retire, or remove these positive declarations. Firmware `/capabilities` does not provision or reconcile this table.
+
+| Column | Type | Nullable | Default | Key / constraint | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `uuid` | no | `gen_random_uuid()` | primary key | One lifecycle/service interval UUID. |
+| `device_id` | `text` | no |  | foreign key | References `device_registry(device_id)`. |
+| `logical_sensor_key` | `text` | no |  | unique/exclusion component | Stable device-local logical sensor identity. |
+| `logical_channel` | `text` | no |  | nonblank check | Serviceable channel such as M01 or AIR. |
+| `sensor_family` | `text` | no |  | nonblank check | Sensor/measurement family. |
+| `expected_measurement_names` | `text[]` | no |  | array checks | Nonempty expected stored-measurement contract. |
+| `physical_sensor_id` | `text` | yes |  | optional nonblank check | Installed-piece marking for this interval. |
+| `friendly_name` | `text` | yes |  | optional nonblank check | Installation-specific ordinary name. |
+| `location_label` | `text` | yes |  | optional nonblank check | Installation placement. |
+| `effective_from` | `timestamp with time zone` | no |  | unique/exclusion component | Inclusive lifecycle start. |
+| `effective_to` | `timestamp with time zone` | yes |  | interval/exclusion rule | Exclusive lifecycle end; null means current. |
+| `provisioning_note` | `text` | yes |  | optional nonblank check | Support provenance, not customer-facing. |
+| `created_at` | `timestamp with time zone` | no | `now()` |  | Record creation evidence, not commissioning time. |
 
 ### device_heartbeats
 
@@ -421,6 +463,68 @@ values (
 | `created_at` | `timestamp with time zone` | no | `now()` |  |  |
 
 ## Public Views
+
+### customer_device_capabilities
+
+- Purpose: Authenticated customer view of current commissioned capabilities for authorized, customer-visible devices.
+- Related repo artifacts: Phase 8C forward contract, ADR 0024, and Phase 8C production execution evidence.
+- Command/control status: Read-only commissioned configuration. Not command/control.
+- Source objects: `device_capabilities`, `customer_garden_devices`.
+- Source exclusions: No measurement, heartbeat, telemetry, or firmware `/capabilities` dependency.
+- Lifecycle behavior: Includes only rows effective now. Omits row UUID, physical sensor identity, provisioning note, creation time, and retired history.
+- Ownership/security behavior: Owner-executed protected view with `security_barrier=true`; its mandatory join to `customer_garden_devices` supplies existing `auth.uid()` garden-membership and customer-visibility filtering.
+- Grants: `authenticated` SELECT only; `public` and `anon` have no privileges.
+- Balcony02 validation: Zero rows, correctly, because the unchanged assignment has `customer_visible=false`.
+
+| Column | Type | Nullable | Notes |
+| --- | --- | --- | --- |
+| `garden_id` | `uuid` | yes | Authorized garden context. |
+| `garden_key` | `text` | yes | Authorized garden key. |
+| `garden_name` | `text` | yes | Authorized garden name. |
+| `garden_device_id` | `uuid` | yes | Assignment identifier. |
+| `device_id` | `text` | yes | Provisioned device identity. |
+| `device_key` | `text` | yes | Hosted device key. |
+| `device_display_name` | `text` | yes | Assignment display name. |
+| `logical_sensor_key` | `text` | yes | Commissioned logical identity. |
+| `logical_channel` | `text` | yes | Logical channel. |
+| `sensor_family` | `text` | yes | Sensor family. |
+| `expected_measurement_names` | `text[]` | yes | Expected stored measurements. |
+| `friendly_name` | `text` | yes | Customer-facing installation name. |
+| `location_label` | `text` | yes | Customer-facing placement. |
+
+### support_device_capabilities
+
+- Purpose: Authenticated Support view of authorized commissioned capability lifecycle history and provisioning metadata.
+- Related repo artifacts: Phase 8C forward contract, ADR 0024, and Phase 8C production execution evidence.
+- Command/control status: Read-only commissioned configuration/history. Not command/control.
+- Source objects: `device_capabilities`, `support_garden_devices`.
+- Source exclusions: No measurement, heartbeat, telemetry, or firmware `/capabilities` dependency.
+- Lifecycle behavior: Includes authorized current and retired rows with interval, physical identity, provisioning note, and record-creation evidence.
+- Ownership/security behavior: Owner-executed protected view with `security_barrier=true`; its mandatory join to `support_garden_devices` supplies existing `auth.uid()` Support-membership and support-visibility filtering.
+- Grants: `authenticated` SELECT only; `public` and `anon` have no privileges.
+- Balcony02 validation: The validated Support identity returned all nine rows with correct device key, effective starts, and null effective ends. An unauthorized synthetic identity returned zero rows.
+
+| Column | Type | Nullable | Notes |
+| --- | --- | --- | --- |
+| `garden_id` | `uuid` | yes | Authorized garden context. |
+| `garden_key` | `text` | yes | Authorized garden key. |
+| `garden_name` | `text` | yes | Authorized garden name. |
+| `garden_device_id` | `uuid` | yes | Assignment identifier. |
+| `capability_id` | `uuid` | yes | Lifecycle/service interval UUID. |
+| `device_id` | `text` | yes | Provisioned device identity. |
+| `device_key` | `text` | yes | Hosted device key. |
+| `device_display_name` | `text` | yes | Assignment display name. |
+| `logical_sensor_key` | `text` | yes | Commissioned logical identity. |
+| `logical_channel` | `text` | yes | Logical channel. |
+| `sensor_family` | `text` | yes | Sensor family. |
+| `expected_measurement_names` | `text[]` | yes | Expected stored measurements. |
+| `physical_sensor_id` | `text` | yes | Installed-piece marking. |
+| `friendly_name` | `text` | yes | Installation name. |
+| `location_label` | `text` | yes | Installation placement. |
+| `effective_from` | `timestamp with time zone` | yes | Inclusive lifecycle start. |
+| `effective_to` | `timestamp with time zone` | yes | Exclusive lifecycle end. |
+| `provisioning_note` | `text` | yes | Support provenance. |
+| `created_at` | `timestamp with time zone` | yes | Database creation evidence. |
 
 ### customer_garden_devices
 
@@ -853,6 +957,7 @@ All observed public base tables have RLS enabled.
 
 Observed effective policy posture:
 
+- `device_capabilities`: RLS enabled, forced RLS false, zero policies, and no browser base-table grants.
 - `device_heartbeats`: anon INSERT only through `is_device_heartbeat_insert_enabled(device_id)`; no SELECT/UPDATE/DELETE policy observed.
 - `sensor_logs`: anon/authenticated SELECT; anon INSERT only through `is_device_telemetry_insert_enabled(device_id)`; no UPDATE/DELETE policy observed.
 - `sensor_measurement_batches`: anon INSERT only through `is_device_telemetry_insert_enabled(device_id)`; no SELECT/UPDATE/DELETE policy observed.
@@ -871,6 +976,7 @@ Effective browser-role posture from the pasted result sets:
 - Customer/support protected views are authenticated-selectable and filtered by membership/support rules.
 - `sensor_logs` remains anon/authenticated selectable for legacy/current history.
 - Device-originated writes for heartbeat, telemetry batch, legacy telemetry, and watering-event evidence are registry-gated INSERT paths, not command/control paths.
+- Capability configuration has no browser write path. `authenticated` reads only the two membership-filtered capability views; `anon` reads neither view.
 - `sensor_events` has no observed browser-role policy and remains manual/operator/admin context.
 
 ## Repo SQL Artifact Mapping
@@ -886,6 +992,8 @@ Effective browser-role posture from the pasted result sets:
 | `phase7k6-hosted-runtime-diagnostics-view.sql` | Expanded hosted diagnostics view | none | `hosted_device_diagnostics` | none | none | Maps to live expanded diagnostics view. |
 | `phase7l4-customer-auth-garden-membership-rls.sql` | Auth/customer/support metadata and protected views | `profiles`, `gardens`, `garden_devices`, `garden_memberships`, `support_memberships` | customer/support protected measurement, diagnostics, and garden-device views | none | membership/self/support SELECT policies | File header may say draft, but live catalog evidence shows objects are applied. |
 | `phase7o1-watering-events.sql` | Watering event evidence path and protected views | `watering_events` | `customer_watering_events`, `support_watering_events` | none | registry-backed anon INSERT | File header may say proposal, but live catalog evidence shows objects are applied. |
+| `phase8c-hosted-device-capability-contract-proposal.sql` | Positive commissioned capability lifecycle and protected reads | `device_capabilities` | `customer_device_capabilities`, `support_device_capabilities` | none | no browser writes | Exact committed statement body executed 2026-08-14; proposal header preserves pre-execution provenance. |
+| `phase8c-balcony02-capability-provisioning-proposal.sql` | Nine positive Balcony02 declarations | `device_capabilities` rows | none | none | no browser writes | Exact committed statement body executed 2026-08-14; proposal header preserves pre-execution provenance. |
 
 ## Live-vs-Repo Gaps
 
@@ -899,6 +1007,7 @@ Effective browser-role posture from the pasted result sets:
 
 - Supabase remains telemetry, history, diagnostics, evidence storage, and read-only hosted data source.
 - Supabase is not command/control, not remote watering authority, not hosted Water Now backend, and not local pump-control authority.
+- `device_capabilities` is hosted commissioning/provisioning authority only. It contains no command columns, functions, or policies and grants no watering authority.
 - Local ESP32 firmware owns watering decisions and pump shutoff.
 - `control_eligible` remains local firmware evidence only.
 - `sensor_events` is manual operational context only, not firmware telemetry and not command/control.

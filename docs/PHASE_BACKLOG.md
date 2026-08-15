@@ -32,7 +32,7 @@ Phase 8 reframes My Balcony Gardener around a schedule-first customer product, w
 
 ## Current Roadmap Snapshot
 
-- ADR 0024 is accepted. The narrowed Phase 8C Supabase design package proposes positive lifecycle storage plus only protected customer capability and Support lifecycle views, with separate Balcony02 provisioning, rollback, and validation. Measurement-derived Support diagnostics remain deferred pending bounded-query design and production read-only `EXPLAIN`. The package remains unexecuted and unprovisioned; the next gate is review and separate explicit prerequisite/SQL-execution approval. Firmware, frontend work, assignments, runtime-capability evidence storage, and automatic reconciliation remain later slices.
+- ADR 0024 is accepted. The narrowed Phase 8C hosted capability contract and separate Balcony02 provisioning were executed and production-validated on 2026-08-14 from the exact committed statement bodies. The positive lifecycle table and protected customer/Support views are active; Balcony02 has nine current declarations and eleven expected measurement names, remains Support-visible/customer-hidden, and has no M04/L04/LUX04 declaration. Measurement-derived Support diagnostics remain deferred pending bounded-query design and production read-only `EXPLAIN`. Frontend consumption, runtime-capability evidence storage, and automatic reconciliation remain later slices. Execution evidence: [`docs/product/phase8c-hosted-device-capability-production-execution-evidence.md`](./product/phase8c-hosted-device-capability-production-execution-evidence.md).
 
 The compact roadmap near the top is the current planning view. The detailed phase history below remains historical evidence and may be reorganized in a later Phase 8F documentation cleanup.
 

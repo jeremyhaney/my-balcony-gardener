@@ -193,7 +193,7 @@ ADR 0022 in [`docs/adr/0022-gen2-endpoint-responsibility-and-contract-cleanup.md
 
 ### ADR 0024 Hosted Capability and Presentation Boundary
 
-ADR 0024 in [`docs/adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md`](./adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md) defines the hosted commissioned-capability authority without selecting or implementing a schema.
+ADR 0024 in [`docs/adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md`](./adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md) defines the hosted commissioned-capability authority. The Phase 8C schema and Balcony02 provisioning were executed and production-validated on 2026-08-14.
 
 - Provisioned per-device capability configuration in Supabase is the hosted source of truth for commissioned logical sensors and remains subject to authentication, garden/device membership, customer isolation, and support access.
 - Declarations are positive and lifecycle-based. Connector accommodation or possible hardware, including Balcony02 M04, is not commissioned merely because it exists; negative records for every absent sensor are not required.
@@ -202,7 +202,7 @@ ADR 0024 in [`docs/adr/0024-hosted-device-capability-source-of-truth-and-present
 - Current cards start from currently commissioned capabilities and retain visible stale, invalid, missing, unavailable, or not-yet-reported states. Undeclared measurements remain diagnostic and do not become ordinary customer cards.
 - Stable generic display definitions remain frontend-owned; installation-specific friendly/location names may accompany provisioning. Gen1 and Gen2 adapters feed a common presentation model without making measurement storage capability configuration.
 - Local, Demo, My Garden, Support, History, and diagnostic panels apply shared definitions with route-specific policy rather than duplicated card catalogs. Device/route eligibility remains assignment/access policy, independent of sensor health.
-- Exact SQL/RLS/grants, provisioning, adapters, cards, history controls, diagnostics UI, friendly-name styling, derived readings, and deterministic Demo work remain separately reviewed implementation slices.
+- `public.device_capabilities` is the positive lifecycle table. Authenticated reads use separate `security_barrier` customer-current and Support-lifecycle views; the base table has RLS enabled, zero policies, and no browser grants. Balcony02 currently has nine declarations and remains Support-visible/customer-hidden. Frontend adapters, cards, history controls, diagnostics UI, friendly-name styling, derived readings, and deterministic Demo work remain separately reviewed implementation slices.
 
 ## Hosted Read-Only Device Diagnostics
 
