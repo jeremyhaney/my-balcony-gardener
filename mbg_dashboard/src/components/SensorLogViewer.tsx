@@ -24,9 +24,16 @@ import {
   updateHistoryControlUrl,
 } from '../historyControls'
 import { calculateHostedGen2Health } from '../hostedGen2Health'
+import {
+  getCapabilityCardDescriptors,
+  getCapabilityChartSeriesDescriptors,
+} from '../capabilityPresentation'
+import { fetchSupportDeviceCapabilities } from '../supportDeviceCapabilities'
+import { getCapabilityConfigurationState } from '../deviceCapabilities'
 import { getHostedWateringCycles } from '../hostedWateringCycles'
 import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
+import type { CommissionedDeviceCapability } from '../types/deviceCapabilities'
 import type { SensorLogRow } from '../types/sensorLog'
 import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
 import DualAxisChart from './DualAxisChart'
@@ -92,6 +99,9 @@ const SensorLogViewer = ({
   const [hostedGen2Rows, setHostedGen2Rows] = useState<HostedGen2MeasurementRow[]>([])
   const [hostedGen2Error, setHostedGen2Error] = useState<string | null>(null)
   const [isHostedGen2Loading, setIsHostedGen2Loading] = useState(false)
+  const [capabilities, setCapabilities] = useState<CommissionedDeviceCapability[]>([])
+  const [capabilityError, setCapabilityError] = useState<string | null>(null)
+  const [isCapabilityLoading, setIsCapabilityLoading] = useState(false)
   const [wateringEventRows, setWateringEventRows] = useState<HostedWateringEventRow[]>([])
   const [wateringEventsError, setWateringEventsError] = useState<string | null>(null)
   const [isWateringEventsLoading, setIsWateringEventsLoading] = useState(false)
@@ -156,6 +166,37 @@ const SensorLogViewer = ({
       setSelectedDevice(nextControlState.device)
     }
   }, [deviceOptions, selectedDevice.key])
+
+  useEffect(() => {
+    if (hostedDataScope !== 'support' || isAuthorizedDevicesLoading ||
+      !deviceOptions.some((device) => device.key === selectedDevice.key)) {
+      setCapabilities([])
+      setCapabilityError(null)
+      setIsCapabilityLoading(false)
+      return
+    }
+
+    let isMounted = true
+    setCapabilities([])
+    setCapabilityError(null)
+    setIsCapabilityLoading(true)
+
+    void fetchSupportDeviceCapabilities(selectedDevice.deviceId)
+      .then((nextCapabilities) => {
+        if (!isMounted) return
+        setCapabilities(nextCapabilities)
+        setIsCapabilityLoading(false)
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return
+        console.warn('Protected Support capability fetch failed:', error)
+        setCapabilities([])
+        setCapabilityError(getErrorMessage(error))
+        setIsCapabilityLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [deviceOptions, hostedDataScope, isAuthorizedDevicesLoading, selectedDevice])
 
   useEffect(() => {
     let isMounted = true
@@ -425,6 +466,14 @@ const SensorLogViewer = ({
     () => getHostedWateringCycles(wateringEventRows),
     [wateringEventRows],
   )
+  const capabilityCardDescriptors = useMemo(
+    () => getCapabilityCardDescriptors(capabilities),
+    [capabilities],
+  )
+  const capabilityChartSeriesDescriptors = useMemo(
+    () => getCapabilityChartSeriesDescriptors(capabilityCardDescriptors),
+    [capabilityCardDescriptors],
+  )
   const getDemoGuideTargetClass = (target: DemoGuideTarget): string =>
     [
       'demo-guide-target',
@@ -635,6 +684,24 @@ const SensorLogViewer = ({
     </>
   )
 
+  const capabilityConfigurationState = getCapabilityConfigurationState(
+    isCapabilityLoading,
+    capabilityError,
+    capabilities.length,
+  )
+  const supportCapabilityState = hostedDataScope === 'support'
+    ? capabilityConfigurationState.kind === 'ready'
+      ? null
+      : capabilityConfigurationState.kind === 'failure'
+        ? (
+            <div>
+              <p className="text-sm">{capabilityConfigurationState.message}</p>
+              <details><summary>Technical detail</summary><p>{capabilityError}</p></details>
+            </div>
+          )
+        : <p className="text-sm">{capabilityConfigurationState.message}</p>
+    : null
+
   return (
     <div className="p-4">
       {isHostedReadonly ? (
@@ -647,22 +714,28 @@ const SensorLogViewer = ({
           ) : null}
           {hostedDeviceControl}
           {deviceStatusPanels}
-          <HostedGen2Measurements
-            rows={hostedGen2Rows}
-            isLoading={isHostedGen2Loading}
-            error={hostedGen2Error}
-            fallbackDeviceLabel={selectedDeviceLabel}
-            className={getDemoGuideTargetClass('readings')}
-          />
-          <HostedGen2TrendChart
-            rows={hostedGen2Rows}
-            historyWindowKey={selectedWindow.key}
-            isLoading={isHostedGen2Loading}
-            error={hostedGen2Error}
-            controls={hostedWindowControl}
-            className={getDemoGuideTargetClass('chart')}
-            wateringCycles={isProtectedHostedScope ? wateringCycles : []}
-          />
+          {supportCapabilityState ?? (
+            <>
+              <HostedGen2Measurements
+                rows={hostedGen2Rows}
+                cardDescriptors={hostedDataScope === 'support' ? capabilityCardDescriptors : undefined}
+                isLoading={isHostedGen2Loading}
+                error={hostedGen2Error}
+                fallbackDeviceLabel={selectedDeviceLabel}
+                className={getDemoGuideTargetClass('readings')}
+              />
+              <HostedGen2TrendChart
+                rows={hostedGen2Rows}
+                seriesDescriptors={hostedDataScope === 'support' ? capabilityChartSeriesDescriptors : undefined}
+                historyWindowKey={selectedWindow.key}
+                isLoading={isHostedGen2Loading}
+                error={hostedGen2Error}
+                controls={hostedWindowControl}
+                className={getDemoGuideTargetClass('chart')}
+                wateringCycles={isProtectedHostedScope ? wateringCycles : []}
+              />
+            </>
+          )}
           {isProtectedHostedScope ? (
             <HostedWateringEvents
               cycles={wateringCycles}

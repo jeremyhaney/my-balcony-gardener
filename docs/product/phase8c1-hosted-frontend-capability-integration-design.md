@@ -1,6 +1,8 @@
 # Phase 8C.1 Hosted Frontend Capability Integration Design
 
-Status: design accepted; documentation closeout only; runtime implementation deferred
+Status: design accepted; Phase 8C.2 implementation complete and locally validated; post-push production validation pending
+
+Implementation note: Phase 8C.2 is implemented and passed tests, lint, type checking, production-build validation, and Jeremy's authenticated Support visual review on 2026-08-16. Balcony02 produced the approved eleven cards from nine commissioned logical sensors; Prototype01 and the other unprovisioned devices correctly produced the successful-zero state. Prototype01 firmware upgrade and explicit capability provisioning remain later work. Commit/push and the resulting post-deployment production validation remain the next checkpoint; this document retains the accepted design wording below.
 
 Authority: [ADR 0024](../adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md)
 

@@ -3,18 +3,7 @@ import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
 // Public presentation-domain types.
 export type HostedGen2ElementSectionKey = 'fire' | 'wind' | 'water' | 'earth'
 
-export type HostedGen2CardKey =
-  | 'light-l01'
-  | 'light-l02'
-  | 'light-l03'
-  | 'air-temperature'
-  | 'humidity'
-  | 'atmospheric-pressure'
-  | 'reservoir-water'
-  | 'moisture-m01'
-  | 'moisture-m02'
-  | 'moisture-m03'
-  | 'soil-temperature'
+export type HostedGen2CardKey = string
 
 export type HostedGen2ChartGroupKey =
   | 'light'
@@ -33,6 +22,8 @@ export type HostedGen2CardCatalogDescriptor = {
   compatibleMeasurementNames: readonly string[]
   expectedUnit?: string
   order: number
+  isUnsupported?: boolean
+  isCommissioned?: boolean
 }
 
 export type HostedGen2SensorPresentationState =
@@ -72,6 +63,7 @@ export type HostedGen2ChartSeriesDescriptor = {
   label: string
   order: number
   derivedValue: 'relative-moisture-index' | null
+  cardDescriptor?: HostedGen2CardCatalogDescriptor
 }
 
 export type HostedGen2PackageContext = {
@@ -81,6 +73,7 @@ export type HostedGen2PackageContext = {
   profileInstalled: boolean | null
   recentGoodRow?: HostedGen2MeasurementRow | null
   requiresReview?: boolean
+  commissioned?: boolean
 }
 
 // Approved element-section catalog.
@@ -185,10 +178,8 @@ export const getHostedGen2CanonicalMeasurementIdentity = (
 ): string => {
   const measurementName = normalizeHostedGen2ComparisonText(row.measurement_name)
   const sensorKey = normalizeHostedGen2ComparisonText(row.sensor_key)
-  const sensorType = normalizeHostedGen2ComparisonText(row.sensor_type)
-
   return measurementName === 'temperature' &&
-    (sensorKey === 'ds18b20_temperature' || sensorType.includes('ds18b20'))
+    sensorKey === 'ds18b20_temperature'
     ? 'soil temp'
     : measurementName
 }
@@ -207,12 +198,11 @@ export const doesHostedGen2RowMatchCard = (
   row: HostedGen2MeasurementRow,
   descriptor: HostedGen2CardCatalogDescriptor,
 ): boolean => {
-  const expectedPhysicalIdentity = normalizeHostedGen2ComparisonText(
-    descriptor.physicalSensorId ?? descriptor.sensorKey,
-  )
+  const logicalSensorMatches = normalizeHostedGen2ComparisonText(row.sensor_key) ===
+    normalizeHostedGen2ComparisonText(descriptor.sensorKey)
 
   return (
-    getHostedGen2PhysicalSensorIdentity(row) === expectedPhysicalIdentity &&
+    logicalSensorMatches &&
     getHostedGen2CanonicalMeasurementIdentity(row) ===
       normalizeHostedGen2ComparisonText(descriptor.canonicalMeasurementName)
   )
@@ -252,7 +242,7 @@ export const getHostedGen2SensorPresentationState = (
   context: HostedGen2PackageContext,
 ): HostedGen2SensorPresentationState => {
   if (!context.hasHistory) return 'No Readings Yet'
-  if (context.profileInstalled === false || isProfileNotInstalled(row)) return 'Not Installed'
+  if (!context.commissioned && (context.profileInstalled === false || isProfileNotInstalled(row))) return 'Not Installed'
 
   const isLatestPackageRow = Boolean(
     row &&
@@ -297,7 +287,7 @@ export const getHostedGen2ReservoirPresentationState = (
   if (
     !context.hasHistory ||
     context.profileInstalled === false ||
-    isProfileNotInstalled(row) ||
+    (!context.commissioned && isProfileNotInstalled(row)) ||
     isSensorNotDetected(row)
   ) {
     return 'Water Status Unavailable'
@@ -343,7 +333,13 @@ export const getHostedGen2ChartSeriesDescriptors = (
     { cardKey: 'atmospheric-pressure', group: 'pressure', label: 'Atmospheric Pressure', order: 1, derivedValue: null },
   ]
 
-  return group ? descriptors.filter((descriptor) => descriptor.group === group) : descriptors
+  const selectedDescriptors = group
+    ? descriptors.filter((descriptor) => descriptor.group === group)
+    : descriptors
+  return selectedDescriptors.map((descriptor) => ({
+    ...descriptor,
+    cardDescriptor: HOSTED_GEN2_CARD_CATALOG.find((card) => card.key === descriptor.cardKey),
+  }))
 }
 
 export const getHostedGen2ChartSeriesIdentity = (

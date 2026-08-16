@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useMemo, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -15,13 +15,13 @@ import {
   doesHostedGen2RowMatchCard,
   getHostedGen2ChartSeriesDescriptors,
   getHostedGen2ChartSeriesIdentity,
-  HOSTED_GEN2_CARD_CATALOG,
   HOSTED_GEN2_CHART_GROUPS,
   normalizeHostedGen2ComparisonText,
   type HostedGen2CardKey,
   type HostedGen2ChartGroupKey,
   type HostedGen2ChartSeriesDescriptor,
 } from '../hostedGen2Presentation'
+import { doesCapabilityChartRowMatchSeries } from '../capabilityPresentation'
 import {
   formatWateringCycleMarkerLabel,
   type HostedWateringCycle,
@@ -32,6 +32,7 @@ import './HostedGen2TrendChart.css'
 
 type HostedGen2TrendChartProps = {
   rows: HostedGen2MeasurementRow[]
+  seriesDescriptors?: readonly HostedGen2ChartSeriesDescriptor[]
   historyWindowKey: HistoryWindowKey
   isLoading: boolean
   error: string | null
@@ -170,6 +171,7 @@ const AXIS_CONFIGS: Record<HostedGen2AxisId, HostedGen2AxisConfig> = {
 
 const HostedGen2TrendChart = ({
   rows,
+  seriesDescriptors = CHART_SERIES_DESCRIPTORS,
   historyWindowKey,
   isLoading,
   error,
@@ -182,8 +184,8 @@ const HostedGen2TrendChart = ({
   )
   const selectedCardKeySet = useMemo(() => new Set(selectedCardKeys), [selectedCardKeys])
   const chartSeries = useMemo(
-    () => buildChartSeries(rows, CHART_SERIES_DESCRIPTORS),
-    [rows],
+    () => buildChartSeries(rows, seriesDescriptors),
+    [rows, seriesDescriptors],
   )
   const selectedSeries = useMemo(
     () => chartSeries.filter((series) => selectedCardKeySet.has(series.descriptor.cardKey)),
@@ -193,7 +195,7 @@ const HostedGen2TrendChart = ({
     () => new Set(chartSeries.map((series) => series.descriptor.cardKey)),
     [chartSeries],
   )
-  const unavailableSelectedDescriptors = CHART_SERIES_DESCRIPTORS.filter(
+  const unavailableSelectedDescriptors = seriesDescriptors.filter(
     (descriptor) =>
       selectedCardKeySet.has(descriptor.cardKey) && !availableCardKeys.has(descriptor.cardKey),
   )
@@ -227,11 +229,16 @@ const HostedGen2TrendChart = ({
   const hasRows = rows.length > 0
   const isBlockingLoad = isLoading && !hasRows
 
+  useEffect(() => {
+    const eligibleKeys = new Set(seriesDescriptors.map((descriptor) => descriptor.cardKey))
+    setSelectedCardKeys((currentKeys) => currentKeys.filter((key) => eligibleKeys.has(key)))
+  }, [seriesDescriptors])
+
   const handleToggleSeries = (cardKey: HostedGen2CardKey) => {
     setSelectedCardKeys((currentKeys) =>
       currentKeys.includes(cardKey)
         ? currentKeys.filter((currentKey) => currentKey !== cardKey)
-        : CHART_SERIES_DESCRIPTORS
+        : seriesDescriptors
             .filter(
               (descriptor) =>
                 currentKeys.includes(descriptor.cardKey) || descriptor.cardKey === cardKey,
@@ -241,7 +248,7 @@ const HostedGen2TrendChart = ({
   }
 
   const handleToggleFamily = (group: HostedGen2ChartGroupKey) => {
-    const familyKeys = CHART_SERIES_DESCRIPTORS
+    const familyKeys = seriesDescriptors
       .filter((descriptor) => descriptor.group === group)
       .map((descriptor) => descriptor.cardKey)
     const allSelected = familyKeys.every((cardKey) => selectedCardKeySet.has(cardKey))
@@ -254,7 +261,7 @@ const HostedGen2TrendChart = ({
         else nextKeys.add(cardKey)
       })
 
-      return CHART_SERIES_DESCRIPTORS
+      return seriesDescriptors
         .filter((descriptor) => nextKeys.has(descriptor.cardKey))
         .map((descriptor) => descriptor.cardKey)
     })
@@ -278,7 +285,7 @@ const HostedGen2TrendChart = ({
         <span className="hosted-gen2-trend-chart-control-label">Select families</span>
         <div aria-label="Trend measurement family shortcuts" role="group">
           {HOSTED_GEN2_CHART_GROUPS.map((group) => {
-            const familyDescriptors = CHART_SERIES_DESCRIPTORS.filter(
+            const familyDescriptors = seriesDescriptors.filter(
               (descriptor) => descriptor.group === group.key,
             )
             const selectedCount = familyDescriptors.filter((descriptor) =>
@@ -312,7 +319,7 @@ const HostedGen2TrendChart = ({
       <fieldset className="hosted-gen2-trend-chart-series-controls">
         <legend>Readings</legend>
         <div className="hosted-gen2-trend-chart-series-toggles">
-          {CHART_SERIES_DESCRIPTORS.map((descriptor) => {
+          {seriesDescriptors.map((descriptor) => {
             const isSelected = selectedCardKeySet.has(descriptor.cardKey)
 
             return (
@@ -467,12 +474,10 @@ const HostedGen2TrendChart = ({
 
 const buildChartSeries = (
   rows: HostedGen2MeasurementRow[],
-  descriptors: HostedGen2ChartSeriesDescriptor[],
+  descriptors: readonly HostedGen2ChartSeriesDescriptor[],
 ): HostedGen2ChartSeries[] => {
   const preparedSeries: PreparedSeries[] = descriptors.flatMap((descriptor) => {
-    const cardDescriptor = HOSTED_GEN2_CARD_CATALOG.find(
-      (candidate) => candidate.key === descriptor.cardKey,
-    )
+    const cardDescriptor = descriptor.cardDescriptor
 
     if (!cardDescriptor) {
       return []
@@ -480,7 +485,9 @@ const buildChartSeries = (
 
     // Chart history accepts only explicit usable evidence for the frozen card identity.
     const plottedRows = rows
-      .filter((row) => doesHostedGen2RowMatchCard(row, cardDescriptor))
+      .filter((row) => descriptor.cardDescriptor
+        ? doesCapabilityChartRowMatchSeries(row, descriptor)
+        : doesHostedGen2RowMatchCard(row, cardDescriptor))
       .filter(isChartUsableRow)
       .map((row) => getPlottedRow(row, descriptor))
 

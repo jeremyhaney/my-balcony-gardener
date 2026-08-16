@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "echo 'Cloudflare is reading THIS package.json' && tsc -b tsconfig.json && vite build",
     "lint": "eslint .",
+    "test": "node --experimental-strip-types --experimental-specifier-resolution=node --test --test-isolation=none tests/*.test.ts",
     "preview": "vite preview --port 5173"
   },
   "dependencies": {

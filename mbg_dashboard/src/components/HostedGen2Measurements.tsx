@@ -1,4 +1,7 @@
-import { FRESHNESS_THRESHOLD_MS } from '../deviceStatusHealth'
+import {
+  describeLastGoodEvidenceSource,
+  resolveCommissionedCardEvidence,
+} from '../commissionedCardEvidence'
 import {
   HOSTED_GEN2_CARD_CATALOG,
   HOSTED_GEN2_ELEMENT_SECTIONS,
@@ -6,9 +9,7 @@ import {
   WET_DRAINED_INDEX,
   WET_DRAINED_RAW,
   calculateGardenerMoistureIndex,
-  findHostedGen2CardRow,
   getGardenerMoistureInterpretation,
-  getHostedGen2CanonicalMeasurementIdentity,
   getHostedGen2CompoundIdentity,
   getHostedGen2ReservoirPresentationState,
   getHostedGen2SensorPresentationState,
@@ -17,7 +18,6 @@ import {
   type HostedGen2ReservoirPresentationState,
   type HostedGen2SensorPresentationState,
 } from '../hostedGen2Presentation'
-import { getHostedGen2RecentGoodRow } from '../hostedGen2RecentValue'
 import {
   getHostedGen2TrendSummary,
   type HostedGen2SparklinePoint,
@@ -28,6 +28,7 @@ import './HostedGen2Measurements.css'
 
 type HostedGen2MeasurementsProps = {
   rows: HostedGen2MeasurementRow[]
+  cardDescriptors?: readonly HostedGen2CardCatalogDescriptor[]
   isLoading: boolean
   error: string | null
   fallbackDeviceLabel: string
@@ -76,6 +77,7 @@ const TREND_DIRECTION_SYMBOLS: Partial<Record<HostedGen2TrendDirection, string>>
 
 const HostedGen2Measurements = ({
   rows,
+  cardDescriptors = HOSTED_GEN2_CARD_CATALOG,
   isLoading,
   error,
   className = '',
@@ -86,7 +88,7 @@ const HostedGen2Measurements = ({
   const isRefreshing = isLoading && hasRetainedRows
   const transportState: TransportState =
     isLoading && !hasRetainedRows ? 'loading' : error && !hasRetainedRows ? 'error' : null
-  const cards = HOSTED_GEN2_CARD_CATALOG.map((descriptor) =>
+  const cards = cardDescriptors.map((descriptor) =>
     buildCatalogCardModel({
       descriptor,
       rows,
@@ -158,6 +160,11 @@ const MeasurementCard = ({ card }: { card: HostedGen2CatalogCardModel }) => {
         <span className="hosted-gen2-measurements-status-pill">{card.pillLabel}</span>
       </div>
       <p className="hosted-gen2-measurements-value">{card.primaryValue}</p>
+      {card.descriptor.isUnsupported ? (
+        <p className="hosted-gen2-measurements-note">
+          Commissioned sensor; frontend presentation is not yet supported.
+        </p>
+      ) : null}
 
       {trendSummary ? (
         <div
@@ -225,7 +232,7 @@ const MeasurementDetails = ({ card }: { card: HostedGen2CatalogCardModel }) => {
         {card.recentGoodRow && row ? (
           <>
             <dt>Recent good evidence</dt>
-            <dd>{formatRecentGoodEvidence(row, card.recentGoodRow)}</dd>
+            <dd>{formatLastGoodEvidence(card)}</dd>
           </>
         ) : null}
 
@@ -322,22 +329,26 @@ const buildCatalogCardModel = ({
     return buildUnavailableCard(descriptor, null)
   }
 
-  const latestRow = latestPackage
-    ? findLatestCatalogRow(rows, descriptor, latestPackage.measuredAt)
-    : null
-  const latestPackageIsCurrent = latestPackage
-    ? isCurrentPackage(latestPackage.measuredAtMs)
-    : false
-  const strictNotInstalled = isStrictProfileNotInstalledRow(latestRow)
-  const explicitNotDetected = isNotDetectedRow(latestRow)
-  const recentGoodRow =
-    latestRow &&
-    latestPackageIsCurrent &&
-    descriptor.key !== RESERVOIR_CARD_KEY &&
-    !strictNotInstalled &&
-    !explicitNotDetected
-      ? getHostedGen2RecentGoodRow(latestRow, rows)
-      : null
+  if (descriptor.isUnsupported) {
+    const latestRow = rows
+      .filter((row) => normalizeHostedGen2ComparisonText(row.sensor_key) === descriptor.sensorKey)
+      .sort((left, right) => new Date(right.measured_at).getTime() - new Date(left.measured_at).getTime())[0] ?? null
+    return {
+      ...buildStateOnlyCard(descriptor, latestPackage, latestRow ? 'Check Sensor' : 'No Readings Yet', 'neutral'),
+      latestRow,
+      pillLabel: latestRow ? 'Unsupported Presentation' : 'Awaiting Evidence',
+    }
+  }
+
+  const commissionedEvidence = resolveCommissionedCardEvidence(descriptor, rows)
+  const latestRow = commissionedEvidence.latestMatchingRow
+  const latestPackageIsCurrent = commissionedEvidence.latestMatchingIsCurrent
+  const shouldDisplayLastGood = Boolean(
+    commissionedEvidence.lastGoodRow &&
+    (!commissionedEvidence.appearsInLatestPackage ||
+      commissionedEvidence.lastGoodRow !== latestRow),
+  )
+  const recentGoodRow = shouldDisplayLastGood ? commissionedEvidence.lastGoodRow : null
   const requiresReview = Boolean(
     latestRow &&
       (latestRow.valid === false ||
@@ -353,18 +364,25 @@ const buildCatalogCardModel = ({
       descriptor,
       latestPackage,
       latestRow,
+      recentGoodRow,
       latestPackageIsCurrent,
     })
   }
 
-  const state = getHostedGen2SensorPresentationState(latestRow, {
-    hasHistory: !successfulEmpty,
+  const evaluatedState = getHostedGen2SensorPresentationState(latestRow, {
+    hasHistory: Boolean(latestRow),
     latestPackageMeasuredAt: latestPackage?.measuredAt ?? null,
     latestPackageIsCurrent,
-    profileInstalled: strictNotInstalled ? false : null,
+    profileInstalled: null,
     recentGoodRow,
     requiresReview,
+    commissioned: descriptor.isCommissioned,
   })
+  const state = recentGoodRow
+    ? 'Last Good Reading'
+    : descriptor.isCommissioned && !latestRow
+      ? 'No Readings Yet'
+      : evaluatedState
   const displayRow = getDisplayRowForState(state, latestRow, recentGoodRow)
 
   return buildSensorCard({
@@ -431,29 +449,35 @@ const buildReservoirCard = ({
   descriptor,
   latestPackage,
   latestRow,
+  recentGoodRow,
   latestPackageIsCurrent,
 }: {
   descriptor: HostedGen2CardCatalogDescriptor
   latestPackage: LatestPackage | null
   latestRow: HostedGen2MeasurementRow | null
+  recentGoodRow: HostedGen2MeasurementRow | null
   latestPackageIsCurrent: boolean
 }): HostedGen2CatalogCardModel => {
-  const sharedReservoirState = getHostedGen2ReservoirPresentationState(latestRow, {
+  const evidenceRow = recentGoodRow ?? latestRow
+  const sharedReservoirState = getHostedGen2ReservoirPresentationState(evidenceRow, {
     hasHistory: true,
     latestPackageMeasuredAt: latestPackage?.measuredAt ?? null,
     latestPackageIsCurrent,
     profileInstalled: null,
+    commissioned: descriptor.isCommissioned,
   })
-  const reservoirState =
+  const reservoirState = recentGoodRow
+    ? 'Water Status Not Current'
+    :
     sharedReservoirState === 'Water Status Not Current' &&
-    !isRecognizedReservoirValue(latestRow)
+    !isRecognizedReservoirValue(evidenceRow)
       ? 'Water Status Unavailable'
       : sharedReservoirState
   const displayRow =
     reservoirState === 'Water Detected' ||
     reservoirState === 'Refill Reservoir' ||
     reservoirState === 'Water Status Not Current'
-      ? latestRow
+      ? evidenceRow
       : null
 
   return {
@@ -461,10 +485,10 @@ const buildReservoirCard = ({
     latestPackageMeasuredAt: latestPackage?.measuredAt ?? null,
     latestRow,
     displayRow,
-    recentGoodRow: null,
+    recentGoodRow,
     state: null,
     reservoirState,
-    pillLabel: reservoirState,
+    pillLabel: recentGoodRow ? 'Last Good Reading' : reservoirState,
     primaryValue: formatReservoirValue(displayRow),
     tone: getReservoirTone(reservoirState),
     trendRows: [],
@@ -541,43 +565,6 @@ const getLatestPackage = (rows: readonly HostedGen2MeasurementRow[]): LatestPack
 
   return latest
 }
-
-const findLatestCatalogRow = (
-  rows: readonly HostedGen2MeasurementRow[],
-  descriptor: HostedGen2CardCatalogDescriptor,
-  measuredAt: string,
-): HostedGen2MeasurementRow | null =>
-  findHostedGen2CardRow(rows, descriptor, measuredAt) ??
-  rows.find(
-    (row) =>
-      row.measured_at === measuredAt &&
-      normalizeHostedGen2ComparisonText(row.sensor_key) ===
-        normalizeHostedGen2ComparisonText(descriptor.sensorKey) &&
-      getHostedGen2CanonicalMeasurementIdentity(row) ===
-        normalizeHostedGen2ComparisonText(descriptor.canonicalMeasurementName) &&
-      isStrictProfileNotInstalledRow(row),
-  ) ??
-  null
-
-const isCurrentPackage = (measuredAtMs: number): boolean => {
-  const ageMs = Date.now() - measuredAtMs
-  return ageMs >= 0 && ageMs <= FRESHNESS_THRESHOLD_MS
-}
-
-const isStrictProfileNotInstalledRow = (
-  row: HostedGen2MeasurementRow | null | undefined,
-): boolean => {
-  const quality = normalizeHostedGen2ComparisonText(row?.quality)
-  return (
-    (quality === 'not_installed' || quality === 'not installed') &&
-    normalizeHostedGen2ComparisonText(row?.reason) === 'profile_not_installed' &&
-    row?.valid === false &&
-    row?.measurement_value === null
-  )
-}
-
-const isNotDetectedRow = (row: HostedGen2MeasurementRow | null | undefined): boolean =>
-  normalizeHostedGen2ComparisonText(row?.reason).includes('not_detected')
 
 const getDisplayRowForState = (
   state: HostedGen2SensorPresentationState,
@@ -661,16 +648,20 @@ const isFiniteRowValue = (
   )
 
 const formatDisplaySource = (card: HostedGen2CatalogCardModel): string => {
-  if (card.recentGoodRow) return 'Recent good reading'
+  if (card.recentGoodRow) return 'Last good reading'
   if (card.state === 'Not Current') return 'Latest non-current reading'
   return 'Latest reading'
 }
 
-const formatRecentGoodEvidence = (
-  latestRow: HostedGen2MeasurementRow,
-  recentGoodRow: HostedGen2MeasurementRow,
-): string =>
-  `${formatMeasurementValue(recentGoodRow)} at ${formatTimestamp(recentGoodRow.measured_at)}; latest row is ${formatTimestamp(latestRow.measured_at)}.`
+const formatLastGoodEvidence = (card: HostedGen2CatalogCardModel): string => {
+  if (!card.recentGoodRow) return 'Not available'
+  const sourceDescription = describeLastGoodEvidenceSource(
+    formatTimestamp(card.recentGoodRow.measured_at),
+    card.latestRow ? formatTimestamp(card.latestRow.measured_at) : null,
+    card.latestPackageMeasuredAt ? formatTimestamp(card.latestPackageMeasuredAt) : null,
+  )
+  return `${formatMeasurementValue(card.recentGoodRow)}. ${sourceDescription}`
+}
 
 const formatRawAdcValue = (value: number): string =>
   `${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${
