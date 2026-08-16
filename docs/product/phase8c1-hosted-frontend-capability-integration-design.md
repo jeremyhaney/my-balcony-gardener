@@ -1,8 +1,8 @@
 # Phase 8C.1 Hosted Frontend Capability Integration Design
 
-Status: design accepted; Phase 8C.2 implementation complete and locally validated; post-push production validation pending
+Status: design accepted; Phase 8C.2 implemented, committed, pushed, production-validated (**Pass**), and operationally closed
 
-Implementation note: Phase 8C.2 is implemented and passed tests, lint, type checking, production-build validation, and Jeremy's authenticated Support visual review on 2026-08-16. Balcony02 produced the approved eleven cards from nine commissioned logical sensors; Prototype01 and the other unprovisioned devices correctly produced the successful-zero state. Prototype01 firmware upgrade and explicit capability provisioning remain later work. Commit/push and the resulting post-deployment production validation remain the next checkpoint; this document retains the accepted design wording below.
+Implementation note: Phase 8C.2 was implemented, committed, and pushed on `main` as `b1eea01c484d6838e66598f6fd5b0eeae3c2d251` (`Implement Phase 8C.2 Support capabilities`). The normal post-push hosted update deployed it with no manual deployment. Validation passed 15/15 tests, lint, the TypeScript/Vite production build, and `git diff --check`; the existing large-chunk advisory remained non-blocking. Jeremy approved the authenticated Support production smoke test on 2026-08-16. Directly observed and test/inspection-supported behavior are recorded separately below.
 
 Authority: [ADR 0024](../adr/0024-hosted-device-capability-source-of-truth-and-presentation-boundary.md)
 
@@ -139,7 +139,7 @@ Architecture covers capability clients, shared types, normalization, exact mappi
 ## Implementation sequence
 
 - **Phase 8C.1 design closeout (current):** documentation only; no runtime changes.
-- **Phase 8C.2 Support Vertical Slice (future):** Support client, shared types, session cache, effective filtering, explicit Balcony02 mappings, declaration-driven cards, evidence attachment, existing history integration, failure states, tests, and production validation.
+- **Phase 8C.2 Support Vertical Slice (complete):** Support client, shared types, session cache, effective filtering, explicit Balcony02 mappings, declaration-driven cards, evidence attachment, existing history integration, failure states, tests, and production validation passed.
 - **Phase 8D schedule work (reserved and unchanged):** Local Schedule UI and Schedule Persistence remains the existing roadmap Phase 8D and is outside this capability-integration design.
 - **Evidence-state and health:** age/consecutive-failure escalation, restrained severity, last-good semantics, and informational versus actionable concern; no alerts without separate approval.
 - **Measurement quality:** implausible-value handling and correct firmware/ingestion/storage/frontend boundary.
@@ -152,7 +152,7 @@ Architecture covers capability clients, shared types, normalization, exact mappi
 
 ## Acceptance contract for the Phase 8C.2 Support Vertical Slice
 
-The later slice is acceptable only when:
+The completed slice was accepted against this contract:
 
 - Support reads `support_device_capabilities`, normalizes the authorized selected-device rows, filters `effective_from`/`effective_to`, and caches once per device per session.
 - Balcony02 renders only approved declarations: three BME280 Air cards, Soil Temperature, three RMI cards, three lux cards, and Reservoir Water, in approved layout/order. M04/L04/LUX04 never appear, and BME280 is not a compound card.
@@ -163,10 +163,27 @@ The later slice is acceptable only when:
 - Hosted watering stays read-only; assignment stays unchanged; customer adoption stays deferred; no public access is added.
 - Tests cover normalization, lifecycle, exact aliases/mappings, order, cache, evidence states, history eligibility, and no-fallback behavior; production validation uses authenticated Support access to Balcony02.
 
+## Production-validation checkpoint
+
+On August 16, 2026, `HEAD`, `main`, and `origin/main` agreed at deployed commit `b1eea01c484d6838e66598f6fd5b0eeae3c2d251` (`Implement Phase 8C.2 Support capabilities`), and the working tree was clean before this documentation closeout. Deployment used the normal post-push hosted-page update; no manual deployment occurred. Automated validation passed 15/15 tests, lint, the TypeScript/Vite production build, and `git diff --check`; the existing Vite large-chunk advisory remained non-blocking.
+
+Jeremy completed and approved the manual production smoke test. Directly observed on authenticated Support:
+
+- Balcony02 rendered eleven capability-driven cards from nine commissioned logical sensors in Light, Air, Water, Soil order.
+- Light rendered L01, L02, and L03. Air rendered separate Air Temperature, Humidity, and Atmospheric Pressure cards from BME280. Water rendered Reservoir Water. Soil rendered M01, M02, M03, and Soil Temperature.
+- M04 and L04/LUX04 did not appear.
+- Live values, state/status pills, trends, last-refreshed information, Manual Refresh, Sensor Details, and History functioned.
+- Prototype01 displayed the successful zero-capability state without fabricated cards.
+- The public Demo remained available and materially unchanged.
+
+The following were not deliberately reproduced in production and remain supported by committed tests and implementation inspection: capability-query failure; future-effective and retired filtering; unknown commissioned-measurement fallback; undeclared measurement exclusion; evidence-state fixtures; once-per-device session caching; capability/measurement-refresh separation; hidden-tab polling; and concurrency protection.
+
+Result: **Pass**. The post-push checkpoint is complete, and Phase 8C.2 is operationally closed. Balcony02 remains Support-only and customer-hidden. Prototype01 firmware/provisioning, customer adoption pending an authorized customer-visible commissioned device, evidence-state/health refinement, measurement-quality gates, Gen1 cleanup/adoption, deterministic Demo work, and major visual modernization remain separate future work. Phase 8D remains Local Schedule UI and Schedule Persistence.
+
 ## Prohibited changes in the Phase 8C.2 Support Vertical Slice
 
 Do not change SQL, schema, data, policies, grants, capabilities, assignments, firmware, pins, sensors, IDs, profiles, thresholds, cadence, watering, safety, Gen1 behavior, public capability access, hosted watering authority, history-query granularity, broad layout/styling, or the public Demo without disclosure and approval. Do not add a per-device frontend inventory, automatic reconciliation, deployment without its own approval, or any claim that firmware/measurements are commissioning authority.
 
 ## Closeout
 
-Phase 8C.1 closes the documentation design under ADR 0024 and authorizes no runtime implementation by itself. Phase 8C.2 remains a future runtime implementation. Frontend runtime behavior, production deployment, Supabase state, firmware, devices, assignments, watering, and the public Demo remain unchanged.
+Phase 8C.1 closed the documentation design under ADR 0024 and authorized no runtime implementation by itself. Phase 8C.2 subsequently passed implementation and production validation and is operationally closed. This documentation-only closeout changed no runtime behavior, tests, fixtures, dependencies, configuration, styling, assets, SQL/Supabase state, firmware, devices, assignments, watering, Demo behavior, deployment, provisioning, or upload state.
