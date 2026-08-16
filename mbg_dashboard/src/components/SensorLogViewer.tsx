@@ -24,6 +24,7 @@ import {
   updateHistoryControlUrl,
 } from '../historyControls'
 import { calculateHostedGen2Health } from '../hostedGen2Health'
+import { COMMISSIONED_FRESHNESS_LIMIT_MS } from '../commissionedEvidencePolicy'
 import {
   getCapabilityCardDescriptors,
   getCapabilityChartSeriesDescriptors,
@@ -456,16 +457,6 @@ const SensorLogViewer = ({
         (log.temperature !== null || log.humidity !== null || log.moisture !== null)
     )
 
-  const telemetryHealth = isLoading
-    ? null
-    : isHostedReadonly
-      ? calculateHostedGen2Health(hostedGen2Rows, selectedWindow.key)
-      : calculateTelemetryHealth(logs, selectedWindow.key)
-  const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
-  const wateringCycles = useMemo(
-    () => getHostedWateringCycles(wateringEventRows),
-    [wateringEventRows],
-  )
   const capabilityCardDescriptors = useMemo(
     () => getCapabilityCardDescriptors(capabilities),
     [capabilities],
@@ -474,6 +465,32 @@ const SensorLogViewer = ({
     () => getCapabilityChartSeriesDescriptors(capabilityCardDescriptors),
     [capabilityCardDescriptors],
   )
+  const telemetryHealth = isLoading ||
+    (hostedDataScope === 'support' && (isCapabilityLoading || capabilityError !== null))
+    ? null
+    : isHostedReadonly
+      ? calculateHostedGen2Health(
+          hostedGen2Rows,
+          selectedWindow.key,
+          new Date(),
+          hostedDataScope === 'support' ? capabilityCardDescriptors : undefined,
+        )
+      : calculateTelemetryHealth(logs, selectedWindow.key)
+  const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
+  const wateringCycles = useMemo(
+    () => getHostedWateringCycles(wateringEventRows),
+    [wateringEventRows],
+  )
+  const newestHostedMeasuredAtMs = hostedGen2Rows.reduce((newest, row) => {
+    const timestamp = new Date(row.measured_at).getTime()
+    return Number.isFinite(timestamp) ? Math.max(newest, timestamp) : newest
+  }, Number.NEGATIVE_INFINITY)
+  const deviceReportingActive =
+    (Number.isFinite(newestHostedMeasuredAtMs) && Date.now() >= newestHostedMeasuredAtMs &&
+      Date.now() - newestHostedMeasuredAtMs <= COMMISSIONED_FRESHNESS_LIMIT_MS) ||
+    (typeof diagnostics?.heartbeat_age_seconds === 'number' &&
+      diagnostics.heartbeat_age_seconds >= 0 &&
+      diagnostics.heartbeat_age_seconds * 1000 <= COMMISSIONED_FRESHNESS_LIMIT_MS)
   const getDemoGuideTargetClass = (target: DemoGuideTarget): string =>
     [
       'demo-guide-target',
@@ -723,6 +740,9 @@ const SensorLogViewer = ({
                 error={hostedGen2Error}
                 fallbackDeviceLabel={selectedDeviceLabel}
                 className={getDemoGuideTargetClass('readings')}
+                supportEvidencePolicy={hostedDataScope === 'support'}
+                deviceReportingActive={deviceReportingActive}
+                showSupportEngineering={hostedDataScope !== 'customer'}
               />
               <HostedGen2TrendChart
                 rows={hostedGen2Rows}

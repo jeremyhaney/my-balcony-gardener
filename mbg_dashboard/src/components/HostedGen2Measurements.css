@@ -198,6 +198,33 @@
   overflow-wrap: anywhere;
 }
 
+.hosted-gen2-measurements-status-pill.is-evidence-neutral {
+  --measurement-status-pill-background: rgba(226, 232, 240, 0.96);
+  --measurement-status-pill-color: #334155;
+}
+
+.hosted-gen2-measurements-status-pill.is-evidence-informational {
+  --measurement-status-pill-background: rgba(207, 250, 254, 0.96);
+  --measurement-status-pill-color: #164e63;
+}
+
+.hosted-gen2-measurements-status-pill.is-evidence-caution {
+  --measurement-status-pill-background: rgba(254, 249, 195, 0.96);
+  --measurement-status-pill-color: #713f12;
+}
+
+.hosted-gen2-measurements-status-pill.is-evidence-actionable {
+  --measurement-status-pill-background: rgba(254, 226, 226, 0.98);
+  --measurement-status-pill-color: #7f1d1d;
+}
+
+.hosted-gen2-measurements-condition,
+.hosted-gen2-measurements-evidence-reason {
+  margin: 0.15rem 0 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.78rem;
+}
+
 .hosted-gen2-measurements-value {
   margin-bottom: 0.45rem;
   font-size: clamp(1.15rem, 1.8vw, 1.45rem);

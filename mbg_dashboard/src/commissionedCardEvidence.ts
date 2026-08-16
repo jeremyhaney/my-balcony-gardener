@@ -1,4 +1,4 @@
-import { FRESHNESS_THRESHOLD_MS } from './deviceStatusHealth.ts'
+import { COMMISSIONED_FRESHNESS_LIMIT_MS } from './commissionedEvidencePolicy.ts'
 import {
   doesHostedGen2RowMatchCard,
   normalizeHostedGen2ComparisonText,
@@ -42,7 +42,7 @@ export const resolveCommissionedCardEvidence = (
     ),
     lastGoodRow,
     latestMatchingIsCurrent: latestMatchingMs !== null &&
-      nowMs >= latestMatchingMs && nowMs - latestMatchingMs <= FRESHNESS_THRESHOLD_MS,
+      nowMs >= latestMatchingMs && nowMs - latestMatchingMs <= COMMISSIONED_FRESHNESS_LIMIT_MS,
   }
 }
 

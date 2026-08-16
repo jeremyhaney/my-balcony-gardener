@@ -39,6 +39,8 @@ export const getCapabilityCardDescriptors = (
             label: getCapabilityCardLabel(capability, descriptor),
             physicalSensorId: capability.physicalSensorId ?? undefined,
             isCommissioned: true,
+            sensorFamily: capability.sensorFamily,
+            logicalChannel: capability.logicalChannel,
           }]
         : []
     })
@@ -96,6 +98,8 @@ const buildUnsupportedDescriptor = (
   order: 1000,
   isUnsupported: true,
   isCommissioned: true,
+  sensorFamily: capability.sensorFamily,
+  logicalChannel: capability.logicalChannel,
 })
 
 const toTitleCase = (value: string): string => value

@@ -24,6 +24,8 @@ export type HostedGen2CardCatalogDescriptor = {
   order: number
   isUnsupported?: boolean
   isCommissioned?: boolean
+  sensorFamily?: string
+  logicalChannel?: string
 }
 
 export type HostedGen2SensorPresentationState =

@@ -1,4 +1,4 @@
-import type { HistoryWindowKey } from './historyControls'
+import type { HistoryWindowKey } from './historyControls.ts'
 import {
   buildDeviceStatusHealth,
   COVERAGE_WARNING_THRESHOLD_PERCENT,
@@ -7,15 +7,15 @@ import {
   getLargestGapMsFromTimestamps,
   type DeviceStatusHealth,
   type DeviceStatusHealthStatus,
-} from './deviceStatusHealth'
+} from './deviceStatusHealth.ts'
 import {
   HOSTED_GEN2_CARD_CATALOG,
   doesHostedGen2RowMatchCard,
   getHostedGen2CanonicalMeasurementIdentity,
   normalizeHostedGen2ComparisonText,
   type HostedGen2CardCatalogDescriptor,
-} from './hostedGen2Presentation'
-import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
+} from './hostedGen2Presentation.ts'
+import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements.ts'
 
 export type HostedGen2QualityTone = 'good' | 'watch' | 'check' | 'neutral'
 
@@ -94,6 +94,7 @@ export const calculateHostedGen2Health = (
   rows: HostedGen2MeasurementRow[],
   historyWindowKey: HistoryWindowKey,
   now: Date = new Date(),
+  expectedDescriptors: readonly HostedGen2CardCatalogDescriptor[] = HOSTED_GEN2_CARD_CATALOG,
 ): HostedGen2Health => {
   const samples = getReportSamples(rows)
   const latestSample = samples[samples.length - 1] ?? null
@@ -106,18 +107,22 @@ export const calculateHostedGen2Health = (
   // Reading History uses report packages rather than flattened measurement rows.
   const readingHistory = getReadingHistory(samples, expectedPackages, historyWindowKey)
 
-  // Sensor Availability matches only the frozen catalog at the explicit latest timestamp.
+  // Sensor Availability matches the caller's expected presentation at the latest timestamp.
   const matchedEntries = latestSample
-    ? getMatchedCatalogEntries(latestSample)
-    : HOSTED_GEN2_CARD_CATALOG.map((descriptor) => ({
+    ? getMatchedCatalogEntries(latestSample, expectedDescriptors)
+    : expectedDescriptors.map((descriptor) => ({
         descriptor,
         row: null,
         profileNotInstalled: false,
       }))
-  const sensorAvailability = getSensorAvailability(matchedEntries, Boolean(latestSample))
+  const sensorAvailability = getSensorAvailability(
+    matchedEntries, Boolean(latestSample), expectedDescriptors,
+  )
 
   // Latest Reading Checks evaluate only expected catalog entries and endpoint evidence.
-  const latestReadingChecks = getLatestSampleQuality(matchedEntries, Boolean(latestSample))
+  const latestReadingChecks = getLatestSampleQuality(
+    matchedEntries, Boolean(latestSample), expectedDescriptors.length,
+  )
 
   // Needs Attention contains only observed, qualifying evidence.
   const attentionItems = getAttentionItems({
@@ -252,8 +257,11 @@ const getReadingHistory = (
   }
 }
 
-const getMatchedCatalogEntries = (sample: Gen2ReportSample): MatchedCatalogEntry[] =>
-  HOSTED_GEN2_CARD_CATALOG.map((descriptor) => {
+const getMatchedCatalogEntries = (
+  sample: Gen2ReportSample,
+  descriptors: readonly HostedGen2CardCatalogDescriptor[],
+): MatchedCatalogEntry[] =>
+  descriptors.map((descriptor) => {
     const normalMatch = sample.rows.find(
       (row) =>
         row.measured_at === sample.measuredAt && doesHostedGen2RowMatchCard(row, descriptor),
@@ -284,9 +292,10 @@ const getExpectedPhysicalIdentity = (descriptor: HostedGen2CardCatalogDescriptor
 const getSensorAvailability = (
   entries: MatchedCatalogEntry[],
   hasLatestSample: boolean,
+  descriptors: readonly HostedGen2CardCatalogDescriptor[],
 ): HostedGen2SensorAvailability => {
   const expectedPhysicalIdentities = new Set(
-    HOSTED_GEN2_CARD_CATALOG.map(getExpectedPhysicalIdentity),
+    descriptors.map(getExpectedPhysicalIdentity),
   )
   const representedPhysicalIdentities = new Set(
     entries
@@ -302,9 +311,9 @@ const getSensorAvailability = (
     .map((entry) => entry.descriptor.label)
 
   return {
-    expectedEntryCount: HOSTED_GEN2_CARD_CATALOG.length,
+    expectedEntryCount: descriptors.length,
     reportedEntryCount,
-    absentEntryCount: HOSTED_GEN2_CARD_CATALOG.length - reportedEntryCount,
+    absentEntryCount: descriptors.length - reportedEntryCount,
     expectedPhysicalSensorCount: expectedPhysicalIdentities.size,
     representedPhysicalSensorCount: representedPhysicalIdentities.size,
     profileNotInstalledEntryCount,
@@ -323,6 +332,7 @@ const getSensorAvailability = (
 const getLatestSampleQuality = (
   entries: MatchedCatalogEntry[],
   hasLatestSample: boolean,
+  expectedEntryCount: number,
 ): HostedGen2LatestReadingChecks => {
   const matchedEntries = entries.filter((entry) => entry.row)
   const evaluatedEntries = matchedEntries.filter((entry) => !entry.profileNotInstalled)
@@ -354,7 +364,7 @@ const getLatestSampleQuality = (
     (evaluatedEntries.length > 0 && usableEntries.length === 0)
 
   return {
-    expectedEntryCount: HOSTED_GEN2_CARD_CATALOG.length,
+    expectedEntryCount,
     matchedEntryCount: matchedEntries.length,
     usableEntryCount: usableEntries.length,
     invalidEntryCount: invalidEntries.length,
