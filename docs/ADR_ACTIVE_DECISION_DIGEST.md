@@ -114,6 +114,8 @@ Phase 8C.1 defines how capability-driven cards join currently commissioned capab
 
 Phase 8C.3 is the approved bounded Support continuation. It separates environmental condition from evidence health, preserves and timestamps last-good evidence, distinguishes invalidity and latest-package omission, uses cadence-derived 50-minute freshness and 95-minute device-active actionable boundaries, derives bounded consecutive counts from already-fetched history, keeps RMI tied to its raw source, and makes Support Device Status capability-driven. No query/storage/backend/device authority changes are introduced. Local automated and authenticated healthy/current presentation validation passed; production deployment/validation remains pending.
 
+Phase 8C.4 is a deterministic validation-only continuation. It directly covers the existing derived-unavailable RMI policy and verifies fault-label/environmental-condition separation without changing runtime behavior, data access, authority, or presentation. Validation passed 22/22 tests, lint, build, and `git diff --check`.
+
 Local pages may consume directly connected runtime capabilities. The temporary Demo remains Balcony02-only and receives no protected capability access. A future My Garden adoption will use authorized commissioned customer capabilities only after an authorized customer-visible commissioned device exists. Support may later expose discrepancies and physical/runtime evidence, and History may later include formerly commissioned logical sensors where lifecycle overlaps the requested period. Device eligibility remains assignment/access policy, separate from sensor health or capability presentation.
 
 ## Watering Event Evidence And Cadence Separation

@@ -98,6 +98,74 @@ test('future and unparseable measurement times are not current', () => {
   assert.equal(policy.label, 'Not Current')
 })
 
+test('derived RMI is unavailable without usable raw evidence and preserves honest fault severity', () => {
+  const noEvidence = evaluateCommissionedEvidencePolicy({
+    descriptor, rows: [], latestMatchingRow: null, lastGoodRow: null,
+    appearsInLatestPackage: false, deviceReportingActive: true,
+    derivedValueAvailable: false, nowMs: Date.parse('2026-08-16T12:00:00Z'),
+  })
+  assert.equal(noEvidence.reason, 'derived-unavailable')
+  assert.equal(noEvidence.label, 'Derived value unavailable')
+  assert.equal(noEvidence.detail, null)
+  assert.equal(noEvidence.severity, 'neutral')
+  assert.equal(noEvidence.conditionIsCurrent, false)
+
+  const invalid1 = row({
+    measured_at: '2026-08-16T11:45:00Z', valid: false,
+    quality: 'failed', measurement_value: null,
+  })
+  const invalid2 = row({
+    measured_at: '2026-08-16T12:00:00Z', valid: false,
+    quality: 'failed', measurement_value: null,
+  })
+  const repeatedInvalid = evaluateCommissionedEvidencePolicy({
+    descriptor, rows: [invalid2, invalid1], latestMatchingRow: invalid2,
+    lastGoodRow: null, appearsInLatestPackage: true,
+    deviceReportingActive: true, derivedValueAvailable: false,
+    nowMs: Date.parse('2026-08-16T12:01:00Z'),
+  })
+  assert.equal(repeatedInvalid.reason, 'derived-unavailable')
+  assert.equal(repeatedInvalid.label, 'Derived value unavailable')
+  assert.equal(repeatedInvalid.detail, 'Latest reading invalid')
+  assert.equal(repeatedInvalid.severity, 'caution')
+  assert.equal(repeatedInvalid.invalidCount.count, 2)
+  assert.equal(repeatedInvalid.invalidCount.isLowerBound, true)
+  assert.equal(repeatedInvalid.conditionIsCurrent, false)
+})
+
+test('fault policy labels and condition currency remain separate', () => {
+  const good = row({ measured_at: '2026-08-16T11:30:00Z' })
+  const invalid = row({
+    measured_at: '2026-08-16T11:45:00Z', valid: false,
+    quality: 'failed', measurement_value: null,
+  })
+  const invalidPolicy = evaluate([invalid, good])
+  assert.equal(invalidPolicy.reason, 'invalid')
+  assert.equal(invalidPolicy.label, 'Last Good')
+  assert.equal(invalidPolicy.detail, 'Latest reading invalid')
+  assert.equal(invalidPolicy.conditionIsCurrent, true)
+
+  const other = row({
+    measured_at: '2026-08-16T12:00:00Z', sensor_key: 'sen0308_m02',
+    physical_sensor_id: 'SEN0308-M02',
+  })
+  const omittedPolicy = evaluate([other, good])
+  assert.equal(omittedPolicy.reason, 'omitted')
+  assert.equal(omittedPolicy.label, 'Last Good')
+  assert.equal(omittedPolicy.detail, 'Missing from latest update')
+  assert.equal(omittedPolicy.conditionIsCurrent, true)
+
+  const stalePolicy = evaluate(
+    [good],
+    Date.parse(good.measured_at) + COMMISSIONED_FRESHNESS_LIMIT_MS + 1,
+    false,
+  )
+  assert.equal(stalePolicy.reason, 'not-current')
+  assert.equal(stalePolicy.label, 'Not Current')
+  assert.equal(stalePolicy.detail, 'Device reporting unavailable')
+  assert.equal(stalePolicy.conditionIsCurrent, false)
+})
+
 test('capability-driven health uses only provided commissioned descriptors', () => {
   const health = calculateHostedGen2Health([row()], '24h', new Date('2026-08-16T12:01:00Z'), [descriptor])
   assert.equal(health.sensorAvailability.expectedEntryCount, 1)
