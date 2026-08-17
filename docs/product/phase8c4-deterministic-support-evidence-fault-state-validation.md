@@ -2,7 +2,7 @@
 
 Date: 2026-08-17
 
-Status: Implemented and locally validated
+Status: Complete, committed, and pushed
 
 ## Purpose
 
@@ -31,4 +31,6 @@ No sensor is disconnected or faulted. Fault-state validation remains determinist
 
 ## Validation result
 
-Validation passed 22/22 deterministic tests, ESLint, the TypeScript/Vite production build, and `git diff --check`. The existing Vite large-chunk advisory remained non-blocking. No production validation, deployment command, SQL, Supabase mutation, firmware or device operation, sensor fault, commit, or push occurred.
+Validation passed 22/22 deterministic tests, ESLint, the TypeScript/Vite production build, and `git diff --check`. The existing Vite large-chunk advisory remained non-blocking. During that validation run, no production validation, deployment command, SQL, Supabase mutation, firmware or device operation, sensor fault, commit, or push occurred.
+
+The validated slice was committed and pushed on `main` as `de7e5de8bcc9e1d73bc72333939225210b273843` (`Validate Support evidence fault states`). Because it changed only tests and documentation, it required no separate runtime production behavior claim. Its deterministic evidence supported the subsequent Phase 8C.3 production-validation closeout.
