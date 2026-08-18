@@ -18,6 +18,7 @@ export type CommissionedEvidenceReason =
   | 'invalid'
   | 'omitted'
   | 'not-current'
+  | 'presentation-ineligible'
   | 'no-window-evidence'
   | 'derived-unavailable'
 
@@ -44,6 +45,9 @@ export const evaluateCommissionedEvidencePolicy = ({
   rows,
   latestMatchingRow,
   lastGoodRow,
+  lastPresentationEligibleRow = lastGoodRow,
+  latestPresentationEligible = true,
+  latestPresentationDetail = null,
   appearsInLatestPackage,
   deviceReportingActive,
   derivedValueAvailable = true,
@@ -53,6 +57,9 @@ export const evaluateCommissionedEvidencePolicy = ({
   rows: readonly HostedGen2MeasurementRow[]
   latestMatchingRow: HostedGen2MeasurementRow | null
   lastGoodRow: HostedGen2MeasurementRow | null
+  lastPresentationEligibleRow?: HostedGen2MeasurementRow | null
+  latestPresentationEligible?: boolean
+  latestPresentationDetail?: string | null
   appearsInLatestPackage: boolean
   deviceReportingActive: boolean
   derivedValueAvailable?: boolean
@@ -60,7 +67,7 @@ export const evaluateCommissionedEvidencePolicy = ({
 }): CommissionedEvidencePolicy => {
   const invalidCount = countConsecutiveOutcomes(descriptor, rows, 'invalid')
   const omissionCount = countConsecutiveOutcomes(descriptor, rows, 'omitted')
-  const lastGoodAgeMs = getAgeMs(lastGoodRow?.measured_at, nowMs)
+  const lastGoodAgeMs = getAgeMs(lastPresentationEligibleRow?.measured_at, nowMs)
   const conditionIsCurrent = lastGoodAgeMs !== null && lastGoodAgeMs >= 0 &&
     lastGoodAgeMs <= COMMISSIONED_FRESHNESS_LIMIT_MS
 
@@ -83,6 +90,17 @@ export const evaluateCommissionedEvidencePolicy = ({
       lastGoodRow ? 'Last Good' : 'No Reading in Selected Window',
       lastGoodRow ? 'Missing from latest update' : null,
       omissionCount.count >= 3 ? 'caution' : lastGoodRow ? 'informational' : 'neutral',
+      { lastGoodAgeMs, conditionIsCurrent, invalidCount, omissionCount },
+    )
+  }
+
+  if (!latestPresentationEligible) {
+    const ageSeverity = getAgeSeverity(lastGoodAgeMs, deviceReportingActive)
+    return buildPolicy(
+      'presentation-ineligible',
+      lastPresentationEligibleRow ? 'Last Reliable' : 'Reading Unavailable',
+      latestPresentationDetail ?? 'Latest reading outside the approved presentation range',
+      maxSeverity('informational', ageSeverity),
       { lastGoodAgeMs, conditionIsCurrent, invalidCount, omissionCount },
     )
   }

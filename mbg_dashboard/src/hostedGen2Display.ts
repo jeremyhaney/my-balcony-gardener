@@ -273,24 +273,6 @@ export const getHostedGen2MeasurementStatus = ({
 
       return { level: 'good', label: 'Full Sun' }
 
-    case 'raw_adc':
-      if (measurementValue === 0 || measurementValue === 4095) {
-        return { level: 'check', label: 'Check' }
-      }
-
-      if (
-        (measurementValue >= 1 && measurementValue <= 199) ||
-        (measurementValue >= 3901 && measurementValue <= 4094)
-      ) {
-        return { level: 'watch', label: 'Watch' }
-      }
-
-      if (measurementValue >= 200 && measurementValue <= 3900) {
-        return { level: 'good', label: 'Good' }
-      }
-
-      return { level: 'check', label: 'Check' }
-
     default:
       return { level: 'neutral', label: 'Coming soon' }
   }

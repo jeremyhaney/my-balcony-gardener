@@ -166,6 +166,25 @@ test('fault policy labels and condition currency remain separate', () => {
   assert.equal(stalePolicy.conditionIsCurrent, false)
 })
 
+test('presentation rejection uses distinct last-reliable evidence without rewriting device-good metadata', () => {
+  const latest = row({ measured_at: '2026-08-16T12:00:00Z', measurement_value: 24000 })
+  const lastEligible = row({ measured_at: '2026-08-16T11:45:00Z', measurement_value: 12000 })
+  const policy = evaluateCommissionedEvidencePolicy({
+    descriptor, rows: [latest, lastEligible], latestMatchingRow: latest,
+    lastGoodRow: latest, lastPresentationEligibleRow: lastEligible,
+    latestPresentationEligible: false,
+    latestPresentationDetail: 'Latest reading outside the provider measurement envelope',
+    appearsInLatestPackage: true, deviceReportingActive: true,
+    nowMs: Date.parse('2026-08-16T12:01:00Z'),
+  })
+  assert.equal(policy.reason, 'presentation-ineligible')
+  assert.equal(policy.label, 'Last Reliable')
+  assert.equal(policy.conditionIsCurrent, true)
+  assert.equal(policy.lastGoodAgeMs, 16 * 60 * 1000)
+  assert.equal(latest.valid, true)
+  assert.equal(latest.quality, 'good')
+})
+
 test('capability-driven health uses only provided commissioned descriptors', () => {
   const health = calculateHostedGen2Health([row()], '24h', new Date('2026-08-16T12:01:00Z'), [descriptor])
   assert.equal(health.sensorAvailability.expectedEntryCount, 1)

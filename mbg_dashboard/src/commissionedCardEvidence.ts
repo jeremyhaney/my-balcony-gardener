@@ -5,6 +5,7 @@ import {
   type HostedGen2CardCatalogDescriptor,
 } from './hostedGen2Presentation.ts'
 import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
+import { evaluateMeasurementPresentationEligibility } from './measurementPresentationEligibility.ts'
 
 export type CommissionedCardEvidence = {
   latestPackageMeasuredAt: string | null
@@ -12,6 +13,7 @@ export type CommissionedCardEvidence = {
   latestMatchingRow: HostedGen2MeasurementRow | null
   appearsInLatestPackage: boolean
   lastGoodRow: HostedGen2MeasurementRow | null
+  lastPresentationEligibleRow: HostedGen2MeasurementRow | null
   latestMatchingIsCurrent: boolean
 }
 
@@ -28,6 +30,8 @@ export const resolveCommissionedCardEvidence = (
     doesHostedGen2RowMatchCard(row, descriptor))
   const latestMatchingRow = matchingRows[0] ?? null
   const lastGoodRow = matchingRows.find(isGoodEvidence) ?? null
+  const lastPresentationEligibleRow = matchingRows.find((row) =>
+    evaluateMeasurementPresentationEligibility(descriptor, row).presentationEligible) ?? null
   const latestMatchingMs = getTimestampMs(latestMatchingRow?.measured_at)
 
   return {
@@ -41,6 +45,7 @@ export const resolveCommissionedCardEvidence = (
       latestMatchingRow.measured_at === latestPackageRow.measured_at,
     ),
     lastGoodRow,
+    lastPresentationEligibleRow,
     latestMatchingIsCurrent: latestMatchingMs !== null &&
       nowMs >= latestMatchingMs && nowMs - latestMatchingMs <= COMMISSIONED_FRESHNESS_LIMIT_MS,
   }

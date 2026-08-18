@@ -21,6 +21,7 @@ import {
   type HostedGen2ChartGroupKey,
   type HostedGen2ChartSeriesDescriptor,
 } from '../hostedGen2Presentation'
+import { evaluateMeasurementPresentationEligibility } from '../measurementPresentationEligibility'
 import { doesCapabilityChartRowMatchSeries } from '../capabilityPresentation'
 import {
   formatWateringCycleMarkerLabel,
@@ -489,6 +490,7 @@ const buildChartSeries = (
         ? doesCapabilityChartRowMatchSeries(row, descriptor)
         : doesHostedGen2RowMatchCard(row, cardDescriptor))
       .filter(isChartUsableRow)
+      .filter((row) => evaluateMeasurementPresentationEligibility(cardDescriptor, row).presentationEligible)
       .map((row) => getPlottedRow(row, descriptor))
 
     return plottedRows.length > 0 ? [{ descriptor, rows: plottedRows }] : []

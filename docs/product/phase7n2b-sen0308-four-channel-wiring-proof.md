@@ -218,9 +218,7 @@ Current SEN0308 records use sensor_type `sen0308`.
 
 The old `sen0308_ads1115` rows should age out of short hosted windows naturally. No fake cleanup, SQL deletion, or hosted filtering was performed in Phase 7N.2B.
 
-The hosted dashboard currently applies old raw ADC display plausibility bounds of `0` to `4095` to Raw ADC cards. Those bounds are appropriate for ESP32 ADC-style 12-bit raw readings, but they are not appropriate for ADS1115-backed SEN0308 raw counts.
-
-ADS1115-backed SEN0308 counts above `4095` are not automatically invalid. The red hosted Check cards for SEN0308 ADS1115 readings are a hosted display/trust follow-up, not a Phase 7N.2B firmware or wiring failure.
+The hosted dashboard behavior observed during this historical proof came from an obsolete generic raw-ADC display rule associated with a failed prior moisture path. That rule has no Gen2 compatibility requirement and is not product authority for ADS1115-backed SEN0308 measurements. Phase 8C.5A supersedes it with a provider-specific boundary and requires obsolete trust handling to be removed rather than adapted.
 
 ## Boundaries Preserved
 
@@ -284,10 +282,10 @@ Phase 7N.2B does not prove:
 - Wetting response
 - Dry-down response
 - That any SEN0308-derived value should control watering
-- That hosted Raw ADC plausibility checks are already ADS1115-aware
+- That a hosted SEN0308 measurement-quality boundary was implemented
 
 ## Follow-Up Work
 
 Phase 7N.3 should evaluate SEN0308 measurement behavior, sensor-to-sensor variation, air/hand/proximity response, inserted-media behavior, wetting response, dry-down response, and whether any SEN0308-derived value can ever become control-quality evidence.
 
-Future hosted trust/display work should distinguish ESP32 GPIO34 raw ADC bounds from ADS1115 raw count bounds using provider details, sensor_type, measurement_unit, or equivalent metadata.
+Future hosted trust/display work should remove the obsolete generic raw-ADC rule and design any measurement-quality boundary directly for the commissioned ADS1115-backed SEN0308 system.

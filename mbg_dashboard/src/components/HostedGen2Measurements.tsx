@@ -8,6 +8,10 @@ import {
 } from '../commissionedEvidencePolicy'
 import { getHostedGen2MeasurementStatus } from '../hostedGen2Display'
 import {
+  evaluateMeasurementPresentationEligibility,
+  type MeasurementPresentationEligibility,
+} from '../measurementPresentationEligibility'
+import {
   HOSTED_GEN2_CARD_CATALOG,
   HOSTED_GEN2_ELEMENT_SECTIONS,
   PRACTICAL_DRY_RAW,
@@ -69,11 +73,28 @@ type HostedGen2CatalogCardModel = {
   transportState: TransportState
   evidencePolicy: CommissionedEvidencePolicy | null
   conditionLabel: string | null
+  latestEligibility: MeasurementPresentationEligibility | null
 }
 
 const APPROVED_QUALITY_VALUES = new Set(['good', 'diagnostic', 'ok', 'okay'])
 const MOISTURE_CARD_KEYS = new Set(['moisture-m01', 'moisture-m02', 'moisture-m03'])
 const RESERVOIR_CARD_KEY = 'reservoir-water'
+
+const getEligibilityDetail = (
+  result: MeasurementPresentationEligibility | null,
+): string | null => {
+  if (!result || result.presentationEligible) return null
+  if (result.classification === 'outside-product-plausibility-range') {
+    return 'Latest reading outside the approved product plausibility range'
+  }
+  if (result.classification === 'outside-provider-measurement-envelope') {
+    return 'Latest reading outside the provider measurement envelope'
+  }
+  if (result.classification === 'invalid-discrete-value') {
+    return 'Latest reading is not a recognized product value'
+  }
+  return 'Latest reading is not eligible for ordinary presentation'
+}
 
 const SPARKLINE_WIDTH = 64
 const SPARKLINE_HEIGHT = 24
@@ -297,6 +318,18 @@ const MeasurementDetails = ({
             <dd>{formatBoundedCount(card.evidencePolicy.invalidCount)}</dd>
             <dt>Consecutive omissions</dt>
             <dd>{formatBoundedCount(card.evidencePolicy.omissionCount)}</dd>
+            {card.latestEligibility ? <>
+              <dt>Presentation eligibility</dt>
+              <dd>{card.latestEligibility.classification}</dd>
+              <dt>Eligibility authority</dt>
+              <dd>{card.latestEligibility.authority}</dd>
+              <dt>Eligibility diagnostic</dt>
+              <dd>{card.latestEligibility.diagnosticCode}</dd>
+              {card.latestEligibility.concerns.length > 0 ? <>
+                <dt>Measurement concern</dt>
+                <dd>{card.latestEligibility.concerns.join(', ')}</dd>
+              </> : null}
+            </> : null}
           </>
         ) : null}
 
@@ -343,6 +376,8 @@ const MeasurementDetails = ({
             <dd>{formatTimestamp(row.measured_at)}</dd>
             <dt>Latest row stored at</dt>
             <dd>{formatTimestamp(row.batch_created_at)}</dd>
+            <dt>Latest row value</dt>
+            <dd>{formatMeasurementValue(row)}</dd>
             <dt>Sensor key</dt>
             <dd>{formatNullableText(row.sensor_key)}</dd>
             <dt>Sensor type</dt>
@@ -430,17 +465,23 @@ const buildCatalogCardModel = ({
 
   const commissionedEvidence = resolveCommissionedCardEvidence(descriptor, rows)
   const latestRow = commissionedEvidence.latestMatchingRow
+  const latestEligibility = latestRow
+    ? evaluateMeasurementPresentationEligibility(descriptor, latestRow)
+    : null
   const latestPackageIsCurrent = commissionedEvidence.latestMatchingIsCurrent
   const shouldDisplayLastGood = Boolean(
-    commissionedEvidence.lastGoodRow &&
+    commissionedEvidence.lastPresentationEligibleRow &&
     (!commissionedEvidence.appearsInLatestPackage ||
-      commissionedEvidence.lastGoodRow !== latestRow),
+      commissionedEvidence.lastPresentationEligibleRow !== latestRow),
   )
-  const recentGoodRow = shouldDisplayLastGood ? commissionedEvidence.lastGoodRow : null
+  const recentGoodRow = shouldDisplayLastGood
+    ? commissionedEvidence.lastPresentationEligibleRow
+    : null
   const requiresReview = Boolean(
     latestRow &&
       (latestRow.valid === false ||
-        !APPROVED_QUALITY_VALUES.has(normalizeHostedGen2ComparisonText(latestRow.quality))),
+        !APPROVED_QUALITY_VALUES.has(normalizeHostedGen2ComparisonText(latestRow.quality)) ||
+        latestEligibility?.presentationEligible === false),
   )
   const evidencePolicy = supportEvidencePolicy && descriptor.isCommissioned
     ? evaluateCommissionedEvidencePolicy({
@@ -448,10 +489,13 @@ const buildCatalogCardModel = ({
         rows,
         latestMatchingRow: latestRow,
         lastGoodRow: commissionedEvidence.lastGoodRow,
+        lastPresentationEligibleRow: commissionedEvidence.lastPresentationEligibleRow,
+        latestPresentationEligible: latestEligibility?.presentationEligible ?? true,
+        latestPresentationDetail: getEligibilityDetail(latestEligibility),
         appearsInLatestPackage: commissionedEvidence.appearsInLatestPackage,
         deviceReportingActive,
         derivedValueAvailable: !MOISTURE_CARD_KEYS.has(descriptor.key) ||
-          Boolean(commissionedEvidence.lastGoodRow),
+          Boolean(commissionedEvidence.lastPresentationEligibleRow),
       })
     : null
 
@@ -463,6 +507,7 @@ const buildCatalogCardModel = ({
             ...emptyCard,
             pillLabel: evidencePolicy.label,
             evidencePolicy,
+            latestEligibility,
           }
         : emptyCard
     }
@@ -474,6 +519,7 @@ const buildCatalogCardModel = ({
       recentGoodRow,
       latestPackageIsCurrent,
       evidencePolicy,
+      latestEligibility,
     })
   }
 
@@ -491,7 +537,9 @@ const buildCatalogCardModel = ({
     : descriptor.isCommissioned && !latestRow
       ? 'No Readings Yet'
       : evaluatedState
-  const displayRow = getDisplayRowForState(state, latestRow, recentGoodRow)
+  const displayRow = latestEligibility && !latestEligibility.presentationEligible && !recentGoodRow
+    ? null
+    : getDisplayRowForState(state, latestRow, recentGoodRow)
 
   return buildSensorCard({
     descriptor,
@@ -502,6 +550,7 @@ const buildCatalogCardModel = ({
     recentGoodRow,
     state,
     evidencePolicy,
+    latestEligibility,
   })
 }
 
@@ -515,6 +564,7 @@ const buildSensorCard = ({
   recentGoodRow,
   state,
   evidencePolicy,
+  latestEligibility,
 }: {
   descriptor: HostedGen2CardCatalogDescriptor
   rows: HostedGen2MeasurementRow[]
@@ -524,6 +574,7 @@ const buildSensorCard = ({
   recentGoodRow: HostedGen2MeasurementRow | null
   state: HostedGen2SensorPresentationState
   evidencePolicy: CommissionedEvidencePolicy | null
+  latestEligibility: MeasurementPresentationEligibility | null
 }): HostedGen2CatalogCardModel => {
   const isMoisture = MOISTURE_CARD_KEYS.has(descriptor.key)
   const rawAdc = isMoisture && isFiniteRowValue(displayRow) ? displayRow.measurement_value : null
@@ -565,6 +616,7 @@ const buildSensorCard = ({
     transportState: null,
     evidencePolicy,
     conditionLabel: interpretation?.label ?? standardCondition?.label ?? null,
+    latestEligibility,
   }
 }
 
@@ -575,6 +627,7 @@ const buildReservoirCard = ({
   recentGoodRow,
   latestPackageIsCurrent,
   evidencePolicy,
+  latestEligibility,
 }: {
   descriptor: HostedGen2CardCatalogDescriptor
   latestPackage: LatestPackage | null
@@ -582,6 +635,7 @@ const buildReservoirCard = ({
   recentGoodRow: HostedGen2MeasurementRow | null
   latestPackageIsCurrent: boolean
   evidencePolicy: CommissionedEvidencePolicy | null
+  latestEligibility: MeasurementPresentationEligibility | null
 }): HostedGen2CatalogCardModel => {
   const evidenceRow = recentGoodRow ?? latestRow
   const sharedReservoirState = getHostedGen2ReservoirPresentationState(evidenceRow, {
@@ -625,6 +679,7 @@ const buildReservoirCard = ({
     transportState: null,
     evidencePolicy,
     conditionLabel: evidencePolicy?.conditionIsCurrent ? reservoirState : null,
+    latestEligibility,
   }
 }
 
@@ -650,6 +705,7 @@ const buildTransportCard = (
   transportState,
   evidencePolicy: null,
   conditionLabel: null,
+  latestEligibility: null,
 })
 
 const buildUnavailableCard = (
@@ -682,6 +738,7 @@ const buildStateOnlyCard = (
   transportState: null,
   evidencePolicy: null,
   conditionLabel: null,
+  latestEligibility: null,
 })
 
 const getLatestPackage = (rows: readonly HostedGen2MeasurementRow[]): LatestPackage | null => {
@@ -722,7 +779,9 @@ const prepareTrendEvidence = (
   }
 
   const identity = getHostedGen2CompoundIdentity(displayRow)
-  const identityRows = rows.filter((row) => getHostedGen2CompoundIdentity(row) === identity)
+  const identityRows = rows
+    .filter((row) => getHostedGen2CompoundIdentity(row) === identity)
+    .filter((row) => evaluateMeasurementPresentationEligibility(descriptor, row).presentationEligible)
 
   if (!MOISTURE_CARD_KEYS.has(descriptor.key)) {
     return { rows: identityRows, currentRow: displayRow }
