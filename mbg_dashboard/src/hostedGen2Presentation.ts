@@ -45,20 +45,6 @@ export type HostedGen2ReservoirPresentationState =
   | 'Water Status Not Current'
   | 'Water Detected'
 
-export type HostedGen2MoistureInterpretationLevel = 'check' | 'watch' | 'good'
-
-export type HostedGen2MoistureInterpretation = {
-  level: HostedGen2MoistureInterpretationLevel
-  label:
-    | 'Check Sensor'
-    | 'Too Dry'
-    | 'Dry'
-    | 'Moist'
-    | 'Well-watered'
-    | 'Very Wet'
-    | 'Saturated'
-}
-
 export type HostedGen2ChartSeriesDescriptor = {
   cardKey: HostedGen2CardKey
   group: HostedGen2ChartGroupKey
@@ -225,18 +211,6 @@ export const findHostedGen2CardRow = (
 export const calculateGardenerMoistureIndex = (rawAdc: number): number =>
   (WET_DRAINED_INDEX * (PRACTICAL_DRY_RAW - rawAdc)) /
   (PRACTICAL_DRY_RAW - WET_DRAINED_RAW)
-
-export const getGardenerMoistureInterpretation = (
-  value: number,
-): HostedGen2MoistureInterpretation => {
-  if (value < 0) return { level: 'check', label: 'Check Sensor' }
-  if (value <= 20) return { level: 'check', label: 'Too Dry' }
-  if (value <= 40) return { level: 'watch', label: 'Dry' }
-  if (value <= 70) return { level: 'good', label: 'Moist' }
-  if (value <= 90) return { level: 'good', label: 'Well-watered' }
-  if (value <= 105) return { level: 'watch', label: 'Very Wet' }
-  return { level: 'check', label: 'Saturated' }
-}
 
 // Sensor and reservoir state evaluation.
 export const getHostedGen2SensorPresentationState = (

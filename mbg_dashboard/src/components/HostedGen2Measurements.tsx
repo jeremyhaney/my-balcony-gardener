@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import {
   describeLastGoodEvidenceSource,
   resolveCommissionedCardEvidence,
@@ -6,7 +7,14 @@ import {
   evaluateCommissionedEvidencePolicy,
   type CommissionedEvidencePolicy,
 } from '../commissionedEvidencePolicy'
-import { getHostedGen2MeasurementStatus } from '../hostedGen2Display'
+import {
+  getHostedGen2EnvironmentalPresentation,
+  getHostedGen2EnvironmentalScale,
+  getHostedGen2CardPillLabel,
+  getRelativeMoisturePresentation,
+  getReservoirPresentation,
+  type HostedGen2EnvironmentalTone,
+} from '../hostedGen2EnvironmentalPresentation'
 import {
   evaluateMeasurementPresentationEligibility,
   type MeasurementPresentationEligibility,
@@ -18,7 +26,6 @@ import {
   WET_DRAINED_INDEX,
   WET_DRAINED_RAW,
   calculateGardenerMoistureIndex,
-  getGardenerMoistureInterpretation,
   getHostedGen2CompoundIdentity,
   getHostedGen2ReservoirPresentationState,
   getHostedGen2SensorPresentationState,
@@ -47,7 +54,7 @@ type HostedGen2MeasurementsProps = {
   showSupportEngineering?: boolean
 }
 
-type CardTone = 'good' | 'watch' | 'check' | 'neutral'
+type CardTone = HostedGen2EnvironmentalTone
 type TransportState = 'loading' | 'error' | null
 
 type LatestPackage = {
@@ -213,20 +220,31 @@ const MeasurementCard = ({
     card.trendRow && card.trendRows.length > 0
       ? getHostedGen2TrendSummary(card.trendRow, card.trendRows)
       : null
+  const evidenceIsCurrent = card.evidencePolicy
+    ? card.evidencePolicy.reason === 'current'
+    : card.state === 'Current' ||
+      card.reservoirState === 'Water Detected' ||
+      card.reservoirState === 'Refill Reservoir'
+  const visiblePillLabel = getHostedGen2CardPillLabel({
+    conditionLabel: card.conditionLabel,
+    evidenceLabel: card.pillLabel,
+    evidenceIsCurrent,
+  })
 
   return (
     <article className={`hosted-gen2-measurements-card is-${card.tone}`}>
       <div className="hosted-gen2-measurements-card-main">
         <h3>{card.descriptor.label}</h3>
-        <span className={[
-          'hosted-gen2-measurements-status-pill',
-          card.evidencePolicy ? `is-evidence-${card.evidencePolicy.severity}` : '',
-        ].filter(Boolean).join(' ')}>{card.pillLabel}</span>
+        {visiblePillLabel ? (
+          <span className={[
+            'hosted-gen2-measurements-status-pill',
+            card.evidencePolicy && !evidenceIsCurrent
+              ? `is-evidence-${card.evidencePolicy.severity}`
+              : '',
+          ].filter(Boolean).join(' ')}>{visiblePillLabel}</span>
+        ) : null}
       </div>
       <p className="hosted-gen2-measurements-value">{card.primaryValue}</p>
-      {card.conditionLabel ? (
-        <p className="hosted-gen2-measurements-condition">Condition: {card.conditionLabel}</p>
-      ) : null}
       {card.evidencePolicy?.detail ? (
         <p className="hosted-gen2-measurements-evidence-reason">{card.evidencePolicy.detail}</p>
       ) : null}
@@ -265,9 +283,41 @@ const MeasurementCard = ({
       ) : null}
 
       {card.transportState !== 'loading' ? (
-        <MeasurementDetails card={card} showSupportEngineering={showSupportEngineering} />
+        <div className="hosted-gen2-measurements-card-footer">
+          <MeasurementDetails card={card} showSupportEngineering={showSupportEngineering} />
+          <ConditionScalePill card={card} />
+        </div>
       ) : null}
     </article>
+  )
+}
+
+const ConditionScalePill = ({ card }: { card: HostedGen2CatalogCardModel }) => {
+  const scaleMeasurementName = card.moistureIndex !== null
+    ? 'moisture_index'
+    : card.descriptor.canonicalMeasurementName
+  const scaleValue = card.moistureIndex ?? card.displayRow?.measurement_value ?? null
+  const scale = getHostedGen2EnvironmentalScale(scaleMeasurementName, scaleValue)
+  const currentDescription = card.conditionLabel
+    ? `Current condition: ${card.conditionLabel}`
+    : 'Current condition unavailable'
+  const accessibleLabel = `${scale.label}. ${currentDescription}.`
+  const style = scale.positionPercent === null
+    ? undefined
+    : { '--condition-scale-position': `${scale.positionPercent}%` } as CSSProperties
+
+  return (
+    <span
+      aria-label={accessibleLabel}
+      className={`hosted-gen2-measurements-scale-pill is-${scale.key}`}
+      role="img"
+      style={style}
+      title={accessibleLabel}
+    >
+      {scale.positionPercent === null ? null : (
+        <span aria-hidden="true" className="hosted-gen2-measurements-scale-marker" />
+      )}
+    </span>
   )
 }
 
@@ -579,17 +629,16 @@ const buildSensorCard = ({
   const isMoisture = MOISTURE_CARD_KEYS.has(descriptor.key)
   const rawAdc = isMoisture && isFiniteRowValue(displayRow) ? displayRow.measurement_value : null
   const moistureIndex = rawAdc === null ? null : calculateGardenerMoistureIndex(rawAdc)
-  const interpretation =
+  const condition =
     (evidencePolicy?.conditionIsCurrent ?? state === 'Current') && moistureIndex !== null
-      ? getGardenerMoistureInterpretation(moistureIndex)
+      ? getRelativeMoisturePresentation(moistureIndex)
       : null
   const standardCondition = !isMoisture &&
     (evidencePolicy?.conditionIsCurrent ?? state === 'Current') && isFiniteRowValue(displayRow)
-      ? getHostedGen2MeasurementStatus({
-          measurementName: displayRow.measurement_name,
-          measurementValue: displayRow.measurement_value,
-          valid: displayRow.valid,
-        })
+      ? getHostedGen2EnvironmentalPresentation(
+          displayRow.measurement_name,
+          displayRow.measurement_value,
+        )
       : null
   const trend = prepareTrendEvidence(descriptor, rows, displayRow, state)
 
@@ -606,16 +655,14 @@ const buildSensorCard = ({
       moistureIndex === null
         ? formatMeasurementValue(displayRow)
         : `${Math.round(moistureIndex).toLocaleString()} index`,
-    tone: evidencePolicy && !evidencePolicy.conditionIsCurrent
-      ? 'neutral'
-      : interpretation?.level ?? standardCondition?.level ?? getSensorStateTone(state),
+    tone: condition?.tone ?? standardCondition?.tone ?? 'neutral',
     trendRows: trend.rows,
     trendRow: trend.currentRow,
     rawAdc,
     moistureIndex,
     transportState: null,
     evidencePolicy,
-    conditionLabel: interpretation?.label ?? standardCondition?.label ?? null,
+    conditionLabel: condition?.label ?? standardCondition?.label ?? null,
     latestEligibility,
   }
 }
@@ -658,6 +705,11 @@ const buildReservoirCard = ({
     reservoirState === 'Water Status Not Current'
       ? evidenceRow
       : null
+  const reservoirConditionIsCurrent = evidencePolicy?.conditionIsCurrent ??
+    (reservoirState === 'Water Detected' || reservoirState === 'Refill Reservoir')
+  const condition = reservoirConditionIsCurrent && isFiniteRowValue(displayRow)
+    ? getReservoirPresentation(displayRow.measurement_value)
+    : null
 
   return {
     descriptor,
@@ -669,16 +721,14 @@ const buildReservoirCard = ({
     reservoirState,
     pillLabel: evidencePolicy?.label ?? (recentGoodRow ? 'Last Good Reading' : reservoirState),
     primaryValue: formatReservoirValue(displayRow),
-    tone: evidencePolicy && !evidencePolicy.conditionIsCurrent
-      ? 'neutral'
-      : getReservoirTone(reservoirState),
+    tone: condition?.tone ?? 'neutral',
     trendRows: [],
     trendRow: null,
     rawAdc: null,
     moistureIndex: null,
     transportState: null,
     evidencePolicy,
-    conditionLabel: evidencePolicy?.conditionIsCurrent ? reservoirState : null,
+    conditionLabel: condition?.label ?? null,
     latestEligibility,
   }
 }
@@ -697,7 +747,7 @@ const buildTransportCard = (
   reservoirState: null,
   pillLabel: transportState === 'loading' ? 'Loading' : 'Reading Unavailable',
   primaryValue: transportState === 'loading' ? 'Loading' : 'Not available',
-  tone: transportState === 'loading' ? 'neutral' : 'check',
+  tone: 'neutral',
   trendRows: [],
   trendRow: null,
   rawAdc: null,
@@ -712,7 +762,7 @@ const buildUnavailableCard = (
   descriptor: HostedGen2CardCatalogDescriptor,
   latestPackage: LatestPackage | null,
 ): HostedGen2CatalogCardModel => ({
-  ...buildStateOnlyCard(descriptor, latestPackage, 'Reading Unavailable', 'check'),
+  ...buildStateOnlyCard(descriptor, latestPackage, 'Reading Unavailable', 'neutral'),
 })
 
 const buildStateOnlyCard = (
@@ -798,19 +848,6 @@ const prepareTrendEvidence = (
   const currentRow = derivedRows.find((row) => row.measured_at === displayRow.measured_at) ?? null
 
   return { rows: derivedRows, currentRow }
-}
-
-const getSensorStateTone = (state: HostedGen2SensorPresentationState): CardTone => {
-  if (state === 'Current') return 'good'
-  if (state === 'Last Good Reading' || state === 'Not Current') return 'watch'
-  if (state === 'No Readings Yet' || state === 'Not Installed') return 'neutral'
-  return 'check'
-}
-
-const getReservoirTone = (state: HostedGen2ReservoirPresentationState): CardTone => {
-  if (state === 'Water Detected') return 'good'
-  if (state === 'Water Status Not Current') return 'watch'
-  return 'check'
 }
 
 const formatReservoirValue = (row: HostedGen2MeasurementRow | null): string => {

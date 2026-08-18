@@ -57,6 +57,23 @@ test('uses approved 50-minute freshness and 95-minute actionable boundaries', ()
   assert.equal(evaluate([evidence], Date.parse(evidence.measured_at) + COMMISSIONED_ACTIONABLE_AGE_MS + 1, false).label, 'Not Current')
 })
 
+test('retains environmental condition currency through the inclusive 50-minute boundary', () => {
+  const evidence = row()
+  const measuredAtMs = Date.parse(evidence.measured_at)
+
+  for (const ageMinutes of [15, 30, 45, 50]) {
+    assert.equal(
+      evaluate([evidence], measuredAtMs + ageMinutes * 60 * 1000).conditionIsCurrent,
+      true,
+    )
+  }
+
+  assert.equal(
+    evaluate([evidence], measuredAtMs + COMMISSIONED_FRESHNESS_LIMIT_MS + 1).conditionIsCurrent,
+    false,
+  )
+})
+
 test('one invalid is informational, two are caution, and usable evidence resets the run', () => {
   const good = row({ measured_at: '2026-08-16T11:30:00Z' })
   const invalid1 = row({ measured_at: '2026-08-16T11:45:00Z', valid: false, quality: 'failed', measurement_value: null })

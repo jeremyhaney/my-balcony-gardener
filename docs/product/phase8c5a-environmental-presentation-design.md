@@ -47,11 +47,11 @@ Brackets are inclusive and parentheses are exclusive.
 
 | Measurement | Approved condition | Exact eligible interval | Card-color meaning |
 | --- | --- | --- | --- |
-| Ambient light | Night / Very Low Light | `[0, 100)` lux | Deep slate/blue |
-| Ambient light | Shade | `[100, 2,500)` lux | Muted blue |
-| Ambient light | Filtered Light | `[2,500, 10,000)` lux | Muted gold |
-| Ambient light | Bright Light | `[10,000, 25,000)` lux | Gold |
-| Ambient light | Direct Sun | `[25,000, 65,535]` lux | Bright gold |
+| Ambient light | Night / Very Low Light | `[0, 100)` lux | Muted blue-gray |
+| Ambient light | Shade | `[100, 2,500)` lux | Soft cool gray |
+| Ambient light | Filtered Light | `[2,500, 10,000)` lux | Pale neutral daylight |
+| Ambient light | Bright Light | `[10,000, 25,000)` lux | Soft warm yellow |
+| Ambient light | Direct Sun | `[25,000, 65,535]` lux | Brighter sunlit yellow |
 | Air temperature | Very Cold | `[0, 40)` °F | Blue |
 | Air temperature | Cool | `[40, 55)` °F | Cyan |
 | Air temperature | Mild | `[55, 85)` °F | Green |
@@ -68,17 +68,21 @@ Brackets are inclusive and parentheses are exclusive.
 | Soil temperature | Active Root Zone | `[55, 85)` °F | Green |
 | Soil temperature | Warm Root Zone | `[85, 95)` °F | Orange |
 | Soil temperature | Hot Root Zone | `[95, 130]` °F | Red |
-| Relative Moisture Index | Check Sensor | `(-∞, 0)` index | Red |
-| Relative Moisture Index | Too Dry | `[0, 20]` index | Red |
-| Relative Moisture Index | Dry | `(20, 40]` index | Orange |
-| Relative Moisture Index | Moist | `(40, 70]` index | Green |
-| Relative Moisture Index | Well-watered | `(70, 90]` index | Deeper green |
-| Relative Moisture Index | Very Wet | `(90, 105]` index | Blue/purple |
-| Relative Moisture Index | Saturated | `(105, +∞)` index | Red |
+| Relative Moisture Index | Check Sensor | `(-∞, 0)` index | Neutral sensor-review tone outside the environmental scale |
+| Relative Moisture Index | Too Dry | `[0, 20]` index | Muted dry tan |
+| Relative Moisture Index | Dry | `(20, 40]` index | Tan/olive transition |
+| Relative Moisture Index | Moist | `(40, 70]` index | Soft sage |
+| Relative Moisture Index | Well-watered | `(70, 90]` index | Muted teal |
+| Relative Moisture Index | Very Wet | `(90, 105]` index | Blue-teal |
+| Relative Moisture Index | Saturated | `(105, +∞)` index | Deep wet blue |
 | Reservoir | Refill Reservoir | exact value `0` | Red actionable product state |
 | Reservoir | Water Detected | exact value `1` | Green/blue available-water state |
 
 The RMI intervals preserve the accepted existing unclamped first-draft scale. They are installation interpretation, not a generic raw-ADC rule or watering authority.
+
+Full-card color is supported by a compact scale pill in every card footer, aligned opposite Sensor Details and sized comparably to the upper-right status pill. The footer pill shows the complete measurement-specific color ramp and a marker for the displayed value. It has an accessible name that states the scale and current condition. When a value is unavailable, the scale remains visible without a false marker.
+
+The upper-right pill follows an assume-current-unless-not rule. For an ordinary current eligible reading, it shows the environmental condition instead of the redundant word `Current`; the separate `Condition:` line is omitted. When evidence is not current or uses a fallback/fault path, the pill shows the evidence state such as `Last Good`, `Last Reliable`, `Not Current`, or `Reading Unavailable` rather than the historical condition. A current card without an approved environmental interpretation shows no redundant `Current` pill. The page-level Latest reading timestamp remains the ordinary currency cue.
 
 Absolute pressure does not receive Low/Normal/High gardener judgment because station elevation and local baseline materially affect meaning. Rising, Falling, or Stable trend evidence remains separate and does not change card color.
 
@@ -126,6 +130,7 @@ Reservoir color represents a discrete product state, not plant comfort or sensor
 - Phase 8C.5B must meet WCAG AA contrast for normal text and meaningful UI components.
 - Existing visible keyboard focus for Sensor Details remains.
 - Pills and condition names must wrap without clipping or covering values, trends, or details.
+- Footer scale pills must remain aligned with Sensor Details, expose their scale/current-condition meaning to assistive technology, and never overflow the card.
 - The current mobile single-column details layout remains usable.
 - Decorative sparklines remain hidden from assistive technology while direction remains textual.
 - Review covers mobile (`≤640 px`), tablet (`641–980 px`), and desktop (`≥981 px`) without beginning major modernization.
@@ -149,6 +154,8 @@ Phase 8C.5B must directly test:
 13. Rejected rows cannot enter condition, RMI, or trend paths, and trend direction never changes card color.
 14. Dashboard/query error, loading, unavailable, invalid, omitted-without-fallback, stale, and no-window states cannot receive environmental coloring.
 15. Meaning remains available as text without color, and mobile wrapping, details layout, keyboard focus, and WCAG AA contrast pass review.
+16. Every supported card family renders its complete scale pill, uses a bounded current-position marker when a display value exists, omits the marker when unavailable, and does not overflow at supported breakpoints.
+17. Current eligible cards show concise condition wording in the upper-right pill with no separate `Condition:` line; non-current and exception cards show evidence-state wording instead, and no card displays a redundant healthy `Current` pill.
 
 ## Bounded Phase 8C.5B implementation plan
 
@@ -188,5 +195,9 @@ Any later proposal requiring a query or stored presentation state is outside Pha
 Jeremy approved the matrix, terminology, pressure treatment, measurement-specific palettes, WCAG AA minimum, Support/customer separation, SEN0562 ceiling behavior, reservoir treatment, and bounded implementation plan on 2026-08-18.
 
 Jeremy amended the proposed neutral behavior: Last Good and Last Reliable values retain their environmental condition and card color while current under the existing inclusive 50-minute evidence policy. Older evidence becomes neutral. This reuses Phase 8C.3 exactly and introduces no new escalation.
+
+During Phase 8C.5B visual review, Jeremy refined light to a quieter gray-to-daylight-to-sun scale and moisture to a continuous dry-tan-through-sage/teal-to-wet-blue scale. Red is not used at both ends of moisture and the moisture ramp is not a pass/fail judgment. Jeremy also approved a compact full-scale footer pill with a current-value marker for every card.
+
+Jeremy further approved an assume-current-unless-not presentation: ordinary current cards put concise condition wording in the upper-right pill and remove the separate condition line, while non-current or exception cards reserve that pill for evidence state.
 
 Phase 8C.5A is documentation-only and approved for closeout. Phase 8C.5B remains planned and requires separate implementation approval. After 8C.5B closes, the priority decision remains unnumbered among watering-event visibility/threshold presentation, Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization.

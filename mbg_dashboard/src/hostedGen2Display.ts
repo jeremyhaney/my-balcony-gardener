@@ -16,20 +16,6 @@ export type HostedGen2MeasurementDisplay = {
   diagnostic: boolean
 }
 
-export type HostedGen2MeasurementStatusLevel = 'good' | 'watch' | 'check' | 'neutral'
-
-export type HostedGen2MeasurementStatus = {
-  level: HostedGen2MeasurementStatusLevel
-  label: string
-  reason?: string
-}
-
-type HostedGen2MeasurementStatusInput = {
-  measurementName: string | null | undefined
-  measurementValue: number | null | undefined
-  valid: boolean | null | undefined
-}
-
 const UNKNOWN_MEASUREMENT_COLOR = '#64748b'
 
 const MEASUREMENT_DISPLAY: Record<string, HostedGen2MeasurementDisplay> = {
@@ -200,104 +186,6 @@ export const getDefaultHostedGen2MeasurementNames = (
   )
 
   return defaultNames.length > 0 ? defaultNames : measurementNames.slice(0, 1)
-}
-
-export const getHostedGen2MeasurementStatus = ({
-  measurementName,
-  measurementValue,
-  valid,
-}: HostedGen2MeasurementStatusInput): HostedGen2MeasurementStatus => {
-  if (valid === false) {
-    return { level: 'check', label: 'Check', reason: 'Invalid reading' }
-  }
-
-  if (measurementValue === null || measurementValue === undefined || !Number.isFinite(measurementValue)) {
-    return { level: 'check', label: 'Check', reason: 'Reading unavailable' }
-  }
-
-  switch (measurementName?.trim()) {
-    case 'air_temperature':
-    case 'temperature':
-    case 'soil temp':
-      return getRangeStatus(measurementValue, {
-        good: [55, 90],
-        lowWatch: [45, 55],
-        highWatch: [90, 98],
-      })
-
-    case 'moisture_index':
-      return getRangeStatus(measurementValue, {
-        good: [45, 85],
-        lowWatch: [30, 45],
-        highWatch: [85, 95],
-      })
-
-    case 'relative_humidity':
-      return getRangeStatus(measurementValue, {
-        good: [35, 75],
-        lowWatch: [25, 35],
-        highWatch: [75, 85],
-      })
-
-    case 'barometric_pressure':
-      if (measurementValue >= 1000 && measurementValue <= 1025) {
-        return { level: 'good', label: 'Normal Pressure' }
-      }
-
-      if (measurementValue >= 980 && measurementValue < 1000) {
-        return { level: 'watch', label: 'Low Pressure' }
-      }
-
-      if (measurementValue > 1025 && measurementValue <= 1045) {
-        return { level: 'watch', label: 'High Pressure' }
-      }
-
-      return { level: 'check', label: 'Check' }
-
-    case 'ambient_light':
-      if (measurementValue < 100) {
-        return { level: 'neutral', label: 'Dark' }
-      }
-
-      if (measurementValue < 2500) {
-        return { level: 'neutral', label: 'Shade' }
-      }
-
-      if (measurementValue < 10000) {
-        return { level: 'good', label: 'Part Shade' }
-      }
-
-      if (measurementValue < 25000) {
-        return { level: 'good', label: 'Part Sun' }
-      }
-
-      return { level: 'good', label: 'Full Sun' }
-
-    default:
-      return { level: 'neutral', label: 'Coming soon' }
-  }
-}
-
-const getRangeStatus = (
-  value: number,
-  ranges: {
-    good: [number, number]
-    lowWatch: [number, number]
-    highWatch: [number, number]
-  },
-): HostedGen2MeasurementStatus => {
-  if (value >= ranges.good[0] && value <= ranges.good[1]) {
-    return { level: 'good', label: 'Good' }
-  }
-
-  if (
-    (value >= ranges.lowWatch[0] && value < ranges.lowWatch[1]) ||
-    (value > ranges.highWatch[0] && value <= ranges.highWatch[1])
-  ) {
-    return { level: 'watch', label: 'Watch' }
-  }
-
-  return { level: 'check', label: 'Check' }
 }
 
 const toTitleCase = (value: string): string =>
