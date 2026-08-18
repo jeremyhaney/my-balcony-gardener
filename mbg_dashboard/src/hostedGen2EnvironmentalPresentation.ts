@@ -39,6 +39,14 @@ export type HostedGen2EnvironmentalScale = {
   positionPercent: number | null
 }
 
+export const formatHostedGen2CardMeasurementValue = (
+  value: number,
+  unit: string | null | undefined,
+): string => `${value.toLocaleString(undefined, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+})} ${unit ?? ''}`.trim()
+
 export const getHostedGen2CardPillLabel = ({
   conditionLabel,
   evidenceLabel,

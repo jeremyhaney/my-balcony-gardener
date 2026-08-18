@@ -154,7 +154,7 @@ const AXIS_CONFIGS: Record<HostedGen2AxisId, HostedGen2AxisConfig> = {
   },
   '%': {
     id: '%', order: 2, fullLabel: 'Humidity (%)', compactLabel: 'Humidity',
-    color: '#2563eb', domain: [0, 100],
+    color: SERIES_COLORS.humidity, domain: [0, 100],
   },
   index: {
     id: 'index', order: 3, fullLabel: 'Moisture Index', compactLabel: 'Moisture',

@@ -45,6 +45,8 @@ Jeremy's visual review refined the initial palettes:
 
 Every supported card includes a compact footer scale pill aligned opposite Sensor Details. It shows the complete measurement scale and a current-value marker. The marker is omitted when no display value exists. Its accessible label states the scale and current condition.
 
+Immediate post-implementation review also standardized prominent ordinary measurement values to exactly one decimal place while retaining whole-number RMI and fuller source precision in Support diagnostics. The humidity chart axis now uses the same dark-teal color as the humidity series, avoiding confusion with Basket 3 moisture. Condition pills are box-bounded, centered, and allowed to wrap inside the card so `Warm Root Zone` remains contained at vertical-monitor and tablet-like widths.
+
 Light-marker position follows the five approved condition bands directly rather than a logarithmic lux position. Each band receives one fifth of the pill, so card color, condition wording, and marker agree. For example, `3,335 lux` falls near the start of the `Filtered Light` segment rather than near the bright-yellow end.
 
 ## Evidence precedence
@@ -70,19 +72,19 @@ Phase 8C.4 remains unchanged:
 - Current condition and exception pills wrap without horizontal overflow.
 - Footer scale pills use accessible names and bounded markers.
 - Sensor Details retains visible keyboard focus.
-- Desktop and `360 px` mobile review showed no card, header, footer, or scale overflow.
+- Desktop, `920 px` vertical/tablet-like, and `360 px` mobile review showed no card, header, footer, pill, or scale overflow.
 - Browser review produced no warnings or errors.
 
 ## Deterministic validation
 
 Validation passed:
 
-- `36/36` deterministic tests;
+- `37/37` deterministic tests;
 - ESLint;
 - TypeScript/Vite production build;
 - `git diff --check`;
 - authenticated-data Demo rendering in hosted-readonly local mode;
-- desktop and `360 px` responsive inspection; and
+- desktop, `920 px` vertical/tablet-like, and `360 px` responsive inspection; and
 - Jeremy's iterative visual review and final information-at-a-glance approval.
 
 The existing Vite large-chunk advisory remains non-blocking and unchanged in kind.

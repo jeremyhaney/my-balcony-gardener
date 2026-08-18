@@ -302,9 +302,16 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.45rem;
+  min-width: 0;
+}
+
+.hosted-gen2-measurements-card-main h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .hosted-gen2-measurements-status-pill {
+  box-sizing: border-box;
   flex: 0 0 auto;
   max-width: 58%;
   padding: 0.22rem 0.55rem;
@@ -316,6 +323,7 @@
   font-weight: 900;
   line-height: 1.2;
   overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .hosted-gen2-measurements-status-pill.is-evidence-neutral {

@@ -8,6 +8,7 @@ import {
   type CommissionedEvidencePolicy,
 } from '../commissionedEvidencePolicy'
 import {
+  formatHostedGen2CardMeasurementValue,
   getHostedGen2EnvironmentalPresentation,
   getHostedGen2EnvironmentalScale,
   getHostedGen2CardPillLabel,
@@ -653,7 +654,7 @@ const buildSensorCard = ({
     pillLabel: evidencePolicy?.label ?? state,
     primaryValue:
       moistureIndex === null
-        ? formatMeasurementValue(displayRow)
+        ? formatCardMeasurementValue(displayRow)
         : `${Math.round(moistureIndex).toLocaleString()} index`,
     tone: condition?.tone ?? standardCondition?.tone ?? 'neutral',
     trendRows: trend.rows,
@@ -865,6 +866,11 @@ const isRecognizedReservoirValue = (
 const formatMeasurementValue = (row: HostedGen2MeasurementRow | null): string => {
   if (!isFiniteRowValue(row)) return 'Not available'
   return `${row.measurement_value.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${row.measurement_unit ?? ''}`.trim()
+}
+
+const formatCardMeasurementValue = (row: HostedGen2MeasurementRow | null): string => {
+  if (!isFiniteRowValue(row)) return 'Not available'
+  return formatHostedGen2CardMeasurementValue(row.measurement_value, row.measurement_unit)
 }
 
 const isFiniteRowValue = (

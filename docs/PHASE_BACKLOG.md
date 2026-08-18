@@ -173,7 +173,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 
 - Applied the approved measurement-specific descriptions, colors, full-scale footer pills, current-position markers, and assume-current-unless-not upper-right pills.
 - Preserved Phase 8C.3 evidence escalation and Phase 8C.4 presentation eligibility without query, SQL, firmware, device, or watering changes.
-- Validation passed 36/36 tests, lint, build, `git diff --check`, desktop/mobile inspection, and Jeremy's final local appearance/behavior review.
+- Validation passed 37/37 tests, lint, build, `git diff --check`, desktop/mobile inspection, and Jeremy's local appearance/behavior review. Immediate review refinements standardize ordinary card values to one decimal, align the humidity axis with its dark-teal series, and contain wrapping condition pills at vertical/tablet-like widths.
 - Authority: [`docs/product/phase8c5b-environmental-presentation-implementation.md`](./product/phase8c5b-environmental-presentation-implementation.md). Separate authenticated production validation after push is not claimed.
 
 #### Post-8C.5 Priority Decision — UNNUMBERED

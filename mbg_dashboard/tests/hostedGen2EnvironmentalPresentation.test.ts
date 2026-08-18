@@ -1,12 +1,19 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  formatHostedGen2CardMeasurementValue,
   getHostedGen2EnvironmentalPresentation,
   getHostedGen2CardPillLabel,
   getHostedGen2EnvironmentalScale,
   getRelativeMoisturePresentation,
   getReservoirPresentation,
 } from '../src/hostedGen2EnvironmentalPresentation.ts'
+
+test('ordinary card measurements use exactly one decimal place', () => {
+  assert.match(formatHostedGen2CardMeasurementValue(4726.67, 'lux'), /4,?726\.7 lux$/)
+  assert.match(formatHostedGen2CardMeasurementValue(44, '%'), /44\.0 %$/)
+  assert.match(formatHostedGen2CardMeasurementValue(1014.35, 'hPa'), /1,?014\.4 hPa$/)
+})
 
 const condition = (name: string, value: number) =>
   getHostedGen2EnvironmentalPresentation(name, value)
