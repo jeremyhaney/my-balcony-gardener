@@ -218,7 +218,7 @@ Current SEN0308 records use sensor_type `sen0308`.
 
 The old `sen0308_ads1115` rows should age out of short hosted windows naturally. No fake cleanup, SQL deletion, or hosted filtering was performed in Phase 7N.2B.
 
-The hosted dashboard behavior observed during this historical proof came from an obsolete generic raw-ADC display rule associated with a failed prior moisture path. That rule has no Gen2 compatibility requirement and is not product authority for ADS1115-backed SEN0308 measurements. Phase 8C.5A supersedes it with a provider-specific boundary and requires obsolete trust handling to be removed rather than adapted.
+The hosted dashboard behavior observed during this historical proof came from an obsolete generic raw-ADC display rule associated with a failed prior moisture path. That rule has no Gen2 compatibility requirement and is not product authority for ADS1115-backed SEN0308 measurements. Phase 8C.4 supersedes it with a provider-specific boundary and requires obsolete trust handling to be removed rather than adapted.
 
 ## Boundaries Preserved
 

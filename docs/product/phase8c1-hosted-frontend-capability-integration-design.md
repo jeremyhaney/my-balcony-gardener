@@ -140,7 +140,7 @@ Architecture covers capability clients, shared types, normalization, exact mappi
 
 - **Phase 8C.1 design closeout (current):** documentation only; no runtime changes.
 - **Phase 8C.2 Support Vertical Slice (complete):** Support client, shared types, session cache, effective filtering, explicit Balcony02 mappings, declaration-driven cards, evidence attachment, existing history integration, failure states, tests, and production validation passed.
-- **Phase 8D schedule work (reserved and unchanged):** Local Schedule UI and Schedule Persistence remains the existing roadmap Phase 8D and is outside this capability-integration design.
+- **Optional automation work:** Local Schedule Foundation and Sensor-Assisted Scheduled Watering remain outside this capability-integration design. The current roadmap now defers them to Phase 9A/9B as a distinct secondary product direction; this supersedes the former Phase 8D/8E labels.
 - **Evidence-state and health:** age/consecutive-failure escalation, restrained severity, last-good semantics, and informational versus actionable concern; no alerts without separate approval.
 - **Measurement quality:** implausible-value handling and correct firmware/ingestion/storage/frontend boundary.
 - **Customer adoption:** only after an authorized customer-visible commissioned device exists; do not reassign Balcony02.
@@ -178,7 +178,7 @@ Jeremy completed and approved the manual production smoke test. Directly observe
 
 The following were not deliberately reproduced in production and remain supported by committed tests and implementation inspection: capability-query failure; future-effective and retired filtering; unknown commissioned-measurement fallback; undeclared measurement exclusion; evidence-state fixtures; once-per-device session caching; capability/measurement-refresh separation; hidden-tab polling; and concurrency protection.
 
-Result: **Pass**. The post-push checkpoint is complete, and Phase 8C.2 is operationally closed. Balcony02 remains Support-only and customer-hidden. Prototype01 firmware/provisioning, customer adoption pending an authorized customer-visible commissioned device, evidence-state/health refinement, measurement-quality gates, Gen1 cleanup/adoption, deterministic Demo work, and major visual modernization remain separate future work. Phase 8D remains Local Schedule UI and Schedule Persistence.
+Result: **Pass**. The post-push checkpoint is complete, and Phase 8C.2 is operationally closed. Balcony02 remains Support-only and customer-hidden. Prototype01 firmware/provisioning, customer adoption pending an authorized customer-visible commissioned device, evidence-state/health refinement, measurement-quality gates, Gen1 cleanup/adoption, deterministic Demo work, and major visual modernization remain separate future work. Optional schedule persistence and sensor-assisted watering are now deferred to Phase 9A/9B.
 
 ## Prohibited changes in the Phase 8C.2 Support Vertical Slice
 

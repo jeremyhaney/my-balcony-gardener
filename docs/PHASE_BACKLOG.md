@@ -33,13 +33,29 @@ Phase 8 reframes My Balcony Gardener around a schedule-first customer product, w
 ## Current Roadmap Snapshot
 
 - ADR 0024 is accepted. The narrowed Phase 8C hosted capability contract and separate Balcony02 provisioning were executed and production-validated on 2026-08-14 from the exact committed statement bodies. The positive lifecycle table and protected customer/Support views are active; Balcony02 has nine current declarations and eleven expected measurement names, remains Support-visible/customer-hidden, and has no M04/L04/LUX04 declaration. Measurement-derived Support diagnostics remain deferred pending bounded-query design and production read-only `EXPLAIN`. Customer frontend consumption, runtime-capability evidence storage, and automatic reconciliation remain later slices. Execution evidence: [`docs/product/phase8c-hosted-device-capability-production-execution-evidence.md`](./product/phase8c-hosted-device-capability-production-execution-evidence.md).
-- Phase 8C.1 design and the Phase 8C.2 checkpoint are documented in [`docs/product/phase8c1-hosted-frontend-capability-integration-design.md`](./product/phase8c1-hosted-frontend-capability-integration-design.md). Phase 8C.2 commit `b1eea01c484d6838e66598f6fd5b0eeae3c2d251` deployed through the normal hosted update with no manual deployment and passed 15/15 tests, lint, build, and `git diff --check`; the chunk advisory remained non-blocking. Jeremy's 2026-08-16 smoke test directly confirmed Balcony02's eleven ordered cards, absence of M04/L04/LUX04, working live evidence/refresh/details/history, Prototype01's zero-capability state, and unchanged Demo availability. Failure, lifecycle, cache, polling, evidence-fixture, fallback, and exclusion cases remain test/inspection-supported. Result: **Pass**; Phase 8C.2 is operationally closed. Prototype01 provisioning, customer adoption, evidence/quality refinement, Gen1 cleanup, deterministic Demo work, and visual modernization remain later work. Phase 8D remains Local Schedule UI and Schedule Persistence.
-- Phase 8C.3 Commissioned Measurement Evidence-State and Health Refinement is production-validated and operationally closed. Authenticated production Support validation on 2026-08-17 passed for Balcony02's eleven ordered commissioned cards, current evidence/condition separation, capability-driven 11/11 and 9/9 quality expectations, details, trends, History, Manual Refresh, protected engineering evidence, absent M04/L04/LUX04 and Water Now, normal Demo loading, and clean browser console. Fault states were not forced and remain deterministic-test-supported. See [`docs/product/phase8c3-commissioned-measurement-evidence-state-and-health-refinement.md`](./product/phase8c3-commissioned-measurement-evidence-state-and-health-refinement.md). Phase 8D remains reserved for Local Schedule UI and Schedule Persistence.
-- Phase 8C.4 Deterministic Support Evidence Fault-State Validation is complete in commit `de7e5de8bcc9e1d73bc72333939225210b273843`. It directly covers derived-unavailable RMI behavior and verifies fault labels independently from environmental-condition currency. Validation passed 22/22 tests, lint, build, and `git diff --check`; it added no runtime, query, storage, backend, device, watering, Demo, customer, or visual change.
-- Phase 8C.5A Measurement-Quality Gates Discovery and Boundary Design is documentation-approved. Generic raw-ADC trust handling from the failed prior moisture path is obsolete, has no compatibility requirement, and must be removed rather than propagated into Gen2 product logic. Future bounds require authority specific to Balcony02's ADS1115-backed SEN0308 system. Append-only Gen2 evidence and device-reported metadata remain preserved, while hosted presentation eligibility stays separate from firmware watering/control eligibility. A later deterministic frontend gate must be separately approved, use already-fetched rows, and add no query, polling, SQL, stored flag, backfill, or Disk IO. See [`docs/product/phase8c5a-measurement-quality-gates-discovery-and-boundary-design.md`](./product/phase8c5a-measurement-quality-gates-discovery-and-boundary-design.md).
-- Phase 8C.5B Provider-Specific Measurement Eligibility is complete, committed, and pushed. It implements approved air `0..130 °F` and soil `10..130 °F` product windows, provider-specific humidity/pressure/SEN0308 rules, SEN0562 darkness and ceiling behavior, exact reservoir values, last-presentation-eligible recovery, Support diagnostics, and trend exclusion. The obsolete trust module and prior generic raw-ADC display rule are removed. Validation passed 28/28 tests, lint, build, `git diff --check`, and Jeremy's local appearance/behavior review. No manual deployment or production validation is claimed. See [`docs/product/phase8c5b-provider-specific-measurement-eligibility-contract.md`](./product/phase8c5b-provider-specific-measurement-eligibility-contract.md).
+- Phase 8C.1 capability design and Phase 8C.2 Support implementation are operationally closed. See [`docs/product/phase8c1-hosted-frontend-capability-integration-design.md`](./product/phase8c1-hosted-frontend-capability-integration-design.md).
+- Phase 8C.3A–D Evidence State is production-validated and operationally closed: discovery/decisions, design closeout, implementation, then deterministic and production validation/closeout. See [`docs/product/phase8c3c-evidence-state-implementation.md`](./product/phase8c3c-evidence-state-implementation.md) and [`docs/product/phase8c3d-evidence-state-production-validation-and-closeout.md`](./product/phase8c3d-evidence-state-production-validation-and-closeout.md).
+- Phase 8C.4 Measurement-Quality Gates is complete, committed, and pushed. It implements approved product/provider plausibility, last-presentation-eligible recovery, Support diagnostics, and trend exclusion while preserving original evidence. Validation passed 28/28 tests, lint, build, `git diff --check`, and Jeremy's local appearance/behavior review. See the [design](./product/phase8c4-measurement-quality-gates-design.md) and [implementation](./product/phase8c4-measurement-quality-gates-implementation.md).
+- **Next numbered slice: Phase 8C.5A Environmental Presentation Design.** It defines condition ranges, terminology, and measurement-specific color systems without changing runtime behavior. Phase 8C.5B may implement approved card descriptions and colors only after design approval.
+- After 8C.5B environmental-presentation implementation closes, select the next priority explicitly rather than inheriting a phase number. Candidates include Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, major UI modernization, and pressing site work from the “Fix watering events and thresholds” task—especially complete watering-event visibility and clear threshold presentation.
+- Former Phase 8D/8E schedule and sensor-assisted timer work is deferred to **Phase 9: Optional Local Watering Automation**, because it is a distinct secondary product direction. Phase 9A is local schedule configuration and controller persistence; Phase 9B is sensor-assisted scheduled watering with conservative skip/allow behavior. Neither is current or implied by completion of the working Gen2 path.
 
-The compact roadmap near the top is the current planning view. The detailed phase history below remains historical evidence and may be reorganized in a later Phase 8F documentation cleanup.
+The compact roadmap near the top is the current planning view. Detailed phase history below remains historical evidence and may be reorganized in a later, separately prioritized documentation cleanup.
+
+### Active Phase 8C Slice Map
+
+| Slice | Status | Purpose | Visible change? |
+| --- | --- | --- | --- |
+| **8C.3A — Evidence-state discovery and decisions** | Complete | Inspect freshness, validity, last-good, omission, and query behavior; approve exact policies | No |
+| **8C.3B — Evidence-state design closeout** | Complete | Document the approved state model, wording, escalation rules, acceptance criteria, and query guardrails | No |
+| **8C.3C — Evidence-state implementation** | Complete | Implement current, stale, invalid, omitted, never-reported, and last-good behavior | Yes—status and evidence wording |
+| **8C.3D — Production validation and closeout** | Complete | Verify deployed behavior and document the result | No new behavior |
+| **8C.4 — Measurement-quality gates** | Complete | Handle implausible values such as `362 °F` at the correct firmware/ingestion/storage/frontend boundaries | Yes—bad values stop masquerading as trustworthy readings |
+| **8C.5A — Environmental presentation design** | Next | Define condition ranges, terminology, and measurement-specific color systems | No |
+| **8C.5B — Environmental presentation implementation** | Planned | Apply approved environmental descriptions and colors to cards | **Yes—this changes card colors** |
+| **Later — priority decision required** | Unnumbered | Compare watering-event/threshold site fixes, Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization | Separate work |
+
+Phase 9A/9B optional automation is deliberately outside this sequence.
 
 Legend:
 
@@ -66,10 +82,15 @@ Legend:
 | ✅ COMPLETE | Phase 8B.4 | Gen2 `/status` Nested Diagnostics Contract Cleanup | LIVE DEVICE, CLOUD, AND HOSTED-DIAGNOSTICS VALIDATED on 2026-07-17 without changing watering ownership. |
 | ✅ COMPLETE | Phase 8B.5 | Gen2 Endpoint Integration and Closeout | COMPLETE / PRODUCTION VALIDATED in commits `a291be6` and `a8b282e`. |
 | ✅ COMPLETE | Phase 8B.6 | Hosted Short History Window Expansion | Commit `9b8eb0f` added `3h`, `6h`, and `12h` with `24h` preserved as default; local hosted-readonly and deployed production validation passed without changing hosted read-only or local watering authority. |
-| 🟡 PLANNED | Phase 8C | Safety, Cadence, and Control-Error Prevention | Continue unattended-control maturity and prevent repeated bad-data watering decisions without weakening local ownership or safety gates. |
-| 🟡 PLANNED | Phase 8D | Local Schedule UI and Schedule Persistence | Provide visible local schedule configuration and controller-side persistence. |
-| 🟡 PLANNED | Phase 8E | Sensor-Assisted Timer Mode | Schedule-first watering with fixed-sensor skip/allow logic after the required safety and evidence gates are proven. |
-| 🟡 PLANNED | Phase 8F | Roadmap and Documentation Reorganization | Larger later cleanup of accumulated roadmap, source-pack, build, service, and product documentation. |
+| ✅ COMPLETE | Phase 8C.1 | Hosted Capability Integration Design | Defined protected capability authority, exact commissioned identity, lifecycle, caching, evidence, and presentation boundaries. |
+| ✅ COMPLETE | Phase 8C.2 | Authenticated Support Capability Implementation | Capability-driven Support cards were implemented, deployed, production validated, and operationally closed. |
+| ✅ COMPLETE | Phase 8C.3A–D | Commissioned Evidence-State Discovery Through Closeout | Discovery, policy decisions, design closeout, runtime implementation, deterministic validation, and authenticated production closeout are complete. |
+| ✅ COMPLETE | Phase 8C.4 | Measurement-Quality Gates | Provider-specific plausibility gates, last-presentation-eligible recovery, Support diagnostics, and trend filtering are complete and locally validated. |
+| ➡️ NEXT | Phase 8C.5A | Environmental Presentation Design | Define condition ranges, terminology, and measurement-specific color systems; documentation only. |
+| 🟡 PLANNED | Phase 8C.5B | Environmental Presentation Implementation | Apply only the approved environmental descriptions and card colors. |
+| 🟡 PRIORITY DECISION | Post-8C.5 queue | Site and product follow-ons | Choose among watering-event/threshold fixes, Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization. |
+| 🧊 DEFERRED | Phase 9A | Local Schedule Foundation | Optional secondary direction: local schedule UI and controller-side persistence. |
+| 🧊 DEFERRED | Phase 9B | Sensor-Assisted Scheduled Watering | Optional secondary direction: fixed-sensor skip/allow behavior after separate safety and evidence design. |
 | 🧊 PARKED | Future intelligence / broader product tracks | Use history to improve threshold/window models after enough trusted evidence exists | Do not pull future intelligence, hosted command/control, or full docs reorganization into Phase 8.0. |
 
 ### Early Phase 8 Sequence
@@ -127,27 +148,40 @@ Legend:
 
 Balcony02 is both a product-development and garden-mapping platform, and the main evidence path for deciding whether single-sensor sensor-assisted timer behavior is good enough for the customer MVP.
 
-#### Phase 8C - Safety/Cadence/Control-Error Prevention
+#### Phase 8C.3A–D - Evidence State — COMPLETE
 
-- Prevent known bad-data watering decision classes before unattended control maturity.
-- Separate local sampling, control evaluation, telemetry cadence, and watering event evidence as needed.
-- Preserve local firmware ownership of watering decisions and pump shutoff.
+- 8C.3A: inspect freshness, validity, last-good, omission, and query behavior; approve exact policies.
+- 8C.3B: close the state model, wording, escalation rules, acceptance criteria, and query guardrails.
+- 8C.3C: implement current, stale, invalid, omitted, never-reported, and last-good behavior.
+- 8C.3D: validate deployed behavior and close the sequence.
 
-#### Phase 8D - Local Schedule UI and Schedule Persistence
+#### Phase 8C.4 - Measurement-Quality Gates — COMPLETE
 
-- User-visible local schedule configuration.
-- Local unit schedule storage.
-- No hosted command/control.
+- Handle implausible values at the correct frontend presentation boundary while preserving original evidence and authority separation.
+- Completed provider-specific rules prevent bad values from masquerading as trustworthy readings.
 
-#### Phase 8E - Sensor-Assisted Timer Mode
+#### Phase 8C.5A - Environmental Presentation Design — NEXT
 
-- Schedule-first watering.
-- Single fixed-sensor skip/allow logic.
-- Conservative fallback behavior if sensor evidence is missing/stale/bad.
+- Define condition ranges and gardener-facing terminology per measurement.
+- Define measurement-specific card color systems, including neutral/unavailable behavior.
+- Documentation and decisions only; no visible change.
 
-#### Phase 8F - Full Roadmap/Docs Reorganization
+#### Phase 8C.5B - Environmental Presentation Implementation — PLANNED
 
-- Larger later documentation cleanup organized around product tracks.
+- Apply the approved environmental descriptions and colors to cards.
+- This is an intentional visible card-color change and requires separate approval after design closeout.
+
+#### Post-8C.5 Priority Decision — UNNUMBERED
+
+- Compare pressing watering-event visibility and threshold-presentation work with Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization.
+- Do not assign the next phase number until the priority and boundary are chosen.
+
+#### Phase 9 - Optional Local Watering Automation — DEFERRED
+
+- Phase 9A, Local Schedule Foundation: user-visible local schedule configuration and controller-side persistence.
+- Phase 9B, Sensor-Assisted Scheduled Watering: fixed-sensor skip/allow logic with conservative fallback behavior.
+- This is a secondary product direction, not a continuation required to establish the current working Gen2 product.
+- Preserve local firmware ownership of watering decisions and pump shutoff; no hosted command/control.
 
 ### Phase 8 Guardrails
 
@@ -212,7 +246,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 - Phase 8A.1 status: COMPLETE; Prototype01 installed sensor profile cleanup disables removed VEML6030 and GPIO34 legacy moisture for `bench-proto-gen2`, reports SEN0308/SEN0562 not-installed channel truth, preserves provider/channel metadata, and changes no watering authority or Balcony01 GPIO34/control behavior.
 - Phase 8A status: COMPLETE; hosted Support View derives a display-only gardener Moisture Index from Prototype01 SEN0308 A0 raw ADC, cleans the main cards into Soil/Light/Air Conditions, keeps raw ADC as supporting evidence, treats expected `profile_not_installed` rows as non-warning top-level status evidence, and changes no watering authority.
 - Phase 8B parent status: COMPLETE. Phase 8B.1 through Phase 8B.4 retain their recorded completion evidence; Phase 8B.5 is COMPLETE / PRODUCTION VALIDATED in commits `a291be6` and `a8b282e`; Phase 8B.6 Hosted Short History Window Expansion is COMPLETE / PRODUCTION VALIDATED in commit `9b8eb0f`.
-- Phase 8C, Phase 8D, Phase 8E, and Phase 8F status: PLANNED.
+- Phase 8C.1–8C.4 status: COMPLETE at their recorded evidence levels. Phase 8C.5A is NEXT; Phase 8C.5B is PLANNED. The post-8C.5 priority queue is intentionally unnumbered. Phase 9A/9B optional automation is DEFERRED.
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -220,7 +254,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 
 ## Historical Recommended Phase Order
 
-The top `Current Roadmap Snapshot` is now the current planning view. This older phase-order list remains as historical context until a later Phase 8F documentation cleanup.
+The top `Current Roadmap Snapshot` is now the current planning view. This older phase-order list remains historical context until documentation reorganization is explicitly prioritized from the unnumbered follow-on queue.
 
 1. Phase 5D Validation - complete
 2. Phase 5D Closeout / merge - complete and merged to main

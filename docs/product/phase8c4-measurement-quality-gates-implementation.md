@@ -1,14 +1,14 @@
-# Phase 8C.5B — Provider-Specific Measurement Eligibility Contract
+# Phase 8C.4 — Measurement-Quality Gates (Implementation)
 
 Date: 2026-08-17
 
 Status: Complete, committed, and pushed
 
-Authority: [Phase 8C.5A](./phase8c5a-measurement-quality-gates-discovery-and-boundary-design.md)
+Authority: [Phase 8C.4 design](./phase8c4-measurement-quality-gates-design.md)
 
 ## Purpose
 
-Phase 8C.5B defines the smallest deterministic provider-specific contract for deciding whether an already-fetched Gen2 measurement may supply an ordinary current value and environmental condition. It replaces the direction of the inactive `mbg_dashboard/src/hostedMeasurementTrust.ts` without activating or adapting that module.
+The Phase 8C.4 implementation defines the smallest deterministic provider-specific contract for deciding whether an already-fetched Gen2 measurement may supply an ordinary current value and environmental condition. It replaces the direction of the inactive `mbg_dashboard/src/hostedMeasurementTrust.ts` without activating or adapting that module.
 
 The approved implementation changes Support/frontend presentation and deterministic tests only. It changes no query, polling path, SQL, Supabase object or row, firmware, device, watering behavior, customer adoption, Demo architecture, deployment, commit, or push.
 
@@ -235,7 +235,7 @@ Tests must also prove that the commissioned card remains, stored row fields are 
 - SQL, Supabase, query, polling, or history expansion.
 - Alerts or notifications.
 - Customer adoption or Demo redesign.
-- Feels Like, Dew Point, watering/control changes, visual modernization, or Phase 8D.
+- Feels Like, Dew Point, watering/control changes, environmental presentation, visual modernization, or deferred Phase 9 automation work.
 
 ## Validation and closeout
 

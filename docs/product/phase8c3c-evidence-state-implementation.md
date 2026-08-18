@@ -1,4 +1,4 @@
-# Phase 8C.3 — Commissioned Measurement Evidence-State and Health Refinement
+# Phase 8C.3C — Evidence-State Implementation
 
 Date: 2026-08-16
 
@@ -6,7 +6,7 @@ Status: Production-validated and operationally closed
 
 ## Purpose
 
-Phase 8C.3 refines the authenticated Support presentation created by Phase 8C.2. Hosted commissioned capabilities continue to determine which logical sensors and expected measurements exist. Measurements remain evidence, never commissioning authority. Missing, invalid, stale, or unavailable evidence cannot remove a commissioned card.
+Phase 8C.3C implements the evidence-state model approved through Phase 8C.3A discovery/decisions and Phase 8C.3B design closeout. It refines the authenticated Support presentation created by Phase 8C.2. Hosted commissioned capabilities continue to determine which logical sensors and expected measurements exist. Measurements remain evidence, never commissioning authority. Missing, invalid, stale, or unavailable evidence cannot remove a commissioned card.
 
 This slice changes no SQL, schema, Supabase data, firmware, device operation, watering authority, polling cadence, history limit, capability caching, Demo capability access, or customer capability adoption.
 
@@ -49,7 +49,7 @@ Jeremy's authenticated local Support review on 2026-08-16 confirmed Balcony02's 
 
 ## Production validation and operational closeout
 
-The Phase 8C.3 runtime implementation was pushed on `main` as `c87fa34782e6bcc603e7d76c1d3d1bdf7ff4c20b` (`Refine commissioned measurement evidence health`) and reached production through the normal Cloudflare post-push update path; no manual deployment command was used. Phase 8C.4 subsequently closed the narrow derived-unavailable deterministic-test evidence gap in commit `de7e5de8bcc9e1d73bc72333939225210b273843` (`Validate Support evidence fault states`).
+The Phase 8C.3C runtime implementation was pushed on `main` as `c87fa34782e6bcc603e7d76c1d3d1bdf7ff4c20b` (`Refine commissioned measurement evidence health`) and reached production through the normal Cloudflare post-push update path; no manual deployment command was used. Phase 8C.3D subsequently closed the narrow derived-unavailable deterministic-test evidence gap in commit `de7e5de8bcc9e1d73bc72333939225210b273843` (`Validate Support evidence fault states`).
 
 Jeremy's authenticated production Support validation on 2026-08-17 passed for Balcony02 at the 24-hour window. Directly observed:
 
@@ -66,4 +66,4 @@ Jeremy's authenticated production Support validation on 2026-08-17 passed for Ba
 
 Invalid, omitted, stale, future-timestamp, repeated-failure, derived-unavailable, device-inactive, and bounded-count states were not induced in production. They remain deterministic-test-supported. No SQL, Supabase mutation, firmware or device operation, sensor fault, capability or assignment change, watering action, query expansion, or manual deployment occurred.
 
-Result: **Pass**. Phase 8C.3 is production-validated and operationally closed.
+Result: **Pass**. Phase 8C.3C implementation is complete; Phase 8C.3D owns production validation and operational closeout.

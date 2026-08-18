@@ -1,4 +1,4 @@
-# Phase 8C.5A — Measurement-Quality Gates Discovery and Boundary Design
+# Phase 8C.4 — Measurement-Quality Gates (Design)
 
 Date: 2026-08-17
 
@@ -6,7 +6,7 @@ Status: Documentation design approved
 
 ## Purpose
 
-Phase 8C.5A defines how implausible or suspicious measurements are classified without changing stored evidence, commissioned capability, customer access, or firmware watering authority. It closes the discovery and boundary-design step only. It does not implement a gate.
+The Phase 8C.4 design step defines how implausible or suspicious measurements are classified without changing stored evidence, commissioned capability, customer access, or firmware watering authority. It does not implement a gate.
 
 The motivating Balcony02 example is an intermittently faulty BME280 that produced values near `362 F`. Current firmware can report such a finite value as `valid:true`, `quality:"good"`, and `reason:"read_ok"`. Append-only storage preserves it, and the current capability-driven Support frontend can classify it as usable, show a `Current` evidence pill, display the value, and let it drive full-card environmental `Check` treatment. That behavior proves that device-reported validity, evidence freshness, and presentation trust are distinct.
 
@@ -54,7 +54,7 @@ The existing Relative Moisture Index is a frontend-derived installation interpre
 
 ### BME280
 
-Current firmware rejects only `NaN` after a successful provider read. It applies no physical plausibility bounds to air temperature, relative humidity, or pressure. A finite implausible value may therefore retain good device metadata. Phase 8C.5A approves no numeric BME280 threshold; later implementation must cite repository evidence or an explicitly approved authoritative source.
+Current firmware rejects only `NaN` after a successful provider read. It applies no physical plausibility bounds to air temperature, relative humidity, or pressure. A finite implausible value may therefore retain good device metadata. The Phase 8C.4 design step approves no numeric BME280 threshold; later implementation must cite repository evidence or an explicitly approved authoritative source.
 
 ### DS18B20
 
@@ -111,7 +111,7 @@ A later proposal that adds provider fields to hosted projections, compares runti
 
 ## Candidate slice separation
 
-1. **Phase 8C.5A — discovery and boundary design:** this documentation-only decision.
+1. **Phase 8C.4 design — discovery and boundary decisions:** this documentation-only decision.
 2. **Deterministic frontend presentation gate:** separately approve rules supported by identified authority, integrate them into capability-driven cards, and add direct tests.
 3. **Firmware/provider validation:** separately decide whether future device metadata should reject electrically impossible or physically implausible reads.
 4. **Ingestion/storage validity:** deferred unless evidence demonstrates a need beyond append-only preservation and derived presentation classification.
@@ -143,9 +143,9 @@ These slices must not be automatically combined.
 - Scientific threshold invention.
 - Customer capability adoption.
 - Demo architecture changes.
-- Feels Like, Dew Point, alerting, calibration, watering changes, Gen1 cleanup implementation, major visual modernization, or Phase 8D work.
+- Feels Like, Dew Point, alerting, calibration, watering changes, Gen1 cleanup implementation, major visual modernization, environmental presentation, or deferred Phase 9 automation work.
 - Deployment, commit, or push.
 
 ## Closeout
 
-Phase 8C.5A approves the boundary design only. It changes no runtime behavior and does not claim that implausible measurements are currently gated. The next implementation scope requires separate approval.
+The Phase 8C.4 design step approves the boundary only. It changes no runtime behavior and does not claim that implausible measurements are currently gated. The implementation scope required separate approval and is recorded in the companion Phase 8C.4 implementation document.
