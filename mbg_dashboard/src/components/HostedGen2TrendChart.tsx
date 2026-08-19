@@ -24,6 +24,11 @@ import {
 import { evaluateMeasurementPresentationEligibility } from '../measurementPresentationEligibility'
 import { doesCapabilityChartRowMatchSeries } from '../capabilityPresentation'
 import {
+  getDerivedAirChartMethodLabel,
+  getDerivedAirChartReadings,
+  toDerivedAirChartRow,
+} from '../derivedAirEvidence'
+import {
   formatWateringCycleMarkerLabel,
   type HostedWateringCycle,
 } from '../hostedWateringCycles'
@@ -134,6 +139,8 @@ const SERIES_COLORS: Record<HostedGen2ChartSeriesDescriptor['cardKey'], string> 
   'moisture-m03': '#7c3aed',
   'air-temperature': '#dc2626',
   'soil-temperature': '#78350f',
+  'feels-like': '#ea580c',
+  'dew-point': '#0284c7',
   humidity: '#0f766e',
   'atmospheric-pressure': '#a21caf',
   'reservoir-water': '#64748b',
@@ -385,6 +392,7 @@ const HostedGen2TrendChart = ({
             >
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
+                  accessibilityLayer
                   data={chartData}
                   margin={{ top: chartTopMargin, right: 12, left: 12, bottom: 5 }}
                 >
@@ -428,9 +436,12 @@ const HostedGen2TrendChart = ({
                   const series = selectedSeries.find(
                     (candidate) => candidate.dataKey === String(item.dataKey),
                   )
+                  const method = getDerivedAirChartMethodLabel(
+                    item.payload?.[`${String(item.dataKey)}:method`],
+                  )
                   return [
                     formatTooltipValue(Number(value), series),
-                    series?.label ?? String(item.name),
+                    `${series?.label ?? String(item.name)}${method ? ` — ${method}` : ''}`,
                   ]
                 }}
                 labelFormatter={(label) => formatTooltipTimestamp(Number(label))}
@@ -491,6 +502,12 @@ const buildChartSeries = (
   descriptors: readonly HostedGen2ChartSeriesDescriptor[],
 ): HostedGen2ChartSeries[] => {
   const preparedSeries: PreparedSeries[] = descriptors.flatMap((descriptor) => {
+    if (descriptor.derivedValue === 'feels-like' || descriptor.derivedValue === 'dew-point') {
+      const derivedRows = getDerivedAirChartReadings(rows, descriptor.derivedValue)
+        .map(toDerivedAirChartRow)
+      return derivedRows.length > 0 ? [{ descriptor, rows: derivedRows }] : []
+    }
+
     const cardDescriptor = descriptor.cardDescriptor
 
     if (!cardDescriptor) {
@@ -655,6 +672,7 @@ const getRowFingerprint = (row: HostedGen2MeasurementRow): string =>
     row.valid,
     row.quality,
     row.reason,
+    row.batch_id,
     row.batch_created_at,
     row.record_index,
   ])
@@ -690,6 +708,8 @@ const buildChartData = (series: HostedGen2ChartSeries[]): HostedGen2ChartPoint[]
       }
 
       point[chartSeries.dataKey] = row.measurement_value ?? Number.NaN
+      const derivedMethod = getDerivedAirChartMethodLabel(row.reason)
+      if (derivedMethod) point[`${chartSeries.dataKey}:method`] = derivedMethod
       points.set(timestampMs, point)
     })
   })

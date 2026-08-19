@@ -143,6 +143,8 @@ const getDeadband = (row: HostedGen2MeasurementRow, earliestValue: number): numb
 
   if (
     measurementName === 'air_temperature' ||
+    measurementName === 'feels_like' ||
+    measurementName === 'dew_point' ||
     measurementName === 'temperature' ||
     measurementName === 'soil temp' ||
     sensorType.includes('ds18b20')

@@ -34,6 +34,7 @@ const capability = (logicalSensorKey: string): CommissionedDeviceCapability => (
 })
 
 const measurement = (overrides: Partial<HostedGen2MeasurementRow> = {}): HostedGen2MeasurementRow => ({
+  batch_id: '10000000-0000-4000-8000-000000000001',
   device_id: 'device-1', device_key: 'balcony02', device_label: 'Balcony02',
   device_role: 'support_bench', measured_at: '2026-08-16T12:00:00Z',
   firmware_version: null, build_profile: null, record_index: 0,
@@ -61,6 +62,29 @@ test('production physical identities attach all moisture and light card and char
     const chartSeries = series.find((candidate) => candidate.cardKey === card?.key)
     assert.equal(chartSeries ? doesCapabilityChartRowMatchSeries(row, chartSeries) : false, true)
   }
+})
+
+test('adds derived temperature series only when both BME280 source measurements are commissioned', () => {
+  const bmeCapability: CommissionedDeviceCapability = {
+    deviceId: 'device-1', logicalSensorKey: 'bme280_air', sensorFamily: 'bme280',
+    logicalChannel: 'air',
+    expectedMeasurementNames: ['air_temperature', 'relative_humidity', 'barometric_pressure'],
+    friendlyName: 'Balcony Air Conditions', locationLabel: 'Near controller',
+    physicalSensorId: null, effectiveFrom: '2026-08-12T17:03:41Z', effectiveTo: null,
+  }
+  const fullSeries = getCapabilityChartSeriesDescriptors(
+    getCapabilityCardDescriptors([bmeCapability]),
+  )
+  assert.equal(fullSeries.some((series) => series.cardKey === 'feels-like'), true)
+  assert.equal(fullSeries.some((series) => series.cardKey === 'dew-point'), true)
+
+  const temperatureOnlyCards = getCapabilityCardDescriptors([{
+    ...bmeCapability,
+    expectedMeasurementNames: ['air_temperature'],
+  }])
+  const temperatureOnlySeries = getCapabilityChartSeriesDescriptors(temperatureOnlyCards)
+  assert.equal(temperatureOnlySeries.some((series) => series.cardKey === 'feels-like'), false)
+  assert.equal(temperatureOnlySeries.some((series) => series.cardKey === 'dew-point'), false)
 })
 
 test('M02 uses physical M4 and L01 uses physical L02 without cross-channel attachment', () => {

@@ -26,6 +26,7 @@ export type HostedGen2EnvironmentalTone =
 export type HostedGen2EnvironmentalScaleKey =
   | 'light'
   | 'air-temperature'
+  | 'dew-point'
   | 'humidity'
   | 'pressure'
   | 'soil-temperature'
@@ -72,7 +73,10 @@ export const getHostedGen2EnvironmentalPresentation = (
     case 'ambient_light':
       return getLightPresentation(value)
     case 'air_temperature':
+    case 'feels_like':
       return getAirTemperaturePresentation(value)
+    case 'dew_point':
+      return getDewPointPresentation(value)
     case 'relative_humidity':
       return getHumidityPresentation(value)
     case 'barometric_pressure':
@@ -120,6 +124,10 @@ export const getHostedGen2EnvironmentalScale = (
       }
     case 'air_temperature':
       return rangedScale('air-temperature', 'Air temperature scale from very cold to extreme heat', finiteValue, 0, 130)
+    case 'feels_like':
+      return rangedScale('air-temperature', 'Feels Like scale from very cold to extreme heat', finiteValue, 0, 130)
+    case 'dew_point':
+      return rangedScale('dew-point', 'Dew point scale from dry air to very muggy air', finiteValue, 0, 85)
     case 'relative_humidity':
       return rangedScale('humidity', 'Humidity scale from very dry to very humid', finiteValue, 0, 100)
     case 'barometric_pressure':
@@ -213,4 +221,14 @@ const getHumidityPresentation = (
   if (value < 70) return { label: 'Moderate Humidity', tone: 'env-green' }
   if (value < 85) return { label: 'Humid', tone: 'env-blue' }
   return { label: 'Very Humid', tone: 'env-deep-blue' }
+}
+
+const getDewPointPresentation = (
+  value: number,
+): HostedGen2EnvironmentalPresentation | null => {
+  if (value < -49 || value > 140) return null
+  if (value <= 55) return { label: 'Dry & Comfortable', tone: 'env-green' }
+  if (value < 65) return { label: 'Getting Muggy', tone: 'env-blue' }
+  if (value < 75) return { label: 'Muggy', tone: 'env-deep-blue' }
+  return { label: 'Very Muggy', tone: 'env-purple' }
 }

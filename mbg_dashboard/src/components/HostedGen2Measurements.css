@@ -93,6 +93,13 @@
   opacity: 0.9;
 }
 
+.hosted-gen2-measurements-derived-air-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.1rem;
+}
+
 .hosted-gen2-measurements-card {
   padding: 0.6rem;
   border: 1px solid rgba(255, 255, 255, 0.34);
@@ -474,6 +481,10 @@
   background: linear-gradient(90deg, #d0aa72 0%, #d0c989 25%, #99c38b 50%, #5aa99f 75%, #326e9d 100%);
 }
 
+.hosted-gen2-measurements-scale-pill.is-dew-point {
+  background: linear-gradient(90deg, #d0aa72 0%, #d0c989 25%, #99c38b 50%, #5aa99f 75%, #326e9d 100%);
+}
+
 .hosted-gen2-measurements-scale-pill.is-pressure {
   background: linear-gradient(90deg, #c4b5e4 0%, #9c82ce 50%, #6f4fad 100%);
 }
@@ -532,6 +543,10 @@
   }
 
   .hosted-gen2-measurements-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hosted-gen2-measurements-derived-air-grid {
     grid-template-columns: 1fr;
   }
 

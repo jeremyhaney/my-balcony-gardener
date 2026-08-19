@@ -50,7 +50,7 @@ export type HostedGen2ChartSeriesDescriptor = {
   group: HostedGen2ChartGroupKey
   label: string
   order: number
-  derivedValue: 'relative-moisture-index' | null
+  derivedValue: 'relative-moisture-index' | 'feels-like' | 'dew-point' | null
   cardDescriptor?: HostedGen2CardCatalogDescriptor
 }
 
@@ -305,6 +305,8 @@ export const getHostedGen2ChartSeriesDescriptors = (
     { cardKey: 'moisture-m03', group: 'moisture', label: 'Moisture M03', order: 3, derivedValue: 'relative-moisture-index' },
     { cardKey: 'air-temperature', group: 'temperature', label: 'Air Temperature', order: 1, derivedValue: null },
     { cardKey: 'soil-temperature', group: 'temperature', label: 'Soil Temperature', order: 2, derivedValue: null },
+    { cardKey: 'feels-like', group: 'temperature', label: 'Feels Like', order: 3, derivedValue: 'feels-like' },
+    { cardKey: 'dew-point', group: 'temperature', label: 'Dew Point', order: 4, derivedValue: 'dew-point' },
     { cardKey: 'humidity', group: 'humidity', label: 'Humidity', order: 1, derivedValue: null },
     { cardKey: 'atmospheric-pressure', group: 'pressure', label: 'Atmospheric Pressure', order: 1, derivedValue: null },
   ]

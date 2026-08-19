@@ -17,6 +17,7 @@ const descriptor: HostedGen2CardCatalogDescriptor = {
 }
 
 const row = (overrides: Partial<HostedGen2MeasurementRow> = {}): HostedGen2MeasurementRow => ({
+  batch_id: '10000000-0000-4000-8000-000000000001',
   device_id: 'device-1', device_key: 'balcony02', device_label: 'Balcony02',
   device_role: 'support_bench', measured_at: '2026-08-16T12:00:00Z',
   firmware_version: null, build_profile: null, record_index: 0,

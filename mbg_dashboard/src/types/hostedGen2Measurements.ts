@@ -1,4 +1,5 @@
 export type HostedGen2MeasurementRow = {
+  batch_id: string | null
   device_id: string
   device_key: string | null
   device_label: string | null

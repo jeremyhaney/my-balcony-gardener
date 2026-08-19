@@ -21,6 +21,14 @@ import {
   type MeasurementPresentationEligibility,
 } from '../measurementPresentationEligibility'
 import {
+  getDerivedAirChartReadings,
+  resolveDerivedAirMetricEvidence,
+  toDerivedAirChartRow,
+  type DerivedAirMetric,
+  type DerivedAirMetricEvidence,
+  type DerivedAirMethod,
+} from '../derivedAirEvidence'
+import {
   HOSTED_GEN2_CARD_CATALOG,
   HOSTED_GEN2_ELEMENT_SECTIONS,
   PRACTICAL_DRY_RAW,
@@ -87,6 +95,7 @@ type HostedGen2CatalogCardModel = {
 const APPROVED_QUALITY_VALUES = new Set(['good', 'diagnostic', 'ok', 'okay'])
 const MOISTURE_CARD_KEYS = new Set(['moisture-m01', 'moisture-m02', 'moisture-m03'])
 const RESERVOIR_CARD_KEY = 'reservoir-water'
+const DERIVED_AIR_METRICS: readonly DerivedAirMetric[] = ['feels-like', 'dew-point']
 
 const getEligibilityDetail = (
   result: MeasurementPresentationEligibility | null,
@@ -156,6 +165,21 @@ const HostedGen2Measurements = ({
           : null,
       }))
     : builtCards
+  const hasDerivedAirSources = cardDescriptors.some((descriptor) => descriptor.key === 'air-temperature') &&
+    cardDescriptors.some((descriptor) => descriptor.key === 'humidity')
+  const derivedAirEvidence = hasDerivedAirSources
+    ? DERIVED_AIR_METRICS.map((metric) => resolveDerivedAirMetricEvidence({
+        rows,
+        metric,
+        deviceReportingActive,
+      }))
+    : []
+  const derivedAirTrendRows = new Map(DERIVED_AIR_METRICS.map((metric) => [
+    metric,
+    hasDerivedAirSources
+      ? getDerivedAirChartReadings(rows, metric).map(toDerivedAirChartRow)
+      : [],
+  ]))
 
   return (
     <section
@@ -203,11 +227,167 @@ const HostedGen2Measurements = ({
                   />
                 ))}
             </div>
+            {section.key === 'wind' && derivedAirEvidence.length > 0 ? (
+              <div className="hosted-gen2-measurements-derived-air-grid">
+                {derivedAirEvidence.map((evidence) => (
+                  <DerivedAirCard
+                    error={error}
+                    evidence={evidence}
+                    key={evidence.metric}
+                    transportState={transportState}
+                    trendRows={derivedAirTrendRows.get(evidence.metric) ?? []}
+                  />
+                ))}
+              </div>
+            ) : null}
           </section>
         ))}
       </div>
     </section>
   )
+}
+
+const DerivedAirCard = ({
+  evidence,
+  transportState,
+  error,
+  trendRows,
+}: {
+  evidence: DerivedAirMetricEvidence
+  transportState: TransportState
+  error: string | null
+  trendRows: HostedGen2MeasurementRow[]
+}) => {
+  const label = evidence.metric === 'feels-like' ? 'Feels Like' : 'Dew Point'
+  const displayLabel = transportState === 'loading'
+    ? 'Loading'
+    : error
+      ? 'Dashboard data unavailable'
+      : evidence.label
+  const primaryValue = transportState === 'loading'
+    ? 'Loading'
+    : evidence.state === 'above-supported-range'
+      ? 'Above supported range'
+      : evidence.reading
+        ? formatHostedGen2CardMeasurementValue(evidence.reading.roundedValueF, '°F')
+        : 'Not available'
+  const detail = error
+    ? 'The dashboard could not confirm newer paired evidence.'
+    : evidence.detail
+  const pair = evidence.reading?.pair ?? evidence.latestEvaluation?.pair ?? null
+  const displayRow = evidence.reading ? toDerivedAirChartRow(evidence.reading) : null
+  const measurementName = evidence.metric === 'feels-like' ? 'feels_like' : 'dew_point'
+  const condition = displayRow?.measurement_value === null || displayRow?.measurement_value === undefined
+    ? null
+    : getHostedGen2EnvironmentalPresentation(measurementName, displayRow.measurement_value)
+  const evidenceIsCurrent = evidence.state === 'current' && !error
+  const visiblePillLabel = getHostedGen2CardPillLabel({
+    conditionLabel: condition?.label ?? null,
+    evidenceLabel: displayLabel,
+    evidenceIsCurrent,
+  })
+  const trendSummary = displayRow && trendRows.length > 0
+    ? getHostedGen2TrendSummary(displayRow, trendRows)
+    : null
+
+  return (
+    <article className={`hosted-gen2-measurements-card hosted-gen2-measurements-derived-card is-${condition?.tone ?? 'neutral'}`}>
+      <div className="hosted-gen2-measurements-card-main">
+        <h3>{label}</h3>
+        {visiblePillLabel ? (
+          <span className={[
+            'hosted-gen2-measurements-status-pill',
+            evidenceIsCurrent
+              ? ''
+              : `is-evidence-${error ? 'neutral' : evidence.severity}`,
+          ].filter(Boolean).join(' ')}>{visiblePillLabel}</span>
+        ) : null}
+      </div>
+      <p className="hosted-gen2-measurements-value">{primaryValue}</p>
+      {detail ? (
+        <p className="hosted-gen2-measurements-evidence-reason">{detail}</p>
+      ) : null}
+      {evidence.reading && evidence.state !== 'current' ? (
+        <p className="hosted-gen2-measurements-evidence-reason">
+          Displayed pair: {formatTimestamp(evidence.reading.pair.measuredAt)} · {formatEvidenceAge(evidence.evidenceAgeMs)} old
+        </p>
+      ) : null}
+
+      {trendSummary ? (
+        <div
+          className={[
+            'hosted-gen2-measurements-trend',
+            `is-${trendSummary.direction.replace(/_/g, '-')}`,
+          ].join(' ')}
+        >
+          <div className="hosted-gen2-measurements-trend-text">
+            <span className="hosted-gen2-measurements-trend-label">
+              Trend: <strong>{formatTrendLabel(trendSummary.direction, trendSummary.label)}</strong>
+            </span>
+            {trendSummary.deltaLabel ? (
+              <span className="hosted-gen2-measurements-trend-delta">
+                {trendSummary.deltaLabel}
+              </span>
+            ) : null}
+          </div>
+          {trendSummary.sparklinePoints ? (
+            <TrendSparkline points={trendSummary.sparklinePoints} />
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="hosted-gen2-measurements-card-footer">
+        <details className="hosted-gen2-measurements-details">
+          <summary>Reading details</summary>
+          <dl className="hosted-gen2-measurements-status">
+            <dt>State</dt>
+            <dd>{displayLabel}</dd>
+            <dt>Consecutive pair failures</dt>
+            <dd>{evidence.failureCount.count === 0
+              ? 'None'
+              : `${evidence.failureCount.isLowerBound ? 'At least ' : ''}${evidence.failureCount.count}`}</dd>
+            <dt>Method</dt>
+            <dd>{formatDerivedAirMethod(evidence.reading?.method, evidence.metric)}</dd>
+            <dt>Calculation units</dt>
+            <dd>{evidence.metric === 'dew-point' ? '°F → °C → °F; relative humidity in %' : '°F and relative humidity in %'}</dd>
+            <dt>Formula</dt>
+            <dd>{evidence.metric === 'dew-point'
+              ? 'WMO Magnus water-phase constants 17.62 and 243.12 °C'
+              : 'NWS Heat Index with approved air-temperature fallback'}</dd>
+            <dt>Displayed measured at</dt>
+            <dd>{formatTimestamp(evidence.reading?.pair.measuredAt ?? null)}</dd>
+            <dt>Source batch ID</dt>
+            <dd>{pair?.batchId ?? 'Not available'}</dd>
+            <dt>Source device</dt>
+            <dd>{pair?.deviceId ?? 'Not available'}</dd>
+            <dt>Source measured at</dt>
+            <dd>{formatTimestamp(pair?.measuredAt ?? null)}</dd>
+            <dt>Source stored at</dt>
+            <dd>{formatTimestamp(pair?.batchCreatedAt ?? null)}</dd>
+            <dt>Air temperature source</dt>
+            <dd>{pair ? formatMeasurementValue(pair.temperatureRow) : 'Not available'}</dd>
+            <dt>Humidity source</dt>
+            <dd>{pair ? formatMeasurementValue(pair.humidityRow) : 'Not available'}</dd>
+          </dl>
+        </details>
+        <EnvironmentalScalePill
+          conditionLabel={condition?.label ?? null}
+          measurementName={measurementName}
+          value={displayRow?.measurement_value ?? null}
+        />
+      </div>
+    </article>
+  )
+}
+
+const formatDerivedAirMethod = (
+  method: DerivedAirMethod | undefined,
+  metric: DerivedAirMetric,
+): string => {
+  if (method === 'heat-index') return 'NWS Heat Index'
+  if (method === 'air-temperature-fallback') return 'Using air temperature'
+  if (method === 'dew-point') return 'WMO Magnus dew point'
+  return metric === 'feels-like' ? 'Not available' : 'WMO Magnus dew point'
 }
 
 const MeasurementCard = ({
@@ -298,9 +478,27 @@ const ConditionScalePill = ({ card }: { card: HostedGen2CatalogCardModel }) => {
     ? 'moisture_index'
     : card.descriptor.canonicalMeasurementName
   const scaleValue = card.moistureIndex ?? card.displayRow?.measurement_value ?? null
-  const scale = getHostedGen2EnvironmentalScale(scaleMeasurementName, scaleValue)
-  const currentDescription = card.conditionLabel
-    ? `Current condition: ${card.conditionLabel}`
+  return (
+    <EnvironmentalScalePill
+      conditionLabel={card.conditionLabel}
+      measurementName={scaleMeasurementName}
+      value={scaleValue}
+    />
+  )
+}
+
+const EnvironmentalScalePill = ({
+  conditionLabel,
+  measurementName,
+  value,
+}: {
+  conditionLabel: string | null
+  measurementName: string | null | undefined
+  value: number | null
+}) => {
+  const scale = getHostedGen2EnvironmentalScale(measurementName, value)
+  const currentDescription = conditionLabel
+    ? `Current condition: ${conditionLabel}`
     : 'Current condition unavailable'
   const accessibleLabel = `${scale.label}. ${currentDescription}.`
   const style = scale.positionPercent === null

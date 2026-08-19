@@ -58,8 +58,11 @@ export const getCapabilityChartSeriesDescriptors = (
   cardDescriptors: readonly HostedGen2CardCatalogDescriptor[],
 ): HostedGen2ChartSeriesDescriptor[] => {
   const cardsByKey = new Map(cardDescriptors.map((card) => [card.key, card]))
+  const hasDerivedAirSources = cardsByKey.has('air-temperature') && cardsByKey.has('humidity')
   return getHostedGen2ChartSeriesDescriptors()
-    .filter((series) => cardsByKey.has(series.cardKey))
+    .filter((series) => series.derivedValue === 'feels-like' || series.derivedValue === 'dew-point'
+      ? hasDerivedAirSources
+      : cardsByKey.has(series.cardKey))
     .map((series) => {
       const cardDescriptor = cardsByKey.get(series.cardKey)
       return { ...series, label: cardDescriptor?.label ?? series.label, cardDescriptor }

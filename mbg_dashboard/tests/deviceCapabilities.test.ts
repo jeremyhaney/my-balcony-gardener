@@ -79,6 +79,7 @@ test('maps the complete nine-sensor Balcony02 declaration to eleven cards', () =
 
 test('legacy temperature aliases only the exact DS18B20 logical key', () => {
   const measurement = {
+    batch_id: '10000000-0000-4000-8000-000000000001',
     device_id: 'device-1', device_key: null, device_label: null, device_role: null,
     measured_at: '2026-08-16T12:00:00Z', firmware_version: null, build_profile: null,
     record_index: 0, sensor_key: 'ds18b20_temperature', sensor_type: 'DS18B20',
@@ -128,6 +129,6 @@ test('configuration loading, failure, zero, and ready states never imply fallbac
 test('commissioned chart series remain eligible without measurement rows', () => {
   const cards = getCapabilityCardDescriptors(getCurrentDeviceCapabilities([row()], new Date('2026-08-16T12:00:00Z')))
   assert.deepEqual(getCapabilityChartSeriesDescriptors(cards).map((series) => series.cardKey), [
-    'air-temperature', 'humidity', 'atmospheric-pressure',
+    'air-temperature', 'feels-like', 'dew-point', 'humidity', 'atmospheric-pressure',
   ])
 })

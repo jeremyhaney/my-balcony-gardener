@@ -2,6 +2,10 @@ import { isSupabaseConfigured, supabase } from './supabaseClient'
 import type { SensorData, SensorLogRow } from './types/sensorLog'
 import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
 import { getConfiguredDeviceId } from './historyControls'
+import {
+  HOSTED_GEN2_MEASUREMENT_COLUMNS,
+  markHostedGen2BatchIdentityUnavailable,
+} from './hostedGen2MeasurementQueryContract'
 
 export type HostedDataScope = 'demo' | 'customer' | 'support'
 
@@ -112,8 +116,6 @@ type SupabaseSensorLogRow = {
 
 const DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT = 1000
 const HOSTED_GEN2_MEASUREMENT_BATCH_SIZE = 1000
-const HOSTED_GEN2_MEASUREMENT_COLUMNS =
-  'device_id, device_key, device_label, device_role, measured_at, firmware_version, build_profile, record_index, sensor_key, sensor_type, physical_sensor_id, measurement_name, measurement_value, measurement_unit, valid, quality, reason, batch_created_at'
 const DEVICE_DIAGNOSTICS_COLUMNS =
   'device_id, device_key, device_label, device_role, hosted_visible, firmware_version, build_profile, last_heartbeat_at, heartbeat_age_seconds, heartbeat_reason, uptime_seconds, wifi_connected, wifi_rssi, wifi_status_code, wifi_status_label, last_wifi_disconnect_reason, last_wifi_disconnect_reason_label, wifi_reconnect_attempts_since_boot, wifi_full_recovery_attempts_since_boot, wifi_disconnects_since_boot, wifi_ip_acquisitions_since_boot, last_wifi_disconnect_uptime_seconds, last_wifi_ip_acquired_uptime_seconds, last_wifi_activity, last_http_status, last_http_status_label, consecutive_failures, last_error_category, last_successful_measurement_post_at, last_successful_measurement_post_uptime_seconds, last_successful_status_post_at, last_successful_status_post_uptime_seconds, currently_watering, active_trigger_source, last_watering_at, last_watering_duration_seconds, free_heap_bytes, minimum_free_heap_bytes'
 const WATERING_EVENT_COLUMNS =
@@ -314,7 +316,9 @@ export async function fetchHostedGen2Measurements(
       throw error
     }
 
-    const batchRows = (data ?? []) as HostedGen2MeasurementRow[]
+    const batchRows = markHostedGen2BatchIdentityUnavailable(
+      (data ?? []) as unknown as Omit<HostedGen2MeasurementRow, 'batch_id'>[],
+    )
     rows.push(...batchRows)
 
     if (batchRows.length < batchEnd - batchStart + 1) {
