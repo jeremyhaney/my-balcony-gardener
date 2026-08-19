@@ -37,13 +37,13 @@ Phase 8 advances the current working Gen2 product through commissioned measureme
 - Phase 8C.1 capability design and Phase 8C.2 Support implementation are operationally closed. See [`docs/product/phase8c1-hosted-frontend-capability-integration-design.md`](./product/phase8c1-hosted-frontend-capability-integration-design.md).
 - Phase 8C.3A–D Evidence State is production-validated and operationally closed: discovery/decisions, design closeout, implementation, then deterministic and production validation/closeout. See [`docs/product/phase8c3c-evidence-state-implementation.md`](./product/phase8c3c-evidence-state-implementation.md) and [`docs/product/phase8c3d-evidence-state-production-validation-and-closeout.md`](./product/phase8c3d-evidence-state-production-validation-and-closeout.md).
 - Phase 8C.4 Measurement-Quality Gates is complete, committed, and pushed. It implements approved product/provider plausibility, last-presentation-eligible recovery, Support diagnostics, and trend exclusion while preserving original evidence. Validation passed 28/28 tests, lint, build, `git diff --check`, and Jeremy's local appearance/behavior review. See the [design](./product/phase8c4-measurement-quality-gates-design.md) and [implementation](./product/phase8c4-measurement-quality-gates-implementation.md).
-- **Phase 8C.5A Environmental Presentation Design is documentation-complete, and Phase 8C.5B implementation is complete and locally validated.** The implementation applies measurement-specific conditions and scales, assumes current unless evidence says otherwise, preserves the unchanged 50-minute/95-minute evidence policy, and adds no query or Disk I/O. See the [design](./product/phase8c5a-environmental-presentation-design.md) and [implementation](./product/phase8c5b-environmental-presentation-implementation.md). Separate authenticated production validation after push is not yet claimed.
-- After 8C.5B environmental-presentation implementation closes, select the next priority explicitly rather than inheriting a phase number. Candidates include Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, major UI modernization, and pressing site work from the “Fix watering events and thresholds” task—especially complete watering-event visibility and clear threshold presentation.
+- **Phase 8C.5A Environmental Presentation Design is documentation-complete, and Phase 8C.5B implementation is complete and hosted-validated.** The implementation applies measurement-specific conditions and scales, assumes current unless evidence says otherwise, preserves the unchanged 50-minute/95-minute evidence policy, and adds no query or Disk I/O. Jeremy confirmed hosted validation passed on 2026-08-19. See the [design](./product/phase8c5a-environmental-presentation-design.md) and [implementation](./product/phase8c5b-environmental-presentation-implementation.md).
+- **The post-8C.5 priority sequence is approved and numbered:** Phase 8D restores recently broken watering-event visibility; Phase 8E adds Feels Like and Dew Point; Phase 8F inventories, contains, and retires Gen1 risk; Phase 8G presents the actual watering threshold without changing it; Phase 8H combines real customer adoption with customer-led UI modernization; and Phase 8I builds the deterministic Demo after that product direction stabilizes. See the [approved sequence](./product/phase8-post-8c5-priority-sequence.md).
 - Former Phase 8D/8E schedule and sensor-assisted timer work is deferred to **Phase 9: Optional Local Watering Automation**, because it is a distinct secondary product direction. Phase 9A is local schedule configuration and controller persistence; Phase 9B is sensor-assisted scheduled watering with conservative skip/allow behavior. Neither is current or implied by completion of the working Gen2 path.
 
 The compact roadmap near the top is the current planning view. Detailed phase history below remains historical evidence and may be reorganized in a later, separately prioritized documentation cleanup.
 
-### Active Phase 8C Slice Map
+### Active Phase 8 Continuation Map
 
 | Slice | Status | Purpose | Visible change? |
 | --- | --- | --- | --- |
@@ -53,8 +53,13 @@ The compact roadmap near the top is the current planning view. Detailed phase hi
 | **8C.3D — Production validation and closeout** | Complete | Verify deployed behavior and document the result | No new behavior |
 | **8C.4 — Measurement-quality gates** | Complete | Handle implausible values such as `362 °F` at the correct firmware/ingestion/storage/frontend boundaries | Yes—bad values stop masquerading as trustworthy readings |
 | **8C.5A — Environmental presentation design** | Complete | Approved condition ranges, terminology, measurement-specific colors, evidence precedence, and acceptance cases | No |
-| **8C.5B — Environmental presentation implementation** | Complete / local validation | Applied approved conditions, scale pills, colors, and evidence precedence | **Yes—intentional presentation change** |
-| **Later — priority decision required** | Unnumbered | Compare watering-event/threshold site fixes, Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization | Separate work |
+| **8C.5B — Environmental presentation implementation** | Complete / hosted validation | Applied approved conditions, scale pills, colors, and evidence precedence | **Yes—intentional presentation change** |
+| **8D — Watering-event visibility restoration** | Next | Restore the recently lost existing hosted watering-event display before adding features | Regression repair; no watering change |
+| **8E — Feels Like and Dew Point** | Planned | Add familiar derived microclimate values with honest paired-evidence rules | Yes—new display-only values |
+| **8F — Gen1 risk review, containment, and retirement** | Planned | Inventory and retire recurring legacy assumptions that create delivery and correctness risk | Bounded cleanup slices |
+| **8G — Watering-threshold presentation** | Planned | Show the actual configured threshold and context without changing it or implying agronomic authority | Read-only presentation |
+| **8H — Customer adoption and customer-led UI modernization** | Planned | Let a real authorized customer journey drive adoption and targeted modernization | Separate approved 8H.x slices |
+| **8I — Deterministic Demo** | Planned | Build a stable curated public showcase after adoption and UI direction settle | No live/protected dependency |
 
 Phase 9A/9B optional automation is deliberately outside this sequence.
 
@@ -88,8 +93,13 @@ Legend:
 | ✅ COMPLETE | Phase 8C.3A–D | Commissioned Evidence-State Discovery Through Closeout | Discovery, policy decisions, design closeout, runtime implementation, deterministic validation, and authenticated production closeout are complete. |
 | ✅ COMPLETE | Phase 8C.4 | Measurement-Quality Gates | Provider-specific plausibility gates, last-presentation-eligible recovery, Support diagnostics, and trend filtering are complete and locally validated. |
 | ✅ COMPLETE | Phase 8C.5A | Environmental Presentation Design | Approved condition ranges, terminology, measurement-specific colors, unchanged evidence precedence, and acceptance cases; documentation only. |
-| ✅ COMPLETE | Phase 8C.5B | Environmental Presentation Implementation | Approved conditions, card colors, full-scale pills, current-condition pills, and evidence precedence are implemented and locally validated; production validation is not yet claimed. |
-| 🟡 PRIORITY DECISION | Post-8C.5 queue | Site and product follow-ons | Choose among watering-event/threshold fixes, Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization. |
+| ✅ COMPLETE | Phase 8C.5B | Environmental Presentation Implementation | Approved conditions, card colors, full-scale pills, current-condition pills, and evidence precedence are implemented and hosted-validated. |
+| ➡️ NEXT | Phase 8D | Watering-Event Visibility Restoration | Repair the recently lost existing function; preserve read-only evidence and local watering authority. |
+| 🟡 PLANNED | Phase 8E | Feels Like and Dew Point | Small derived microclimate presentation slice with exact paired-evidence rules. |
+| 🟡 PLANNED | Phase 8F | Gen1 Risk Review, Containment, and Retirement | Inventory, test, isolate, and remove proven Gen1 remnants so later work no longer repeatedly inherits legacy risk. |
+| 🟡 PLANNED | Phase 8G | Watering-Threshold Presentation | Present actual controller configuration honestly without changing thresholds or watering authority. |
+| 🟡 PLANNED | Phase 8H | Customer Adoption and Customer-Led UI Modernization | Use an authorized customer-visible commissioned device and real journey to drive targeted product modernization. |
+| 🟡 PLANNED | Phase 8I | Deterministic Demo | Curated non-live public showcase after customer and UI direction stabilize. |
 | 🧊 DEFERRED | Phase 9A | Local Schedule Foundation | Optional secondary direction: local schedule UI and controller-side persistence. |
 | 🧊 DEFERRED | Phase 9B | Sensor-Assisted Scheduled Watering | Optional secondary direction: fixed-sensor skip/allow behavior after separate safety and evidence design. |
 | 🧊 PARKED | Future intelligence / broader product tracks | Use history to improve threshold/window models after enough trusted evidence exists | Do not pull future intelligence, hosted command/control, or full docs reorganization into Phase 8.0. |
@@ -174,12 +184,17 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 - Applied the approved measurement-specific descriptions, colors, full-scale footer pills, current-position markers, and assume-current-unless-not upper-right pills.
 - Preserved Phase 8C.3 evidence escalation and Phase 8C.4 presentation eligibility without query, SQL, firmware, device, or watering changes.
 - Validation passed 37/37 tests, lint, build, `git diff --check`, desktop/mobile inspection, and Jeremy's local appearance/behavior review. Immediate review refinements standardize ordinary card values to one decimal, align the humidity axis with its dark-teal series, and contain wrapping condition pills at vertical/tablet-like widths.
-- Authority: [`docs/product/phase8c5b-environmental-presentation-implementation.md`](./product/phase8c5b-environmental-presentation-implementation.md). Separate authenticated production validation after push is not claimed.
+- Authority: [`docs/product/phase8c5b-environmental-presentation-implementation.md`](./product/phase8c5b-environmental-presentation-implementation.md). Jeremy confirmed hosted validation passed on 2026-08-19.
 
-#### Post-8C.5 Priority Decision — UNNUMBERED
+#### Phase 8D through Phase 8I — APPROVED SEQUENCE
 
-- Compare pressing watering-event visibility and threshold-presentation work with Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization.
-- Do not assign the next phase number until the priority and boundary are chosen.
+- **Phase 8D:** Watering-Event Visibility Restoration. Regression repair comes first; threshold presentation is separate unless diagnosis proves it inseparable.
+- **Phase 8E:** Feels Like and Dew Point. Small, familiar, display-only microclimate derivations with exact source eligibility and time-alignment rules.
+- **Phase 8F:** Gen1 Risk Review, Containment, and Retirement. Inventory is only the first step; the objective is tested containment and removal of proven legacy hazards.
+- **Phase 8G:** Watering-Threshold Presentation. Show actual configuration and context without changing the threshold or implying scientific recommendation.
+- **Phase 8H:** Customer Adoption and Customer-Led UI Modernization. Use a real authorized customer journey; divide into 8H.x slices when their boundaries are approved.
+- **Phase 8I:** Deterministic Demo. Build curated non-live showcase data after adoption and UI direction settle.
+- Authority and rationale: [`docs/product/phase8-post-8c5-priority-sequence.md`](./product/phase8-post-8c5-priority-sequence.md).
 
 #### Phase 9 - Optional Local Watering Automation — DEFERRED
 
@@ -251,7 +266,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 - Phase 8A.1 status: COMPLETE; Prototype01 installed sensor profile cleanup disables removed VEML6030 and GPIO34 legacy moisture for `bench-proto-gen2`, reports SEN0308/SEN0562 not-installed channel truth, preserves provider/channel metadata, and changes no watering authority or Balcony01 GPIO34/control behavior.
 - Phase 8A status: COMPLETE; hosted Support View derives a display-only gardener Moisture Index from Prototype01 SEN0308 A0 raw ADC, cleans the main cards into Soil/Light/Air Conditions, keeps raw ADC as supporting evidence, treats expected `profile_not_installed` rows as non-warning top-level status evidence, and changes no watering authority.
 - Phase 8B parent status: COMPLETE. Phase 8B.1 through Phase 8B.4 retain their recorded completion evidence; Phase 8B.5 is COMPLETE / PRODUCTION VALIDATED in commits `a291be6` and `a8b282e`; Phase 8B.6 Hosted Short History Window Expansion is COMPLETE / PRODUCTION VALIDATED in commit `9b8eb0f`.
-- Phase 8C.1–8C.5B status: COMPLETE at their recorded evidence levels; 8C.5B is locally validated and separately approved for commit/push, without a production-validation claim. The post-8C.5 priority queue is intentionally unnumbered. Phase 9A/9B optional automation is DEFERRED.
+- Phase 8C.1–8C.5B status: COMPLETE at their recorded evidence levels; 8C.5B is committed, pushed, and hosted-validated. The approved next sequence is Phase 8D watering-event restoration, 8E Feels Like/Dew Point, 8F Gen1 risk retirement, 8G threshold presentation, 8H customer adoption/customer-led modernization, and 8I deterministic Demo. Phase 9A/9B optional automation is DEFERRED.
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -259,7 +274,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 
 ## Historical Recommended Phase Order
 
-The top `Current Roadmap Snapshot` is now the current planning view. This older phase-order list remains historical context until documentation reorganization is explicitly prioritized from the unnumbered follow-on queue.
+The top `Current Roadmap Snapshot` is now the current planning view. This older phase-order list remains historical context; the approved Phase 8D–8I sequence supersedes its recommendations where they differ.
 
 1. Phase 5D Validation - complete
 2. Phase 5D Closeout / merge - complete and merged to main

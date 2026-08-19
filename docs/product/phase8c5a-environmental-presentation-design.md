@@ -201,3 +201,5 @@ During Phase 8C.5B visual review, Jeremy refined light to a quieter gray-to-dayl
 Jeremy further approved an assume-current-unless-not presentation: ordinary current cards put concise condition wording in the upper-right pill and remove the separate condition line, while non-current or exception cards reserve that pill for evidence state.
 
 Phase 8C.5A is documentation-only and approved for closeout. Phase 8C.5B remains planned and requires separate implementation approval. After 8C.5B closes, the priority decision remains unnumbered among watering-event visibility/threshold presentation, Feels Like/Dew Point, customer adoption, deterministic Demo, Gen1 review, and major UI modernization.
+
+Subsequent roadmap decision, 2026-08-19: Phase 8C.5B was implemented and pushed, and the formerly unnumbered candidates are now sequenced as Phase 8D through Phase 8I in [`phase8-post-8c5-priority-sequence.md`](./phase8-post-8c5-priority-sequence.md). This later decision does not change the approved Phase 8C.5A design boundary.

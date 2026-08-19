@@ -2,7 +2,7 @@
 
 Date: 2026-08-18
 
-Status: Implementation complete and locally validated; Jeremy approved commit and push
+Status: Implementation complete, committed, pushed, and hosted-validated
 
 Authority: [Phase 8C.5A Environmental Presentation Design](./phase8c5a-environmental-presentation-design.md)
 
@@ -113,4 +113,6 @@ The existing Vite large-chunk advisory remains non-blocking and unchanged in kin
 
 ## Closeout boundary
 
-Jeremy approved the final local appearance and behavior and authorized documentation closeout, commit, and push on 2026-08-18. This record claims local deterministic and visual validation. It does not claim a separate authenticated production validation after the push.
+Jeremy approved the final local appearance and behavior and authorized documentation closeout, commit, and push on 2026-08-18. Jeremy confirmed the hosted validation passed on 2026-08-19. Phase 8C.5B is operationally closed at its documented frontend-only boundary.
+
+Subsequent roadmap decision, 2026-08-19: the follow-on candidates excluded from this implementation are now sequenced as Phase 8D through Phase 8I in [`phase8-post-8c5-priority-sequence.md`](./phase8-post-8c5-priority-sequence.md). Their numbering does not retroactively expand Phase 8C.5B.
