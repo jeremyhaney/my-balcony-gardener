@@ -2,7 +2,7 @@
 
 Date: 2026-08-19
 
-Status: Approved roadmap sequence; each phase still requires its own discovery, boundary approval, implementation approval, validation, and closeout
+Status: Approved roadmap sequence; Phase 8D is complete and hosted-validated, and Phase 8E is next. Each remaining phase still requires its own discovery, boundary approval, implementation approval, validation, and closeout.
 
 ## Decision
 
@@ -33,3 +33,7 @@ The former Phase 8D/8E optional schedule and sensor-assisted watering work remai
 - Phase 9A/9B remains deferred optional local automation and is not implied by any Phase 8 work.
 - No phase in this roadmap is authorized to change firmware, SQL, deployment, customer visibility, watering behavior, thresholds, or control authority merely by appearing here.
 
+## Execution status
+
+- **Phase 8D is operationally closed.** Commit `406bce9` restored paired start/terminal watering cycles, normal completions and safety cutoffs, honest sub-second wording, type-specific chart/history presentation, selected-device/window behavior, and count-preserving in-window chart markers. Jeremy confirmed the authenticated hosted result on 2026-08-19. See [`phase8d-watering-event-visibility-restoration-closeout.md`](./phase8d-watering-event-visibility-restoration-closeout.md).
+- **Phase 8E is next.** Its roadmap description is discovery authority only. Formula selection, source pairing, evidence behavior, placement, acceptance cases, implementation, and production validation still require the normal approval sequence.
