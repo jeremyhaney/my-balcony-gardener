@@ -91,13 +91,15 @@ type WateringMarkerLabelProps = {
   lane: number
   anchor: WateringLabelAnchor
   markerId: string
+  color: string
+  tone: HostedWateringCycle['tone']
   viewBox?: {
     x?: number
     y?: number
   }
 }
 
-const MAX_WATERING_MARKER_COUNT = 6
+const MAX_WATERING_LABEL_COUNT = 10
 const LEFT_AXIS_WIDTH = 52
 const RIGHT_AXIS_WIDTH = 54
 const MINIMUM_PLOT_WIDTH = 560
@@ -209,13 +211,23 @@ const HostedGen2TrendChart = ({
     () => getVisibleWateringMarkers(wateringCycles, chartTimeDomain),
     [chartTimeDomain, wateringCycles],
   )
+  const labeledWateringMarkers = useMemo(
+    () => visibleWateringMarkers.slice(0, MAX_WATERING_LABEL_COUNT),
+    [visibleWateringMarkers],
+  )
   const wateringMarkerPresentations = useMemo(
     () => prepareWateringMarkerPresentations(
-      visibleWateringMarkers,
+      labeledWateringMarkers,
       chartTimeDomain,
       MINIMUM_PLOT_WIDTH,
     ),
-    [chartTimeDomain, visibleWateringMarkers],
+    [chartTimeDomain, labeledWateringMarkers],
+  )
+  const wateringMarkerPresentationById = useMemo(
+    () => new Map(
+      wateringMarkerPresentations.map((presentation) => [presentation.cycle.id, presentation]),
+    ),
+    [wateringMarkerPresentations],
   )
   const wateringLabelLaneCount = wateringMarkerPresentations.length === 0
     ? 0
@@ -425,30 +437,31 @@ const HostedGen2TrendChart = ({
                 labelStyle={{ color: '#111827', fontWeight: 700, marginBottom: '0.25rem' }}
               />
               <Legend />
-              {primaryAxisId ? wateringMarkerPresentations.map(({
-                cycle,
-                label,
-                lane,
-                anchor,
-              }) => (
-                <ReferenceLine
-                  key={cycle.id}
-                  x={cycle.startTimestampMs}
-                  yAxisId={primaryAxisId}
-                  stroke="#2563eb"
-                  strokeDasharray="4 4"
-                  strokeWidth={1.5}
-                  ifOverflow="visible"
-                  label={
-                    <WateringMarkerLabel
-                      anchor={anchor}
-                      label={label}
-                      lane={lane}
-                      markerId={cycle.id}
-                    />
-                  }
-                />
-              )) : null}
+              {primaryAxisId ? visibleWateringMarkers.map((cycle) => {
+                const presentation = wateringMarkerPresentationById.get(cycle.id)
+
+                return (
+                  <ReferenceLine
+                    key={cycle.id}
+                    x={cycle.startTimestampMs}
+                    yAxisId={primaryAxisId}
+                    stroke={cycle.markerColor}
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                    ifOverflow="visible"
+                    label={presentation ? (
+                      <WateringMarkerLabel
+                        anchor={presentation.anchor}
+                        color={cycle.markerColor}
+                        label={presentation.label}
+                        lane={presentation.lane}
+                        markerId={cycle.id}
+                        tone={cycle.tone}
+                      />
+                    ) : undefined}
+                  />
+                )
+              }) : null}
               {selectedSeries.map((series) => (
                 <Line
                   key={series.dataKey}
@@ -774,6 +787,8 @@ const WateringMarkerLabel = ({
   lane,
   anchor,
   markerId,
+  color,
+  tone,
   viewBox,
 }: WateringMarkerLabelProps) => {
   const x = viewBox?.x
@@ -793,7 +808,8 @@ const WateringMarkerLabel = ({
       className="hosted-gen2-trend-chart-watering-label"
       data-watering-label-lane={lane}
       data-watering-marker-id={markerId}
-      fill="#1d4ed8"
+      data-watering-event-tone={tone}
+      fill={color}
       fontSize={11}
       fontWeight={800}
       pointerEvents="none"
@@ -812,7 +828,7 @@ const getChartTimeDomain = (
 ): TimeDomain => {
   const timestamps = chartData.map((point) => point.timestampMs)
 
-  wateringCycles.slice(0, MAX_WATERING_MARKER_COUNT).forEach((cycle) => {
+  wateringCycles.forEach((cycle) => {
     if (Number.isFinite(cycle.startTimestampMs)) {
       timestamps.push(cycle.startTimestampMs)
     }
@@ -843,7 +859,6 @@ const getVisibleWateringMarkers = (
         cycle.startTimestampMs >= chartTimeDomain[0] &&
         cycle.startTimestampMs <= chartTimeDomain[1],
     )
-    .slice(0, MAX_WATERING_MARKER_COUNT)
 
 const formatAxisTimestamp = (
   timestampMs: number,

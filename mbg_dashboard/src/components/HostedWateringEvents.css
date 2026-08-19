@@ -96,6 +96,54 @@
   overflow-wrap: anywhere;
 }
 
+.hosted-watering-event-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.12rem 0.48rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.hosted-watering-event-type.is-button {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.hosted-watering-event-type.is-automatic {
+  border-color: #86efac;
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.hosted-watering-event-type.is-manual {
+  border-color: #d8b4fe;
+  background: #f3e8ff;
+  color: #581c87;
+}
+
+.hosted-watering-event-type.is-timeout-safety {
+  border-color: #fbbf24;
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.hosted-watering-event-type.is-reservoir-safety {
+  border-color: #fda4af;
+  background: #ffe4e6;
+  color: #881337;
+}
+
+.hosted-watering-event-type.is-device-safety {
+  border-color: #94a3b8;
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
 .hosted-watering-events-older {
   margin-top: 0.5rem;
 }

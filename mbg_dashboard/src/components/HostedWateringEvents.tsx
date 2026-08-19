@@ -1,4 +1,7 @@
-import type { HostedWateringCycle } from '../hostedWateringCycles'
+import {
+  formatWateringCycleDuration,
+  type HostedWateringCycle,
+} from '../hostedWateringCycles'
 import './HostedWateringEvents.css'
 
 type HostedWateringEventsProps = {
@@ -33,7 +36,7 @@ const HostedWateringEvents = ({
 
       {!isBlockingLoad && !hasCycles ? (
         <p className="hosted-watering-events-note">
-          No completed watering cycles recorded for this device in this window yet.
+          No watering cycles recorded for this device in this window yet.
         </p>
       ) : null}
 
@@ -66,9 +69,16 @@ const WateringCycleTable = ({ cycles }: { cycles: HostedWateringCycle[] }) => (
       <tbody>
         {cycles.map((cycle) => (
           <tr key={cycle.id}>
-            <td>{formatTimestamp(cycle.startAt)}</td>
-            <td>{formatDuration(cycle.durationSeconds)}</td>
-            <td>{cycle.displayReason}</td>
+            <td>
+              {cycle.startTimeSource === 'reconstructed' ? 'Approx. ' : ''}
+              {formatTimestamp(cycle.startAt)}
+            </td>
+            <td>{formatWateringCycleDuration(cycle.durationSeconds)}</td>
+            <td>
+              <span className={`hosted-watering-event-type is-${cycle.tone}`}>
+                {cycle.displayReason}
+              </span>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -85,8 +95,5 @@ const formatTimestamp = (value: string | null | undefined): string => {
 
   return Number.isFinite(parsedValue.getTime()) ? parsedValue.toLocaleString() : value
 }
-
-const formatDuration = (value: number): string =>
-  `${value.toLocaleString()} ${value === 1 ? 'second' : 'seconds'}`
 
 export default HostedWateringEvents
