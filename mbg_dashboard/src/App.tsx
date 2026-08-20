@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import SensorLogViewer, { type DemoGuideTarget } from "./components/SensorLogViewer";
 import PublicLandingPage, { LoginModal } from "./components/PublicLandingPage";
 import LoginPanel from "./components/LoginPanel";
@@ -12,10 +12,6 @@ import "./App.css";
 
 const isHostedReadonlyMode =
   import.meta.env.VITE_MBG_DASHBOARD_MODE === "hosted-readonly";
-
-const LiveStats = isHostedReadonlyMode
-  ? null
-  : lazy(() => import("./components/LiveStats"));
 
 function App() {
   if (isHostedReadonlyMode) {
@@ -40,13 +36,6 @@ function App() {
             Your personal assistant for plant care and weather insights
           </p>
         </header>
-
-        {/* Live Stats Component */}
-        {!isHostedReadonlyMode && LiveStats && (
-          <Suspense fallback={<div>Loading live stats...</div>}>
-            <LiveStats />
-          </Suspense>
-        )}
 
         {/* Sensor Logs Component */}
         <SensorLogViewer isHostedReadonly={isHostedReadonlyMode} />

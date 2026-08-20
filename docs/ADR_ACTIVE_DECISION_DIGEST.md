@@ -21,16 +21,16 @@ The original files in [`docs/adr`](./adr) remain the historical decision log and
 - No Remote Water Now.
 - No hosted calls to local ESP32 endpoints.
 - No Supabase command/control.
-- Manual Water Now remains local and supervised.
+- Any retained firmware `/water-now` use remains local and supervised; the browser frontend action is retired.
 - Gen2 measurements remain separate from the legacy `SensorLogRow` compatibility contract.
 - Control eligibility remains an internal firmware/control-design concern and historical evidence field; it is not part of new cleaned Gen2 `/measurements` records and is never hosted command/control.
 - ADR 0023 locks the MBG internal short-range I2C wire-color convention as RED = 3.3V, BLACK = GND, GREEN = GPIO21 / SDA, and WHITE = GPIO22 / SCL. GPIO21 remains SDA and GPIO22 remains SCL. Factory SEN0562 lead colors, including BLUE = GND and YELLOW = SCL, are cable exceptions and do not redefine the MBG internal convention.
 
 ## Local Runtime And Watering Control Boundary
 
-ADR 0001 is the historical/foundational local working baseline: the local ESP32 path owns current values and local Manual Water Now. ADR 0002 keeps restored history separate from local live/control. ADR 0004 restores current telemetry writes to Supabase while preserving local `/logs` and `/water-now` as the live/control path.
+ADR 0001 is the historical/foundational local working baseline: the local ESP32 path owned current values and local Manual Water Now. ADR 0002 keeps restored history separate from that historical local live/control path. ADR 0004 restored current telemetry writes to Supabase while preserving firmware `/logs` and `/water-now`; Phase 8F.2 later removed their remaining browser consumer without changing the firmware endpoints.
 
-ADR 0006 locks watering safety: ESP32 firmware owns automatic watering and pump shutoff, fixed-duration watering and cooldown remain local, and Supabase must not command watering. ADR 0007 separates sparse Supabase telemetry cadence from fast local dashboard polling and immediate watering evidence. ADR 0011 keeps offline autonomy: Wi-Fi, internet, and Supabase are not required for local automatic watering when local readings and local gates are valid.
+ADR 0006 locks watering safety: ESP32 firmware owns automatic watering and pump shutoff, fixed-duration watering and cooldown remain local, and Supabase must not command watering. ADR 0007 historically separated sparse Supabase telemetry cadence from fast local dashboard polling and immediate watering evidence; Phase 8F.2 retires that frontend polling. ADR 0011 keeps offline autonomy: Wi-Fi, internet, and Supabase are not required for local automatic watering when local readings and local gates are valid.
 
 ADR 0018 defines future Gen2 control-quality and freshness gates. It remains an active design anchor, but it does not change current thresholds, duration, cooldown, moisture mapping, pins, sensors, device IDs, or current `control_eligible` behavior by itself.
 
@@ -40,7 +40,7 @@ ADR 0019 is present in this repo and active for runtime Wi-Fi recovery and netwo
 
 ADR 0009 locks hosted-readonly mode: hosted pages may read Supabase history, hosted Gen2 measurement views, and hosted diagnostics views, but must not render Water Now, call `/logs`, call `/water-now`, bundle local control paths, or become command/control.
 
-ADR 0013 adds multi-unit visibility while keeping history device selection separate from local control target selection. In local/default mode, manual actions are gated by selected device role and live identity match. In hosted-readonly mode, device/window route/query state is navigation and display state only, not authorization or command authority.
+ADR 0013 added multi-unit visibility while keeping history device selection separate from local control target selection and gated the now-retired manual surface by selected role and live identity. Phase 8F.2 removes local control target selection and manual actions from the frontend; history device selection remains navigation/display state, not authorization or command authority.
 
 ADR 0020 keeps the customer product path read-only. Hosted customer use is daily visibility, not app-based watering. Authenticated customer/support views may filter read paths by membership, but support/admin visibility remains read-only and must not create remote watering authority.
 

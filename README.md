@@ -6,11 +6,9 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 - Firmware compiles on BJ3 with PlatformIO.
 - Frontend lints, builds, runs, and loads on BJ3.
-- The local ESP32 path is the active live/control working path today.
-- ESP32 is reachable locally at `10.0.0.200`.
-- `GET /logs` works from BJ3, phone, and other devices on the local network when the ESP32 is powered independently from USB power.
-- Local ESP32 live sensor values display in the UI.
-- Manual Water Now works from the local site.
+- The frontend no longer contains a direct browser-to-device live/control path.
+- Firmware `/logs` and `/water-now` handlers remain unchanged, but the dashboard no longer calls them.
+- Local/default mode retains the Supabase-backed Sensor History path without `LiveStats` or a manual Water Now action.
 - ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values.
@@ -23,8 +21,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Supabase `sensor_events` is validated as a separate manual operational event log for sensor swaps, moves, cleaning, calibration notes, maintenance, and experiment markers.
 - ADR 0006 is accepted and locks the Phase 5C watering logic and safety philosophy.
 - A `15`-minute automatic watering cooldown guard has been implemented in firmware, uploaded to the ESP32, and field validated.
-- Manual Water Now remains a local/supervised testing and hydraulic-prove-out feature and intentionally bypasses the automatic cooldown.
-- Manual Water Now can still be run again after a completed manual watering cycle.
+- The historical local Manual Water Now frontend has been retired; this does not change firmware watering behavior or the firmware `/water-now` handler.
 - Automatic watering resumes after cooldown if moisture remains below `MOISTURE_THRESHOLD`.
 - Phase 5D telemetry logging cadence has been field validated on the feature branch `phase5d-telemetry-logging-cadence`.
 - Normal Supabase telemetry now posts on approximately a 15-minute cadence (vs. previous 5 seconds).
@@ -35,8 +32,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Soil moisture remains a fresh analog read and is not cached because it controls automatic watering behavior.
 - Sensor History chart rows are explicitly sorted chronologically by timestamp before rendering.
 - Watering-start rows are displayed as vertical history markers using Supabase `sensor_logs.data.watering = true`.
-- Local `/logs` endpoint still provides frequent live readings for the local dashboard.
-- Local dashboard updates frequently because the frontend polls the ESP32 `/logs` endpoint directly.
+- The frontend no longer polls a device `/logs` endpoint; local `/logs` remains a firmware compatibility endpoint only.
 - Phase 6A hosted read-only dashboard was merged to `main`.
 - Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
 - Cloudflare Pages project `my-balcony-gardener` is connected to GitHub, and Production deployment from `main` is validated.
@@ -75,7 +71,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 7L.3 hosted-readonly routing is implemented pending validation and review: `/` is a minimal public landing page with an embedded real-data snapshot, `/demo` is the fuller public read-only demo with a dismissible visitor guide and no prominent site-assignment shell, `/mygarden` is the customer `My Garden` dashboard shell without the prominent site-assignment shell, `/app` remains a backward-compatible alias, `/login` opens the landing page with a placeholder login dialog, and `/support` is a temporary read-only support view reachable by direct URL.
 - As a short-term containment correction, the public landing snapshot and `/demo` temporarily use live Balcony02 (`balcony02`, `7e5bd328-ad68-4389-a71a-fa5cd01b3813`) data. The Demo's single-option Device selector and existing guide are intentionally retained; a deterministic interactive sample Demo is deferred to its own future phase.
 - The Phase 7L.3 landing snapshot uses real hosted telemetry from Balcony02 and does not introduce fake telemetry, fake `sensor_logs` rows, or ghost devices.
-- Local/default dashboard behavior remains unchanged; Manual Water Now remains available only through the local/default path.
+- Local/default dashboard mode now renders Sensor History without direct local ESP32 polling or manual action controls.
 - Remote command/control (Remote Water Now) is not part of MVP.
 - Supabase remains read-only for telemetry and history; it is not used for command/control.
 - Supabase outages may interrupt hosted history/Device Status freshness, but must not prevent local watering logic.
@@ -95,8 +91,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 7B Gen2 measurements are local-only; no `SensorLogRow`, Supabase SQL, hosted dashboard, or frontend runtime changes were made.
 - Phase 7C's Prototype01-only local measurement panel was historically implemented and runtime validated against the then-current bench contracts.
 - Phase 8F.1 retires that unsupported frontend panel, its 5-second Prototype01 endpoint polling, and its exclusively owned pre-current-contract types and request helpers.
-- Existing `LiveStats` / `/logs` and local Water Now remain as the shared Gen1/local compatibility and control path for later Phase 8F review.
-- The shared device registry, local-control targets, firmware endpoints, build profiles, and Gen1 firmware remain unchanged by this frontend-only retirement.
+- Phase 8F.2 retires `LiveStats`, its selected-target five-second `/logs` polling, browser identity gating, local Water Now action, and exclusively owned local-control target definitions.
+- The shared device registry, `sensor_logs` / `SensorLogRow` history path, firmware endpoints, build profiles, and Gen1 firmware remain unchanged by these frontend-only retirements.
 - Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete.
 - Gen2 raw measurement storage uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time.
 - The full Gen2 `records[]` array is stored as `jsonb`; `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
@@ -146,16 +142,13 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 ## Local Working Path
 
-1. The ESP32 firmware runs locally on the device and exposes the local endpoints used by the dashboard.
+1. The ESP32 firmware runs locally on the device and retains its local endpoints for direct inspection and compatibility.
 2. The React/Vite frontend in [`mbg_dashboard`](./mbg_dashboard) is the active UI.
-3. Gen1/current compatibility path: `LiveStats` polls `/logs` for live sensor values and keeps the existing local/manual behavior.
-4. Local ESP32 path: live sensor values and Manual Water Now.
-5. Supabase read/history path: current and historical Sensor History graph data only.
-6. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
-7. Gen2 batch storage path: firmware posts complete `/measurements` packages to `public.sensor_measurement_batches`, and `public.sensor_measurements_flat` derives chart/query rows.
-8. Supabase is not the live/current value path and does not replace local ESP32 control.
-9. Supabase is not used for remote command/control.
-10. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
+3. Local/default frontend mode renders the existing Supabase-backed `sensor_logs` Sensor History path and does not call device `/logs` or `/water-now` endpoints.
+4. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
+5. Gen2 batch storage path: firmware posts complete `/measurements` packages to `public.sensor_measurement_batches`, and `public.sensor_measurements_flat` derives chart/query rows.
+6. Supabase is not used for remote command/control.
+7. Local automatic watering logic and pump shutoff remain firmware-owned when Wi-Fi, internet, or Supabase is unavailable.
 
 ## Hosted Read-Only Dashboard
 
@@ -192,10 +185,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Friendly names are separate labels, not telemetry identity.
 - Hosted read-only mode shows Supabase Sensor History and read-only Device Status and keeps local ESP32 controls unavailable.
 - Hosted read-only mode has no Water Now and does not call local ESP32 `/logs` or `/water-now`.
-- Local/default dashboard mode supports multi-unit Local Control Target selection for known ESP32 units.
-- Known local targets are Installed Balcony Unit (`controller`, `10.0.0.200`), Bench Prototype Unit (`bench`, `10.0.0.192`), and Balcony Sensor Scout 01 (`sensor-scout`, `10.0.0.180`).
-- Local/default dashboard mode still renders `LiveStats`, selected-target `/logs` polling, and local manual action controls.
-- Local manual action is identity-gated by the selected target and live `/logs` `device_id`; balcony uses Water Now wording, bench uses relay-test wording, and scout has no manual command authority.
+- Local/default dashboard mode also has no direct browser-to-device polling or manual action controls; it retains Sensor History.
+- The shared device registry remains because history, customer-site, and Demo selection still consume it.
 - Supabase remains telemetry/history only, not command/control.
 - No-Wi-Fi operation is autonomous/headless for now; installer/customer AP or captive-portal provisioning is deferred.
 
@@ -234,12 +225,11 @@ npm run dev
 
 ## Current Local Endpoints
 
-Gen1/current compatibility path:
+Firmware compatibility endpoints (no current frontend consumer):
 
-- `LiveStats`
 - `GET /` - health/basic device response
-- `GET /logs` - current sensor payload used by the Gen1/current compatibility path
-- `POST /water-now` - existing local/manual behavior
+- `GET /logs` - retained current sensor payload
+- `POST /water-now` - retained local/manual firmware behavior
 
 Gen2 firmware inspection endpoints (no current local frontend consumer):
 
@@ -249,7 +239,7 @@ Gen2 firmware inspection endpoints (no current local frontend consumer):
 
 - Field-unit Gen2 endpoints include compile-time `device_label`, `firmware_version`, and `build_profile` provenance for quick local inspection.
 - Gen2 `/status` and `/capabilities` include top-level `reported_at` for snapshot generation time; `/measurements` includes top-level `measured_at` for measurement package/sample time.
-- Installed/scout Gen2 retain `GET /logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1` to protect current local scripts/UI during migration.
+- Installed/scout Gen2 retain `GET /logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`; no current frontend consumer depends on it.
 - `GET /logs` remains intentionally absent on `bench-proto-gen2`; future frontend work should migrate local Gen2 display to `/measurements`.
 
 ## Deferred For Later

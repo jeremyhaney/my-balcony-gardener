@@ -20,20 +20,20 @@ Source-pack compression/reference documents are available for future ChatGPT/Cod
   - Controls watering behavior already implemented in firmware
 - React/Vite dashboard
   - Runs from [`mbg_dashboard`](../mbg_dashboard)
-  - Displays current sensor values
-  - Triggers Manual Water Now from the local site
+  - Displays Supabase-backed history and hosted Gen2 readings
+  - Does not call local device endpoints or expose Manual Water Now
 
 ## Approved Runtime And Data Flow
 
-1. The ESP32 is reachable on the local network.
-2. The dashboard runs locally from [`mbg_dashboard`](../mbg_dashboard).
-3. The current approved working path for live values and manual watering is the local ESP32 fallback path.
-4. The active local endpoints used by the current baseline are:
+1. ESP32 firmware retains local watering authority and its local endpoints.
+2. The dashboard runs from [`mbg_dashboard`](../mbg_dashboard) without a direct browser-to-device path.
+3. Local/default frontend mode retains the Supabase-backed `sensor_logs` history path; hosted-readonly mode also reads hosted Gen2 measurement/diagnostic views.
+4. Retained firmware endpoints with no current frontend consumer include:
    - `GET /`
    - `GET /logs`
    - `POST /water-now`
 5. The ESP32 also posts telemetry directly to Supabase `sensor_logs` for history storage.
-6. Supabase-backed history remains a separate read path in the frontend and must not replace the local live/control path.
+6. Supabase-backed frontend reads remain telemetry/history/diagnostics only and must not become command/control.
 7. Supabase `sensor_events` is a separate manual operational event log for physical or system changes that help interpret telemetry.
 8. `sensor_events` is not the live/current path, not command/control, and not a replacement for `sensor_logs` telemetry history.
 
@@ -46,7 +46,7 @@ ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-l
 - Automatic watering remains fixed-duration batch watering.
 - Pump shutoff remains local and does not depend on Supabase.
 - Automatic watering includes a post-watering cooldown guard between automatic cycles.
-- Manual Water Now remains local/supervised and is intentionally not blocked by the automatic cooldown.
+- The retained firmware `/water-now` behavior remains local/supervised and is intentionally not blocked by the automatic cooldown; Phase 8F.2 removes its browser frontend action.
 - Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
 - Phase 6H approves raw soil ADC visibility in telemetry for diagnosis.
 - Repeated-reading validation, filtering, calibration, and automatic-watering invalid-read rejection remain deferred.
@@ -67,19 +67,19 @@ ADR 0011 in [`docs/adr/0011-offline-autonomy-and-wifi-recovery.md`](./adr/0011-o
 
 ## Hosted Read-Only Dashboard Boundary
 
-ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-readonly-dashboard.md) locks the Phase 6A hosted read-only dashboard boundary.
+ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-readonly-dashboard.md) locks the Phase 6A hosted read-only dashboard boundary. Phase 8F.2 removes the former local browser control surface without weakening that boundary.
 
-- Local Control Mode uses the local ESP32 endpoints, `LiveStats`, Manual Water Now, and frequent `/logs` polling.
+- Local/default mode renders the Supabase-backed Sensor History path and contains no direct browser-to-device polling or manual watering action.
 - Hosted Read-Only Mode is a Cloudflare Pages static frontend mode controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
 - Hosted Read-Only Mode renders Supabase `sensor_logs` history, read-only Device Status / telemetry-quality information, and Phase 7F hosted Gen2 measurement display through `public.hosted_gen2_measurements`; it supports read-only Device and Window selectors and keeps `VITE_MBG_DEVICE_ID` as the fallback/default device behavior.
 - Hosted Read-Only Mode filters Supabase history server-side by selected `device_id` and by selected timestamp lower bound except for all-time.
 - Hosted Gen2 Device Status is computed in the frontend from already-fetched `public.hosted_gen2_measurements` rows for the selected device/window. The legacy `sensor_logs` / `SensorLogRow` status assumptions remain available for Gen1/local/history compatibility but are not the hosted Gen2 Device Status source.
 - Device Status must remain read-only and must not introduce Supabase command/control or local ESP32 endpoint calls.
 - Supabase `data.watering` may be shown only as watering history markers, not as live currently-watering status.
-- Hosted Read-Only Mode must not render `LiveStats`, show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
+- Hosted Read-Only Mode must not show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
 - Hosted Read-Only Mode must not bundle local control code in the production artifact.
 - Sensor History remains rendered in both modes.
-- The local ESP32 live/control path and Supabase history/read path remain separate.
+- Firmware retains local watering authority and endpoint compatibility, but the frontend no longer provides a local ESP32 live/control consumer.
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
 - Phase 7L.3 introduced the hosted route shell. `/` and `/demo` are public hosted routes.
@@ -87,15 +87,11 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 
 ## Multi-Unit Visibility And Local Control Target Safety
 
-ADR 0013 in [`docs/adr/0013-multi-unit-visibility-and-local-control-target-safety.md`](./adr/0013-multi-unit-visibility-and-local-control-target-safety.md) locks the Phase 6J.0 multi-unit visibility and local target safety boundary.
+ADR 0013 in [`docs/adr/0013-multi-unit-visibility-and-local-control-target-safety.md`](./adr/0013-multi-unit-visibility-and-local-control-target-safety.md) records the safety boundary that governed the retired Phase 6J.0 local target surface.
 
-- The local/default dashboard can select known local targets.
-- Local target selection affects live `/logs` polling and the local manual action endpoint.
-- Manual action is gated by selected device role and a live `/logs` `device_id` match.
-- The installed balcony controller may expose Water Now only when the selected target identity is verified.
-- The bench unit may expose relay-test wording only, not plant-watering wording, and only when identity is verified.
-- The sensor scout has no manual relay or pump command authority.
-- History Device selection is the read-only Supabase history target and remains separate from Local Control Target selection.
+- Phase 8F.2 removes local target selection, live `/logs` polling, browser identity gating, and manual action UI from the frontend.
+- History Device selection remains a read-only Supabase history target and continues to use the shared device registry.
+- The retired local-control target definitions had no consumer outside `LiveStats` and are removed.
 - Hosted-readonly mode remains read-only and must not import local control metadata or expose local endpoints.
 - Supabase remains telemetry/history only and must not be used for command/control.
 
@@ -145,7 +141,8 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - GPIO5 remains retired for future Gen2 relay/pump control designs.
 - Phase 7C historically added a Prototype01-only local/default panel over `/status`, `/capabilities`, and `/measurements`; Phase 8F.1 retires that unsupported frontend consumer and its stale local response types and request helpers.
 - The Gen2 firmware endpoints remain available for direct local inspection and later contract-aware work, but the current local/default application does not mount or poll the retired Prototype01 panel.
-- `/logs` remains Gen1/current compatibility and is not part of the modular bench measurement contract.
+- Phase 8F.2 retires the remaining `LiveStats` browser consumer, selected-target five-second `/logs` polling, and local `/water-now` action.
+- `/logs` remains firmware compatibility and is not part of the modular bench measurement contract; the frontend no longer consumes it.
 - Hosted-readonly remains Supabase-only/read-only and does not bundle local endpoint/control strings.
 - Supabase command/control remains prohibited.
 - ADR 0017 in [`docs/adr/0017-gen2-measurement-batch-storage.md`](./adr/0017-gen2-measurement-batch-storage.md) defines Gen2 measurement storage as one append-only raw batch row per complete device `/measurements` package.

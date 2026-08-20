@@ -21,10 +21,9 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 - Firmware compiles on BJ3.
 - Frontend lints, builds, runs, and loads on BJ3.
-- ESP32 is reachable locally at `10.0.0.200`.
-- `GET /logs` works from BJ3, phone, and other devices on the local network when the ESP32 is powered independently from USB power.
-- The UI shows live sensor values through the local ESP32 path.
-- Manual Water Now works from the local site.
+- Firmware local endpoints remain in the repository, but the retired Balcony01, Scout01, and Prototype01 identities have no active browser consumer.
+- The frontend no longer displays device-local `/logs` values or exposes Manual Water Now.
+- Local/default mode retains the Supabase-backed Sensor History path.
 - ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values so the browser can render them correctly in local time.
@@ -58,7 +57,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Sensor History chart rows now use explicit chronological timestamp sorting before rendering.
 - Watering-start rows are shown as vertical history markers using Supabase `sensor_logs.data.watering = true`.
 - No frontend runtime changes were made in Phase 5C or Phase 5D; Phase 5E only updated Sensor History graph display semantics.
-- Local dashboard continues to update frequently with live values from the `/logs` endpoint because the frontend polls locally.
+- Phase 8F.2 retires the frontend's frequent local `/logs` polling; the firmware endpoint remains unchanged.
 - Supabase telemetry display is sparse at the ~15-minute cadence, with additional rows for immediate watering events.
 - `sensor_events` remains a manual operational log and is unchanged; it is not used by firmware.
 - Phase 6A hosted read-only dashboard was merged to `main`.
@@ -71,7 +70,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
 - Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
-- Hosted read-only mode renders Supabase Sensor History plus Device Status with Device and Window selectors and does not render `LiveStats` or Water Now.
+- Hosted read-only mode renders Supabase Sensor History plus Device Status with Device and Window selectors and has no Water Now action; `LiveStats` is no longer present in either frontend mode.
 - Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
 - Hosted Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
 - Hosted URL query state supports valid combinations such as `?device=balcony&window=24h` and `?device=bench&window=7d`.
@@ -154,8 +153,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Supabase `sensor_logs` RLS INSERT policy now allows scout01.
 - A first near-live scout01 Sensor History row was observed after the RLS update.
 - Phase 6J.0 made no firmware changes, no `SensorLogRow` changes, no Supabase schema changes, and no watering threshold/duration/cooldown/sensor logic changes.
-- Local/default dashboard mode still renders `LiveStats`, local `/logs` polling, local Manual Water Now, and Sensor History.
-- The local ESP32 live/control path and hosted read-only Supabase history path remain separate.
+- Local/default dashboard mode now renders Sensor History without `LiveStats`, local `/logs` polling, or local Manual Water Now.
+- Firmware retains local watering authority and endpoint compatibility; the frontend no longer has a browser-to-device live/control path.
 - Supabase remains read-only telemetry/history only and is not used for command/control.
 - Phase 6J.1 is currently documentation/design only for Device Diagnostics / Heartbeats / Reliability Evidence.
 - ADR 0014 has been added to define the future separate diagnostics path using append-only `device_heartbeats` evidence and a proposed read-only local `GET /status` endpoint.
@@ -226,9 +225,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7C historically implemented and runtime-validated a Prototype01-only local measurement panel against the bench contracts then in use.
 - Phase 8F.1 retires that unsupported panel, its hardcoded 5-second Prototype01 polling, its dedicated styling, and its exclusively owned pre-current-contract response types and request helpers.
 - The local/default application no longer mounts or polls `/status`, `/capabilities`, or `/measurements` for Prototype01. Those firmware endpoints remain available for direct inspection and are not removed.
-- Existing `LiveStats` / `/logs` and local Water Now remain in place. The shared device registry, local-control targets, `sensor_logs`, firmware profiles, Gen1 firmware, and hosted Gen2 presentation are preserved for later bounded Phase 8F slices.
+- Phase 8F.2 retires `LiveStats`, its selected-target five-second `/logs` polling, browser device-identity gating, local Water Now action, and the exclusively owned `localControlTargets.ts` definitions. No dedicated stylesheet existed at the Phase 8F.2 baseline; the removed component used inline presentation.
+- The shared device registry remains because history, customer-site, and Demo paths still consume it. `sensor_logs`, `SensorLogRow`, `fetchHistoryLogs`, `SensorLogViewer`, firmware profiles, Gen1 firmware, firmware `/logs` and `/water-now` handlers, and hosted Gen2 presentation remain unchanged.
 - Hosted-readonly remains Supabase-only/read-only and continues to exclude local endpoint/control strings.
 - Phase 8F.1 local validation passed `59/59` tests, lint, ordinary and hosted-readonly production builds, the hosted forbidden-string guard, source/test retirement searches, and `git diff --check`. The ordinary build no longer emits the retired component's JavaScript or CSS chunk; hosted generated asset names and byte sizes remained exactly equal to baseline. See [`docs/product/phase8f1-retire-unsupported-live-measurements-frontend.md`](./product/phase8f1-retire-unsupported-live-measurements-frontend.md).
+- Phase 8F.2 local validation and exact generated-asset evidence are recorded in [`docs/product/phase8f2-retire-livestats-local-water-now-frontend.md`](./product/phase8f2-retire-livestats-local-water-now-frontend.md).
 - Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.
