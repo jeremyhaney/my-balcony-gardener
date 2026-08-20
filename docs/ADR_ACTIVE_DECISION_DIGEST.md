@@ -50,7 +50,7 @@ ADR 0003 defines the canonical `SensorLogRow` contract: top-level `device_id`, `
 
 ADR 0012 amends ADR 0003 by adding optional `data.soilRawAdc` for raw ESP32 ADC evidence. Older rows without `soilRawAdc` remain valid. `data.moisture` remains a derived moisture index, not a calibrated soil-moisture percentage.
 
-ADR 0016 historically kept `SensorLogRow` and `sensor_logs` stable while Gen1/current compatibility existed. Phases 8F.3 and 8F.5 removed the last supported reader and writer. Phase 8F.10 proves no future Gen2 consumer remains and proposes, without executing, deletion of the final development rows followed by retirement of the table/access surface. Historical ADR meaning and exports remain evidence.
+ADR 0016 historically kept `SensorLogRow` and `sensor_logs` stable while Gen1/current compatibility existed. Phases 8F.3 and 8F.5 removed the last supported reader and writer. Phase 8F.10 proves no future Gen2 consumer remains and deletes the final development rows under separate exact-hash approval. Retirement of the table/access surface remains proposed but unexecuted. Historical ADR meaning and exports remain evidence.
 
 ## Gen2 Modular Measurement And Endpoint Contract
 
@@ -72,8 +72,8 @@ ADR 0017 continues to define one append-only raw batch row per complete `/measur
 
 ## Data And Evidence Paths
 
-- `sensor_logs`: obsolete live compatibility table with no supported consumer; Phase 8F.10 retirement proposal only, not yet executed.
-- `sensor_events`: isolated manual operational context, not device-originated telemetry and not command/control; retain the table, while Phase 8F.10 proposes deleting its three sample rows and revoking unused API grants.
+- `sensor_logs`: obsolete, empty live compatibility table with no supported consumer; Phase 8F.10 schema/access retirement proposal only, not yet executed.
+- `sensor_events`: empty isolated manual operational-context table, not device-originated telemetry and not command/control; retain the table, while Phase 8F.10 separately proposes revoking unused API grants.
 - `device_heartbeats`: append-only diagnostics/latest health evidence.
 - `device_registry`: provisioned-device registry and insert allowlist source, not command/control.
 - `sensor_measurement_batches`: raw Gen2 measurement package evidence.
