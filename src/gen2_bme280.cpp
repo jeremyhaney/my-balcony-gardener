@@ -238,36 +238,4 @@ String gen2Bme280MeasurementsJson(const String &deviceId, const String &measured
 #endif
 }
 
-bool gen2Bme280ReadLegacyAir(float &temperatureF, float &humidity) {
-#if MBG_HAS_BME280
-  if (!bme280Present) {
-    gen2Bme280Begin();
-  }
-
-  if (!bme280Present) {
-    return false;
-  }
-
-  if (!prepareBmeReadPath()) {
-    return false;
-  }
-
-  float tempF = (bme280.readTemperature() * 1.8) + 32;
-  float relativeHumidity = bme280.readHumidity();
-  finishBmeReadPath();
-
-  if (isnan(tempF) || isnan(relativeHumidity)) {
-    return false;
-  }
-
-  temperatureF = tempF;
-  humidity = relativeHumidity;
-  return true;
-#else
-  (void)temperatureF;
-  (void)humidity;
-  return false;
-#endif
-}
-
 #endif

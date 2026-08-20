@@ -25,6 +25,102 @@ function Test-Contract {
   else { Write-Host "[FAIL] $Message" -ForegroundColor Red; $failures.Add($Message) }
 }
 
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$mainSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/main.cpp')
+$measurementsSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/gen2_measurements.cpp')
+$profileSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/profile_overrides.h')
+$platformioSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'platformio.ini')
+
+$registeredRoutes = @(
+  [regex]::Matches($mainSource, 'server\.on\("([^"]+)"') |
+    ForEach-Object { $_.Groups[1].Value }
+)
+Test-Contract (
+  ($registeredRoutes -join '|') -ceq '/|/status|/capabilities|/measurements'
+) 'source registers exactly the approved Balcony02 HTTP routes in order'
+Test-Contract ($mainSource.Contains('server.onNotFound(handleNotFound);')) 'source retains the Gen2 not-found handler'
+
+$retiredMainPatterns = @(
+  '/logs','/water-now','sendDataToSupabase','sensor_logs','readDhtWithFallback',
+  'readSoilMoisture','soilRawAdc','SOIL_PIN','MBG_HAS_SOIL_MOISTURE',
+  'MBG_HTTP_WATERING_ENDPOINT_ENABLED','MBG_GEN2_ENABLE_LEGACY_LOGS',
+  '#ifndef MBG_GEN2_ENABLED'
+)
+foreach ($pattern in $retiredMainPatterns) {
+  Test-Contract (-not $mainSource.Contains($pattern)) "firmware source omits retired token $pattern"
+}
+
+$retiredProfilePatterns = @(
+  'MBG_HAS_DHT11','MBG_HAS_VEML6030','MBG_HAS_SOIL_MOISTURE',
+  'MBG_WATERING_SIMULATION_AVAILABLE','MBG_HTTP_WATERING_ENDPOINT_ENABLED',
+  'MBG_CAPABILITIES_INCLUDE_DHT11_ALIAS','MBG_GEN2_ENABLE_LEGACY_LOGS'
+)
+foreach ($pattern in $retiredProfilePatterns) {
+  Test-Contract (
+    -not $profileSource.Contains($pattern) -and -not $platformioSource.Contains($pattern)
+  ) "profile/configuration omits retired flag $pattern"
+}
+
+$retiredModulePaths = @(
+  'src/gen2_dht11.cpp','src/gen2_dht11.h',
+  'src/gen2_soil_moisture.cpp','src/gen2_soil_moisture.h',
+  'src/gen2_veml6030.cpp','src/gen2_veml6030.h',
+  'src/gen2_i2c_mux.cpp','src/gen2_i2c_mux.h',
+  'lib/DHT_sensor_library'
+)
+foreach ($relativePath in $retiredModulePaths) {
+  Test-Contract (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relativePath))) "retired module is absent: $relativePath"
+}
+
+Test-Contract (
+  $measurementsSource.Contains('return balcony02StaticCapabilitiesJson(deviceId, reportedAt);') -and
+  -not $measurementsSource.Contains('i2cScanJson') -and
+  -not $measurementsSource.Contains('String(MBG_BUILD_PROFILE) ==')
+) '/capabilities source returns only the approved static Balcony02 manifest'
+
+$recordSources = @(
+  'gen2Bme280MeasurementsJson','gen2Ds18b20MeasurementsJson',
+  'gen2Sen0308MeasurementsJson','gen2Sen0562MeasurementsJson','gen2Sen0204MeasurementsJson'
+)
+$recordsFunctionIndex = $measurementsSource.IndexOf('String gen2MeasurementRecordsJson')
+$recordsFunctionSource = if ($recordsFunctionIndex -ge 0) {
+  $measurementsSource.Substring($recordsFunctionIndex)
+} else { '' }
+$recordIndexes = @($recordSources | ForEach-Object { $recordsFunctionSource.IndexOf($_) })
+$orderedRecordSources = $true
+for ($index = 0; $index -lt $recordIndexes.Count; $index++) {
+  if ($recordIndexes[$index] -lt 0 -or ($index -gt 0 -and $recordIndexes[$index] -le $recordIndexes[$index - 1])) {
+    $orderedRecordSources = $false
+  }
+}
+Test-Contract $orderedRecordSources '/measurements source retains the exact installed-module read order'
+
+$loopFunctionIndex = $mainSource.IndexOf('void loop()')
+$loopFunctionSource = if ($loopFunctionIndex -ge 0) { $mainSource.Substring($loopFunctionIndex) } else { '' }
+Test-Contract (
+  $loopFunctionSource.Contains('Pump shutoff has priority over client/server, network, and telemetry work.') -and
+  $loopFunctionSource.IndexOf('if (isWatering)') -lt $loopFunctionSource.IndexOf('maintainWiFiConnection();') -and
+  $loopFunctionSource.IndexOf('maintainWiFiConnection();') -lt $loopFunctionSource.IndexOf('sendGen2MeasurementsToSupabase();')
+) 'pump shutoff remains ahead of network, HTTP, and telemetry work'
+Test-Contract (
+  $mainSource.Contains('if (!gen2Sen0204LiquidDetected())') -and
+  $mainSource.Contains('reservoir_liquid_not_detected') -and
+  $mainSource.Contains('reservoir_liquid_lost') -and
+  $mainSource.Contains('physical_button_hold_timeout')
+) 'physical-button reservoir and max-hold safety paths remain in source'
+Test-Contract (
+  $mainSource.Contains('automaticControlQualityGatesPass') -and
+  $mainSource.Contains('maybeStartAutomaticWatering') -and
+  $mainSource.Contains('AUTOMATIC_CONTROL_POST_WATERING_EXCLUSION_MS') -and
+  $mainSource.Contains('WATERING_COOLDOWN_MS')
+) 'generic local automatic-watering gates and start helper remain in source'
+Test-Contract (
+  $profileSource.Contains('Only an explicitly provisioned Gen2 firmware profile is supported') -and
+  $profileSource.Contains('The Balcony02 profile is missing a required installed Gen2 module')
+) 'compile-time guards reject unsupported or incomplete profiles'
+
+if ($failures.Count -gt 0) { Write-Error "$($failures.Count) static contract assertion(s) failed."; exit 1 }
+
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
   Write-Host '[PASS] Script parsed; live /measurements validation skipped because no BaseUrl was supplied.'
   Write-Host '[PASS] Script parsed; live /capabilities validation skipped because no BaseUrl was supplied.'

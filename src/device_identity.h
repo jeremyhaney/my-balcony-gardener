@@ -19,6 +19,16 @@
 #error "MBG_DEVICE_LABEL must be defined by an explicit firmware device profile"
 #endif
 
+namespace mbg_device_profile {
+constexpr bool stringsEqual(const char* left, const char* right) {
+  return *left == *right && (*left == '\0' || stringsEqual(left + 1, right + 1));
+}
+}
+
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_LABEL, "Balcony02"), "Unsupported device label");
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ID, "7e5bd328-ad68-4389-a71a-fa5cd01b3813"), "Unsupported device UUID");
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ROLE, "controller"), "Unsupported device role");
+
 #ifdef DEVICE_ID
 #undef DEVICE_ID
 #endif

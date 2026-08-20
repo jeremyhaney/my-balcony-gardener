@@ -21,11 +21,10 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 
 - Firmware compiles on BJ3.
 - Frontend lints, builds, runs, and loads on BJ3.
-- Firmware local endpoints remain in the repository, but the retired Balcony01, Scout01, and Prototype01 identities have no active browser consumer.
+- Supported firmware exposes only `/`, `/status`, `/capabilities`, and `/measurements`; no browser route consumes these local endpoints.
 - The frontend no longer displays device-local `/logs` values or exposes Manual Water Now.
 - Ordinary and hosted-readonly frontend builds enter the same hosted Gen2 route shell.
-- ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
-- Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
+- Balcony02 posts Gen2 measurement batches, device heartbeats, and watering-event evidence directly to their current Supabase Data API tables; supported firmware no longer writes `sensor_logs`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values so the browser can render them correctly in local time.
 - Hosted Gen2 reads refresh every 5 minutes while visible, pause scheduled refreshes while hidden, and resume with one immediate refresh.
 - Supabase warned that the project was depleting its Disk IO Budget, but this was not a storage-capacity incident: the database was approximately `82 MB` and storage utilization was low. Normal B02 and P01 writes matched the intended 15-minute cadence at approximately four measurement batches and four heartbeats per active device per hour.
@@ -34,31 +33,26 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Local validation passed for the B02 Gen2 Support View, manual refresh, local timestamp, Device/Window changes, hidden/visible behavior, responsive layout, lint, TypeScript/Vite production build, and `git diff --check`. Visual placement is accepted as temporary pending the broader frontend redesign and Gen1-remnant retirement. The correction is not yet claimed committed, pushed, deployed, or production-validated.
 - No SQL, schema, indexes, retention, firmware, telemetry/heartbeat cadence, device identity, authentication/RLS, watering behavior, or local control authority changed.
 - Supabase `sensor_events` exists as a separate manual operational event log and was validated with manual sample events.
-- The local ESP32 path still owns live/current values.
+- The local ESP32 still owns sensor acquisition, local watering, interlocks, and pump shutoff.
 - Supabase is not used for remote command/control.
-- Phase 5E kept the local ESP32 live/control path unchanged.
+- The phase-by-phase evidence below is chronological. Later retirement entries supersede earlier present-tense statements without rewriting the original field-validation history.
+- Phase 5E historically kept the then-current local ESP32 live/control path unchanged; Phases 8F.1–8F.5 later retired its unsupported browser and firmware surfaces.
 - ADR 0006 locks the Phase 5C watering logic and safety philosophy.
 - Phase 5C cooldown firmware was uploaded to the ESP32 and field validated.
 - Phase 5D telemetry logging cadence firmware was compiled, uploaded, and field validated on feature branch `phase5d-telemetry-logging-cadence`.
 - Phase 5F telemetry integrity firmware compiled with `pio run`, uploaded to the ESP32, and was validated after upload.
 - ESP32 rebooted cleanly after upload and after repeated USB power disconnect/reconnect cycles.
 - ESP32 resumed local site reporting immediately after reconnecting to USB power; the local dashboard showed its expected unavailable warning while the ESP32 was offline and recovered after return.
-- Manual Water Now still works and remains local/supervised.
-- Manual Water Now can still be run again after a completed manual cycle.
-- Pump still stops after approximately `15` seconds, independently from the telemetry cadence.
-- Automatic watering is blocked during the cooldown and resumes after approximately `15` minutes if moisture remains below threshold.
-- Supabase normal telemetry cadence now posts approximately every `15` minutes (not every 5 seconds).
-- Immediate watering-start telemetry with `data.watering = true` posts to Supabase immediately upon Manual Water Now trigger.
-- Immediate watering-completion telemetry with `data.watering = false` posts to Supabase immediately upon pump shutoff.
-- `lastWateringDuration` is populated with the pump runtime (approximately 15 seconds) in completion telemetry.
-- DHT temperature/humidity may use firmware last-known-good fallback for `/logs` and telemetry rows after at least one good DHT read.
-- Soil moisture remains fresh-only for watering decisions and is not cached.
-- During DHT failure, immediate watering-start and watering-completion telemetry still posts when cached DHT values exist, using cached temperature/humidity plus fresh moisture.
+- Historical Phase 5 Manual Water Now and direct analog-soil automatic-watering validation remains evidence for retired profiles, not a current Balcony02 runtime claim.
+- Balcony02 posts Gen2 measurement batches and device heartbeats approximately every `15` minutes. Watering-event evidence posts immediately/best-effort outside that cadence.
+- Phase 8F.5 removes the firmware `sensor_logs` writer, DHT cache/fallback, direct analog-soil read/mapping, Gen1 immediate/periodic logging, `/logs`, and HTTP `/water-now` implementation.
+- Physical-button press/release watering, reservoir start block and liquid-loss cutoff, max-hold safety cutoff, relay LOW initialization/shutoff, event queueing, and local/offline authority remain.
+- Generic automatic-control thresholds, quality gates, fixed-duration/cooldown behavior, and event semantics remain source-level Gen2 extension boundaries; Balcony02 has no direct analog-soil control feed and gains no new automatic input in Phase 8F.5.
 - Hosted Gen2 trend and watering-event presentation remain selected-device/window scoped.
-- Watering-start rows are shown as vertical history markers using Supabase `sensor_logs.data.watering = true`.
+- Hosted watering-event rows are shown as history markers through the protected Gen2 watering-event views; the legacy `sensor_logs.data.watering` presentation is retired.
 - No frontend runtime changes were made in Phase 5C or Phase 5D; Phase 5E only updated Sensor History graph display semantics.
-- Phase 8F.2 retires the frontend's frequent local `/logs` polling; the firmware endpoint remains unchanged.
-- Supabase telemetry display is sparse at the ~15-minute cadence, with additional rows for immediate watering events.
+- Phase 8F.2 retires frontend local `/logs` polling; Phase 8F.5 retires the unreachable firmware endpoint itself.
+- Supabase telemetry display is sparse at the ~15-minute cadence, with watering evidence supplied by the Gen2 watering-event path.
 - `sensor_events` remains a manual operational log and is unchanged; it is not used by firmware.
 - Phase 6A hosted read-only dashboard was merged to `main`.
 - Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
@@ -153,7 +147,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - A first near-live scout01 Sensor History row was observed after the RLS update.
 - Phase 6J.0 made no firmware changes, no `SensorLogRow` changes, no Supabase schema changes, and no watering threshold/duration/cooldown/sensor logic changes.
 - The non-hosted/local dashboard route is retired; ordinary builds use the hosted Gen2 route shell.
-- Firmware retains local watering authority and endpoint compatibility; the frontend no longer has a browser-to-device live/control path.
+- Firmware retains local watering authority through physical-button and safety behavior; the frontend has no browser-to-device live/control path and the legacy endpoint compatibility handlers are retired.
 - Supabase remains read-only telemetry/history only and is not used for command/control.
 - Phase 6J.1 is currently documentation/design only for Device Diagnostics / Heartbeats / Reliability Evidence.
 - ADR 0014 has been added to define the future separate diagnostics path using append-only `device_heartbeats` evidence and a proposed read-only local `GET /status` endpoint.
@@ -204,14 +198,13 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The retired physical bench ESP32 used UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and acted as the Gen2 mule after rewire and `bench-proto-gen2` flash.
 - Gen2 bench `/status`, `/capabilities`, and `/measurements` work.
 - For Gen2, `/measurements` is authoritative for measurement data.
-- `/logs` remains a Gen1 compatibility branch in source for Phase 8F.5; no supported profile registers it. Historical `bench-proto-gen2` returned `404` for that endpoint.
+- Phase 8F.5 removes the Gen1 `/logs` compatibility branch; unsupported requests continue through the Gen2 `404` handler.
 - BME280 emits `air_temperature`, `relative_humidity`, and `barometric_pressure`.
 - DS18B20 emits `temperature`.
-- VEML6030 emits `ambient_light`.
-- Analog soil moisture emits `moisture_index` and `raw_adc`.
-- Gen2 I2C scan reports `0x48` and `0x76`.
+- Historical VEML6030 and direct analog-soil modules are retired. Balcony02 retains three muxed SEN0562 light sensors and three installed ADS1115/SEN0308 channels.
+- `/capabilities` is the static Balcony02 manifest and performs no runtime I2C scan.
 - All Gen2 measurement records are `control_eligible:false`.
-- Historical `bench-proto-gen2` exposed a simulated `/water-now` endpoint that toggled the pump-free GPIO25 bench output through `RELAY_PIN`. The supported Balcony02 profile explicitly disables the HTTP watering endpoint.
+- Historical `bench-proto-gen2` exposed a simulated `/water-now` endpoint that toggled the pump-free GPIO25 bench output through `RELAY_PIN`. Phase 8F.5 removes the unsupported HTTP handler and flag.
 - Earlier Phase 6J relay-test wording and Phase 7B bench watering terminology remain historical evidence; the executable bench profiles are retired.
 - Gen2 no longer runs the legacy DHT / `sensor_logs` / automatic-watering interval block.
 - Device heartbeats continue posting with `details.phase = "7B"`.
@@ -229,6 +222,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 8F.2 local validation and exact generated-asset evidence are recorded in [`docs/product/phase8f2-retire-livestats-local-water-now-frontend.md`](./product/phase8f2-retire-livestats-local-water-now-frontend.md).
 - Phase 8F.3 retires the non-hosted route branch, Demo's redundant `sensor_logs` request, frontend `fetchHistoryLogs`/`SensorLogRow` normalization and state, the legacy Sensor History chart, and legacy telemetry-health presentation. It preserves hosted Gen2 queries, capability/evidence presentation, diagnostics, watering evidence, authentication, customer/support routing, firmware endpoints/profiles/posting, Supabase storage/policies, and registry entries. See [`docs/product/phase8f3-retire-local-dashboard-sensor-logs-frontend.md`](./product/phase8f3-retire-local-dashboard-sensor-logs-frontend.md).
 - Phase 8F.4 retires the obsolete `balcony-installed`, `balcony-installed-gen2`, `bench-prototype`, `bench-proto-gen2`, and `balcony-sensor-scout-01` PlatformIO environments plus the retired Balcony01 default selection. `balcony02-gen2` is the sole supported selectable firmware environment; shared ESP32 board/framework and monitor/upload mechanics remain in non-selectable `[env]` configuration. Balcony02's identity, flags, libraries, firmware size, endpoint gates, sensor installation, reservoir interlock, watering behavior, and telemetry behavior are unchanged. Historical evidence and Gen1 source branches remain for Phase 8F.5. See [`docs/product/phase8f4-retire-obsolete-firmware-build-profiles.md`](./product/phase8f4-retire-obsolete-firmware-build-profiles.md).
+- Phase 8F.5 removes the unreachable Gen1 source branches and dependencies, collapses selected Gen2 status/heartbeat/setup/loop behavior, retains a generic active Data API table-suffix normalizer for the current private configuration shape, and adds deterministic source/compile-time guards. See [`docs/product/phase8f5-retire-unreachable-gen1-firmware-implementation.md`](./product/phase8f5-retire-unreachable-gen1-firmware-implementation.md).
 - Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.

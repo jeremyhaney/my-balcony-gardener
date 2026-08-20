@@ -46,10 +46,9 @@ ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-l
 - Automatic watering remains fixed-duration batch watering.
 - Pump shutoff remains local and does not depend on Supabase.
 - Automatic watering includes a post-watering cooldown guard between automatic cycles.
-- The retained firmware `/water-now` behavior remains local/supervised and is intentionally not blocked by the automatic cooldown; Phase 8F.2 removes its browser frontend action.
-- Current moisture is a derived display/control index from `analogRead(SOIL_PIN)`, not a proven calibrated soil-moisture percentage.
-- Phase 6H approves raw soil ADC visibility in telemetry for diagnosis.
-- Repeated-reading validation, filtering, calibration, and automatic-watering invalid-read rejection remain deferred.
+- Supported firmware exposes no HTTP watering endpoint. Physical-button watering remains local, with reservoir start/loss interlocks and max-hold shutoff.
+- The generic Gen2 automatic-control threshold, repeated-reading gates, startup settling, freshness guard, post-watering exclusion, fixed-duration behavior, and cooldown remain firmware-local extension boundaries.
+- Balcony02 has no direct `analogRead(SOIL_PIN)` control feed. Its SEN0308/ADS1115 measurements remain measurement evidence and Phase 8F.5 does not grant them watering authority.
 
 ## Offline Autonomy And Network Failure Boundary
 
@@ -165,13 +164,13 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Phase 7E display labels are compile-time endpoint readability labels: `Balcony01`, `Scout01`, and `Prototype01`. They are not user-editable names or database-driven nicknames.
 - Phase 7E local endpoints report firmware provenance with `firmware_version`, `build_profile`, and `device_label` on `/status`, `/capabilities`, and `/measurements`.
 - Gen2 local endpoint timestamp semantics are explicit: `/status.reported_at` is the status snapshot generation time, `/capabilities.reported_at` is the capability snapshot generation time, and `/measurements.measured_at` is the measurement package/sample time.
-- The retired installed/scout profiles historically enabled `/logs` through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`. No supported profile enables it; the compatibility branch remains in source for later Phase 8F review.
+- The retired installed/scout profiles historically enabled `/logs` through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`. Phase 8F.5 removes that feature flag, handler, registration, and response implementation.
 - Phase 7G.0 preserves the `/logs` `SensorLogRow` compatibility shape for Scout01 by allowing existing `data.temperature` and `data.humidity` fields to come from BME280 when Scout01 DHT11 is disabled; pressure and soil temperature remain in Gen2 `/measurements`, not `/logs`.
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`, plus `batch_details.phase = "7E"` and `batch_details.device_label`.
 - Balcony01 and Scout01 profile capabilities are historical; both device profiles are retired. Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
-- Balcony02 retains local firmware watering authority, but its supported profile explicitly disables the HTTP `/water-now` endpoint. Remote Water Now remains prohibited.
+- Balcony02 retains local firmware watering authority through physical-button/safety behavior; the unsupported HTTP `/water-now` implementation is absent. Remote Water Now remains prohibited.
 - Historical pre-ADR-0022 records may contain `control_eligible`. New cleaned external Gen2 records omit it; watering eligibility remains internal firmware/control logic and does not grant hosted command authority.
-- The known DHT11 startup first-read wart may produce suspicious initial `/measurements` DHT values, but DHT11 records are not watering control inputs.
+- DHT11 and direct analog-soil modules are absent from the supported Balcony02 firmware contract and implementation.
 
 ### ADR 0022 Endpoint Responsibility Refinement
 
@@ -233,21 +232,21 @@ ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./a
 - `src/config.h` remains ignored/local-only for Wi-Fi and Supabase secrets.
 - This is not the final production provisioning system.
 - Phase 8F.4 narrows executable build configuration to the single supported `balcony02-gen2` device environment. PlatformIO's non-selectable `[env]` section retains only shared board/framework, monitor, and upload-port mechanics; it carries no device identity or behavior flags.
-- There is no generic/default firmware selection. Future numbered devices require a new explicit environment, device identity, and UUID.
-- Future production provisioning may replace this with programming-station or device-storage assignment without changing `sensor_logs.device_id` or `VITE_MBG_DEVICE_ID` behavior.
-- Supabase `sensor_logs` RLS insert policy must allow provisioned device UUIDs that are expected to post telemetry.
+- Phase 8F.5 requires exact explicit Balcony02 identity, static sensor/control provisioning, and Gen2 enablement at compile time. There is no generic/default firmware selection.
+- Future numbered devices require a new explicit environment, UUID, static capability manifest, measurement validation, and an intentional extension of the supported-profile guards.
 
-## Firmware Telemetry Integrity
+## Historical Phase 5F Telemetry Integrity
 
-ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-telemetry-integrity-hardening.md) locks the Phase 5F telemetry-integrity boundary.
+ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-telemetry-integrity-hardening.md) locks the historical Phase 5F telemetry-integrity boundary. Phase 8F.5 retires its DHT, direct-soil, `/logs`, and `sensor_logs` firmware implementation from the sole supported Balcony02 profile without rewriting that historical decision record.
 
-- DHT temperature/humidity may use last-known-good fallback for `/logs` and Supabase telemetry continuity after at least one good DHT read has populated the firmware cache.
-- Soil moisture must remain fresh-only because it controls automatic watering.
+- DHT temperature/humidity fallback and fresh-only direct analog-soil control were requirements of the retired Phase 5/Gen1 path, not current Balcony02 behavior.
 - Pump stop logic remains local and independent of telemetry success or failure.
 - Supabase remains read-only history/telemetry and is not command/control.
-- The canonical `SensorLogRow` shape remains unchanged.
+- Historical `SensorLogRow` data remains database evidence, but supported firmware no longer creates those rows.
 
-## Approved Frontend Boundary For Deferred Restoration
+## Historical Frontend Restoration Boundary
+
+This boundary records the earlier restoration sequence. Phases 8F.1–8F.3 supersede its local browser path and `sensor_logs` frontend assumptions; Phase 8F.5 removes the corresponding unsupported firmware endpoints and writer.
 
 - Local live path remains separate from deferred history/graph restoration work.
 - Local live/control path remains separate from the Supabase history/read path after current logging restoration.
@@ -262,9 +261,9 @@ ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-teleme
 - The shared sensor log contract remains centralized in [`mbg_dashboard/src/types`](../mbg_dashboard/src/types).
 - The first restoration slice must not introduce package extraction or a broad frontend refactor.
 
-## Canonical Sensor Log Contract
+## Historical Sensor Log Contract
 
-The canonical sensor log contract is authoritative across frontend code, firmware payload handling, and Supabase history work.
+The following contract remains authoritative for interpreting historical `sensor_logs` rows. It is no longer a supported firmware or frontend runtime contract.
 
 ```ts
 type SensorLogRow = {

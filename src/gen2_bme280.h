@@ -8,7 +8,6 @@
 void gen2Bme280Begin();
 String gen2Bme280CapabilityJson();
 String gen2Bme280MeasurementsJson(const String &deviceId, const String &measuredAt);
-bool gen2Bme280ReadLegacyAir(float &temperatureF, float &humidity);
 
 #endif
 

@@ -4,18 +4,12 @@
 #include "firmware_identity.h"
 #include "gen2_measurements.h"
 
-#ifdef MBG_GEN2_ENABLED
-
 #include <Wire.h>
 #include "gen2_bme280.h"
-#include "gen2_dht11.h"
 #include "gen2_ds18b20.h"
-#include "gen2_i2c_mux.h"
 #include "gen2_sen0308.h"
 #include "gen2_sen0204.h"
 #include "gen2_sen0562.h"
-#include "gen2_soil_moisture.h"
-#include "gen2_veml6030.h"
 
 namespace {
 String boolString(bool value) {
@@ -32,30 +26,6 @@ String hexAddress(uint8_t address) {
   return response;
 }
 
-String i2cScanJson() {
-#if MBG_HAS_I2C_MODULES
-  String response = "{\"addresses_found\":[";
-  bool hasAny = false;
-
-  for (uint8_t address = 0x08; address <= 0x77; address++) {
-    Wire.beginTransmission(address);
-    if (Wire.endTransmission() == 0) {
-      if (hasAny) {
-        response += ",";
-      }
-      response += hexAddress(address);
-      hasAny = true;
-    }
-  }
-
-  response += "]}";
-  return response;
-#else
-  return "{\"enabled\":false,\"addresses_found\":[]}";
-#endif
-}
-
-#if defined(MBG_SEN0204_PIN) && defined(MBG_PHYSICAL_BUTTON_PIN)
 // Builds the Balcony02 configured-hardware manifest without consulting runtime
 // detection, measurement quality, GPIO state, or any sensor/provider read path.
 // Property and module order are part of the approved Phase 8B.3 wire contract.
@@ -114,7 +84,6 @@ String balcony02StaticCapabilitiesJson(const String &deviceId, const String &rep
   response += "]}";
   return response;
 }
-#endif
 }
 
 void gen2Begin() {
@@ -122,82 +91,19 @@ void gen2Begin() {
   Wire.begin(MBG_I2C_SDA_PIN, MBG_I2C_SCL_PIN);
 #endif
 
-  gen2Dht11Begin();
   gen2Bme280Begin();
   gen2Ds18b20Begin();
-  gen2Veml6030Begin();
   gen2Sen0204Begin();
   gen2Sen0562Begin();
 }
 
 String gen2CapabilitiesJson(const String &deviceId, const String &reportedAt) {
-#if defined(MBG_SEN0204_PIN) && defined(MBG_PHYSICAL_BUTTON_PIN)
-  // Balcony02 uses the approved static contract; all other compiled profiles
-  // continue through the existing capability aggregation path unchanged.
-  if (String(MBG_BUILD_PROFILE) == "balcony02-gen2") {
-    return balcony02StaticCapabilitiesJson(deviceId, reportedAt);
-  }
-#endif
-
-  String response = "{";
-  response += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
-  response += "\"device_id\":\"" + deviceId + "\",";
-  response += "\"device_role\":\"" + String(DEVICE_ROLE) + "\",";
-  response += "\"firmware_version\":\"" + String(MBG_FIRMWARE_VERSION) + "\",";
-  response += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
-  response += "\"reported_at\":\"" + reportedAt + "\",";
-  response += "\"gen2_enabled\":true,";
-  response += "\"pump_control_available\":" + boolString(MBG_PUMP_CONTROL_AVAILABLE != 0) + ",";
-  response += "\"device_can_water\":" + boolString(MBG_DEVICE_CAN_WATER != 0) + ",";
-  response += "\"watering_simulation_available\":" + boolString(MBG_WATERING_SIMULATION_AVAILABLE != 0) + ",";
-  response += "\"local_http_watering_endpoint_available\":" + boolString(MBG_HTTP_WATERING_ENDPOINT_ENABLED != 0) + ",";
-  response += "\"relay_test_output_pin\":";
-  response += (MBG_PUMP_CONTROL_AVAILABLE ? String(RELAY_PIN) : String("null"));
-  response += ",";
-  response += "\"control_authority\":\"local_firmware\",";
-  response += "\"supabase_command_control\":false,";
-  response += "\"i2c\":{\"enabled\":" + boolString(MBG_HAS_I2C_MODULES != 0) + ",";
-  response += "\"sda_pin\":";
-  response += (MBG_HAS_I2C_MODULES ? String(MBG_I2C_SDA_PIN) : String("null"));
-  response += ",\"scl_pin\":";
-  response += (MBG_HAS_I2C_MODULES ? String(MBG_I2C_SCL_PIN) : String("null"));
-  response += "},";
-  response += "\"i2c_scan\":" + i2cScanJson() + ",";
-#if MBG_HAS_I2C_MUX
-  response += "\"i2c_mux\":" + gen2I2cMuxCapabilitiesJson() + ",";
-#endif
-#if MBG_CAPABILITIES_INCLUDE_DHT11_ALIAS
-  response += "\"legacy_dht11_enabled\":" + boolString(MBG_HAS_DHT11 != 0) + ",";
-#endif
-  response += "\"modules\":[";
-  response += gen2Dht11CapabilityJson();
-  response += ",";
-  response += gen2Bme280CapabilityJson();
-  response += ",";
-  response += gen2Ds18b20CapabilityJson();
-  response += ",";
-  response += gen2Veml6030CapabilityJson();
-  response += ",";
-  response += gen2SoilMoistureCapabilityJson();
-  response += ",";
-  response += gen2Sen0308CapabilityJson();
-  response += ",";
-  response += gen2Sen0562CapabilityJson();
-#if MBG_HAS_SEN0204
-  response += ",";
-  response += gen2Sen0204CapabilityJson();
-#endif
-  response += "]";
-  response += "}";
-  return response;
+  return balcony02StaticCapabilitiesJson(deviceId, reportedAt);
 }
 
 String gen2MeasurementRecordsJson(const String &deviceId, const String &measuredAt) {
-  String dht11 = gen2Dht11MeasurementsJson(deviceId, measuredAt);
   String bme = gen2Bme280MeasurementsJson(deviceId, measuredAt);
   String ds18b20 = gen2Ds18b20MeasurementsJson(deviceId, measuredAt);
-  String veml6030 = gen2Veml6030MeasurementsJson(deviceId, measuredAt);
-  String soil = gen2SoilMoistureMeasurementsJson(deviceId, measuredAt);
   String sen0308 = gen2Sen0308MeasurementsJson(deviceId, measuredAt);
   String sen0562 = gen2Sen0562MeasurementsJson(deviceId, measuredAt);
   String sen0204 = gen2Sen0204MeasurementsJson(deviceId, measuredAt);
@@ -205,10 +111,6 @@ String gen2MeasurementRecordsJson(const String &deviceId, const String &measured
   String response = "[";
 
   bool hasAny = false;
-  if (dht11.length() > 2) {
-    response += dht11.substring(1, dht11.length() - 1);
-    hasAny = true;
-  }
   if (bme.length() > 2) {
     if (hasAny) {
       response += ",";
@@ -221,20 +123,6 @@ String gen2MeasurementRecordsJson(const String &deviceId, const String &measured
       response += ",";
     }
     response += ds18b20;
-    hasAny = true;
-  }
-  if (veml6030.length() > 0) {
-    if (hasAny) {
-      response += ",";
-    }
-    response += veml6030;
-    hasAny = true;
-  }
-  if (soil.length() > 2) {
-    if (hasAny) {
-      response += ",";
-    }
-    response += soil.substring(1, soil.length() - 1);
     hasAny = true;
   }
   if (sen0308.length() > 0) {
@@ -276,5 +164,3 @@ String gen2MeasurementsJson(const String &deviceId, const String &measuredAt) {
   response += "}";
   return response;
 }
-
-#endif
