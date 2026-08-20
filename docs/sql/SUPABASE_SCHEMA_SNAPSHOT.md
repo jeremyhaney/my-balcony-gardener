@@ -1,8 +1,8 @@
 # Supabase Schema Snapshot
 
-Status: Active live schema snapshot, updated through Phase 8C production validation.
-Snapshot dates: 2026-06-11 full public-schema catalog inspection; 2026-08-14 Phase 8C capability-object execution and focused validation.
-Source: Approved read-only Supabase catalog result sets pasted by Jeremy on 2026-06-11, plus Jeremy's manually executed and verified Phase 8C production results from 2026-08-14.
+Status: Active live schema snapshot, updated through Phase 8F.10 read-only focused verification; Phase 8F.10 proposal SQL is unexecuted.
+Snapshot dates: 2026-06-11 full public-schema catalog inspection; 2026-08-14 Phase 8C capability-object execution and focused validation; 2026-08-20 Phase 8F.10 focused legacy-table/access/dependency verification.
+Source: Approved read-only Supabase catalog result sets pasted by Jeremy on 2026-06-11, Jeremy's manually executed and verified Phase 8C production results from 2026-08-14, and the protected Phase 8F.10 repeatable-read catalog/row export from 2026-08-20.
 Scope: Live Supabase `public` schema inventory only.
 Important warning: This is an observed live Supabase public-schema snapshot based on the dated evidence above. It is documentation, not a migration or schema-change script. Phase 8C authenticated-role isolation was exercised in rollback-only SQL Editor transactions; no claim is made that every REST/client access path was separately exercised.
 Maintenance rule: This snapshot must be updated whenever an approved SQL/schema phase changes public tables, views, functions, RLS policies, grants, indexes, constraints, or triggers.
@@ -311,8 +311,10 @@ Observed live extension relevant to Phase 8C:
 - Indexes: `sensor_events_pkey`, `sensor_events_event_timestamp_idx`, `sensor_events_event_type_idx`, `sensor_events_sensor_type_idx`, `sensor_events_device_id_idx`, `sensor_events_container_id_idx`, `sensor_events_location_label_idx`.
 - RLS: Enabled.
 - Policies: No browser-role policies were observed in the pasted result set.
-- Grants/access notes: With RLS enabled and no observed browser-role policies, this remains effectively operator/admin manual context rather than normal anon/auth REST telemetry.
-- Notes: Uses `event_timestamp`, not `event_at`, `event_time`, or only `created_at`.
+- Grants/access notes: Phase 8F.10 verifies explicit full table ACLs for `anon`, `authenticated`, `service_role`, and owner `postgres`. RLS blocks ordinary anon/authenticated row access because no policy exists; service role bypasses RLS. The proposal revokes all three non-owner role grants while retaining the table.
+- Live rows: Three explicit Phase 5B sample-validation fixtures, all timestamped `2026-05-07T18:46:16.571701Z`; exact deletion is proposed but unexecuted.
+- Dependencies: No view, function body, table trigger, foreign key, publication, or subscription.
+- Notes: Uses `event_timestamp`, not `event_at`, `event_time`, or only `created_at`. The still-approved use is isolated manual operational context; there is no application or firmware consumer.
 
 | column | type | nullable | default | identity/generated | notes |
 | --- | --- | --- | --- | --- | --- |
@@ -359,7 +361,7 @@ values (
 
 ### sensor_logs
 
-- Purpose: Legacy/current `SensorLogRow` telemetry history and historical watering-marker compatibility.
+- Purpose: Obsolete live `SensorLogRow` compatibility table. Historical evidence remains valid; no supported current/future Gen2 consumer remains.
 - Related repo artifacts: No clear current tracked SQL creation artifact in the inspected `docs/sql` source pack; later policy behavior is affected by `phase6j5-device-registry.sql`.
 - Command/control status: Telemetry/history evidence only. Not command/control.
 - Primary key: `id`.
@@ -369,8 +371,10 @@ values (
 - Indexes: `sensor_logs_pkey`, `sensor_logs_timestamp_idx`.
 - RLS: Enabled.
 - Policies: Anon/authenticated SELECT is observed. Anon INSERT is registry-gated through `is_device_telemetry_insert_enabled(device_id)`. No UPDATE/DELETE policy observed.
-- Grants/access notes: Public/demo history read posture is intentional legacy/current read evidence, constrained by RLS.
-- Notes: Gen2 expanded measurements remain outside this table.
+- Grants/access notes: Phase 8F.10 verifies full table ACLs for `anon`, `authenticated`, `service_role`, and owner `postgres`. Anon/authenticated can select all rows; anon insert remains registry-gated; service role bypasses RLS.
+- Live rows: Three Phase 4 history-UI development seed rows from `2026-03-28T02:54:08.517271Z` through `03:04:08.517271Z`; exact deletion is proposed but unexecuted. No Balcony02 rows.
+- Dependencies: No view, function body, table trigger, foreign key, publication, or subscription. The insert policy depends on `is_device_telemetry_insert_enabled(text)`, which remains required by two current Gen2 policies and is not a retirement target.
+- Notes: Phase 8F.10 separately proposes row deletion and schema/access retirement. Gen2 expanded measurements remain outside this table.
 
 | column | type | nullable | default | identity/generated | notes |
 | --- | --- | --- | --- | --- | --- |
@@ -959,10 +963,10 @@ Observed effective policy posture:
 
 - `device_capabilities`: RLS enabled, forced RLS false, zero policies, and no browser base-table grants.
 - `device_heartbeats`: anon INSERT only through `is_device_heartbeat_insert_enabled(device_id)`; no SELECT/UPDATE/DELETE policy observed.
-- `sensor_logs`: anon/authenticated SELECT; anon INSERT only through `is_device_telemetry_insert_enabled(device_id)`; no UPDATE/DELETE policy observed.
+- `sensor_logs`: anon/authenticated SELECT; anon INSERT only through `is_device_telemetry_insert_enabled(device_id)`; no UPDATE/DELETE policy observed. This obsolete exposure is proposed for retirement but remains live.
 - `sensor_measurement_batches`: anon INSERT only through `is_device_telemetry_insert_enabled(device_id)`; no SELECT/UPDATE/DELETE policy observed.
 - `watering_events`: anon INSERT only through `is_device_telemetry_insert_enabled(device_id)`; no SELECT/UPDATE/DELETE policy observed on the base table.
-- `sensor_events`: RLS enabled; no browser-role policies observed; effectively operator/admin manual context.
+- `sensor_events`: RLS enabled; no browser-role policies observed. Broad anon/authenticated/service-role ACLs remain; Phase 8F.10 proposes revocation while retaining operator/admin manual context.
 - `device_registry`: RLS enabled; no browser-role SELECT policy observed; helper functions are used for insert authorization checks.
 - `gardens`, `garden_devices`, `garden_memberships`, `profiles`, and `support_memberships`: authenticated SELECT policies are membership-filtered or self-filtered.
 

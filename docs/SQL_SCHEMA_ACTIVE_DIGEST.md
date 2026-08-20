@@ -32,29 +32,30 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 
 ### sensor_logs
 
-- Purpose: Legacy/current `SensorLogRow` telemetry history and historical watering markers.
-- Source of rows: ESP32 firmware telemetry posts.
-- Device-originated inserts: Yes, for provisioned devices. Phase 6J.5 replaces hardcoded UUID insert allowlists with `public.is_device_telemetry_insert_enabled(device_id)`.
+- Purpose: Obsolete live `SensorLogRow` compatibility surface. Historical rows/ADRs remain evidence, but Phase 8F.10 finds no supported current or future Gen2 consumer.
+- Source of rows: Historical ESP32 firmware telemetry posts plus the final Phase 4 development seed. Supported firmware no longer writes the table.
+- Live rows: Exactly three `esp32-dev-01` development-seed rows from 2026-03-28, protected and proposed for exact deletion. No Balcony02 rows.
+- Device-originated inserts: The live anon policy still permits provisioned identities through `public.is_device_telemetry_insert_enabled(device_id)`, but no supported firmware invokes it for `sensor_logs`.
 - Browser/customer read path: None in the supported frontend after Phase 8F.3. Public Demo and protected customer/support routes use hosted Gen2 views instead.
-- Anon SELECT: Existing public/anon `sensor_logs` SELECT policy is documented as remaining after Phase 6J.5.
-- Authenticated SELECT: Needs verification from applied Supabase state for any direct authenticated base-table access; protected customer/support Gen2 views do not depend on direct browser reads of `sensor_logs`.
+- Applied access: RLS enabled/not forced; anon/authenticated `SELECT USING (true)`; anon registry-gated `INSERT`; broad table ACLs for anon/authenticated/service_role; service role bypasses RLS. No update/delete policy.
+- Dependencies: No view, function body, table trigger, foreign key, publication, or subscription depends on the table. The insert policy calls the shared telemetry helper, which must remain for current Gen2 measurement-batch and watering-event policies.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0002, 0003, 0004, 0006, 0007, 0009, 0012, 0015, 0016, 0021.
-- Related SQL artifacts: `docs/sql/phase6j5-device-registry.sql`; `docs/sql/phase7g1-control-validation-readonly-queries.sql`.
-- Notes: `data.soilRawAdc` is optional raw ADC evidence. `data.moisture` is a derived moisture index. Gen2 expanded measurements must not be added to `SensorLogRow.data`.
+- Related SQL artifacts: `docs/sql/phase6j5-device-registry.sql`; `docs/sql/phase7g1-control-validation-readonly-queries.sql`; proposal-only Phase 8F.10 row and schema/access retirement artifacts.
+- Notes: Phase 8F.10 proposes, but has not executed, exact final-row deletion followed by policy/grant/index/constraint/table retirement with `RESTRICT` and no `CASCADE`.
 
 ### sensor_events
 
 - Purpose: Manual operational event/context log for sensor swaps, maintenance, calibration notes, plant/container moves, experiments, and human-entered context.
 - Source of rows: Manual Supabase Table Editor or SQL Editor entry for MVP.
+- Live rows: Exactly three explicit Phase 5B sample-validation rows from 2026-05-07, protected and proposed for exact deletion. No Balcony02 rows.
 - Device-originated inserts: No.
 - Browser/customer read path: Not a primary hosted/customer read path in current artifacts.
-- Anon SELECT: Phase 7S.1 live catalog inspection found RLS enabled and no browser-role policies observed; treat this as manual/operator/admin context unless a later approved SQL phase changes access.
-- Authenticated SELECT: Phase 7S.1 live catalog inspection found RLS enabled and no browser-role policies observed; treat this as manual/operator/admin context unless a later approved SQL phase changes access.
+- Applied access: RLS enabled/not forced and zero policies. Anon/authenticated/service_role nevertheless hold broad table ACLs; ordinary anon/authenticated row operations are denied by RLS, while service role bypasses RLS. Phase 8F.10 proposes revoking all three roles' table privileges while retaining operator/editor access.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0005, 0014, 0017, 0021.
 - Related SQL artifacts: No current `docs/sql` creation artifact found; ADR 0005 contains the validated core schema.
-- Notes: Must not become canonical device-originated watering evidence and must not reshape `SensorLogRow`.
+- Notes: Must not become canonical device-originated watering evidence and must not reshape `SensorLogRow`. No frontend, firmware, script, fixture, view, function, trigger, foreign key, publication, or subscription consumes it. Retain as isolated manual compatibility unless the governing ADRs are separately superseded.
 
 ### device_heartbeats
 

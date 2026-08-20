@@ -50,7 +50,7 @@ ADR 0003 defines the canonical `SensorLogRow` contract: top-level `device_id`, `
 
 ADR 0012 amends ADR 0003 by adding optional `data.soilRawAdc` for raw ESP32 ADC evidence. Older rows without `soilRawAdc` remain valid. `data.moisture` remains a derived moisture index, not a calibrated soil-moisture percentage.
 
-ADR 0016 further clarifies that `SensorLogRow` and `sensor_logs` remain stable for Gen1/current compatibility while Gen2 expanded measurements use a separate measurement path.
+ADR 0016 historically kept `SensorLogRow` and `sensor_logs` stable while Gen1/current compatibility existed. Phases 8F.3 and 8F.5 removed the last supported reader and writer. Phase 8F.10 proves no future Gen2 consumer remains and proposes, without executing, deletion of the final development rows followed by retirement of the table/access surface. Historical ADR meaning and exports remain evidence.
 
 ## Gen2 Modular Measurement And Endpoint Contract
 
@@ -72,8 +72,8 @@ ADR 0017 continues to define one append-only raw batch row per complete `/measur
 
 ## Data And Evidence Paths
 
-- `sensor_logs`: legacy/current `SensorLogRow` telemetry history and historical watering markers.
-- `sensor_events`: manual operational context, not device-originated telemetry and not command/control.
+- `sensor_logs`: obsolete live compatibility table with no supported consumer; Phase 8F.10 retirement proposal only, not yet executed.
+- `sensor_events`: isolated manual operational context, not device-originated telemetry and not command/control; retain the table, while Phase 8F.10 proposes deleting its three sample rows and revoking unused API grants.
 - `device_heartbeats`: append-only diagnostics/latest health evidence.
 - `device_registry`: provisioned-device registry and insert allowlist source, not command/control.
 - `sensor_measurement_batches`: raw Gen2 measurement package evidence.
@@ -126,7 +126,7 @@ Local pages may consume directly connected runtime capabilities. The temporary D
 
 ## Watering Event Evidence And Cadence Separation
 
-ADR 0021 remains active for watering event evidence and cadence separation. `sensor_logs` remains legacy/current environmental telemetry and historical watering-marker compatibility. `sensor_events` remains manual human context. `device_heartbeats` can show latest watering diagnostics but is not a complete event history.
+ADR 0021 remains active for watering event evidence and cadence separation. Historical `sensor_logs` evidence remains valid, while its live compatibility surface has no supported consumer and is proposed for retirement by Phase 8F.10. `sensor_events` remains manual human context. `device_heartbeats` can show latest watering diagnostics but is not a complete event history.
 
 The active architecture favors a dedicated append-only `watering_events` evidence path for device-originated watering facts such as `watering_started`, `watering_completed`, `watering_blocked`, and `watering_safety_cutoff`. This path is evidence/storage/read-only. It does not authorize watering and does not change pump ownership.
 

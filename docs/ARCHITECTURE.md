@@ -266,6 +266,8 @@ This boundary records the earlier restoration sequence. Phases 8F.1–8F.3 super
 
 The following contract remains authoritative for interpreting historical `sensor_logs` rows. It is no longer a supported firmware or frontend runtime contract.
 
+Phase 8F.10 proves that the live table has no supported current or future Gen2 consumer and that its final three rows are a Phase 4 development seed. Exact row-deletion and schema/access-retirement proposals exist but are unexecuted; the table remains live until separately approved execution.
+
 ```ts
 type SensorLogRow = {
   id?: string
@@ -283,7 +285,7 @@ type SensorLogRow = {
 }
 ```
 
-- The shared frontend definition in [`mbg_dashboard/src/types/sensorLog.ts`](../mbg_dashboard/src/types/sensorLog.ts) is the canonical in-repo contract.
+- The former shared frontend definition was retired in Phase 8F.3. This historical contract, protected exports, and the live schema remain interpretation authority until the proposed table retirement is separately approved and executed.
 - In Supabase, `data` is stored as `jsonb`.
 - For the `jsonb` object, key order is not significant.
 - Field names and value types are significant and must not drift.
@@ -302,6 +304,8 @@ type SensorLogRow = {
 ## Manual Operational Event Log
 
 Supabase `public.sensor_events` is approved as a separate manual operational event/history table for changes that affect how telemetry should be interpreted.
+
+Phase 8F.10 finds no frontend, firmware, script, fixture, view, function, or trigger consumer. The final three rows are explicit Phase 5B sample-validation fixtures proposed for deletion. The table remains approved as isolated manual context; its unnecessary `anon`, `authenticated`, and `service_role` grants are proposed for revocation, not yet changed.
 
 - It is used for operational notes such as sensor swaps, moves, cleaning, calibration, reference readings, maintenance, plant moves, container changes, and experiment markers.
 - It does not store telemetry payloads and does not replace `sensor_logs`.
