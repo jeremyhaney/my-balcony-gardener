@@ -25,17 +25,18 @@ Source-pack compression/reference documents are available for future ChatGPT/Cod
 
 ## Approved Runtime And Data Flow
 
-1. ESP32 firmware retains local watering authority and its local endpoints.
+1. ESP32 firmware retains local watering authority and the supported read-only local endpoint set.
 2. The dashboard runs from [`mbg_dashboard`](../mbg_dashboard) without a direct browser-to-device path.
 3. Ordinary and hosted-readonly builds use the same hosted Gen2 route shell and read the appropriate public or protected hosted views.
-4. Retained firmware endpoints with no current frontend consumer include:
+4. Supported firmware endpoints, none of which has a current frontend consumer, are:
    - `GET /`
-   - `GET /logs`
-   - `POST /water-now`
-5. The ESP32 also posts telemetry directly to Supabase `sensor_logs` for history storage.
+   - `GET /status`
+   - `GET /capabilities`
+   - `GET /measurements`
+5. The ESP32 posts measurement batches, device heartbeats, and watering-event evidence directly to their current Gen2 Supabase tables.
 6. Supabase-backed frontend reads remain telemetry/history/diagnostics only and must not become command/control.
 7. Supabase `sensor_events` is a separate manual operational event log for physical or system changes that help interpret telemetry.
-8. `sensor_events` is not the live/current path, not command/control, and not a replacement for `sensor_logs` telemetry history.
+8. `sensor_events` is not the live/current path, not command/control, and not a replacement for current Gen2 telemetry or watering-event evidence.
 
 ## Watering Control Boundary
 
@@ -76,8 +77,8 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 - Protected watering history and chart markers use hosted watering-event evidence, not `sensor_logs.data.watering`.
 - Hosted Read-Only Mode must not show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
 - Hosted Read-Only Mode must not bundle local control code in the production artifact.
-- No supported frontend route reads or renders `sensor_logs`; Phase 8F.10 retires the obsolete live table after protected export and exact-row deletion.
-- Firmware retains local watering authority and endpoint compatibility, but the frontend no longer provides a local ESP32 live/control consumer.
+- No supported frontend route reads or renders `sensor_logs`; Phase 8F.10 retired the obsolete live table after protected export and exact-row deletion.
+- Firmware retains local watering authority and read-only local inspection endpoints, but the frontend has no local ESP32 consumer.
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
 - Phase 7L.3 introduced the hosted route shell. `/` and `/demo` are public hosted routes.
@@ -97,13 +98,13 @@ ADR 0013 in [`docs/adr/0013-multi-unit-visibility-and-local-control-target-safet
 
 ADR 0014 in [`docs/adr/0014-device-diagnostics-heartbeats-and-reliability-evidence.md`](./adr/0014-device-diagnostics-heartbeats-and-reliability-evidence.md) defines the Phase 6J.1 diagnostics/heartbeat architecture.
 
-- `device_heartbeats` is the recommended future append-only machine/device health evidence table.
-- `device_heartbeats` is separate from `sensor_logs` plant/environment telemetry and `sensor_events` manual operational context.
-- `GET /status` is the proposed future read-only local diagnostics endpoint.
+- `device_heartbeats` is the current append-only machine/device health evidence table.
+- `device_heartbeats` is separate from Gen2 measurement telemetry and `sensor_events` manual operational context.
+- `GET /status` is the supported read-only local diagnostics endpoint.
 - `/status` must be diagnostic-only and must not control watering, alter runtime state, or expose command authority.
 - Diagnostics should exist on every deployed ESP32 unit, including controller, sensor-only/scout, and bench units.
 - Supabase may store telemetry/history/diagnostics evidence only and must not become command/control.
-- Hosted dashboard diagnostics display is deferred until `/status` and `device_heartbeats` are proven, and hosted-readonly mode must remain read-only.
+- Hosted diagnostics read current heartbeat evidence through limited public or protected views and remain read-only.
 
 ## Device Registry / Provisioned Device Allowlist
 
@@ -111,7 +112,7 @@ ADR 0015 in [`docs/adr/0015-supabase-device-registry-and-table-driven-allowlist.
 
 - `public.device_registry` is the provisioned-device registry for known MBG ESP32 units.
 - Registry-backed RLS replaces repeated hardcoded UUID allowlists for device-originated inserts.
-- Registry flags authorize `sensor_logs` telemetry inserts and `device_heartbeats` diagnostics inserts only.
+- Registry flags authorize current Gen2 measurement-batch, watering-event, and device-heartbeat inserts only.
 - Registry flags are not command/control and must not grant watering authority.
 - Supabase remains telemetry/history/diagnostics storage only and must not expose Remote Water Now.
 - Base `device_registry` anonymous read access is not approved in Phase 6J.5.
@@ -121,8 +122,8 @@ ADR 0015 in [`docs/adr/0015-supabase-device-registry-and-table-driven-allowlist.
 
 ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen2-modular-sensor-architecture.md) defines Gen2 as a modular grow-environment platform where sensors, capabilities, and control authority are independently discoverable, optional, and replaceable.
 
-- `SensorLogRow` remains a firmware/storage compatibility concept for `sensor_logs`; its frontend type and adapter are retired.
-- Gen2 expanded measurements belong in a separate measurement-list/table path, likely future `public.sensor_measurements`.
+- `SensorLogRow` is a retired historical firmware/storage contract; its frontend type, writer, reader, and live table are retired.
+- Gen2 measurements use the current measurement-list/batch path in `public.sensor_measurement_batches` and `public.sensor_measurements_flat`.
 - `SensorLogRow.data` must not keep expanding with fixed fields for every future sensor.
 - Gen2 optional sensors may be present, missing, disabled, failed, or not installed without breaking device operation.
 - Valid for display is not the same as valid for control. ADR 0022 removes `control_eligible` from new external `/measurements` records; local firmware/control logic remains solely responsible for deciding whether any measurement may influence watering.
@@ -138,10 +139,10 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Phase 7B `bench-proto-gen2` historically used GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
 - GPIO5 remains retired for future Gen2 relay/pump control designs.
 - Phase 7C historically added a Prototype01-only local/default panel over `/status`, `/capabilities`, and `/measurements`; Phase 8F.1 retires that unsupported frontend consumer and its stale local response types and request helpers.
-- The Gen2 firmware endpoints remain available for direct local inspection and later contract-aware work, but the current local/default application does not mount or poll the retired Prototype01 panel.
+- The supported Gen2 firmware endpoints remain available for direct local inspection and later contract-aware work, but the frontend does not mount or poll a local-device panel.
 - Phase 8F.2 retires the remaining `LiveStats` browser consumer, selected-target five-second `/logs` polling, and local `/water-now` action.
 - Phase 8F.3 retires the non-hosted route, frontend `sensor_logs` query/adapter/types, legacy Sensor History chart, and legacy telemetry-health presentation.
-- `/logs` remains firmware compatibility and is not part of the modular bench measurement contract; the frontend no longer consumes it.
+- `/logs` was historical compatibility and is absent from supported firmware and frontend source.
 - Hosted-readonly remains Supabase-only/read-only and does not bundle local endpoint/control strings.
 - Supabase command/control remains prohibited.
 - ADR 0017 in [`docs/adr/0017-gen2-measurement-batch-storage.md`](./adr/0017-gen2-measurement-batch-storage.md) defines Gen2 measurement storage as one append-only raw batch row per complete device `/measurements` package.
@@ -161,12 +162,12 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Database-backed physical sensor inventory and assignment administration remain deferred. ADR 0022 permits optional runtime `physical_sensor_id` on measurement/capability entries where a known physical identity already exists.
 - `sensor_events` remains an operational note log, not the source of truth for defining installed physical sensors.
 - Phase 7D preserved `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, watering behavior, and the then-current per-record `control_eligible` field. ADR 0022 later removes that field from new external Gen2 measurement records while preserving historical stored evidence.
-- Phase 7E moves field units onto the Gen2 compatibility path while preserving the installed controller UUID `550e8400-e29b-41d4-a716-446655440000` and scout UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`.
-- Phase 7E display labels are compile-time endpoint readability labels: `Balcony01`, `Scout01`, and `Prototype01`. They are not user-editable names or database-driven nicknames.
+- Phase 7E historically moved the now-retired field units onto the Gen2 compatibility path while preserving their then-current UUIDs.
+- Phase 7E display labels `Balcony01`, `Scout01`, and `Prototype01` were compile-time endpoint readability labels, not user-editable names or database-driven nicknames.
 - Phase 7E local endpoints report firmware provenance with `firmware_version`, `build_profile`, and `device_label` on `/status`, `/capabilities`, and `/measurements`.
 - Gen2 local endpoint timestamp semantics are explicit: `/status.reported_at` is the status snapshot generation time, `/capabilities.reported_at` is the capability snapshot generation time, and `/measurements.measured_at` is the measurement package/sample time.
 - The retired installed/scout profiles historically enabled `/logs` through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`. Phase 8F.5 removes that feature flag, handler, registration, and response implementation.
-- Phase 7G.0 preserves the `/logs` `SensorLogRow` compatibility shape for Scout01 by allowing existing `data.temperature` and `data.humidity` fields to come from BME280 when Scout01 DHT11 is disabled; pressure and soil temperature remain in Gen2 `/measurements`, not `/logs`.
+- Phase 7G.0 historically preserved the `/logs` `SensorLogRow` compatibility shape for Scout01; Phase 8F.5 later removed that path.
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`, plus `batch_details.phase = "7E"` and `batch_details.device_label`.
 - Balcony01 and Scout01 profile capabilities are historical; both device profiles are retired. Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
 - Balcony02 retains local firmware watering authority through physical-button/safety behavior; the unsupported HTTP `/water-now` implementation is absent. Remote Water Now remains prohibited.
@@ -200,11 +201,11 @@ ADR 0024 in [`docs/adr/0024-hosted-device-capability-source-of-truth-and-present
 - Stable generic display definitions remain frontend-owned; installation-specific friendly/location names may accompany provisioning. Gen1 and Gen2 adapters feed a common presentation model without making measurement storage capability configuration.
 - Local, Demo, My Garden, Support, History, and diagnostic panels apply shared definitions with route-specific policy rather than duplicated card catalogs. Device/route eligibility remains assignment/access policy, independent of sensor health.
 - `public.device_capabilities` is the positive lifecycle table. Authenticated reads use separate `security_barrier` customer-current and Support-lifecycle views; the base table has RLS enabled, zero policies, and no browser grants. Balcony02 currently has nine declarations and remains Support-visible/customer-hidden. Frontend adapters, cards, history controls, diagnostics UI, friendly-name styling, derived readings, and deterministic Demo work remain separately reviewed implementation slices.
-- Phase 8C.1 documents the approved frontend application in [`docs/product/phase8c1-hosted-frontend-capability-integration-design.md`](./product/phase8c1-hosted-frontend-capability-integration-design.md). Phase 8C.2 is production-validated (**Pass**) and operationally closed for authenticated Support: it reads `support_device_capabilities`, normalizes to a shared logical-sensor model, filters current-effective rows, caches per device in memory, applies exact logical-series mappings, and uses no inventory fallback. Jeremy's 2026-08-16 production smoke test confirmed Balcony02's eleven approved cards in Light, Air, Water, Soil order, Prototype01's successful-zero state, and preserved Demo availability; unforced failure, lifecycle, cache, refresh, polling, and concurrency cases remain test/inspection-supported. Customer adoption, Prototype01 firmware/provisioning, Gen1 cleanup, deterministic Demo work, visual modernization, and public capability access remain deferred.
+- Phase 8C.1 documents the approved frontend application in [`docs/product/phase8c1-hosted-frontend-capability-integration-design.md`](./product/phase8c1-hosted-frontend-capability-integration-design.md). Phase 8C.2 is production-validated (**Pass**) and operationally closed for authenticated Support: it reads `support_device_capabilities`, normalizes to a shared logical-sensor model, filters current-effective rows, caches per device in memory, applies exact logical-series mappings, and uses no inventory fallback. Jeremy's 2026-08-16 production smoke test confirmed Balcony02's eleven approved cards in Light, Air, Water, Soil order, Prototype01's then-valid successful-zero state, and preserved Demo availability; unforced failure, lifecycle, cache, refresh, polling, and concurrency cases remain test/inspection-supported. Prototype01 provisioning and Gen1 cleanup were deferred at that checkpoint and are now retired through Phase 8F; customer adoption, deterministic Demo work, visual modernization, and public capability access remain later work.
 - Phase 8C.3A–D is the closed evidence-state sequence. `measured_at` owns freshness; `batch_created_at` remains transport evidence; current thresholds are 50 minutes and 95 minutes with device-active qualification. Last-good, invalidity, latest-package omission, selected-window absence, derived availability, environmental condition, evidence-health severity, and device reporting remain separate frontend concepts. The implementation record is [`docs/product/phase8c3c-evidence-state-implementation.md`](./product/phase8c3c-evidence-state-implementation.md); deterministic evidence and production closeout are in [`docs/product/phase8c3d-evidence-state-production-validation-and-closeout.md`](./product/phase8c3d-evidence-state-production-validation-and-closeout.md).
 - Phase 8C.4 is the completed measurement-quality gate. Exact commissioned identities select product/provider rules; air uses `0..130 °F`, soil uses `10..130 °F`, and SEN0562 accepts `0..65535 lux` while recording the upper measurement ceiling as a non-rejecting concern. Latest rejected evidence remains visible to authenticated Support, ordinary value/condition and trend paths use only presentation-eligible rows, and `lastPresentationEligibleRow` remains separate from device-good evidence. Design: [`docs/product/phase8c4-measurement-quality-gates-design.md`](./product/phase8c4-measurement-quality-gates-design.md). Implementation: [`docs/product/phase8c4-measurement-quality-gates-implementation.md`](./product/phase8c4-measurement-quality-gates-implementation.md).
 - Phase 8C.5A design and Phase 8C.5B implementation define the environmental-presentation layer; see the [design](./product/phase8c5a-environmental-presentation-design.md) and [implementation](./product/phase8c5b-environmental-presentation-implementation.md). Phase 8C.4 eligibility precedes Phase 8C.3 evidence health. Eligible evidence current through the inclusive 50-minute boundary may supply condition wording, measurement-specific card color, and a full-scale marker. Ordinary current cards show condition in the upper-right pill; evidence exceptions show evidence state. Older evidence is neutral. Support diagnostics, future customer wording, trends/RMI, and firmware watering authority remain separate. The frontend uses already-fetched rows and adds no query or Disk I/O. Phase 9 separately holds optional local schedule persistence and sensor-assisted watering.
-- The approved continuation is Phase 8D watering-event visibility restoration, 8E Feels Like/Dew Point, 8F Gen1 risk containment/retirement, 8G threshold presentation, 8H customer adoption/customer-led modernization, and 8I deterministic Demo. This is a roadmap order, not implementation authority. In particular, watering events and thresholds remain evidence/presentation, derived microclimate values remain display-only, customer adoption requires authorized commissioned visibility, and the Demo must not depend on protected configuration or live production telemetry. See the [priority sequence](./product/phase8-post-8c5-priority-sequence.md).
+- The approved continuation is Phase 8D watering-event visibility restoration, 8E Feels Like/Dew Point, 8F Gen1 risk containment/retirement, 8G threshold presentation, 8H customer adoption/customer-led modernization, and 8I deterministic Demo. Phases 8D, 8E, and 8F are operationally closed; Phase 8G is next. This is a roadmap order, not implementation authority. In particular, watering events and thresholds remain evidence/presentation, derived microclimate values remain display-only, customer adoption requires authorized commissioned visibility, and the Demo must not depend on protected configuration or live production telemetry. See the [priority sequence](./product/phase8-post-8c5-priority-sequence.md).
 ## Hosted Read-Only Device Diagnostics
 
 Phase 6J.6 adds a limited hosted diagnostics read path through `public.hosted_device_diagnostics`.
@@ -220,11 +221,11 @@ Phase 6J.6 adds a limited hosted diagnostics read path through `public.hosted_de
 
 ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./adr/0010-device-identity-and-production-traceability.md) locks the Phase 6B device identity convention.
 
-- The current installed balcony unit keeps UUID `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
-- Firmware `DEVICE_ID` is the telemetry identity used in `sensor_logs.device_id` and local `/logs`.
+- The retired first installed balcony unit historically kept UUID `550e8400-e29b-41d4-a716-446655440000` for evidence continuity; it is not a current executable or registry identity.
+- Firmware `DEVICE_ID` remains the stable telemetry identity used in Gen2 envelopes and current evidence tables. Historical Gen1 used it in `sensor_logs.device_id` and local `/logs`.
 - Future ESP32 units must be preloaded/provisioned with unique, stable, non-null UUIDs before deployment.
 - Friendly names are separate user-facing labels and are not the telemetry identity.
-- Hosted read-only dashboard selection uses `VITE_MBG_DEVICE_ID`.
+- Hosted selection uses the Balcony02-only Demo registry or authorization-derived customer/Support device options; `VITE_MBG_DEVICE_ID` is retired.
 - No Supabase schema change, `SensorLogRow` change, multi-device UI, or provisioning UI is approved in Phase 6B.
 - ADR 0010 remains the identity convention authority.
 - Phase 6C implements a prototype/small-batch bridge using PlatformIO build profiles.
@@ -247,7 +248,7 @@ ADR 0008 in [`docs/adr/0008-telemetry-integrity-hardening.md`](./adr/0008-teleme
 
 ## Historical Frontend Restoration Boundary
 
-This boundary records the earlier restoration sequence. Phases 8F.1–8F.3 supersede its local browser path and `sensor_logs` frontend assumptions; Phase 8F.5 removes the corresponding unsupported firmware endpoints and writer.
+This boundary records the earlier restoration sequence. Its bullets describe the historical requirements at that checkpoint, not current runtime guidance. Phases 8F.1–8F.3 supersede its local browser path and `sensor_logs` frontend assumptions; Phase 8F.5 removes the corresponding unsupported firmware endpoints and writer.
 
 - Local live path remains separate from deferred history/graph restoration work.
 - Local live/control path remains separate from the Supabase history/read path after current logging restoration.
@@ -285,7 +286,7 @@ type SensorLogRow = {
 }
 ```
 
-- The former shared frontend definition was retired in Phase 8F.3. This historical contract, protected exports, and the live schema remain interpretation authority until the proposed table retirement is separately approved and executed.
+- The former shared frontend definition was retired in Phase 8F.3. This historical contract and protected exports remain interpretation evidence; the live table was retired in Phase 8F.10.
 - In Supabase, `data` is stored as `jsonb`.
 - For the `jsonb` object, key order is not significant.
 - Field names and value types are significant and must not drift.
@@ -305,10 +306,10 @@ type SensorLogRow = {
 
 Supabase `public.sensor_events` is approved as a separate manual operational event/history table for changes that affect how telemetry should be interpreted.
 
-Phase 8F.10 finds no frontend, firmware, script, fixture, view, function, or trigger consumer. The final three rows are explicit Phase 5B sample-validation fixtures proposed for deletion. The table remains approved as isolated manual context; its unnecessary `anon`, `authenticated`, and `service_role` grants are proposed for revocation, not yet changed.
+Phase 8F.10 found no frontend, firmware, script, fixture, view, function, or trigger consumer. Its final three Phase 5B sample-validation fixtures were exported and deleted. The table remains approved as isolated manual context; its `anon`, `authenticated`, and `service_role` table privileges were revoked.
 
 - It is used for operational notes such as sensor swaps, moves, cleaning, calibration, reference readings, maintenance, plant moves, container changes, and experiment markers.
-- It does not store telemetry payloads and does not replace `sensor_logs`.
+- It does not store telemetry payloads and does not replace current Gen2 telemetry or watering-event evidence.
 - It does not change firmware ownership of local live values, Manual Water Now, or watering behavior.
 - It does not introduce Supabase command/control.
 - MVP entry is manual through the Supabase Table Editor or SQL Editor under RLS.
@@ -318,7 +319,7 @@ Phase 8F.10 finds no frontend, firmware, script, fixture, view, function, or tri
 - BJ3 is the current working development machine baseline.
 - Frontend development and build commands are run from [`mbg_dashboard`](../mbg_dashboard).
 - Firmware build and upload commands are run from the repo root PlatformIO project.
-- The local ESP32 fallback path is the approved baseline until a later ADR changes it.
+- The browser-to-device fallback path is retired; local read-only endpoints remain available only for direct device inspection outside the frontend.
 - Cloudflare Pages project `my-balcony-gardener` has a validated Production deployment from branch `main`.
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.

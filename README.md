@@ -16,7 +16,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted polling correction diagnosis: Supabase warned that the project was depleting its Disk IO Budget, while the database was only approximately `82 MB` with low storage utilization. Normal B02 and P01 writes matched the intended 15-minute cadence at approximately four measurement batches and four heartbeats per active device per hour.
 - Gen2 storage matched ADR 0017: each device batch occupied one physical `sensor_measurement_batches` row; B02's eleven records remained inside that batch and were flattened through the conventional SQL view. The dominant workload was instead repeated 10-second hosted Support View polling across multiple open browser tabs; PostgreSQL statistics showed approximately `197,000` executions of the leading protected Gen2 measurement queries and approximately `185 GB` of cumulative temporary-file activity.
 - The correction reduces visible scheduled refresh cycles by `30x`, eliminates scheduled hidden-tab polling, refreshes immediately after visibility return and Device/Window changes, and adds a non-overlapping manual Refresh control with a local completion timestamp. It reduces opportunities for complex queries to spill into temporary files but does not guarantee that an individual query cannot spill.
-- Local validation passed for the B02 Gen2 Support View, manual refresh, local timestamp, Device/Window changes, hidden/visible behavior, responsive layout, lint, TypeScript/Vite production build, and `git diff --check`. The current control placement is accepted as temporary because a broader frontend redesign and Gen1-remnant retirement are upcoming work; this correction is not yet claimed committed, pushed, deployed, or production-validated.
+- Local validation passed for the B02 Gen2 Support View, manual refresh, local timestamp, Device/Window changes, hidden/visible behavior, responsive layout, lint, TypeScript/Vite production build, and `git diff --check`. The current control placement remains temporary pending a broader frontend redesign; Gen1-remnant retirement is operationally closed through Phase 8F.11. This polling correction is not yet claimed committed, pushed, deployed, or production-validated.
 - This correction changed no SQL, schema, indexes, retention, firmware, telemetry/heartbeat cadence, device identity, authentication/RLS, watering behavior, or local control authority.
 - Supabase `sensor_events` remains an approved isolated manual operational log with no frontend/firmware consumer. Its three Phase 5B sample-validation fixtures were deleted in Phase 8F.10; the table remains present, empty, RLS-enabled, and inaccessible to `anon`, `authenticated`, and `service_role` through table privileges.
 - ADR 0006 is accepted and locks the Phase 5C watering logic and safety philosophy.
@@ -121,7 +121,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 8B.4 firmware `phase8b4-gen2-status-contract` built in all seven environments and was live-validated on Balcony02 plus a status-only Prototype01 check. The nested `/status`, heartbeat, cloud storage, and hosted diagnostics contracts align; all three SEN0562 light sensors are now detected after replacing the bad L01 connector, and full `/measurements` validation confirms SEN0308 M01/M02/M03. This firmware/runtime checkpoint made no further frontend or SQL changes and changed no hosted command/control, hardware assignment, watering policy, cadence, threshold, duration, cooldown, relay, button, interlock, or Gen1 contract behavior.
 - Balcony02 passed all three local endpoint contracts; Prototype01 passed status-only validation. Measurement and status post success remain separate, hosted diagnostics remain read-only and exclude local IP/MAC, and three physical-button watering cycles were stored successfully.
 - Phase 8B.1 Balcony02 physical build and commissioning completed August 12, 2026. The controller and relay/reservoir enclosures are mounted, dressed, sealed, and presented; all installed sensors produced valid final readings; and WL01, the physical button, relay, actual pump, low-water interlock behavior, and 15-second cutoff were functionally proven. Pump power uses COM/NO fail-off routing and a sealed 16 AWG stranded-copper extension. The authoritative closeout is [`docs/production/MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md`](./docs/production/MBG_Balcony02_As_Built_and_Commissioning_v1.0_2026-08-12.md), with a fillable [`as-built BOM`](./docs/production/MBG_Balcony02_As_Built_BOM_v0.1_2026-08-12.xlsx).
-- The installed sensor map intentionally separates physical markings, stable firmware/telemetry identities, and customer-facing locations. `sen0308_m04` remains intentionally `installed:false`; it is not incomplete installation. Installed soak/reliability, intermittent DS18B20 missing readings, moisture-system evaluation, WL01 elevation, reservoir calibration, hydraulic characterization, plausibility handling, customer-facing metadata, Supabase storage growth, Gen1-remnant review, and a later major website redesign remain open follow-on evidence streams.
+- The installed sensor map intentionally separates physical markings, stable firmware/telemetry identities, and customer-facing locations. `sen0308_m04` remains intentionally `installed:false`; it is not incomplete installation. Installed soak/reliability, intermittent DS18B20 missing readings, moisture-system evaluation, WL01 elevation, reservoir calibration, hydraulic characterization, plausibility handling, customer-facing metadata, Supabase storage growth, and a later major website redesign remain open follow-on evidence streams. Gen1-remnant review is operationally closed through Phase 8F.11.
 
 ## Authoritative Repo Areas
 
@@ -133,7 +133,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 ## Local Working Path
 
-1. The ESP32 firmware runs locally on the device and retains its local endpoints for direct inspection and compatibility.
+1. The ESP32 firmware runs locally on the device and exposes `/`, `/status`, `/capabilities`, and `/measurements` for direct read-only inspection.
 2. The React/Vite frontend in [`mbg_dashboard`](./mbg_dashboard) is the active UI.
 3. Ordinary and hosted-readonly builds render the same hosted Gen2 route shell and do not call device `/logs` or `/water-now` endpoints.
 4. Supabase `sensor_events` is a separate manual operational event table for physical/system changes and is not telemetry storage.
@@ -169,14 +169,14 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Tracked `src/device_identity.h` maps `MBG_DEVICE_ID` to the firmware `DEVICE_ID`.
 - Ignored local-only `src/config.h` remains for secrets and is not the repo-owned identity mechanism.
 - Phase 6D bench hardware identity validation passed using the explicit PlatformIO `bench-prototype` upload profile.
-- Supabase RLS insert policy now allows known provisioned device UUIDs for the installed balcony unit, bench prototype, and scout01.
-- Retired database identities and historical telemetry remain unchanged by this firmware-profile slice.
+- Historical registry-backed RLS allowed the installed balcony unit, bench prototype, and scout01; those retired live registry identities and rows were removed in Phase 8F.9.
+- Protected historical exports and completed phase evidence remain unchanged by the retirement.
 - Future ESP32 units must receive a new explicit profile, identity, and UUID.
 - Friendly names are separate labels, not telemetry identity.
 - The hosted shell shows Gen2 readings, trends, quality, diagnostics, and authorized watering evidence while keeping local ESP32 controls unavailable.
 - Hosted read-only mode has no Water Now and does not call local ESP32 `/logs` or `/water-now`.
 - Ordinary builds use the same hosted shell and have no direct browser-to-device polling or manual action controls.
-- The shared device registry remains because customer-site and Demo selection still consume it; retired entries await a later registry cleanup slice.
+- The source registry remains Balcony02-only for Demo selection; customer and Support options are authorization-derived, and the retired live registry rows were deleted in Phase 8F.9.
 - Supabase remains telemetry/history only, not command/control.
 - No-Wi-Fi operation is autonomous/headless for now; installer/customer AP or captive-portal provisioning is deferred.
 

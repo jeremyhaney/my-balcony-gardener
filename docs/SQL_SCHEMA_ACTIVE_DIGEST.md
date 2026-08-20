@@ -8,6 +8,8 @@ This is a repo-artifact digest, not proof of the live Supabase state. When a lin
 
 Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SUPABASE_SCHEMA_SNAPSHOT.md`](./sql/SUPABASE_SCHEMA_SNAPSHOT.md). Treat that snapshot as the field-level live-catalog reference from Jeremy's approved read-only result sets on 2026-06-11; keep this digest compact.
 
+Phase 8F.10 later supplies the authoritative retirement delta for the two legacy surfaces: `sensor_logs` is absent, while retained empty `sensor_events` has RLS enabled/not forced, zero policies, and no table privileges for `anon`, `authenticated`, or `service_role`. Phase 8F.11 closes the repository audit without new live database access.
+
 ## Source Artifacts Inspected
 
 - [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
@@ -82,7 +84,7 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Command/control: No. Registry flags authorize inserts only and do not grant watering authority.
 - Related ADRs: ADR 0010, 0015, 0016, 0020.
 - Related SQL artifacts: `docs/sql/phase6j5-device-registry.sql`, `docs/sql/phase7f-hosted-gen2-measurements-view.sql`, `docs/sql/phase7k6-hosted-runtime-diagnostics-view.sql`, `docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`.
-- Notes: Seeded device keys include `balcony`, `bench`, and `scout01` in repo artifacts.
+- Notes: Historical SQL seed artifacts include `balcony`, `bench`, and `scout01`; Phase 8F.9 deleted those retired live registry rows, leaving Balcony02 as the protected current registry identity.
 
 ### device_capabilities
 
@@ -319,8 +321,8 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 ### watering_events
 
 - Purpose: Dedicated append-only device-originated watering event evidence path.
-- Source of rows: Future/current ESP32 firmware event posts per Phase 7O.1 evidence path.
-- Device-originated inserts: Yes, proposed/granted through registry-enabled anon insert policy using `public.is_device_telemetry_insert_enabled(device_id)`.
+- Source of rows: Current ESP32 firmware event posts per the Phase 7O.1 evidence path.
+- Device-originated inserts: Yes, granted through the registry-enabled anon insert policy using `public.is_device_telemetry_insert_enabled(device_id)`.
 - Browser/customer read path: `customer_watering_events` and `support_watering_events` protected views.
 - Anon SELECT: No direct anon SELECT on base table expected in Phase 7O.1 artifact.
 - Authenticated SELECT: No broad direct base-table browser SELECT intended; protected views are the read path.
