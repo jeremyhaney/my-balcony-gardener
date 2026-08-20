@@ -7,9 +7,10 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Firmware compiles on BJ3 with PlatformIO.
 - Frontend lints, builds, runs, and loads on BJ3.
 - The frontend no longer contains a direct browser-to-device live/control path.
-- Phase 8F.5 removes the unreachable firmware `/logs` and HTTP `/water-now` handlers; local watering remains firmware-owned through the physical button and the retained generic automatic-control boundary.
+- Phase 8F.5 removes the unreachable firmware `/logs` and HTTP `/water-now` handlers; local watering remains firmware-owned through the physical button and the retained generic automatic-control boundary. Phase 8F.6 migrates the ignored firmware Supabase configuration to the HTTPS project root and rejects legacy Data API suffixes before builds.
 - Ordinary and hosted-readonly frontend builds now enter the same hosted Gen2 route shell.
 - Balcony02 posts Gen2 measurement batches, device heartbeats, and watering-event evidence to their current Supabase Data API tables; firmware no longer creates `sensor_logs` rows.
+- Firmware configuration now stores only the Supabase project root; the resolver constructs exactly `/rest/v1/sensor_measurement_batches`, `/rest/v1/device_heartbeats`, or `/rest/v1/watering_events` and accepts only an optional trailing root slash.
 - Supabase stores firmware timestamps as UTC ISO-8601 values.
 - Hosted Gen2 measurements, diagnostics, capability evidence, and protected watering-event history refresh every 5 minutes while visible and pause scheduled refreshes while hidden.
 - Hosted polling correction diagnosis: Supabase warned that the project was depleting its Disk IO Budget, while the database was only approximately `82 MB` with low storage utilization. Normal B02 and P01 writes matched the intended 15-minute cadence at approximately four measurement batches and four heartbeats per active device per hour.

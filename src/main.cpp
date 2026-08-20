@@ -202,26 +202,13 @@ String jsonStringOrNull(const String &value) {
   return "\"" + value + "\"";
 }
 
-// The current private configuration still uses a table-suffixed Data API URL.
-// Normalize any configured /rest/v1/<table> suffix to the active Gen2 target so
-// credentials can be migrated to a project-root URL independently of firmware.
+// Build-time validation accepts only the Supabase project root. Add the Data API
+// table route deterministically while accepting an optional trailing root slash.
 String supabaseTableUrl(const char* tableName) {
   String url = String(SUPABASE_URL);
-  const String restTablePrefix = "/rest/v1/";
-  int restTableIndex = url.indexOf(restTablePrefix);
-
-  if (restTableIndex >= 0) {
-    return url.substring(0, restTableIndex + restTablePrefix.length()) + tableName;
-  }
-
-  if (url.endsWith("/rest/v1")) {
-    return url + "/" + tableName;
-  }
-
   if (url.endsWith("/")) {
-    return url + "rest/v1/" + tableName;
+    url.remove(url.length() - 1);
   }
-
   return url + "/rest/v1/" + tableName;
 }
 

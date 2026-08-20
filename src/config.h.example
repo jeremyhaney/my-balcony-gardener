@@ -5,7 +5,8 @@
 #define WIFI_SSID "your_wifi_ssid"
 #define WIFI_PASSWORD "your_wifi_password"
 
-// Supabase Configuration
+// Supabase Configuration. Use the HTTPS project root only; firmware appends
+// /rest/v1/<table> for each approved Data API write target.
 #define SUPABASE_URL "https://your_project.supabase.co"
 #define SUPABASE_ANON_KEY "your_supabase_anon_key"
 

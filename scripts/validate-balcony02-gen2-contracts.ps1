@@ -30,6 +30,8 @@ $mainSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/main.cpp')
 $measurementsSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/gen2_measurements.cpp')
 $profileSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/profile_overrides.h')
 $platformioSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'platformio.ini')
+$configExampleSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/config.h.example')
+$supabaseConfigValidator = Join-Path $repoRoot 'scripts/validate-firmware-supabase-config.py'
 
 $registeredRoutes = @(
   [regex]::Matches($mainSource, 'server\.on\("([^"]+)"') |
@@ -118,6 +120,48 @@ Test-Contract (
   $profileSource.Contains('Only an explicitly provisioned Gen2 firmware profile is supported') -and
   $profileSource.Contains('The Balcony02 profile is missing a required installed Gen2 module')
 ) 'compile-time guards reject unsupported or incomplete profiles'
+
+$urlFunctionStart = $mainSource.IndexOf('String supabaseTableUrl(const char* tableName) {')
+$urlFunctionEnd = if ($urlFunctionStart -ge 0) {
+  $mainSource.IndexOf("`n}", $urlFunctionStart)
+} else { -1 }
+$urlFunctionSource = if ($urlFunctionStart -ge 0 -and $urlFunctionEnd -gt $urlFunctionStart) {
+  $mainSource.Substring($urlFunctionStart, $urlFunctionEnd - $urlFunctionStart + 2)
+} else { '' }
+Test-Contract (
+  $urlFunctionSource.Contains('if (url.endsWith("/"))') -and
+  $urlFunctionSource.Contains('url.remove(url.length() - 1);') -and
+  $urlFunctionSource.Contains('return url + "/rest/v1/" + tableName;')
+) 'Supabase resolver appends the exact Data API table route with deterministic trailing-slash handling'
+Test-Contract (
+  -not $urlFunctionSource.Contains('indexOf') -and
+  -not $urlFunctionSource.Contains('substring') -and
+  -not $urlFunctionSource.Contains('endsWith("/rest/v1")')
+) 'firmware source no longer accepts or rewrites historical Data API suffixes'
+$activeSupabaseTargets = @(
+  [regex]::Matches($mainSource, 'supabaseTableUrl\("([^"]+)"\)') |
+    ForEach-Object { $_.Groups[1].Value }
+)
+Test-Contract (
+  ($activeSupabaseTargets -join '|') -ceq 'watering_events|device_heartbeats|sensor_measurement_batches'
+) 'firmware resolves exactly the three active Gen2 Data API targets'
+$exampleUrlMatch = [regex]::Match(
+  $configExampleSource,
+  '(?m)^\s*#define\s+SUPABASE_URL\s+"([^"]+)"'
+)
+Test-Contract (
+  $exampleUrlMatch.Success -and
+  $exampleUrlMatch.Groups[1].Value.StartsWith('https://') -and
+  -not $exampleUrlMatch.Groups[1].Value.Contains('/rest/v1')
+) 'tracked configuration example remains aligned with the project-root contract'
+Test-Contract (
+  $platformioSource.Contains('extra_scripts = pre:scripts/validate-firmware-supabase-config.py')
+) 'PlatformIO runs the safe firmware Supabase configuration guard before builds'
+
+& python $supabaseConfigValidator --self-test
+Test-Contract ($LASTEXITCODE -eq 0) 'Supabase resolver and negative configuration tests pass'
+& python $supabaseConfigValidator --config (Join-Path $repoRoot 'src/config.h')
+Test-Contract ($LASTEXITCODE -eq 0) 'ignored firmware Supabase configuration passes safe validation'
 
 if ($failures.Count -gt 0) { Write-Error "$($failures.Count) static contract assertion(s) failed."; exit 1 }
 

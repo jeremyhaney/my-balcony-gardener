@@ -149,6 +149,7 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - The full Gen2 `records[]` array is stored as `jsonb` on the raw batch row.
 - `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]` for charting, diagnostics, filtering, unit conversion, and future control-quality evaluation.
 - Firmware posts one batch object to `/rest/v1/sensor_measurement_batches`.
+- Phase 8F.6 makes the ignored firmware `SUPABASE_URL` contract the HTTPS Supabase project root only. A build-time guard rejects placeholders, non-HTTPS or unrecognized hosts, malformed URLs, `/rest/v1`, table-suffixed paths, and other paths without printing the configured value. Firmware appends the exact active table route with deterministic optional trailing-slash handling; no historical configured-table suffix is accepted or rewritten.
 - Registry-backed RLS for Gen2 measurement batch inserts uses `public.is_device_telemetry_insert_enabled(device_id)`.
 - Phase 7D adds no anon SELECT, UPDATE, or DELETE policies for the batch table or flat view.
 - Phase 7F adds limited hosted read-only Gen2 measurement display through `public.hosted_gen2_measurements`.
