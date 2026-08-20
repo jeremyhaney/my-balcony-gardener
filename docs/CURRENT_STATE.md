@@ -199,22 +199,20 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - The panel presents heartbeat evidence only, including latest heartbeat watering evidence, and does not diagnose plant health, sensor calibration, root cause, or live pump state.
 - Phase 6J.6 makes no firmware, `SensorLogRow`, `/status`, `/logs`, `/water-now`, watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, LiveStats, DualAxisChart, or local control behavior changes.
 - Phase 6E did not change firmware, Supabase schemas, `sensor_events`, the canonical `SensorLogRow` shape, watering logic, local Manual Water Now behavior, or the local live/control path.
-- Phase 7B Gen2 bench runtime validation is complete.
-- `bench-proto-gen2` is the Gen2 bench PlatformIO profile.
-- `bench-prototype` remains the retained Gen1 fallback/reference PlatformIO profile.
-- The physical bench ESP32 UUID remains `318fab98-89ad-4f36-9100-3134a04e0be5`.
-- The physical bench ESP32 is now acting as the Gen2 mule after Gen2 rewire and `bench-proto-gen2` flash.
+- Phase 7B Gen2 bench runtime validation is historical and complete.
+- Phase 7B used `bench-proto-gen2` as the Gen2 bench profile and retained `bench-prototype` as a Gen1 fallback/reference. Phase 8F.4 retires both selectable profiles.
+- The retired physical bench ESP32 used UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and acted as the Gen2 mule after rewire and `bench-proto-gen2` flash.
 - Gen2 bench `/status`, `/capabilities`, and `/measurements` work.
 - For Gen2, `/measurements` is authoritative for measurement data.
-- `/logs` remains a Gen1 compatibility endpoint and is intentionally not registered for `bench-proto-gen2`; it returns `404` on the Gen2 bench.
+- `/logs` remains a Gen1 compatibility branch in source for Phase 8F.5; no supported profile registers it. Historical `bench-proto-gen2` returned `404` for that endpoint.
 - BME280 emits `air_temperature`, `relative_humidity`, and `barometric_pressure`.
 - DS18B20 emits `temperature`.
 - VEML6030 emits `ambient_light`.
 - Analog soil moisture emits `moisture_index` and `raw_adc`.
 - Gen2 I2C scan reports `0x48` and `0x76`.
 - All Gen2 measurement records are `control_eligible:false`.
-- On `bench-proto-gen2`, `/water-now` remains the simulated production watering endpoint and toggles the GPIO25 bench output through `RELAY_PIN`; no pump is attached.
-- Earlier Phase 6J relay-test wording remains historical Gen1 bench safety language. Phase 7B intentionally keeps watering terminology for `bench-proto-gen2` because the bench now simulates the production watering function while remaining physically pump-free.
+- Historical `bench-proto-gen2` exposed a simulated `/water-now` endpoint that toggled the pump-free GPIO25 bench output through `RELAY_PIN`. The supported Balcony02 profile explicitly disables the HTTP watering endpoint.
+- Earlier Phase 6J relay-test wording and Phase 7B bench watering terminology remain historical evidence; the executable bench profiles are retired.
 - Gen2 no longer runs the legacy DHT / `sensor_logs` / automatic-watering interval block.
 - Device heartbeats continue posting with `details.phase = "7B"`.
 - Phase 7B Gen2 measurements are local-only.
@@ -230,6 +228,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 8F.1 local validation passed `59/59` tests, lint, ordinary and hosted-readonly production builds, the hosted forbidden-string guard, source/test retirement searches, and `git diff --check`. The ordinary build no longer emits the retired component's JavaScript or CSS chunk; hosted generated asset names and byte sizes remained exactly equal to baseline. See [`docs/product/phase8f1-retire-unsupported-live-measurements-frontend.md`](./product/phase8f1-retire-unsupported-live-measurements-frontend.md).
 - Phase 8F.2 local validation and exact generated-asset evidence are recorded in [`docs/product/phase8f2-retire-livestats-local-water-now-frontend.md`](./product/phase8f2-retire-livestats-local-water-now-frontend.md).
 - Phase 8F.3 retires the non-hosted route branch, Demo's redundant `sensor_logs` request, frontend `fetchHistoryLogs`/`SensorLogRow` normalization and state, the legacy Sensor History chart, and legacy telemetry-health presentation. It preserves hosted Gen2 queries, capability/evidence presentation, diagnostics, watering evidence, authentication, customer/support routing, firmware endpoints/profiles/posting, Supabase storage/policies, and registry entries. See [`docs/product/phase8f3-retire-local-dashboard-sensor-logs-frontend.md`](./product/phase8f3-retire-local-dashboard-sensor-logs-frontend.md).
+- Phase 8F.4 retires the obsolete `balcony-installed`, `balcony-installed-gen2`, `bench-prototype`, `bench-proto-gen2`, and `balcony-sensor-scout-01` PlatformIO environments plus the retired Balcony01 default selection. `balcony02-gen2` is the sole supported selectable firmware environment; shared ESP32 board/framework and monitor/upload mechanics remain in non-selectable `[env]` configuration. Balcony02's identity, flags, libraries, firmware size, endpoint gates, sensor installation, reservoir interlock, watering behavior, and telemetry behavior are unchanged. Historical evidence and Gen1 source branches remain for Phase 8F.5. See [`docs/product/phase8f4-retire-obsolete-firmware-build-profiles.md`](./product/phase8f4-retire-obsolete-firmware-build-profiles.md).
 - Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.

@@ -133,10 +133,10 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - The Gen2 4-conductor local I2C sensor-module cable color standard is RED = 3.3V, BLK = GND, GRN = GPIO21 / I2C SDA, and WHT = GPIO22 / I2C SCL. This July 3, 2026 convention supersedes the earlier WHT = SDA / GRN = SCL documentation; GPIO21 remains SDA and GPIO22 remains SCL. This color standard applies only to short-range local I2C sensor-module wiring and is not the approved long-distance field wiring strategy. Factory SEN0562 leads remain a documented cable exception, including BLUE = GND and YELLOW = SCL, and do not redefine the MBG internal convention.
 - Local ESP32 firmware remains the owner of watering decisions and pump shutoff.
 - Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
-- Phase 7B implements the Gen2 bench profile as `bench-proto-gen2`; the retained `bench-prototype` profile remains Gen1 fallback/reference.
-- Gen1/current compatibility uses `/logs`; Gen2 bench uses `/capabilities` and `/measurements`.
+- Phase 7B historically implemented `bench-proto-gen2` and retained `bench-prototype` as a Gen1 fallback/reference. Phase 8F.4 retires both selectable profiles after Prototype01/Bench01 retirement.
+- Historical Gen1 compatibility used `/logs`; the Gen2 bench used `/capabilities` and `/measurements`.
 - `/logs` is not part of the Gen2 bench measurement contract.
-- Phase 7B `bench-proto-gen2` uses GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
+- Phase 7B `bench-proto-gen2` historically used GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
 - GPIO5 remains retired for future Gen2 relay/pump control designs.
 - Phase 7C historically added a Prototype01-only local/default panel over `/status`, `/capabilities`, and `/measurements`; Phase 8F.1 retires that unsupported frontend consumer and its stale local response types and request helpers.
 - The Gen2 firmware endpoints remain available for direct local inspection and later contract-aware work, but the current local/default application does not mount or poll the retired Prototype01 panel.
@@ -165,11 +165,11 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Phase 7E display labels are compile-time endpoint readability labels: `Balcony01`, `Scout01`, and `Prototype01`. They are not user-editable names or database-driven nicknames.
 - Phase 7E local endpoints report firmware provenance with `firmware_version`, `build_profile`, and `device_label` on `/status`, `/capabilities`, and `/measurements`.
 - Gen2 local endpoint timestamp semantics are explicit: `/status.reported_at` is the status snapshot generation time, `/capabilities.reported_at` is the capability snapshot generation time, and `/measurements.measured_at` is the measurement package/sample time.
-- Installed/scout Gen2 temporarily retain `/logs` through `MBG_GEN2_ENABLE_LEGACY_LOGS=1` for local script/UI compatibility; `bench-proto-gen2` intentionally omits `/logs`.
+- The retired installed/scout profiles historically enabled `/logs` through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`. No supported profile enables it; the compatibility branch remains in source for later Phase 8F review.
 - Phase 7G.0 preserves the `/logs` `SensorLogRow` compatibility shape for Scout01 by allowing existing `data.temperature` and `data.humidity` fields to come from BME280 when Scout01 DHT11 is disabled; pressure and soil temperature remain in Gen2 `/measurements`, not `/logs`.
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`, plus `batch_details.phase = "7E"` and `batch_details.device_label`.
-- Installed `Balcony01` is watering-capable; `Scout01` is not watering-capable. Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
-- `/water-now` remains local-only and capability-gated; Remote Water Now remains prohibited.
+- Balcony01 and Scout01 profile capabilities are historical; both device profiles are retired. Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
+- Balcony02 retains local firmware watering authority, but its supported profile explicitly disables the HTTP `/water-now` endpoint. Remote Water Now remains prohibited.
 - Historical pre-ADR-0022 records may contain `control_eligible`. New cleaned external Gen2 records omit it; watering eligibility remains internal firmware/control logic and does not grant hosted command authority.
 - The known DHT11 startup first-read wart may produce suspicious initial `/measurements` DHT values, but DHT11 records are not watering control inputs.
 
@@ -232,6 +232,8 @@ ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./a
 - `src/device_identity.h` maps `MBG_DEVICE_ID` to the existing `DEVICE_ID`.
 - `src/config.h` remains ignored/local-only for Wi-Fi and Supabase secrets.
 - This is not the final production provisioning system.
+- Phase 8F.4 narrows executable build configuration to the single supported `balcony02-gen2` device environment. PlatformIO's non-selectable `[env]` section retains only shared board/framework, monitor, and upload-port mechanics; it carries no device identity or behavior flags.
+- There is no generic/default firmware selection. Future numbered devices require a new explicit environment, device identity, and UUID.
 - Future production provisioning may replace this with programming-station or device-storage assignment without changing `sensor_logs.device_id` or `VITE_MBG_DEVICE_ID` behavior.
 - Supabase `sensor_logs` RLS insert policy must allow provisioned device UUIDs that are expected to post telemetry.
 

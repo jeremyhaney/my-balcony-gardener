@@ -81,16 +81,17 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Relay-controlled pump activation works from Manual Water Now.
 - Moisture-triggered pump behavior was confirmed during field testing.
 - Phase 7B Gen2 bench runtime validation is complete.
-- `bench-proto-gen2` is the Gen2 bench PlatformIO profile; `bench-prototype` remains the retained Gen1 fallback/reference profile.
-- The physical bench ESP32 UUID remains `318fab98-89ad-4f36-9100-3134a04e0be5`, and the physical bench ESP32 is now acting as the Gen2 mule after rewire/flash.
+- Phase 7B historically used `bench-proto-gen2` as the Gen2 bench profile and retained `bench-prototype` as a Gen1 fallback/reference; Phase 8F.4 retires both selectable profiles after Prototype01/Bench01 retirement.
+- The retired physical bench ESP32 used UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and historically acted as the Gen2 mule after rewire/flash.
 - Gen2 validation uses `/capabilities` and `/measurements`; `/measurements` is authoritative for Gen2 measurement data.
-- `/logs` remains a Gen1 compatibility endpoint and is intentionally not registered for `bench-proto-gen2`.
-- On `bench-proto-gen2`, `/water-now` remains the simulated production watering endpoint and toggles the GPIO25 bench output through `RELAY_PIN`; no pump is attached.
+- `/logs` remains a Gen1 compatibility branch in firmware source for later Phase 8F review, but no supported build profile enables it.
+- Historical `bench-proto-gen2` exposed a simulated `/water-now` path; the only supported profile, `balcony02-gen2`, explicitly disables the HTTP watering endpoint.
 - Phase 7B Gen2 measurements are local-only; no `SensorLogRow`, Supabase SQL, hosted dashboard, or frontend runtime changes were made.
 - Phase 7C's Prototype01-only local measurement panel was historically implemented and runtime validated against the then-current bench contracts.
 - Phase 8F.1 retires that unsupported frontend panel, its 5-second Prototype01 endpoint polling, and its exclusively owned pre-current-contract types and request helpers.
 - Phase 8F.2 retires `LiveStats`, its selected-target five-second `/logs` polling, browser identity gating, local Water Now action, and exclusively owned local-control target definitions.
 - Phase 8F.3 retires the non-hosted route, Demo's redundant legacy history request, frontend `sensor_logs` normalization/presentation, and exclusively owned legacy chart/health code. Firmware posting, tables, rows, policies, profiles, endpoints, and registry entries remain unchanged.
+- Phase 8F.4 retires obsolete Balcony01, Scout01, and Prototype01/Bench01 firmware environments and the Balcony01 default selection. Balcony02 is the only supported firmware device environment; Gen1 implementation branches remain for Phase 8F.5.
 - Phase 7D Gen2 Measurement Batch Storage MVP is runtime validated / complete.
 - Gen2 raw measurement storage uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time.
 - The full Gen2 `records[]` array is stored as `jsonb`; `public.sensor_measurements_flat` is the derived chart/query view that unnests `records[]`.
@@ -104,15 +105,14 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 7D made no `SensorLogRow`, `sensor_logs`, Gen1 `/logs`, `/water-now`, hosted-readonly UI, watering behavior, Supabase command/control, or Remote Water Now changes.
 - Phase 7E Field Units Gen2 Compatibility Migration is runtime validated / complete and merged to main.
 - Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is field validated / complete pending commit/documentation closeout.
-- Standard Gen2 field-unit pins are GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature. GPIO27 is actively used for DS18B20 soil temperature on Scout01 and Balcony01.
-- Installed Balcony Unit Gen2 uses UUID `550e8400-e29b-41d4-a716-446655440000`, role `controller`, build profile `balcony-installed-gen2`, and display label `Balcony01`.
-- Balcony Sensor Scout 01 Gen2 uses UUID `28f4e6e3-5979-4af4-9753-34e185d8e47e`, role `sensor-scout`, build profile `balcony-sensor-scout-01`, and display label `Scout01`.
-- Bench Prototype Unit uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5` and display label `Prototype01`; bench Gen2 remains a richer prototype/reference profile and was not re-uploaded during final field-unit label/provenance validation.
+- The Phase 7E field-unit profiles used GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature.
+- Phase 7E historically used `balcony-installed-gen2` for Balcony01, `balcony-sensor-scout-01` for Scout01, and `bench-proto-gen2` for Prototype01. Phase 8F.4 retires those firmware profiles and identities from executable build configuration.
+- Balcony02 is the only supported firmware device environment. Future numbered devices receive new profiles, identities, and UUIDs rather than inheriting retired identity.
 - `device_label` values are compile-time endpoint readability labels, not user-editable names or database-driven nicknames.
-- Field-unit local endpoints now include `device_label`, `firmware_version`, and `build_profile` on `/status`, `/capabilities`, and `/measurements`; installed/scout Gen2 also retain `/logs` temporarily with added top-level identity fields and unchanged nested `data`.
+- Balcony02 local endpoints include `device_label`, `firmware_version`, and `build_profile` on `/status`, `/capabilities`, and `/measurements`.
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`; `batch_details.phase` is now `7E`, and `batch_details.device_label` identifies the short device label.
-- Installed `Balcony01` is watering-capable and has `moisture_index` as the only `control_eligible:true` Gen2 measurement; DHT11 measurements and `raw_adc` are display/diagnostic only.
-- Scout `Scout01` has no watering authority; all scout Gen2 measurements are `control_eligible:false`.
+- Historical Balcony01 firmware was watering-capable and used `moisture_index` as its only `control_eligible:true` Gen2 measurement; DHT11 measurements and `raw_adc` were display/diagnostic only.
+- Historical Scout01 firmware had no watering authority; all scout Gen2 measurements were `control_eligible:false`.
 - Phase 7G.0 validated Scout01 BME02/BME280 and ST02/DS18B20, Balcony01 DHT01 and ST03/DS18B20, and hosted Gen2 automatic measurement discovery for Soil Temperature and Barometric Pressure without changing watering/control authority.
 - Supabase remains telemetry/history/diagnostics storage only. No Supabase command/control or Remote Water Now was introduced, and `/water-now` remains local-only and capability-gated.
 - `/water-now` was not called during final Phase 7E field-unit label/provenance validation.
@@ -123,7 +123,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 8B.5 delivers deterministic Garden Readings, separate Garden Reading Quality and MBG Diagnostics surfaces, ten independent chart series with five family shortcuts, mixed-family unit-driven multi-axis trends, unique stable series colors, deterministic watering-label lanes, and responsive production validation while preserving hosted read-only behavior and local firmware watering authority. Detailed evidence is recorded in [`docs/product/phase8b-gen2-endpoint-contract-cleanup.md`](./docs/product/phase8b-gen2-endpoint-contract-cleanup.md).
 - Phase 8B.6 Hosted Short History Window Expansion is COMPLETE / PRODUCTION VALIDATED in commit `9b8eb0f`: `3h`, `6h`, and `12h` were added ahead of the unchanged longer Windows with `24h` preserved as default; short hosted chart ticks use local hour/minute labels, expected package counts are `12`, `24`, and `48`, and Jeremy visually confirmed the deployed ten-option selector, selected 12-hour chart, existing multi-axis presentation, and watering marker on 2026-07-20. Hosted history remains read-only and local firmware retains all watering authority.
 - Phase 8C hosted device-capability schema and Balcony02 provisioning are production executed and validated as of 2026-08-14. Supabase now holds nine positive commissioned Balcony02 logical-sensor declarations with eleven expected measurement names; Balcony02 remains Support-visible and customer-hidden, no public capability view or browser write exists, and no frontend or watering authority changed. See the [`Phase 8C production execution evidence`](./docs/product/phase8c-hosted-device-capability-production-execution-evidence.md).
-- Balcony02 build profile `balcony02-gen2` now returns a static configured-hardware and control-feature manifest from `/capabilities`. The isolated path uses existing compile-time/profile flags for installed state and performs no sensor reads, GPIO reads, I2C or mux scans, detection probes, or provider conversions; existing non-Balcony02 capability behavior is unchanged.
+- Balcony02 build profile `balcony02-gen2` returns a static configured-hardware and control-feature manifest from `/capabilities`. The isolated path uses existing compile-time/profile flags for installed state and performs no sensor reads, GPIO reads, I2C or mux scans, detection probes, or provider conversions.
 - Live validation at `10.0.0.69` against `Balcony02` (`7e5bd328-ad68-4389-a71a-fa5cd01b3813`, role `controller`, firmware `phase8b-balcony02-proveout`) confirmed ten ordered capability modules, M04 `installed:false`, L01 `installed:true`, and WL01 as the only `control_role:"watering_interlock"`. Two responses matched after normalizing only `reported_at`.
 - Phase 8B.4 firmware `phase8b4-gen2-status-contract` built in all seven environments and was live-validated on Balcony02 plus a status-only Prototype01 check. The nested `/status`, heartbeat, cloud storage, and hosted diagnostics contracts align; all three SEN0562 light sensors are now detected after replacing the bad L01 connector, and full `/measurements` validation confirms SEN0308 M01/M02/M03. This firmware/runtime checkpoint made no further frontend or SQL changes and changed no hosted command/control, hardware assignment, watering policy, cadence, threshold, duration, cooldown, relay, button, interlock, or Gen1 contract behavior.
 - Balcony02 passed all three local endpoint contracts; Prototype01 passed status-only validation. Measurement and status post success remain separate, hosted diagnostics remain read-only and exclude local IP/MAC, and three physical-button watering cycles were stored successfully.
@@ -170,15 +170,15 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Device Status green/yellow/red status is informational and inspectable; details are available from the indicator.
 - No additional Supabase query is required for the Device Status panel.
 - Protected watering evidence is displayed from hosted watering-event views, not `sensor_logs.data.watering`.
-- Firmware build profiles provide the Phase 6C prototype/small-batch bridge for intentional device identity.
-- The default firmware build profile is `balcony-installed`.
-- The `bench-prototype` firmware profile uses UUID `318fab98-89ad-4f36-9100-3134a04e0be5`.
+- Firmware build profiles historically provided the Phase 6C prototype/small-batch bridge for intentional device identity.
+- `balcony02-gen2` is now the only selectable supported device environment and uses UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`.
+- Shared ESP32 board/framework, monitor, and upload-port mechanics live in PlatformIO's non-selectable `[env]` configuration; there is no default or generic device profile.
 - Tracked `src/device_identity.h` maps `MBG_DEVICE_ID` to the firmware `DEVICE_ID`.
 - Ignored local-only `src/config.h` remains for secrets and is not the repo-owned identity mechanism.
 - Phase 6D bench hardware identity validation passed using the explicit PlatformIO `bench-prototype` upload profile.
 - Supabase RLS insert policy now allows known provisioned device UUIDs for the installed balcony unit, bench prototype, and scout01.
-- The installed balcony unit UUID remains unchanged.
-- Future ESP32 units must not reuse the installed unit UUID.
+- Retired database identities and historical telemetry remain unchanged by this firmware-profile slice.
+- Future ESP32 units must receive a new explicit profile, identity, and UUID.
 - Friendly names are separate labels, not telemetry identity.
 - The hosted shell shows Gen2 readings, trends, quality, diagnostics, and authorized watering evidence while keeping local ESP32 controls unavailable.
 - Hosted read-only mode has no Water Now and does not call local ESP32 `/logs` or `/water-now`.
@@ -193,18 +193,11 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 ```bash
 # Build only; does not upload firmware
-pio run
-pio run -e balcony-installed
-pio run -e balcony-installed-gen2
-pio run -e balcony-sensor-scout-01
-pio run -e bench-prototype
-pio run -e bench-proto-gen2
+pio run -e balcony02-gen2
 ```
 
-- `bench-prototype` is retained Gen1 fallback/reference.
-- `bench-proto-gen2` is the Gen2 bench profile.
-- `balcony-installed-gen2` is the Gen2 installed controller field profile.
-- `balcony-sensor-scout-01` is the Gen2 scout field profile.
+- `balcony02-gen2` is the only supported firmware device profile.
+- The shared `[env]` section is inherited configuration, not a device identity or upload target.
 - Do not upload without an explicit environment and confirmed port.
 - Use `/status`, `/capabilities`, and `/measurements` for Gen2 validation.
 
@@ -234,10 +227,10 @@ Gen2 firmware inspection endpoints (no current local frontend consumer):
 - `GET /capabilities` - Gen2 configured-hardware and control-feature manifest; Balcony02 uses the validated static contract without hardware reads or scans
 - `GET /measurements` - authoritative Gen2 measurement-list payload
 
-- Field-unit Gen2 endpoints include compile-time `device_label`, `firmware_version`, and `build_profile` provenance for quick local inspection.
+- Balcony02 Gen2 endpoints include compile-time `device_label`, `firmware_version`, and `build_profile` provenance for quick local inspection.
 - Gen2 `/status` and `/capabilities` include top-level `reported_at` for snapshot generation time; `/measurements` includes top-level `measured_at` for measurement package/sample time.
-- Installed/scout Gen2 retain `GET /logs` temporarily through `MBG_GEN2_ENABLE_LEGACY_LOGS=1`; no current frontend consumer depends on it.
-- `GET /logs` remains intentionally absent on `bench-proto-gen2`; future frontend work should migrate local Gen2 display to `/measurements`.
+- No supported profile enables `MBG_GEN2_ENABLE_LEGACY_LOGS`; the compatibility branch remains in source for the separately scoped Phase 8F.5 review.
+- Balcony02 explicitly disables the HTTP watering endpoint while retaining firmware-owned automatic and physical-button watering behavior.
 
 ## Deferred For Later
 

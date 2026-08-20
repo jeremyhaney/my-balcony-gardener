@@ -2,22 +2,21 @@
 
 // Device Identity Configuration
 //
-// MBG_DEVICE_ID may be supplied by PlatformIO build profiles.
-// The fallback preserves the installed balcony unit UUID for Supabase history continuity.
+// Device identity must be supplied by an explicit PlatformIO device environment.
 //
 // Device UUID is production/provisioning identity.
 // Friendly names are separate user-facing labels and must not be used as telemetry identity.
 
 #ifndef MBG_DEVICE_ID
-#define MBG_DEVICE_ID "550e8400-e29b-41d4-a716-446655440000"
+#error "MBG_DEVICE_ID must be defined by an explicit firmware device profile"
 #endif
 
 #ifndef MBG_DEVICE_ROLE
-#define MBG_DEVICE_ROLE "controller"
+#error "MBG_DEVICE_ROLE must be defined by an explicit firmware device profile"
 #endif
 
 #ifndef MBG_DEVICE_LABEL
-#define MBG_DEVICE_LABEL "Unknown MBG Device"
+#error "MBG_DEVICE_LABEL must be defined by an explicit firmware device profile"
 #endif
 
 #ifdef DEVICE_ID

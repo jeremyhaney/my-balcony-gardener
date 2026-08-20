@@ -9,8 +9,8 @@
 #define SUPABASE_URL "https://your_project.supabase.co/rest/v1/sensor_logs"
 #define SUPABASE_ANON_KEY "your_supabase_anon_key"
 
-// Device Configuration
-#define DEVICE_ID "550e8400-e29b-41d4-a716-446655440000"
+// Device identity and firmware provenance are supplied by the explicit
+// PlatformIO device environment, not by this local secrets file.
 
 // Hardware Pins
 #define DHTPIN 21
