@@ -17,10 +17,6 @@ const LiveStats = isHostedReadonlyMode
   ? null
   : lazy(() => import("./components/LiveStats"));
 
-const LiveMeasurements = isHostedReadonlyMode
-  ? null
-  : lazy(() => import("./components/LiveMeasurements"));
-
 function App() {
   if (isHostedReadonlyMode) {
     return <HostedReadonlyRoutes />;
@@ -49,12 +45,6 @@ function App() {
         {!isHostedReadonlyMode && LiveStats && (
           <Suspense fallback={<div>Loading live stats...</div>}>
             <LiveStats />
-          </Suspense>
-        )}
-
-        {!isHostedReadonlyMode && LiveMeasurements && (
-          <Suspense fallback={<div>Loading LiveMeasurements...</div>}>
-            <LiveMeasurements />
           </Suspense>
         )}
 

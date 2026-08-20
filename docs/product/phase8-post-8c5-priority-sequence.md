@@ -2,7 +2,7 @@
 
 Date: 2026-08-19
 
-Status: Approved roadmap sequence; Phases 8D and 8E are complete, hosted-validated, and operationally closed. Each remaining phase still requires its own discovery, boundary approval, implementation approval, validation, and closeout.
+Status: Approved roadmap sequence; Phases 8D and 8E are complete, hosted-validated, and operationally closed. Phase 8F is active through the approved bounded 8F.1 frontend-retirement slice. Other slices still require their own discovery, boundary approval, implementation approval, validation, and closeout.
 
 ## Decision
 
@@ -37,3 +37,4 @@ The former Phase 8D/8E optional schedule and sensor-assisted watering work remai
 
 - **Phase 8D is operationally closed.** Commit `406bce9` restored paired start/terminal watering cycles, normal completions and safety cutoffs, honest sub-second wording, type-specific chart/history presentation, selected-device/window behavior, and count-preserving in-window chart markers. Jeremy confirmed the authenticated hosted result on 2026-08-19. See [`phase8d-watering-event-visibility-restoration-closeout.md`](./phase8d-watering-event-visibility-restoration-closeout.md).
 - **Phase 8E is operationally closed.** Its approved formulas, exact package-provenance pairing, evidence behavior, cards, chart series, and deterministic tests were committed and pushed to `main` as `8d90cec77ec128ee7eeaba304fc24cd5cb3a2453`, then deployed through the established Cloudflare production path. Jeremy confirmed on 2026-08-19 that the live site visibly contained the Phase 8E features. This proves deployed feature presence, but byte-for-byte correspondence between the Cloudflare-served bundle and local `HEAD` was not independently proven. No SQL, query, watering, or control-authority change occurred. See [`phase8e-feels-like-and-dew-point-implementation.md`](./phase8e-feels-like-and-dew-point-implementation.md).
+- **Phase 8F is active through Phase 8F.1.** The first bounded slice retires the unsupported Phase 7C Prototype01 local frontend panel and only its proven-exclusive styling, response types, and request helpers. Shared `LiveStats`/`/logs`, local Water Now, device registry and local-control targets, hosted Gen2 behavior, firmware, and Demo behavior remain outside this slice. See [`phase8f1-retire-unsupported-live-measurements-frontend.md`](./phase8f1-retire-unsupported-live-measurements-frontend.md).

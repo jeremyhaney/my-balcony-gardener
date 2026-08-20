@@ -223,19 +223,12 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - No `public.sensor_measurements` table exists yet.
 - No `SensorLogRow`, Supabase SQL, hosted dashboard, or frontend runtime changes were made in Phase 7B.
 - External legacy `/logs` polling was identified through the Gen2 not-found handler after old tabs/Vite were closed.
-- Phase 7C Live Measurements Local Frontend MVP is implemented and runtime validated.
-- Local/default dashboard renders `Live Measurements` outside hosted-readonly mode.
-- `Live Measurements` uses `/status`, `/capabilities`, and `/measurements`.
-- `Live Measurements` does not call `/logs`.
-- Runtime validation succeeded against `bench-proto-gen2` at `10.0.0.192`.
-- Phase 7C runtime validation rendered BME280 `air_temperature`, BME280 `relative_humidity`, BME280 `barometric_pressure`, DS18B20 `temperature`, VEML6030 `ambient_light`, analog soil moisture `moisture_index`, and analog soil moisture `raw_adc`.
-- The default visible UI is compact and gardener-facing.
-- Device technical diagnostics, sensor module details, and raw measurement records are available behind collapsed advanced sections.
-- `control_eligible:false` is visible/explained as display/diagnostic only and not controlling watering yet.
-- `Water Now` remains available in the new bench Live Measurements context, calls `/water-now`, and is presented as bench simulation with no pump attached.
-- Existing `LiveStats` / `/logs` Gen1 local path remains in place.
-- Phase 7C hosted-readonly guardrail scan passed and did not bundle local Live Measurements or local endpoint/control strings.
-- Phase 7C made no firmware, Supabase SQL, `SensorLogRow`, hosted-readonly behavior, watering duration, threshold, cooldown, moisture mapping, automatic watering logic, or `/water-now` firmware semantics changes.
+- Phase 7C historically implemented and runtime-validated a Prototype01-only local measurement panel against the bench contracts then in use.
+- Phase 8F.1 retires that unsupported panel, its hardcoded 5-second Prototype01 polling, its dedicated styling, and its exclusively owned pre-current-contract response types and request helpers.
+- The local/default application no longer mounts or polls `/status`, `/capabilities`, or `/measurements` for Prototype01. Those firmware endpoints remain available for direct inspection and are not removed.
+- Existing `LiveStats` / `/logs` and local Water Now remain in place. The shared device registry, local-control targets, `sensor_logs`, firmware profiles, Gen1 firmware, and hosted Gen2 presentation are preserved for later bounded Phase 8F slices.
+- Hosted-readonly remains Supabase-only/read-only and continues to exclude local endpoint/control strings.
+- Phase 8F.1 local validation passed `59/59` tests, lint, ordinary and hosted-readonly production builds, the hosted forbidden-string guard, source/test retirement searches, and `git diff --check`. The ordinary build no longer emits the retired component's JavaScript or CSS chunk; hosted generated asset names and byte sizes remained exactly equal to baseline. See [`docs/product/phase8f1-retire-unsupported-live-measurements-frontend.md`](./product/phase8f1-retire-unsupported-live-measurements-frontend.md).
 - Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.

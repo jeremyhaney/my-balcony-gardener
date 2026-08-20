@@ -143,10 +143,10 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - `/logs` is not part of the Gen2 bench measurement contract.
 - Phase 7B `bench-proto-gen2` uses GPIO25 for the pump-free simulated watering output through `RELAY_PIN`.
 - GPIO5 remains retired for future Gen2 relay/pump control designs.
-- Phase 7C adds a local/default frontend `Live Measurements` view for modular bench measurements.
-- `Live Measurements` uses `/status`, `/capabilities`, and `/measurements`.
+- Phase 7C historically added a Prototype01-only local/default panel over `/status`, `/capabilities`, and `/measurements`; Phase 8F.1 retires that unsupported frontend consumer and its stale local response types and request helpers.
+- The Gen2 firmware endpoints remain available for direct local inspection and later contract-aware work, but the current local/default application does not mount or poll the retired Prototype01 panel.
 - `/logs` remains Gen1/current compatibility and is not part of the modular bench measurement contract.
-- Hosted-readonly remains Supabase-only/read-only and does not bundle local `Live Measurements` or local endpoint/control strings.
+- Hosted-readonly remains Supabase-only/read-only and does not bundle local endpoint/control strings.
 - Supabase command/control remains prohibited.
 - ADR 0017 in [`docs/adr/0017-gen2-measurement-batch-storage.md`](./adr/0017-gen2-measurement-batch-storage.md) defines Gen2 measurement storage as one append-only raw batch row per complete device `/measurements` package.
 - Phase 7D stores raw Gen2 packages in `public.sensor_measurement_batches`; one database row equals one complete Gen2 `/measurements` package from one device at one measured time.
