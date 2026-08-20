@@ -16,7 +16,7 @@ const row = (overrides: Partial<SupportDeviceCapabilityRow> = {}): SupportDevice
   sensor_family: 'BME280',
   logical_channel: 'air',
   expected_measurement_names: ['air_temperature', 'relative_humidity', 'barometric_pressure'],
-  friendly_name: '  Bench air  ',
+  friendly_name: '  Balcony air  ',
   location_label: '  Upper shelf  ',
   physical_sensor_id: null,
   effective_from: '2026-08-12T17:03:41Z',
@@ -27,7 +27,7 @@ const row = (overrides: Partial<SupportDeviceCapabilityRow> = {}): SupportDevice
 test('normalizes one logical sensor with multiple expected measurements', () => {
   const normalized = normalizeSupportDeviceCapability(row())
   assert.equal(normalized.sensorFamily, 'bme280')
-  assert.equal(normalized.friendlyName, 'Bench air')
+  assert.equal(normalized.friendlyName, 'Balcony air')
   assert.deepEqual(normalized.expectedMeasurementNames, [
     'air_temperature', 'relative_humidity', 'barometric_pressure',
   ])

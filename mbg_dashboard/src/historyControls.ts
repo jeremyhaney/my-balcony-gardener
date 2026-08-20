@@ -1,6 +1,6 @@
 import { DEVICE_REGISTRY, type DeviceKey } from './deviceRegistry'
 
-export type HistoryDeviceKey = DeviceKey
+export type HistoryDeviceKey = string
 export type HistoryWindowKey =
   '3h' | '6h' | '12h' | '24h' | '7d' | '1m' | '3m' | '6m' | '1y' | 'all'
 
@@ -85,10 +85,6 @@ export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
 
 const DEFAULT_WINDOW_KEY: HistoryWindowKey = '24h'
 
-const configuredDeviceId = import.meta.env.VITE_MBG_DEVICE_ID?.trim() ?? ''
-
-export const getConfiguredDeviceId = (): string => configuredDeviceId
-
 export const getHistoryDeviceOption = (
   key: string | null,
   deviceOptions: HistoryDeviceOption[],
@@ -96,7 +92,7 @@ export const getHistoryDeviceOption = (
   deviceOptions.find((option) => option.key === key)
 
 export const getHistoryDeviceOptionsForDeviceKeys = (
-  deviceKeys: readonly HistoryDeviceKey[],
+  deviceKeys: readonly DeviceKey[],
 ): HistoryDeviceOption[] =>
   deviceKeys
     .map((deviceKey) => DEVICE_REGISTRY.find((device) => device.key === deviceKey))
@@ -117,11 +113,7 @@ export const resolveHistoryDeviceOption = (
     return queryDevice
   }
 
-  const configuredDevice = deviceOptions.find(
-    (option) => option.deviceId === configuredDeviceId,
-  )
-
-  return configuredDevice ?? deviceOptions[0]
+  return deviceOptions[0]
 }
 
 export const resolveHistoryWindowOption = (

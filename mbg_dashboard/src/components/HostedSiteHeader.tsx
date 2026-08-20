@@ -29,7 +29,7 @@ const HostedSiteHeader = ({
         <h3>Devices</h3>
         <ul>
           <li>
-            <strong>{primaryDevice?.hostedLabel ?? 'Balcony01'}</strong>
+            <strong>{primaryDevice?.hostedLabel ?? 'Balcony02'}</strong>
             <span>Primary controller</span>
           </li>
           {supportDevices.map((device) => (

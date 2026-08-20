@@ -14,9 +14,9 @@ test('the measurement query uses the existing hosted contract without batch_id',
 test('hosted rows explicitly mark the optional batch UUID unavailable', () => {
   const row = {
     device_id: 'device-1',
-    device_key: 'balcony',
-    device_label: 'Balcony',
-    device_role: 'primary',
+    device_key: 'balcony02',
+    device_label: 'Balcony02',
+    device_role: 'controller',
     measured_at: '2026-08-19T12:00:00.000Z',
     firmware_version: '1.0.0',
     build_profile: 'production',

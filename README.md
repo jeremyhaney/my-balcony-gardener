@@ -7,7 +7,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Firmware compiles on BJ3 with PlatformIO.
 - Frontend lints, builds, runs, and loads on BJ3.
 - The frontend no longer contains a direct browser-to-device live/control path.
-- Phase 8F.5 removes the unreachable firmware `/logs` and HTTP `/water-now` handlers; local watering remains firmware-owned through the physical button and the retained generic automatic-control boundary. Phase 8F.6 migrates the ignored firmware Supabase configuration to the HTTPS project root and rejects legacy Data API suffixes before builds. Phase 8F.7 records read-only live retired-device truth and a verified protected safety export; no database mutation is authorized or performed.
+- Phase 8F.5 removes the unreachable firmware `/logs` and HTTP `/water-now` handlers; local watering remains firmware-owned through the physical button and the retained generic automatic-control boundary. Phase 8F.6 migrates the ignored firmware Supabase configuration to the HTTPS project root and rejects legacy Data API suffixes before builds. Phase 8F.7 records read-only live retired-device truth and a verified protected safety export. Phase 8F.8 removes retired identities and browser-to-device configuration from current frontend source while leaving the live database unchanged.
 - Ordinary and hosted-readonly frontend builds now enter the same hosted Gen2 route shell.
 - Balcony02 posts Gen2 measurement batches, device heartbeats, and watering-event evidence to their current Supabase Data API tables; firmware no longer creates `sensor_logs` rows.
 - Firmware configuration now stores only the Supabase project root; the resolver constructs exactly `/rest/v1/sensor_measurement_batches`, `/rest/v1/device_heartbeats`, or `/rest/v1/watering_events` and accepts only an optional trailing root slash.
@@ -33,7 +33,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
-- `VITE_MBG_DASHBOARD_MODE=hosted-readonly` remains build-compatible, but route behavior no longer depends on it.
+- Ordinary and hosted production builds use the same hosted route shell and require no dashboard-mode setting.
 - Phase 6E hosted read-only device/window controls are validated on the custom domain.
 - Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
 - Phase 6G bench profile built successfully.
@@ -54,7 +54,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Hosted Gen2 queries filter server-side by selected `device_id` and selected lower timestamp bound except for `all`.
 - Garden Reading Quality is based on already-fetched hosted Gen2 measurement rows for the selected device/window.
 - Device Status is informational only; it does not diagnose sensor accuracy, plant condition, watering need, or pump behavior.
-- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
+- Public Demo selection is fixed by the Balcony02-only source registry; authenticated customer and Support selection remains authorization-derived from hosted views.
 - Hosted Gen2 trend axes and tooltips adapt to the selected history window.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
 - Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
@@ -146,16 +146,16 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Cloudflare Pages Production is validated from branch `main`.
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
-- The hosted-readonly environment value remains accepted for deployment compatibility; ordinary builds use the same route shell.
+- Ordinary and hosted production builds use the same route shell and generated assets.
 - Hosted read-only builds require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; do not document real values.
 - Hosted read-only routing now uses `/` for the public landing page, `/demo` for the public detailed demo, `/mygarden` for the customer `My Garden` dashboard shell, `/app` as a backward-compatible alias, `/login` for a placeholder login dialog, and `/support` for temporary read-only support review by direct URL.
 - Cloudflare Pages direct route refreshes are supported by `mbg_dashboard/public/_redirects` with `/* /index.html 200`.
 - Hosted routes expose read-only Device and Window selectors for Gen2 measurements and trends.
-- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device when no valid `device` query value is present.
-- Installed balcony unit currently uses `device_id` `550e8400-e29b-41d4-a716-446655440000` for Supabase history continuity.
+- When no valid `device` query value is present, each route falls back to its first available Demo or authorized device.
+- Balcony02 is the only source-configured frontend identity and uses `device_id` `7e5bd328-ad68-4389-a71a-fa5cd01b3813`.
 - Public Demo currently exposes Balcony02; authenticated customer and support selectors are authorization-derived.
 - Hosted Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
-- Hosted query-string state supports `?device=balcony&window=24h`, `?device=bench&window=7d`, and similar valid combinations.
+- Hosted query-string state supports scoped values such as `?device=balcony02&window=24h`; authenticated routes additionally accept devices returned by their protected garden-device views.
 - This Demo containment changes no SQL, firmware, polling, authentication, watering, or broader UI behavior. Future Demo ideas include curated Balcony02-derived data, guided interactions, representative watering history, controlled failure examples, no live-device dependency, and a possible separate Live Garden route.
 - Invalid hosted query values fall back to the first available authorized/Demo device and `24h`.
 - Hosted Gen2 reads filter server-side by selected `device_id` and selected timestamp lower bound except for `all`.

@@ -1,6 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabaseClient'
 import type { HostedGen2MeasurementRow } from './types/hostedGen2Measurements'
-import { getConfiguredDeviceId } from './historyControls'
 import {
   HOSTED_GEN2_MEASUREMENT_COLUMNS,
   markHostedGen2BatchIdentityUnavailable,
@@ -150,7 +149,7 @@ export async function fetchDeviceDiagnostics(
   }
 
   try {
-    const effectiveDeviceId = selectedDeviceId.trim() || getConfiguredDeviceId()
+    const effectiveDeviceId = selectedDeviceId.trim()
 
     if (!effectiveDeviceId) {
       return {
@@ -196,7 +195,7 @@ export async function fetchHostedGen2Measurements(
     throw new Error('Supabase Gen2 measurements are not configured.')
   }
 
-  const effectiveDeviceId = deviceId.trim() || getConfiguredDeviceId()
+  const effectiveDeviceId = deviceId.trim()
   const limit = Math.max(1, options.limit ?? DEFAULT_HOSTED_GEN2_MEASUREMENT_LIMIT)
   const rows: HostedGen2MeasurementRow[] = []
 
@@ -311,7 +310,7 @@ export async function fetchHostedWateringEvents(
   }
 
   try {
-    const effectiveDeviceId = deviceId.trim() || getConfiguredDeviceId()
+    const effectiveDeviceId = deviceId.trim()
 
     if (!effectiveDeviceId) {
       return {

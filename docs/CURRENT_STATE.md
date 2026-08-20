@@ -60,16 +60,15 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
-- `VITE_MBG_DASHBOARD_MODE=hosted-readonly` remains accepted for deployment compatibility, but no longer selects a different route branch.
-- Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
+- Ordinary and hosted production builds select the same hosted route shell without a dashboard-mode environment input.
+- Current frontend environment configuration is limited to `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
 - Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
 - The hosted route shell renders Gen2 readings, trends, Garden Reading Quality, diagnostics, and authorized watering evidence with Device and Window selectors and no Water Now action.
 - Public Demo selects Balcony02 from the shared registry; authenticated customer and Support selectors use authorization-derived garden-device options.
 - Hosted Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
 - Hosted URL query state accepts devices available within the current Demo or authorized route scope.
-- Invalid hosted query values fall back to the first available scoped device and `24h`.
-- `VITE_MBG_DEVICE_ID` remains a configured-device fallback only when that device exists in the current route's available options.
+- Invalid or absent device query values fall back to the first device available within the current Demo or authorization-derived route scope.
 - Hosted Gen2 queries filter server-side by selected `device_id` and selected timestamp lower bound except for `all`.
 - Hosted Gen2 Garden Reading Quality uses already-fetched Gen2 rows for the selected device/window; the frontend legacy `sensor_logs` health calculation is retired.
 - Garden Reading Quality checks latest Gen2 report sample age, unique `measured_at` sample count, expected sample coverage, largest gap, Gen2 measurement metadata such as `valid`, `quality`, and `reason`, and whether the latest sample has displayable numeric measurements.
@@ -225,6 +224,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 8F.5 removes the unreachable Gen1 source branches and dependencies, collapses selected Gen2 status/heartbeat/setup/loop behavior, retains a generic active Data API table-suffix normalizer for the current private configuration shape, and adds deterministic source/compile-time guards. See [`docs/product/phase8f5-retire-unreachable-gen1-firmware-implementation.md`](./product/phase8f5-retire-unreachable-gen1-firmware-implementation.md).
 - Phase 8F.6 migrates the ignored private firmware configuration from its legacy table-suffixed URL to the same project's HTTPS root, preserves the existing key and unrelated private settings, replaces suffix normalization with root-only deterministic table URL construction, and adds a safe build-time guard plus resolver/negative configuration tests. The three active write targets remain `sensor_measurement_batches`, `device_heartbeats`, and `watering_events`; built firmware contains no `sensor_logs` string. See [`docs/product/phase8f6-migrate-firmware-supabase-url-to-project-root.md`](./product/phase8f6-migrate-firmware-supabase-url-to-project-root.md).
 - Phase 8F.7 establishes read-only live truth for the three retired device identities, proves their current public/customer/Support exposure, and creates a verified external JSONL/metadata safety export containing 81,575 proposed retired rows. Balcony02 is absent from every retired-row export and predicate. No database or local registry mutation occurred; a separately approved future slice must refresh the export before following the documented dependency-ordered deletion plan. See the [inventory](./product/phase8f7-retired-device-registry-inventory-and-safety-export.md) and [manifest summary](./product/phase8f7-retired-device-safety-export-manifest-summary.md).
+- Phase 8F.8 narrows the executable frontend registry and Demo mapping to Balcony02, removes retired frontend identity/configuration residue plus unused browser-to-device proxy routes, and adds a deterministic Balcony02 registry/Demo invariant test. The database remains unchanged: retired devices may still appear through Customer and Support hosted views until a later refreshed, explicitly approved destructive slice. See the [implementation record](./product/phase8f8-retire-local-device-registry-and-frontend-configuration.md).
 - Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.
@@ -403,8 +403,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - MBG should not fork into separate independently maintained customer and engineering sites.
 - Prefer one shared dashboard codebase and shared UI components with mode/capability/context gates for customer hosted read-only mode, support/admin read-only diagnostics mode, and local engineering/service mode.
 - Customer, support/admin, and local engineering views may expose different capabilities, but they should reuse the same core layout/components where practical so the UI does not drift.
-- Hosted-readonly pilot device selection is constrained through the Phase 7L.1 assignment layer to `Balcony01` and `Scout01`; `Prototype01` / `bench` remains in the base frontend device registry for support/development use outside this pilot simulation.
-- If hosted pilot mode receives `?device=bench`, the selected device falls back to `Balcony01` because `bench` is not assigned to the pilot site.
+- Historically, Phase 7L.1 constrained the pilot assignment to Balcony01 and Scout01 while Prototype01/Bench01 remained in the base frontend registry. Phase 8F.8 supersedes that local-source state: the current Demo registry contains only Balcony02, while Customer and Support choices come from protected hosted views.
+- The current Demo falls back to Balcony02 for any unrecognized device query value. Customer and Support routes fall back within their authorization-derived device sets.
 - Phase 7L.1 creates no fake telemetry, fake `sensor_logs` rows, ghost physical device, duplicate device ID, Supabase Auth flow, customer/site SQL table, membership table, or RLS policy.
 - Phase 7L.1 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
 - Phase 7L.2 keeps the hosted dashboard read-only and introduces no Water Now, local ESP32 endpoint calls, Supabase command/control, firmware change, SQL/RLS change, deploy, or firmware upload.
