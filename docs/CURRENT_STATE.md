@@ -23,11 +23,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Frontend lints, builds, runs, and loads on BJ3.
 - Firmware local endpoints remain in the repository, but the retired Balcony01, Scout01, and Prototype01 identities have no active browser consumer.
 - The frontend no longer displays device-local `/logs` values or exposes Manual Water Now.
-- Local/default mode retains the Supabase-backed Sensor History path.
+- Ordinary and hosted-readonly frontend builds enter the same hosted Gen2 route shell.
 - ESP32 now posts current telemetry directly to Supabase `sensor_logs`.
 - Supabase `sensor_logs` uses the canonical `SensorLogRow` shape with top-level `device_id`, `timestamp`, and nested `data`.
 - Supabase stores firmware timestamps as UTC ISO-8601 values so the browser can render them correctly in local time.
-- Read-only Supabase-backed Sensor History / graph display is restored, refreshes every 5 minutes while the tab is visible, pauses scheduled refreshes while hidden, and now displays watering-start event markers.
+- Hosted Gen2 reads refresh every 5 minutes while visible, pause scheduled refreshes while hidden, and resume with one immediate refresh.
 - Supabase warned that the project was depleting its Disk IO Budget, but this was not a storage-capacity incident: the database was approximately `82 MB` and storage utilization was low. Normal B02 and P01 writes matched the intended 15-minute cadence at approximately four measurement batches and four heartbeats per active device per hour.
 - Gen2 persistence matched ADR 0017: one physical `sensor_measurement_batches` row per batch, with B02's eleven records stored inside the batch and flattened through a conventional SQL view. The dominant workload was repeated 10-second hosted Support View polling across multiple open browser tabs; PostgreSQL statistics showed approximately `197,000` executions of the leading protected Gen2 measurement queries and approximately `185 GB` of cumulative temporary-file activity.
 - The pending hosted polling correction reduces visible scheduled refresh cycles by `30x`, eliminates scheduled hidden-tab polling, performs immediate refresh on visibility return and Device/Window changes, and adds non-overlapping manual Refresh with a local completion timestamp. It reduces opportunities for complex queries to spill into temporary files; it does not guarantee that an individual query cannot spill.
@@ -54,7 +54,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - DHT temperature/humidity may use firmware last-known-good fallback for `/logs` and telemetry rows after at least one good DHT read.
 - Soil moisture remains fresh-only for watering decisions and is not cached.
 - During DHT failure, immediate watering-start and watering-completion telemetry still posts when cached DHT values exist, using cached temperature/humidity plus fresh moisture.
-- Sensor History chart rows now use explicit chronological timestamp sorting before rendering.
+- Hosted Gen2 trend and watering-event presentation remain selected-device/window scoped.
 - Watering-start rows are shown as vertical history markers using Supabase `sensor_logs.data.watering = true`.
 - No frontend runtime changes were made in Phase 5C or Phase 5D; Phase 5E only updated Sensor History graph display semantics.
 - Phase 8F.2 retires the frontend's frequent local `/logs` polling; the firmware endpoint remains unchanged.
@@ -66,22 +66,21 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
 - Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
 - The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
-- Hosted read-only mode is controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
+- `VITE_MBG_DASHBOARD_MODE=hosted-readonly` remains accepted for deployment compatibility, but no longer selects a different route branch.
 - Hosted read-only mode uses `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optional `VITE_MBG_DEVICE_ID`.
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
 - Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
-- Hosted read-only mode renders Supabase Sensor History plus Device Status with Device and Window selectors and has no Water Now action; `LiveStats` is no longer present in either frontend mode.
-- Hosted Device selector supports Installed Balcony Unit (`balcony`, `550e8400-e29b-41d4-a716-446655440000`), Bench Prototype Unit (`bench`, `318fab98-89ad-4f36-9100-3134a04e0be5`), and Balcony Sensor Scout 01 (`scout01`, `28f4e6e3-5979-4af4-9753-34e185d8e47e`).
+- The hosted route shell renders Gen2 readings, trends, Garden Reading Quality, diagnostics, and authorized watering evidence with Device and Window selectors and no Water Now action.
+- Public Demo selects Balcony02 from the shared registry; authenticated customer and Support selectors use authorization-derived garden-device options.
 - Hosted Window selector supports `3h`, `6h`, `12h`, `24h`, `7d`, `1m`, `3m`, `6m`, `1y`, and `all`; `24h` remains the default.
-- Hosted URL query state supports valid combinations such as `?device=balcony&window=24h` and `?device=bench&window=7d`.
-- Invalid hosted query values safely fall back to Installed Balcony Unit / `24h`.
-- `VITE_MBG_DEVICE_ID` remains the fallback/default hosted device behavior.
-- Hosted Supabase history queries filter server-side by selected `device_id`.
-- Hosted Supabase history queries filter by selected timestamp lower bound except for `all`, which does not apply a lower timestamp bound.
-- Hosted Gen2 Device Status uses already-fetched rows from `public.hosted_gen2_measurements` for the selected device/window. Gen1/Sensor History `sensor_logs` status assumptions remain legacy/local compatibility behavior, not the hosted Gen2 status source.
-- Hosted Gen2 Device Status checks latest Gen2 report sample age, unique `measured_at` sample count, expected sample coverage, largest gap, Gen2 measurement metadata such as `valid`, `quality`, and `reason`, and whether the latest sample has displayable numeric measurements.
-- Device Status is informational only and does not perform calibration, plant diagnosis, fault diagnosis, alerts, or command/control.
-- Sensor History chart X-axis labels adapt by selected history window, and chart tooltips show full date/time.
+- Hosted URL query state accepts devices available within the current Demo or authorized route scope.
+- Invalid hosted query values fall back to the first available scoped device and `24h`.
+- `VITE_MBG_DEVICE_ID` remains a configured-device fallback only when that device exists in the current route's available options.
+- Hosted Gen2 queries filter server-side by selected `device_id` and selected timestamp lower bound except for `all`.
+- Hosted Gen2 Garden Reading Quality uses already-fetched Gen2 rows for the selected device/window; the frontend legacy `sensor_logs` health calculation is retired.
+- Garden Reading Quality checks latest Gen2 report sample age, unique `measured_at` sample count, expected sample coverage, largest gap, Gen2 measurement metadata such as `valid`, `quality`, and `reason`, and whether the latest sample has displayable numeric measurements.
+- Garden Reading Quality is informational only and does not perform calibration, plant diagnosis, fault diagnosis, alerts, or command/control.
+- Hosted Gen2 trend labels and tooltips adapt to the selected history window.
 - Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.
 - Phase 6E hosted-readonly production bundle guardrail scan returned no output for `water-now`, `Water Now`, `/logs`, `Currently Watering`, `LiveStats`, `VITE_ESP32_URL`, or `VITE_WATER_ENDPOINT`.
@@ -153,7 +152,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Supabase `sensor_logs` RLS INSERT policy now allows scout01.
 - A first near-live scout01 Sensor History row was observed after the RLS update.
 - Phase 6J.0 made no firmware changes, no `SensorLogRow` changes, no Supabase schema changes, and no watering threshold/duration/cooldown/sensor logic changes.
-- Local/default dashboard mode now renders Sensor History without `LiveStats`, local `/logs` polling, or local Manual Water Now.
+- The non-hosted/local dashboard route is retired; ordinary builds use the hosted Gen2 route shell.
 - Firmware retains local watering authority and endpoint compatibility; the frontend no longer has a browser-to-device live/control path.
 - Supabase remains read-only telemetry/history only and is not used for command/control.
 - Phase 6J.1 is currently documentation/design only for Device Diagnostics / Heartbeats / Reliability Evidence.
@@ -195,7 +194,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - `public.hosted_device_diagnostics` joins active, hosted-visible registry rows to the latest `public.device_heartbeats` row per device and grants SELECT on the view to `anon` and `authenticated`.
 - The hosted diagnostics view exposes only safe hosted diagnostics fields and does not expose local IP, MAC, SSID, notes, base registry admin fields, heartbeat `details`, or command/control fields.
 - Base `public.device_registry` anon SELECT remains unapproved and unchanged.
-- Hosted Sensor History now fetches diagnostics for the selected device from `public.hosted_device_diagnostics` using the read-only Supabase path.
+- Hosted routes fetch diagnostics for the selected device from the appropriate public or protected hosted diagnostics view.
 - The Device Diagnostics panel shows Diagnostics Fresh, Diagnostics Stale, or No Diagnostics Yet using the named `35` minute heartbeat warning threshold.
 - The panel presents heartbeat evidence only, including latest heartbeat watering evidence, and does not diagnose plant health, sensor calibration, root cause, or live pump state.
 - Phase 6J.6 makes no firmware, `SensorLogRow`, `/status`, `/logs`, `/water-now`, watering behavior, threshold, duration, cooldown, moisture mapping, pin, sensor, LiveStats, DualAxisChart, or local control behavior changes.
@@ -226,10 +225,11 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 8F.1 retires that unsupported panel, its hardcoded 5-second Prototype01 polling, its dedicated styling, and its exclusively owned pre-current-contract response types and request helpers.
 - The local/default application no longer mounts or polls `/status`, `/capabilities`, or `/measurements` for Prototype01. Those firmware endpoints remain available for direct inspection and are not removed.
 - Phase 8F.2 retires `LiveStats`, its selected-target five-second `/logs` polling, browser device-identity gating, local Water Now action, and the exclusively owned `localControlTargets.ts` definitions. No dedicated stylesheet existed at the Phase 8F.2 baseline; the removed component used inline presentation.
-- The shared device registry remains because history, customer-site, and Demo paths still consume it. `sensor_logs`, `SensorLogRow`, `fetchHistoryLogs`, `SensorLogViewer`, firmware profiles, Gen1 firmware, firmware `/logs` and `/water-now` handlers, and hosted Gen2 presentation remain unchanged.
+- Phase 8F.2 preserved the shared registry and legacy history path pending the next bounded slice.
 - Hosted-readonly remains Supabase-only/read-only and continues to exclude local endpoint/control strings.
 - Phase 8F.1 local validation passed `59/59` tests, lint, ordinary and hosted-readonly production builds, the hosted forbidden-string guard, source/test retirement searches, and `git diff --check`. The ordinary build no longer emits the retired component's JavaScript or CSS chunk; hosted generated asset names and byte sizes remained exactly equal to baseline. See [`docs/product/phase8f1-retire-unsupported-live-measurements-frontend.md`](./product/phase8f1-retire-unsupported-live-measurements-frontend.md).
 - Phase 8F.2 local validation and exact generated-asset evidence are recorded in [`docs/product/phase8f2-retire-livestats-local-water-now-frontend.md`](./product/phase8f2-retire-livestats-local-water-now-frontend.md).
+- Phase 8F.3 retires the non-hosted route branch, Demo's redundant `sensor_logs` request, frontend `fetchHistoryLogs`/`SensorLogRow` normalization and state, the legacy Sensor History chart, and legacy telemetry-health presentation. It preserves hosted Gen2 queries, capability/evidence presentation, diagnostics, watering evidence, authentication, customer/support routing, firmware endpoints/profiles/posting, Supabase storage/policies, and registry entries. See [`docs/product/phase8f3-retire-local-dashboard-sensor-logs-frontend.md`](./product/phase8f3-retire-local-dashboard-sensor-logs-frontend.md).
 - Phase 7D Gen2 Measurement Batch Storage MVP is validated / complete.
 - ADR 0017 defines Gen2 raw measurement storage as one append-only row per complete device `/measurements` package.
 - Phase 7D uses `public.sensor_measurement_batches`; one row equals one complete Gen2 `/measurements` package from one device at one measured time, with the full `records[]` array stored as `jsonb`.

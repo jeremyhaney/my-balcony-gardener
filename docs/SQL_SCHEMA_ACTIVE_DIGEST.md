@@ -35,7 +35,7 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Purpose: Legacy/current `SensorLogRow` telemetry history and historical watering markers.
 - Source of rows: ESP32 firmware telemetry posts.
 - Device-originated inserts: Yes, for provisioned devices. Phase 6J.5 replaces hardcoded UUID insert allowlists with `public.is_device_telemetry_insert_enabled(device_id)`.
-- Browser/customer read path: Public/demo Sensor History reads `sensor_logs`; Gen2 customer/support routes use protected Gen2 views instead of this as their main measurement source.
+- Browser/customer read path: None in the supported frontend after Phase 8F.3. Public Demo and protected customer/support routes use hosted Gen2 views instead.
 - Anon SELECT: Existing public/anon `sensor_logs` SELECT policy is documented as remaining after Phase 6J.5.
 - Authenticated SELECT: Needs verification from applied Supabase state for any direct authenticated base-table access; protected customer/support Gen2 views do not depend on direct browser reads of `sensor_logs`.
 - Command/control: No. Evidence/storage/read path only.

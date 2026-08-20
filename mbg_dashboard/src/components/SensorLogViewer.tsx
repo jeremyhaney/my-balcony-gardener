@@ -2,7 +2,6 @@ import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchDeviceDiagnostics,
   fetchGardenDevices,
-  fetchHistoryLogs,
   fetchHostedGen2Measurements,
   fetchHostedWateringEvents,
   type GardenDevice,
@@ -16,7 +15,6 @@ import {
   getHistoryDeviceOption,
   getHistoryDeviceOptionsForDeviceKeys,
   getHistoryWindowOption,
-  HISTORY_DEVICE_OPTIONS,
   HISTORY_WINDOW_OPTIONS,
   type HistoryDeviceOption,
   type HistoryDeviceKey,
@@ -32,31 +30,22 @@ import {
 import { fetchSupportDeviceCapabilities } from '../supportDeviceCapabilities'
 import { getCapabilityConfigurationState } from '../deviceCapabilities'
 import { getHostedWateringCycles } from '../hostedWateringCycles'
-import { calculateTelemetryHealth } from '../telemetryHealth'
 import type { HostedGen2MeasurementRow } from '../types/hostedGen2Measurements'
 import type { CommissionedDeviceCapability } from '../types/deviceCapabilities'
-import type { SensorLogRow } from '../types/sensorLog'
 import DeviceDiagnosticsPanel from './DeviceDiagnosticsPanel'
-import DualAxisChart from './DualAxisChart'
 import HostedGen2Measurements from './HostedGen2Measurements'
 import HostedGen2TrendChart from './HostedGen2TrendChart'
 import HostedSiteHeader from './HostedSiteHeader'
 import HostedWateringEvents from './HostedWateringEvents'
 import SensorHealthPanel from './SensorHealthPanel'
 
-const isValidPercent = (value: number): boolean =>
-  Number.isFinite(value) && value >= 0 && value <= 100
-
-const sanitizePercent = (value: number): number | null => (isValidPercent(value) ? value : null)
-
-const hasUsableTimestamp = (timestamp: string): boolean =>
-  Number.isFinite(new Date(timestamp).getTime())
-
 const HISTORY_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 const HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE = 8
+const DEMO_DEVICE_OPTIONS = getHistoryDeviceOptionsForDeviceKeys(
+  PHASE_7L1_PILOT_CUSTOMER_SITE.deviceKeys,
+)
 
 type SensorLogViewerProps = {
-  isHostedReadonly?: boolean
   hostedReadonlyScope?: 'demo' | 'pilot' | 'customer' | 'support'
   showHostedSiteHeader?: boolean
   demoGuideTarget?: DemoGuideTarget
@@ -70,55 +59,43 @@ const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Unknown error'
 
 const SensorLogViewer = ({
-  isHostedReadonly = false,
   hostedReadonlyScope = 'demo',
   showHostedSiteHeader = true,
   demoGuideTarget,
   emptyStateMessage,
 }: SensorLogViewerProps) => {
   const hostedDataScope = getHostedDataScope(hostedReadonlyScope)
-  const isProtectedHostedScope = isHostedReadonly && hostedDataScope !== 'demo'
-  const pilotCustomerSite =
-    isHostedReadonly && hostedDataScope === 'demo' ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
-  const demoDeviceOptions = useMemo(
-    () =>
-      pilotCustomerSite
-        ? getHistoryDeviceOptionsForDeviceKeys(pilotCustomerSite.deviceKeys)
-        : HISTORY_DEVICE_OPTIONS,
-    [pilotCustomerSite],
-  )
+  const isProtectedHostedScope = hostedDataScope !== 'demo'
+  const pilotCustomerSite = hostedDataScope === 'demo' ? PHASE_7L1_PILOT_CUSTOMER_SITE : null
   const deviceStatusPanelsRef = useRef<HTMLDivElement>(null)
   const [authorizedDeviceOptions, setAuthorizedDeviceOptions] = useState<HistoryDeviceOption[]>([])
   const [authorizedDevicesError, setAuthorizedDevicesError] = useState<string | null>(null)
   const [isAuthorizedDevicesLoading, setIsAuthorizedDevicesLoading] = useState(
     isProtectedHostedScope,
   )
-  const [logs, setLogs] = useState<SensorLogRow[]>([])
-  const [historyError, setHistoryError] = useState<string | null>(null)
   const [diagnostics, setDiagnostics] = useState<DeviceDiagnostics | null>(null)
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null)
   const [hostedGen2Rows, setHostedGen2Rows] = useState<HostedGen2MeasurementRow[]>([])
   const [hostedGen2Error, setHostedGen2Error] = useState<string | null>(null)
-  const [isHostedGen2Loading, setIsHostedGen2Loading] = useState(false)
+  const [isHostedGen2Loading, setIsHostedGen2Loading] = useState(true)
   const [capabilities, setCapabilities] = useState<CommissionedDeviceCapability[]>([])
   const [capabilityError, setCapabilityError] = useState<string | null>(null)
   const [isCapabilityLoading, setIsCapabilityLoading] = useState(false)
   const [wateringEventRows, setWateringEventRows] = useState<HostedWateringEventRow[]>([])
   const [wateringEventsError, setWateringEventsError] = useState<string | null>(null)
   const [isWateringEventsLoading, setIsWateringEventsLoading] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null)
   const manualRefreshRef = useRef<(() => Promise<void>) | null>(null)
   const refreshGenerationRef = useRef(0)
   const [openDeviceStatusPanel, setOpenDeviceStatusPanel] =
     useState<DeviceStatusPanelKey | null>(null)
-  const deviceOptions = isProtectedHostedScope ? authorizedDeviceOptions : demoDeviceOptions
+  const deviceOptions = isProtectedHostedScope ? authorizedDeviceOptions : DEMO_DEVICE_OPTIONS
   const [selectedDevice, setSelectedDevice] = useState<HistoryDeviceOption>(
-    () => getHistoryControlStateFromUrl(demoDeviceOptions).device,
+    () => getHistoryControlStateFromUrl(DEMO_DEVICE_OPTIONS).device,
   )
   const [selectedWindow, setSelectedWindow] = useState<HistoryWindowOption>(
-    () => getHistoryControlStateFromUrl().window,
+    () => getHistoryControlStateFromUrl(DEMO_DEVICE_OPTIONS).window,
   )
 
   useEffect(() => {
@@ -215,8 +192,6 @@ const SensorLogViewer = ({
       }
 
       if (isProtectedHostedScope && deviceOptions.length === 0) {
-        setLogs([])
-        setHistoryError(null)
         setDiagnostics(null)
         setDiagnosticsError(null)
         setHostedGen2Rows([])
@@ -225,7 +200,6 @@ const SensorLogViewer = ({
         setWateringEventRows([])
         setWateringEventsError(null)
         setIsWateringEventsLoading(false)
-        setIsLoading(false)
         setLastRefreshedAt(new Date())
         return
       }
@@ -241,18 +215,16 @@ const SensorLogViewer = ({
       setIsRefreshing(true)
 
       const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
-      const hostedGen2Request = isHostedReadonly
-        ? fetchHostedGen2Measurements(selectedDevice.deviceId, {
-            startTime: lowerBoundIso,
-            limit: Math.max(1000, selectedWindow.limit * HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE),
-            scope: hostedDataScope,
-          })
-            .then((rows) => ({ rows, error: null }))
-            .catch((error: unknown) => ({
-              rows: [] as HostedGen2MeasurementRow[],
-              error: `Supabase Gen2 measurements are currently unavailable: ${getErrorMessage(error)}`,
-            }))
-        : Promise.resolve({ rows: [] as HostedGen2MeasurementRow[], error: null })
+      const hostedGen2Request = fetchHostedGen2Measurements(selectedDevice.deviceId, {
+        startTime: lowerBoundIso,
+        limit: Math.max(1000, selectedWindow.limit * HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE),
+        scope: hostedDataScope,
+      })
+        .then((rows) => ({ rows, error: null }))
+        .catch((error: unknown) => ({
+          rows: [] as HostedGen2MeasurementRow[],
+          error: `Supabase Gen2 measurements are currently unavailable: ${getErrorMessage(error)}`,
+        }))
       const wateringEventsRequest = isProtectedHostedScope
         ? fetchHostedWateringEvents(selectedDevice.deviceId, {
             startTime: lowerBoundIso,
@@ -261,24 +233,15 @@ const SensorLogViewer = ({
           })
         : Promise.resolve({ rows: [] as HostedWateringEventRow[], error: null })
 
-      if (isHostedReadonly) {
-        setIsHostedGen2Loading(true)
-      }
+      setIsHostedGen2Loading(true)
 
       if (isProtectedHostedScope) {
         setIsWateringEventsLoading(true)
       }
 
       try {
-        const [historyResult, diagnosticsResult, hostedGen2Result, wateringEventsResult] =
+        const [diagnosticsResult, hostedGen2Result, wateringEventsResult] =
           await Promise.all([
-            hostedDataScope === 'demo'
-              ? fetchHistoryLogs(
-                  selectedWindow.limit,
-                  selectedDevice.deviceId,
-                  lowerBoundIso,
-                )
-              : Promise.resolve({ rows: [] as SensorLogRow[], error: null }),
             fetchDeviceDiagnostics(selectedDevice.deviceId, hostedDataScope),
             hostedGen2Request,
             wateringEventsRequest,
@@ -288,8 +251,6 @@ const SensorLogViewer = ({
           return
         }
 
-        setLogs(historyResult.rows)
-        setHistoryError(historyResult.error)
         setDiagnostics(diagnosticsResult.diagnostics)
         setDiagnosticsError(diagnosticsResult.error)
         setHostedGen2Rows(hostedGen2Result.rows)
@@ -302,7 +263,6 @@ const SensorLogViewer = ({
         if (isMounted && refreshGeneration === refreshGenerationRef.current) {
           setIsHostedGen2Loading(false)
           setIsWateringEventsLoading(false)
-          setIsLoading(false)
           setIsRefreshing(false)
           setLastRefreshedAt(new Date())
         }
@@ -361,7 +321,6 @@ const SensorLogViewer = ({
     deviceOptions,
     hostedDataScope,
     isAuthorizedDevicesLoading,
-    isHostedReadonly,
     isProtectedHostedScope,
     selectedDevice,
     selectedWindow,
@@ -436,27 +395,6 @@ const SensorLogViewer = ({
     void manualRefreshRef.current?.()
   }
 
-  const chartLogs = [...logs]
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    .map((log) => {
-      const temperature = Number.isFinite(log.data.temperature) ? log.data.temperature : null
-      const humidity = sanitizePercent(log.data.humidity)
-      const moisture = sanitizePercent(log.data.moisture)
-
-      return {
-        timestamp: log.timestamp,
-        temperature,
-        humidity,
-        moisture,
-        watering: log.data.watering,
-      }
-    })
-    .filter(
-      (log) =>
-        hasUsableTimestamp(log.timestamp) &&
-        (log.temperature !== null || log.humidity !== null || log.moisture !== null)
-    )
-
   const capabilityCardDescriptors = useMemo(
     () => getCapabilityCardDescriptors(capabilities),
     [capabilities],
@@ -465,18 +403,16 @@ const SensorLogViewer = ({
     () => getCapabilityChartSeriesDescriptors(capabilityCardDescriptors),
     [capabilityCardDescriptors],
   )
-  const telemetryHealth = isLoading ||
+  const hostedGen2Health = isHostedGen2Loading ||
     (hostedDataScope === 'support' && (isCapabilityLoading || capabilityError !== null))
     ? null
-    : isHostedReadonly
-      ? calculateHostedGen2Health(
-          hostedGen2Rows,
-          selectedWindow.key,
-          new Date(),
-          hostedDataScope === 'support' ? capabilityCardDescriptors : undefined,
-        )
-      : calculateTelemetryHealth(logs, selectedWindow.key)
-  const selectedDeviceLabel = isHostedReadonly ? selectedDevice.hostedLabel : selectedDevice.label
+    : calculateHostedGen2Health(
+        hostedGen2Rows,
+        selectedWindow.key,
+        new Date(),
+        hostedDataScope === 'support' ? capabilityCardDescriptors : undefined,
+      )
+  const selectedDeviceLabel = selectedDevice.hostedLabel
   const wateringCycles = useMemo(
     () => getHostedWateringCycles(wateringEventRows),
     [wateringEventRows],
@@ -499,25 +435,24 @@ const SensorLogViewer = ({
       .filter(Boolean)
       .join(' ')
 
-  // Reusable selector markup shared by hosted and legacy control placement.
   const deviceControl = (
     <label
       className={getDemoGuideTargetClass('device')}
       data-guide-target="device"
-      style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
+      style={{ display: 'grid', gap: '0.25rem', fontSize: '0.82rem' }}
     >
-      <span>{isHostedReadonly ? 'Device' : 'Device History'}</span>
+      <span>Device</span>
       <select
         value={selectedDevice.key}
         onChange={handleDeviceChange}
         style={{
-          minWidth: isHostedReadonly ? '180px' : '220px',
-          padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
+          minWidth: '180px',
+          padding: '0.3rem 0.45rem',
         }}
       >
         {deviceOptions.map((option) => (
           <option key={option.key} value={option.key}>
-            {isHostedReadonly ? option.hostedLabel : option.label}
+            {option.hostedLabel}
           </option>
         ))}
       </select>
@@ -528,15 +463,15 @@ const SensorLogViewer = ({
     <label
       className={getDemoGuideTargetClass('window')}
       data-guide-target="window"
-      style={{ display: 'grid', gap: '0.25rem', fontSize: isHostedReadonly ? '0.82rem' : '0.9rem' }}
+      style={{ display: 'grid', gap: '0.25rem', fontSize: '0.82rem' }}
     >
       <span>Window</span>
       <select
         value={selectedWindow.key}
         onChange={handleWindowChange}
         style={{
-          minWidth: isHostedReadonly ? '140px' : '160px',
-          padding: isHostedReadonly ? '0.3rem 0.45rem' : '0.4rem',
+          minWidth: '140px',
+          padding: '0.3rem 0.45rem',
         }}
       >
         {HISTORY_WINDOW_OPTIONS.map((option) => (
@@ -571,26 +506,6 @@ const SensorLogViewer = ({
     </div>
   )
 
-  // Legacy history keeps the existing combined Device History and Window controls.
-  const historyControls = (
-    <div
-      aria-label="Sensor history controls"
-      className="sensor-history-controls"
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: isHostedReadonly ? '0.6rem' : '0.75rem',
-        alignItems: 'flex-end',
-        marginBottom: isHostedReadonly ? 0 : '1rem',
-      }}
-    >
-      {deviceControl}
-      {windowControl}
-      {refreshControl}
-    </div>
-  )
-
-  // Hosted layout separates device context from the chart-associated Window control.
   const hostedDeviceControl = (
     <div
       aria-label="Device selection"
@@ -642,12 +557,6 @@ const SensorLogViewer = ({
     )
   }
 
-  const historyErrorMessage = historyError ? (
-    <p className="mb-3 text-sm" style={{ color: '#7f1d1d' }}>
-      {historyError}
-    </p>
-  ) : null
-
   const deviceStatusPanels = (
     <div
       className={[
@@ -657,9 +566,9 @@ const SensorLogViewer = ({
       data-guide-target="status"
       ref={deviceStatusPanelsRef}
     >
-      {telemetryHealth ? (
+      {hostedGen2Health ? (
         <SensorHealthPanel
-          health={telemetryHealth}
+          health={hostedGen2Health}
           isOpen={openDeviceStatusPanel === 'status'}
           onOpenChange={(isOpen) =>
             setOpenDeviceStatusPanel(isOpen ? 'status' : null)
@@ -677,28 +586,6 @@ const SensorLogViewer = ({
         }
       />
     </div>
-  )
-
-  const sensorHistoryHeader = (
-    <>
-      <h2 className="text-xl font-bold mb-2">Sensor History</h2>
-      {historyControls}
-      {historyErrorMessage}
-    </>
-  )
-
-  const sensorHistoryChart = (
-    <>
-      {isLoading ? (
-        <p className="text-sm">Loading history...</p>
-      ) : logs.length === 0 ? (
-        <p className="text-sm">No Sensor History rows in this window.</p>
-      ) : chartLogs.length === 0 ? (
-        <p className="text-sm">History rows were found, but no valid readings are available to chart yet.</p>
-      ) : (
-        <DualAxisChart sensorLogs={chartLogs} historyWindowKey={selectedWindow.key} />
-      )}
-    </>
   )
 
   const capabilityConfigurationState = getCapabilityConfigurationState(
@@ -721,56 +608,46 @@ const SensorLogViewer = ({
 
   return (
     <div className="p-4">
-      {isHostedReadonly ? (
+      {pilotCustomerSite && showHostedSiteHeader ? (
+        <HostedSiteHeader
+          customerSite={pilotCustomerSite}
+          assignedDevices={deviceOptions}
+        />
+      ) : null}
+      {hostedDeviceControl}
+      {deviceStatusPanels}
+      {supportCapabilityState ?? (
         <>
-          {pilotCustomerSite && showHostedSiteHeader ? (
-            <HostedSiteHeader
-              customerSite={pilotCustomerSite}
-              assignedDevices={deviceOptions}
-            />
-          ) : null}
-          {hostedDeviceControl}
-          {deviceStatusPanels}
-          {supportCapabilityState ?? (
-            <>
-              <HostedGen2Measurements
-                rows={hostedGen2Rows}
-                cardDescriptors={hostedDataScope === 'support' ? capabilityCardDescriptors : undefined}
-                isLoading={isHostedGen2Loading}
-                error={hostedGen2Error}
-                fallbackDeviceLabel={selectedDeviceLabel}
-                className={getDemoGuideTargetClass('readings')}
-                supportEvidencePolicy={hostedDataScope === 'support'}
-                deviceReportingActive={deviceReportingActive}
-                showSupportEngineering={hostedDataScope !== 'customer'}
-              />
-              <HostedGen2TrendChart
-                rows={hostedGen2Rows}
-                seriesDescriptors={hostedDataScope === 'support' ? capabilityChartSeriesDescriptors : undefined}
-                historyWindowKey={selectedWindow.key}
-                isLoading={isHostedGen2Loading}
-                error={hostedGen2Error}
-                controls={hostedWindowControl}
-                className={getDemoGuideTargetClass('chart')}
-                wateringCycles={isProtectedHostedScope ? wateringCycles : []}
-              />
-            </>
-          )}
-          {isProtectedHostedScope ? (
-            <HostedWateringEvents
-              cycles={wateringCycles}
-              isLoading={isWateringEventsLoading}
-              error={wateringEventsError}
-            />
-          ) : null}
-        </>
-      ) : (
-        <>
-          {sensorHistoryHeader}
-          {deviceStatusPanels}
-          {sensorHistoryChart}
+          <HostedGen2Measurements
+            rows={hostedGen2Rows}
+            cardDescriptors={hostedDataScope === 'support' ? capabilityCardDescriptors : undefined}
+            isLoading={isHostedGen2Loading}
+            error={hostedGen2Error}
+            fallbackDeviceLabel={selectedDeviceLabel}
+            className={getDemoGuideTargetClass('readings')}
+            supportEvidencePolicy={hostedDataScope === 'support'}
+            deviceReportingActive={deviceReportingActive}
+            showSupportEngineering={hostedDataScope !== 'customer'}
+          />
+          <HostedGen2TrendChart
+            rows={hostedGen2Rows}
+            seriesDescriptors={hostedDataScope === 'support' ? capabilityChartSeriesDescriptors : undefined}
+            historyWindowKey={selectedWindow.key}
+            isLoading={isHostedGen2Loading}
+            error={hostedGen2Error}
+            controls={hostedWindowControl}
+            className={getDemoGuideTargetClass('chart')}
+            wateringCycles={isProtectedHostedScope ? wateringCycles : []}
+          />
         </>
       )}
+      {isProtectedHostedScope ? (
+        <HostedWateringEvents
+          cycles={wateringCycles}
+          isLoading={isWateringEventsLoading}
+          error={wateringEventsError}
+        />
+      ) : null}
     </div>
   )
 }

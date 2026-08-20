@@ -20,14 +20,14 @@ Source-pack compression/reference documents are available for future ChatGPT/Cod
   - Controls watering behavior already implemented in firmware
 - React/Vite dashboard
   - Runs from [`mbg_dashboard`](../mbg_dashboard)
-  - Displays Supabase-backed history and hosted Gen2 readings
+  - Displays hosted Gen2 readings, trends, diagnostics, and watering evidence
   - Does not call local device endpoints or expose Manual Water Now
 
 ## Approved Runtime And Data Flow
 
 1. ESP32 firmware retains local watering authority and its local endpoints.
 2. The dashboard runs from [`mbg_dashboard`](../mbg_dashboard) without a direct browser-to-device path.
-3. Local/default frontend mode retains the Supabase-backed `sensor_logs` history path; hosted-readonly mode also reads hosted Gen2 measurement/diagnostic views.
+3. Ordinary and hosted-readonly builds use the same hosted Gen2 route shell and read the appropriate public or protected hosted views.
 4. Retained firmware endpoints with no current frontend consumer include:
    - `GET /`
    - `GET /logs`
@@ -67,18 +67,17 @@ ADR 0011 in [`docs/adr/0011-offline-autonomy-and-wifi-recovery.md`](./adr/0011-o
 
 ## Hosted Read-Only Dashboard Boundary
 
-ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-readonly-dashboard.md) locks the Phase 6A hosted read-only dashboard boundary. Phase 8F.2 removes the former local browser control surface without weakening that boundary.
+ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-readonly-dashboard.md) locks the Phase 6A hosted read-only dashboard boundary. Phases 8F.2 and 8F.3 remove the former local browser control and legacy history surfaces without weakening that boundary.
 
-- Local/default mode renders the Supabase-backed Sensor History path and contains no direct browser-to-device polling or manual watering action.
-- Hosted Read-Only Mode is a Cloudflare Pages static frontend mode controlled by `VITE_MBG_DASHBOARD_MODE=hosted-readonly`.
-- Hosted Read-Only Mode renders Supabase `sensor_logs` history, read-only Device Status / telemetry-quality information, and Phase 7F hosted Gen2 measurement display through `public.hosted_gen2_measurements`; it supports read-only Device and Window selectors and keeps `VITE_MBG_DEVICE_ID` as the fallback/default device behavior.
-- Hosted Read-Only Mode filters Supabase history server-side by selected `device_id` and by selected timestamp lower bound except for all-time.
-- Hosted Gen2 Device Status is computed in the frontend from already-fetched `public.hosted_gen2_measurements` rows for the selected device/window. The legacy `sensor_logs` / `SensorLogRow` status assumptions remain available for Gen1/local/history compatibility but are not the hosted Gen2 Device Status source.
+- Ordinary and hosted-readonly builds enter the same hosted route shell; `VITE_MBG_DASHBOARD_MODE` no longer selects a separate application branch.
+- Public Demo reads `public.hosted_gen2_measurements` and hosted diagnostics for Balcony02. Customer and Support routes use their protected garden-device, Gen2 measurement, diagnostics, capability, and watering-event views.
+- Hosted reads filter server-side by selected `device_id` and selected timestamp lower bound except for all-time.
+- Hosted Gen2 Garden Reading Quality is computed in the frontend from already-fetched Gen2 rows for the selected device/window.
 - Device Status must remain read-only and must not introduce Supabase command/control or local ESP32 endpoint calls.
-- Supabase `data.watering` may be shown only as watering history markers, not as live currently-watering status.
+- Protected watering history and chart markers use hosted watering-event evidence, not `sensor_logs.data.watering`.
 - Hosted Read-Only Mode must not show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
 - Hosted Read-Only Mode must not bundle local control code in the production artifact.
-- Sensor History remains rendered in both modes.
+- No supported frontend route reads or renders `sensor_logs`; the table remains a firmware/storage compatibility surface.
 - Firmware retains local watering authority and endpoint compatibility, but the frontend no longer provides a local ESP32 live/control consumer.
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
@@ -90,7 +89,7 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 ADR 0013 in [`docs/adr/0013-multi-unit-visibility-and-local-control-target-safety.md`](./adr/0013-multi-unit-visibility-and-local-control-target-safety.md) records the safety boundary that governed the retired Phase 6J.0 local target surface.
 
 - Phase 8F.2 removes local target selection, live `/logs` polling, browser identity gating, and manual action UI from the frontend.
-- History Device selection remains a read-only Supabase history target and continues to use the shared device registry.
+- Device selection remains read-only navigation state. Demo uses the shared registry for Balcony02, while protected routes use authorization-derived device options.
 - The retired local-control target definitions had no consumer outside `LiveStats` and are removed.
 - Hosted-readonly mode remains read-only and must not import local control metadata or expose local endpoints.
 - Supabase remains telemetry/history only and must not be used for command/control.
@@ -123,7 +122,7 @@ ADR 0015 in [`docs/adr/0015-supabase-device-registry-and-table-driven-allowlist.
 
 ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen2-modular-sensor-architecture.md) defines Gen2 as a modular grow-environment platform where sensors, capabilities, and control authority are independently discoverable, optional, and replaceable.
 
-- `SensorLogRow` remains the Gen1/current compatibility contract for the existing `sensor_logs` telemetry history path.
+- `SensorLogRow` remains a firmware/storage compatibility concept for `sensor_logs`; its frontend type and adapter are retired.
 - Gen2 expanded measurements belong in a separate measurement-list/table path, likely future `public.sensor_measurements`.
 - `SensorLogRow.data` must not keep expanding with fixed fields for every future sensor.
 - Gen2 optional sensors may be present, missing, disabled, failed, or not installed without breaking device operation.
@@ -142,6 +141,7 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - Phase 7C historically added a Prototype01-only local/default panel over `/status`, `/capabilities`, and `/measurements`; Phase 8F.1 retires that unsupported frontend consumer and its stale local response types and request helpers.
 - The Gen2 firmware endpoints remain available for direct local inspection and later contract-aware work, but the current local/default application does not mount or poll the retired Prototype01 panel.
 - Phase 8F.2 retires the remaining `LiveStats` browser consumer, selected-target five-second `/logs` polling, and local `/water-now` action.
+- Phase 8F.3 retires the non-hosted route, frontend `sensor_logs` query/adapter/types, legacy Sensor History chart, and legacy telemetry-health presentation.
 - `/logs` remains firmware compatibility and is not part of the modular bench measurement contract; the frontend no longer consumes it.
 - Hosted-readonly remains Supabase-only/read-only and does not bundle local endpoint/control strings.
 - Supabase command/control remains prohibited.

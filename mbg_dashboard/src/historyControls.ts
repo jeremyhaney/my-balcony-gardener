@@ -20,12 +20,6 @@ export type HistoryWindowOption = {
   getLowerBoundIso: (now: Date) => string | undefined
 }
 
-const HISTORY_DEVICE_KEYS: HistoryDeviceKey[] = ['balcony', 'bench', 'scout01']
-
-export const HISTORY_DEVICE_OPTIONS: HistoryDeviceOption[] = DEVICE_REGISTRY.filter((device) =>
-  HISTORY_DEVICE_KEYS.includes(device.key),
-).map(mapRegisteredDeviceToHistoryOption)
-
 export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
   {
     key: '3h',
@@ -89,7 +83,6 @@ export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
   },
 ]
 
-const DEFAULT_DEVICE_KEY: HistoryDeviceKey = 'balcony'
 const DEFAULT_WINDOW_KEY: HistoryWindowKey = '24h'
 
 const configuredDeviceId = import.meta.env.VITE_MBG_DEVICE_ID?.trim() ?? ''
@@ -98,7 +91,7 @@ export const getConfiguredDeviceId = (): string => configuredDeviceId
 
 export const getHistoryDeviceOption = (
   key: string | null,
-  deviceOptions = HISTORY_DEVICE_OPTIONS,
+  deviceOptions: HistoryDeviceOption[],
 ): HistoryDeviceOption | undefined =>
   deviceOptions.find((option) => option.key === key)
 
@@ -116,7 +109,7 @@ export const getHistoryWindowOption = (key: string | null): HistoryWindowOption 
 
 export const resolveHistoryDeviceOption = (
   searchParams: URLSearchParams,
-  deviceOptions = HISTORY_DEVICE_OPTIONS,
+  deviceOptions: HistoryDeviceOption[],
 ): HistoryDeviceOption => {
   const queryDevice = getHistoryDeviceOption(searchParams.get('device'), deviceOptions)
 
@@ -128,12 +121,7 @@ export const resolveHistoryDeviceOption = (
     (option) => option.deviceId === configuredDeviceId,
   )
 
-  return (
-    configuredDevice ??
-    getHistoryDeviceOption(DEFAULT_DEVICE_KEY, deviceOptions) ??
-    deviceOptions[0] ??
-    getHistoryDeviceOption(DEFAULT_DEVICE_KEY)!
-  )
+  return configuredDevice ?? deviceOptions[0]
 }
 
 export const resolveHistoryWindowOption = (
@@ -142,7 +130,7 @@ export const resolveHistoryWindowOption = (
   getHistoryWindowOption(searchParams.get('window')) ?? getHistoryWindowOption(DEFAULT_WINDOW_KEY)!
 
 export const getHistoryControlStateFromUrl = (
-  deviceOptions = HISTORY_DEVICE_OPTIONS,
+  deviceOptions: HistoryDeviceOption[],
 ) => {
   const searchParams = new URLSearchParams(window.location.search)
 

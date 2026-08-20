@@ -10,61 +10,8 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import "./App.css";
 
-const isHostedReadonlyMode =
-  import.meta.env.VITE_MBG_DASHBOARD_MODE === "hosted-readonly";
-
 function App() {
-  if (isHostedReadonlyMode) {
-    return <HostedReadonlyRoutes />;
-  }
-
-  return (
-    <main
-      style={{
-        padding: "2rem 0",
-        fontFamily: "'Roboto', Arial, sans-serif",
-        background: "linear-gradient(to bottom, #a8e063, #56ab2f)",
-        color: "white",
-        minHeight: "100vh",
-      }}
-    >
-      <div className="dashboard-shell">
-        {/* Header Section */}
-        <header style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "3rem", margin: 0 }}>🪴 My Balcony Gardener</h1>
-          <p style={{ fontSize: "1.2rem", fontStyle: "italic" }}>
-            Your personal assistant for plant care and weather insights
-          </p>
-        </header>
-
-        {/* Sensor Logs Component */}
-        <SensorLogViewer isHostedReadonly={isHostedReadonlyMode} />
-
-        {/* Footer Section */}
-        <footer
-          style={{
-            textAlign: "center",
-            marginTop: "2rem",
-            fontSize: "0.9rem",
-            opacity: 0.8,
-          }}
-        >
-          <p>🌱 Built with love for gardening enthusiasts</p>
-          <p>
-            © {new Date().getFullYear()} My Balcony Gardener |{" "}
-            <a
-              href="https://github.com/your-repo"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "white", textDecoration: "underline" }}
-            >
-              GitHub
-            </a>
-          </p>
-        </footer>
-      </div>
-    </main>
-  );
+  return <HostedReadonlyRoutes />;
 }
 
 const HostedReadonlyRoutes = () => {
@@ -156,7 +103,6 @@ const HostedReadonlyRoutes = () => {
         ) : null}
         <SensorLogViewer
           demoGuideTarget={highlightedDemoGuideTarget}
-          isHostedReadonly
           showHostedSiteHeader={false}
         />
       </HostedPageShell>
@@ -186,7 +132,6 @@ const HostedReadonlyRoutes = () => {
         >
           <SensorLogViewer
             emptyStateMessage="No garden is assigned to this account yet."
-            isHostedReadonly
             hostedReadonlyScope="customer"
             showHostedSiteHeader={false}
           />
@@ -222,7 +167,6 @@ const HostedReadonlyRoutes = () => {
         >
           <SensorLogViewer
             emptyStateMessage="Support access is not available for this account."
-            isHostedReadonly
             hostedReadonlyScope="support"
             showHostedSiteHeader={false}
           />
