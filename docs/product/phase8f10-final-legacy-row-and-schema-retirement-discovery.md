@@ -2,7 +2,7 @@
 
 Date: 2026-08-20
 
-Status: Discovery complete. The exact six-row proposal was separately approved and executed on 2026-08-20; its [execution record](./phase8f10-delete-final-legacy-rows.md) proves both tables remain present and empty. The separate schema/access proposal remains unapproved and unexecuted. The discovery details below preserve the pre-execution live snapshot.
+Status: Discovery complete. Both exact proposals were separately approved, executed once, and independently verified on 2026-08-20. See the [row-deletion record](./phase8f10-delete-final-legacy-rows.md) and [schema/access record](./phase8f10-retire-legacy-schema-access.md). The discovery details below preserve the pre-execution live snapshot.
 
 ## Outcome
 
@@ -17,9 +17,9 @@ At the discovery snapshot, the live schema had exactly three rows in each legacy
 Prepared artifacts and current execution state:
 
 - [`../sql/phase8f10-final-legacy-row-deletion-proposal.sql`](../sql/phase8f10-final-legacy-row-deletion-proposal.sql): executed once under separate exact-hash approval; exact six-row DML only; 7,860 bytes; SHA-256 `6b4d8c2e1852ddb08ef7437ac0d7716b7c453ab7de081f668219ba1ae304495b`;
-- [`../sql/phase8f10-legacy-schema-access-retirement-proposal.sql`](../sql/phase8f10-legacy-schema-access-retirement-proposal.sql): unapproved and unexecuted; requires both legacy tables to be empty, removes the `sensor_logs` schema/access surface, and revokes obsolete API grants from retained `sensor_events`; 9,783 bytes; SHA-256 `1100d1e6edb2a73a1a88a24fe52cb55297b22bd1ddd6e944f0217e8443c7ca83`.
+- [`../sql/phase8f10-legacy-schema-access-retirement-proposal.sql`](../sql/phase8f10-legacy-schema-access-retirement-proposal.sql): executed once under separate exact-hash approval; removed the empty `sensor_logs` schema/access surface and revoked obsolete API grants from retained `sensor_events`; 9,783 bytes; SHA-256 `1100d1e6edb2a73a1a88a24fe52cb55297b22bd1ddd6e944f0217e8443c7ca83`.
 
-The row slice and schema/access slice require separate explicit approvals. Approval and execution of the row slice did not authorize the schema/access slice.
+The row slice and schema/access slice received separate explicit approvals and were executed independently in that order.
 
 ## Repository and authority baseline
 
@@ -302,6 +302,4 @@ The unchanged Vite main-chunk advisory remains non-fatal. No frontend or firmwar
 - The active garden member/support-member overlap remains unrelated to this slice; no protected view definition or auth row changes.
 - No physical device request, firmware upload, serial monitor, watering action, deployment, or database mutation occurred.
 
-The first of the two originally required approvals—the exact hash-bound six-row deletion—was later granted, executed once, and independently post-verified. One explicit approval remains: separate approval to execute the exact hash-bound schema/access-retirement proposal.
-
-Any schema/access approval must name the exact artifact hash current at execution time. The completed row approval grants no schema/access authority.
+Both originally required exact-hash approvals were later granted separately. Each artifact was executed once and independently post-verified; Phase 8F.10 has no remaining execution proposal.

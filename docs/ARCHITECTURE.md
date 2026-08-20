@@ -76,7 +76,7 @@ ADR 0009 in [`docs/adr/0009-hosted-readonly-dashboard.md`](./adr/0009-hosted-rea
 - Protected watering history and chart markers use hosted watering-event evidence, not `sensor_logs.data.watering`.
 - Hosted Read-Only Mode must not show Water Now, call local ESP32 `/logs`, or call local ESP32 `/water-now`.
 - Hosted Read-Only Mode must not bundle local control code in the production artifact.
-- No supported frontend route reads or renders `sensor_logs`; the table remains a firmware/storage compatibility surface.
+- No supported frontend route reads or renders `sensor_logs`; Phase 8F.10 retires the obsolete live table after protected export and exact-row deletion.
 - Firmware retains local watering authority and endpoint compatibility, but the frontend no longer provides a local ESP32 live/control consumer.
 - Supabase remains telemetry/history only and must not be used for command/control.
 - Phase 6A does not add multi-device UI, Admin, Settings, or Remote Water Now.
@@ -266,7 +266,7 @@ This boundary records the earlier restoration sequence. Phases 8F.1–8F.3 super
 
 The following contract remains authoritative for interpreting historical `sensor_logs` rows. It is no longer a supported firmware or frontend runtime contract.
 
-Phase 8F.10 proves that the live table has no supported current or future Gen2 consumer and that its final three rows are a Phase 4 development seed. Exact row-deletion and schema/access-retirement proposals exist but are unexecuted; the table remains live until separately approved execution.
+Phase 8F.10 proves that the table had no supported current or future Gen2 consumer and that its final three rows were a Phase 4 development seed. Separate exact-hash approvals exported/deleted the final legacy rows and retired the empty `sensor_logs` table with `RESTRICT`. The shared telemetry helper remains for its two current Gen2 policies. The retained empty `sensor_events` table remains RLS-enabled and has no `anon`, `authenticated`, or `service_role` table privileges.
 
 ```ts
 type SensorLogRow = {

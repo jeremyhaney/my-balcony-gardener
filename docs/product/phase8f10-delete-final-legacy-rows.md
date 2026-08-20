@@ -2,7 +2,7 @@
 
 Date: 2026-08-20
 
-Status: Complete. The exact approved six-row DML artifact committed once and the complete independent read-only post-verification passed. The separate schema/access proposal remains unapproved and unexecuted.
+Status: Complete. The exact approved six-row DML artifact committed once and the complete independent read-only post-verification passed. The later separately approved schema/access slice is recorded in [`phase8f10-retire-legacy-schema-access.md`](./phase8f10-retire-legacy-schema-access.md).
 
 ## Outcome
 
@@ -54,6 +54,6 @@ External support evidence:
 - independent post-verification: `phase8f10_post_execution_verification_20260820T191808Z.json`, SHA-256 `0128e54a9032c9ce811ed74d76500f27877d68a4d534ef33ca7c79b6be7a25ab`; and
 - one-submission reconciliation: `phase8f10_row_deletion_execution_reconciliation_20260820T191905Z.json`, SHA-256 `9cdfce83e6aa9d9ee9b3a018598bd073f62770bf6e46dbac528c3a63bae80a08`.
 
-## Remaining approval boundary
+## Follow-on boundary
 
-The schema/access proposal at [`../sql/phase8f10-legacy-schema-access-retirement-proposal.sql`](../sql/phase8f10-legacy-schema-access-retirement-proposal.sql), SHA-256 `1100d1e6edb2a73a1a88a24fe52cb55297b22bd1ddd6e944f0217e8443c7ca83`, remains proposal-only and unexecuted. It requires separate explicit approval. This row-deletion approval did not authorize dropping `sensor_logs`, changing `sensor_events` grants, changing RLS, or altering the shared helper or any other schema object.
+This row-deletion approval did not itself authorize schema changes. A later separate approval executed the exact schema/access proposal with SHA-256 `1100d1e6edb2a73a1a88a24fe52cb55297b22bd1ddd6e944f0217e8443c7ca83`; see the [schema/access execution record](./phase8f10-retire-legacy-schema-access.md).

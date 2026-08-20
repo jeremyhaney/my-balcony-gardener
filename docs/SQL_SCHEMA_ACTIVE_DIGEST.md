@@ -32,17 +32,18 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 
 ### sensor_logs
 
-- Purpose: Obsolete live `SensorLogRow` compatibility surface. Historical rows/ADRs remain evidence, but Phase 8F.10 finds no supported current or future Gen2 consumer.
+- Applied state: Retired in Phase 8F.10. The live `public.sensor_logs` relation, its two policies, two indexes, primary-key constraint, and relation grants are absent.
+- Historical purpose: Obsolete `SensorLogRow` compatibility surface. Historical rows/ADRs and the protected Phase 8F.10 export remain evidence.
 - Source of rows: Historical ESP32 firmware telemetry posts plus a final Phase 4 development seed. Supported firmware no longer writes the table.
-- Live rows: Zero after the separately approved Phase 8F.10 exact-row deletion. No Balcony02 rows were present or touched.
-- Device-originated inserts: The live anon policy still permits provisioned identities through `public.is_device_telemetry_insert_enabled(device_id)`, but no supported firmware invokes it for `sensor_logs`.
+- Live rows: No table. Its final three-row slice was exported and deleted before schema retirement; the other three Phase 8F.10 rows belonged to retained `sensor_events`. No Balcony02 rows were present or touched.
+- Device-originated inserts: None. The legacy anon insert policy was removed with the table.
 - Browser/customer read path: None in the supported frontend after Phase 8F.3. Public Demo and protected customer/support routes use hosted Gen2 views instead.
-- Applied access: RLS enabled/not forced; anon/authenticated `SELECT USING (true)`; anon registry-gated `INSERT`; broad table ACLs for anon/authenticated/service_role; service role bypasses RLS. No update/delete policy.
-- Dependencies: No view, function body, table trigger, foreign key, publication, or subscription depends on the table. The insert policy calls the shared telemetry helper, which must remain for current Gen2 measurement-batch and watering-event policies.
+- Applied access: None; the relation is absent.
+- Dependencies: The retired insert policy no longer depends on the shared telemetry helper. The helper remains unchanged for current Gen2 measurement-batch and watering-event policies.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0002, 0003, 0004, 0006, 0007, 0009, 0012, 0015, 0016, 0021.
-- Related SQL artifacts: `docs/sql/phase6j5-device-registry.sql`; `docs/sql/phase7g1-control-validation-readonly-queries.sql`; executed exact-row and proposal-only schema/access Phase 8F.10 artifacts.
-- Notes: Phase 8F.10 executed only the exact final-row deletion. Policy/grant/index/constraint/table retirement with `RESTRICT` and no `CASCADE` remains separately proposed, unapproved, and unexecuted.
+- Related SQL artifacts: `docs/sql/phase6j5-device-registry.sql`; `docs/sql/phase7g1-control-validation-readonly-queries.sql`; both executed Phase 8F.10 exact-hash artifacts.
+- Notes: Phase 8F.10 used `RESTRICT`, not `CASCADE`, and independently verified the complete expected catalog delta.
 
 ### sensor_events
 
@@ -51,7 +52,7 @@ Phase 7S.1 adds a detailed observed live public-schema snapshot at [`docs/sql/SU
 - Live rows: Zero after the separately approved Phase 8F.10 exact-row deletion. No Balcony02 rows were present or touched.
 - Device-originated inserts: No.
 - Browser/customer read path: Not a primary hosted/customer read path in current artifacts.
-- Applied access: RLS enabled/not forced and zero policies. Anon/authenticated/service_role nevertheless hold broad table ACLs; ordinary anon/authenticated row operations are denied by RLS, while service role bypasses RLS. Phase 8F.10 proposes revoking all three roles' table privileges while retaining operator/editor access.
+- Applied access: RLS enabled/not forced and zero policies. Phase 8F.10 revoked every table privilege from `anon`, `authenticated`, and `service_role`; effective privilege checks were false and direct SELECT probes were denied for all three roles. Owner/operator access remains.
 - Command/control: No. Evidence/storage/read path only.
 - Related ADRs: ADR 0005, 0014, 0017, 0021.
 - Related SQL artifacts: No current `docs/sql` creation artifact found; ADR 0005 contains the validated core schema.
