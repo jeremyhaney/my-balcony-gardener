@@ -2,7 +2,7 @@
 
 Date: 2026-08-19
 
-Status: Implemented and locally validated; deployment, authenticated hosted validation, and closeout are not yet performed.
+Status: Implemented, committed, pushed, deployed, Jeremy-validated, and operationally closed.
 
 ## Outcome
 
@@ -126,8 +126,8 @@ Phase 8E adds no query, request, recovery fetch, polling, history, or client Dis
 - Final local hosted-readonly browser validation against the current public demo view showed all existing readings plus `Feels Like 96.9 °F` and `Dew Point 62.8 °F` from the current `95.5 °F / 34.2%` BME280 package, with no query-error banner. Feels Like rendered with the Air Temperature `Extreme Heat` condition and red scale; Dew Point rendered with `Getting Muggy` and the moisture-oriented blue scale. Both cards included the ordinary trend, sparkline, scale, accessible condition text, and reading-details behavior. Both derived chart controls were present. At `360` and `1280` pixels there was no page-level horizontal overflow; the cards rendered in one and two columns respectively, with no technical derived heading or chart explainer. This proves the local frontend against the current public hosted contract; it does not prove a deployed bundle or authenticated customer/support behavior.
 - Jeremy approved the final local gardener-facing card presentation on 2026-08-19.
 
-## Remaining approval and proof boundary
+## Hosted validation and closeout
 
-Recommended next action: deploy the locally validated Phase 8E frontend for authenticated hosted validation.
+The implementation was committed and pushed to `main` as `8d90cec77ec128ee7eeaba304fc24cd5cb3a2453` (`Implement Phase 8E feels like and dew point`), and the established Cloudflare production path deployed it. On 2026-08-19, Jeremy confirmed that the live site visibly contained the Phase 8E Feels Like and Dew Point features. Phase 8E is operationally closed at its approved frontend-only, display-only boundary.
 
-That action will prove the deployed customer/support views render Feels Like and Dew Point from their existing exact package provenance while preserving current readings, responsive presentation, selected-device/window behavior, and the read-only authority boundary. It will not change or prove firmware watering behavior, sensor accuracy beyond the stored evidence, or any command/control capability.
+The live-site observation confirms the deployed feature presence, but byte-for-byte correspondence between the Cloudflare-served bundle and local `HEAD` was not independently proven. This validation also does not prove firmware watering behavior, sensor accuracy beyond the stored evidence, or any command/control capability.
