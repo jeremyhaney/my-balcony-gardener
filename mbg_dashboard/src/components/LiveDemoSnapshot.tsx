@@ -7,7 +7,7 @@ import {
 import { PHASE_7L1_PILOT_CUSTOMER_SITE } from "../customerSites";
 import { DEVICE_REGISTRY } from "../deviceRegistry";
 import { formatHostedGen2MeasurementLabel } from "../hostedGen2Display";
-import { calculateGardenerMoistureIndex } from "../hostedGen2Presentation";
+import { deriveGardenerMoistureIndexRow } from "../hostedGen2Presentation";
 import {
   getHostedGen2MeasurementDisplayModels,
   isDisplayableHostedGen2Row,
@@ -195,12 +195,7 @@ const getDisplayModel = (
     return {
       ...model,
       displayRow: isDisplayableHostedGen2Row(model.displayRow)
-        ? {
-            ...model.displayRow,
-            measurement_name: "moisture_index",
-            measurement_unit: "index",
-            measurement_value: calculateGardenerMoistureIndex(model.displayRow.measurement_value),
-          }
+        ? deriveGardenerMoistureIndexRow(model.displayRow)
         : null,
     };
   }

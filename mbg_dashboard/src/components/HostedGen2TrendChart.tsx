@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts'
 import {
-  calculateGardenerMoistureIndex,
+  deriveGardenerMoistureIndexRow,
   doesHostedGen2RowMatchCard,
   getHostedGen2ChartSeriesDescriptors,
   getHostedGen2ChartSeriesIdentity,
@@ -602,12 +602,7 @@ const getPlottedRow = (
   }
 
   // All three moisture sensors use the shared, unclamped Relative Moisture Index formula.
-  return {
-    ...row,
-    measurement_name: 'moisture_index',
-    measurement_unit: 'index',
-    measurement_value: calculateGardenerMoistureIndex(row.measurement_value),
-  }
+  return deriveGardenerMoistureIndexRow(row)
 }
 
 const resolveDuplicateSeriesRows = (

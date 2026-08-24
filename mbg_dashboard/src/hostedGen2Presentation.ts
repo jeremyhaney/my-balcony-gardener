@@ -145,10 +145,18 @@ export const HOSTED_GEN2_CHART_GROUPS: ReadonlyArray<{
 
 export const DEFAULT_HOSTED_GEN2_CHART_GROUP: HostedGen2ChartGroupKey = 'moisture'
 
-// Frozen Relative Moisture Index constants.
-export const PRACTICAL_DRY_RAW = 14820
-export const WET_DRAINED_RAW = 11230
-export const WET_DRAINED_INDEX = 90
+// Provisional gardener-facing Relative Moisture Index reference points.
+export const RMI_OVERDUE_RAW_ADC = 11230
+export const RMI_OVERDUE_INDEX = 35
+export const RMI_ADEQUATELY_WATERED_RAW_ADC = 7640
+export const RMI_ADEQUATELY_WATERED_INDEX = 100
+export const RMI_RAW_ADC_SPAN =
+  RMI_OVERDUE_RAW_ADC - RMI_ADEQUATELY_WATERED_RAW_ADC
+export const RMI_INDEX_SPAN =
+  RMI_ADEQUATELY_WATERED_INDEX - RMI_OVERDUE_INDEX
+export const GARDENER_MOISTURE_FORMULA_TEXT =
+  `${RMI_OVERDUE_INDEX} + ${RMI_INDEX_SPAN} * ` +
+  `(${RMI_OVERDUE_RAW_ADC} - raw_adc) / ${RMI_RAW_ADC_SPAN}`
 
 // Normalization and compound-identity helpers.
 export const normalizeHostedGen2ComparisonText = (
@@ -209,8 +217,20 @@ export const findHostedGen2CardRow = (
 
 // Relative Moisture Index conversion and interpretation.
 export const calculateGardenerMoistureIndex = (rawAdc: number): number =>
-  (WET_DRAINED_INDEX * (PRACTICAL_DRY_RAW - rawAdc)) /
-  (PRACTICAL_DRY_RAW - WET_DRAINED_RAW)
+  RMI_OVERDUE_INDEX +
+  RMI_INDEX_SPAN * (RMI_OVERDUE_RAW_ADC - rawAdc) / RMI_RAW_ADC_SPAN
+
+export const deriveGardenerMoistureIndexRow = (
+  rawRow: HostedGen2MeasurementRow,
+): HostedGen2MeasurementRow => ({
+  ...rawRow,
+  measurement_name: 'moisture_index',
+  measurement_unit: 'index',
+  measurement_value:
+    typeof rawRow.measurement_value === 'number' && Number.isFinite(rawRow.measurement_value)
+      ? calculateGardenerMoistureIndex(rawRow.measurement_value)
+      : null,
+})
 
 // Sensor and reservoir state evaluation.
 export const getHostedGen2SensorPresentationState = (

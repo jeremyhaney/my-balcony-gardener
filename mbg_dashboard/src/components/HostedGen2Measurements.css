@@ -255,13 +255,6 @@
   --measurement-trend-border: rgba(23, 35, 29, 0.2);
 }
 
-.hosted-gen2-measurements-card.is-moisture-check {
-  --measurement-status-background: rgba(100, 116, 139, 0.48);
-  --measurement-status-background-end: rgba(51, 65, 85, 0.34);
-  --measurement-status-border: rgba(203, 213, 225, 0.82);
-  --measurement-status-inner-border: rgba(226, 232, 240, 0.24);
-}
-
 .hosted-gen2-measurements-card.is-moisture-too-dry {
   --measurement-status-background: rgba(210, 173, 114, 0.62);
   --measurement-status-background-end: rgba(193, 151, 91, 0.44);

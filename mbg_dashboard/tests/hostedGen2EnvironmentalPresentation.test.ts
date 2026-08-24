@@ -97,27 +97,46 @@ test('uses exact humidity bands and a non-judgmental pressure presentation', () 
   assert.equal(condition('barometric_pressure', 1101), null)
 })
 
-test('preserves the approved unclamped RMI scale exactly', () => {
-  assert.deepEqual(getRelativeMoisturePresentation(-1), { label: 'Check Sensor', tone: 'moisture-check' })
-  assert.deepEqual(getRelativeMoisturePresentation(0), { label: 'Too Dry', tone: 'moisture-too-dry' })
-  assert.equal(getRelativeMoisturePresentation(20)?.label, 'Too Dry')
-  assert.equal(getRelativeMoisturePresentation(20.01)?.label, 'Dry')
-  assert.equal(getRelativeMoisturePresentation(40)?.label, 'Dry')
-  assert.equal(getRelativeMoisturePresentation(40.01)?.label, 'Moist')
-  assert.equal(getRelativeMoisturePresentation(70)?.label, 'Moist')
-  assert.equal(getRelativeMoisturePresentation(70.01)?.label, 'Well-watered')
-  assert.equal(getRelativeMoisturePresentation(90)?.label, 'Well-watered')
-  assert.equal(getRelativeMoisturePresentation(90.01)?.label, 'Very Wet')
-  assert.equal(getRelativeMoisturePresentation(105)?.label, 'Very Wet')
-  assert.equal(getRelativeMoisturePresentation(105.01)?.label, 'Saturated')
+test('uses the revised exact unclamped RMI condition boundaries', () => {
+  const cases: ReadonlyArray<[number, string]> = [
+    [-1, 'Too Dry'], [0, 'Too Dry'], [35, 'Too Dry'], [35.01, 'Dry'],
+    [55, 'Dry'], [55.01, 'Moist'], [85, 'Moist'], [85.01, 'Well-watered'],
+    [100, 'Well-watered'], [108, 'Well-watered'], [121, 'Well-watered'],
+    [131, 'Well-watered'], [140, 'Well-watered'], [140.01, 'Very Wet'],
+    [180, 'Very Wet'], [180.01, 'Saturated'],
+  ]
+
+  for (const [value, expectedLabel] of cases) {
+    assert.equal(getRelativeMoisturePresentation(value)?.label, expectedLabel, `RMI ${value}`)
+  }
+
+  assert.deepEqual(getRelativeMoisturePresentation(-1), {
+    label: 'Too Dry', tone: 'moisture-too-dry',
+  })
+  assert.deepEqual(getRelativeMoisturePresentation(36), {
+    label: 'Dry', tone: 'moisture-dry',
+  })
+  assert.deepEqual(getRelativeMoisturePresentation(56), {
+    label: 'Moist', tone: 'moisture-moist',
+  })
+  assert.deepEqual(getRelativeMoisturePresentation(108), {
+    label: 'Well-watered', tone: 'moisture-well-watered',
+  })
+  assert.deepEqual(getRelativeMoisturePresentation(141), {
+    label: 'Very Wet', tone: 'moisture-very-wet',
+  })
+  assert.deepEqual(getRelativeMoisturePresentation(181), {
+    label: 'Saturated', tone: 'moisture-saturated',
+  })
 })
 
 test('provides a complete scale and bounded current-position marker for every card family', () => {
   assert.deepEqual(getHostedGen2EnvironmentalScale('moisture_index', 0), {
-    key: 'moisture', label: 'Moisture scale from dry to saturated and wet', positionPercent: 0,
+    key: 'moisture', label: 'Moisture scale from overdue-dry to saturated', positionPercent: 0,
   })
-  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 105).positionPercent, 100)
-  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 124).positionPercent, 100)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 90).positionPercent, 50)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 180).positionPercent, 100)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 200).positionPercent, 100)
   assert.equal(getHostedGen2EnvironmentalScale('ambient_light', 0).positionPercent, 0)
   assert.equal(getHostedGen2EnvironmentalScale('ambient_light', 99).positionPercent, 19.8)
   assert.equal(getHostedGen2EnvironmentalScale('ambient_light', 100).positionPercent, 20)

@@ -14,7 +14,6 @@ export type HostedGen2EnvironmentalTone =
   | 'light-filtered'
   | 'light-bright'
   | 'light-direct'
-  | 'moisture-check'
   | 'moisture-too-dry'
   | 'moisture-dry'
   | 'moisture-moist'
@@ -47,6 +46,9 @@ export const formatHostedGen2CardMeasurementValue = (
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 })} ${unit ?? ''}`.trim()
+
+export const formatGardenerMoistureIndexCardValue = (value: number): string =>
+  `${Math.round(value).toLocaleString()} index`
 
 export const getHostedGen2CardPillLabel = ({
   conditionLabel,
@@ -99,12 +101,11 @@ export const getRelativeMoisturePresentation = (
   value: number,
 ): HostedGen2EnvironmentalPresentation | null => {
   if (!Number.isFinite(value)) return null
-  if (value < 0) return { label: 'Check Sensor', tone: 'moisture-check' }
-  if (value <= 20) return { label: 'Too Dry', tone: 'moisture-too-dry' }
-  if (value <= 40) return { label: 'Dry', tone: 'moisture-dry' }
-  if (value <= 70) return { label: 'Moist', tone: 'moisture-moist' }
-  if (value <= 90) return { label: 'Well-watered', tone: 'moisture-well-watered' }
-  if (value <= 105) return { label: 'Very Wet', tone: 'moisture-very-wet' }
+  if (value <= 35) return { label: 'Too Dry', tone: 'moisture-too-dry' }
+  if (value <= 55) return { label: 'Dry', tone: 'moisture-dry' }
+  if (value <= 85) return { label: 'Moist', tone: 'moisture-moist' }
+  if (value <= 140) return { label: 'Well-watered', tone: 'moisture-well-watered' }
+  if (value <= 180) return { label: 'Very Wet', tone: 'moisture-very-wet' }
   return { label: 'Saturated', tone: 'moisture-saturated' }
 }
 
@@ -136,7 +137,7 @@ export const getHostedGen2EnvironmentalScale = (
     case 'soil temp':
       return rangedScale('soil-temperature', 'Root-zone temperature scale from cold to hot', finiteValue, 10, 130)
     case 'moisture_index':
-      return rangedScale('moisture', 'Moisture scale from dry to saturated and wet', finiteValue, 0, 105)
+      return rangedScale('moisture', 'Moisture scale from overdue-dry to saturated', finiteValue, 0, 180)
     case 'reservoir_liquid_detected':
       return rangedScale('reservoir', 'Reservoir scale from refill to water detected', finiteValue, 0, 1)
     default:

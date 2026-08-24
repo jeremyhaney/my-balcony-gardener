@@ -58,7 +58,7 @@ const MEASUREMENT_DISPLAY: Record<string, HostedGen2MeasurementDisplay> = {
   moisture_index: {
     name: 'moisture_index',
     label: 'Moisture Index',
-    unitLabel: '% / index',
+    unitLabel: 'index',
     axisGroup: 'humidityMoisture',
     color: '#16a34a',
     defaultSelected: true,

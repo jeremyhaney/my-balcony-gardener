@@ -8,6 +8,7 @@ import {
   type CommissionedEvidencePolicy,
 } from '../commissionedEvidencePolicy'
 import {
+  formatGardenerMoistureIndexCardValue,
   formatHostedGen2CardMeasurementValue,
   getHostedGen2EnvironmentalPresentation,
   getHostedGen2EnvironmentalScale,
@@ -31,10 +32,8 @@ import {
 import {
   HOSTED_GEN2_CARD_CATALOG,
   HOSTED_GEN2_ELEMENT_SECTIONS,
-  PRACTICAL_DRY_RAW,
-  WET_DRAINED_INDEX,
-  WET_DRAINED_RAW,
-  calculateGardenerMoistureIndex,
+  GARDENER_MOISTURE_FORMULA_TEXT,
+  deriveGardenerMoistureIndexRow,
   getHostedGen2CompoundIdentity,
   getHostedGen2ReservoirPresentationState,
   getHostedGen2SensorPresentationState,
@@ -607,7 +606,7 @@ const MeasurementDetails = ({
             <dt>Raw ADC source timestamp</dt>
             <dd>{formatTimestamp(card.displayRow.measured_at)}</dd>
             <dt>Moisture formula</dt>
-            <dd>{`${WET_DRAINED_INDEX} * (${PRACTICAL_DRY_RAW} - raw_adc) / (${PRACTICAL_DRY_RAW} - ${WET_DRAINED_RAW})`}</dd>
+            <dd>{GARDENER_MOISTURE_FORMULA_TEXT}</dd>
             <dt>Unrounded index</dt>
             <dd>
               {card.moistureIndex?.toLocaleString(undefined, {
@@ -827,7 +826,12 @@ const buildSensorCard = ({
 }): HostedGen2CatalogCardModel => {
   const isMoisture = MOISTURE_CARD_KEYS.has(descriptor.key)
   const rawAdc = isMoisture && isFiniteRowValue(displayRow) ? displayRow.measurement_value : null
-  const moistureIndex = rawAdc === null ? null : calculateGardenerMoistureIndex(rawAdc)
+  const derivedMoistureRow = isMoisture && displayRow
+    ? deriveGardenerMoistureIndexRow(displayRow)
+    : null
+  const moistureIndex = isFiniteRowValue(derivedMoistureRow)
+    ? derivedMoistureRow.measurement_value
+    : null
   const condition =
     (evidencePolicy?.conditionIsCurrent ?? state === 'Current') && moistureIndex !== null
       ? getRelativeMoisturePresentation(moistureIndex)
@@ -853,7 +857,7 @@ const buildSensorCard = ({
     primaryValue:
       moistureIndex === null
         ? formatCardMeasurementValue(displayRow)
-        : `${Math.round(moistureIndex).toLocaleString()} index`,
+        : formatGardenerMoistureIndexCardValue(moistureIndex),
     tone: condition?.tone ?? standardCondition?.tone ?? 'neutral',
     trendRows: trend.rows,
     trendRow: trend.currentRow,
@@ -1036,14 +1040,7 @@ const prepareTrendEvidence = (
     return { rows: identityRows, currentRow: displayRow }
   }
 
-  const derivedRows = identityRows.map((row) => ({
-    ...row,
-    measurement_name: 'moisture_index',
-    measurement_unit: 'index',
-    measurement_value: isFiniteRowValue(row)
-      ? calculateGardenerMoistureIndex(row.measurement_value)
-      : null,
-  }))
+  const derivedRows = identityRows.map(deriveGardenerMoistureIndexRow)
   const currentRow = derivedRows.find((row) => row.measured_at === displayRow.measured_at) ?? null
 
   return { rows: derivedRows, currentRow }
