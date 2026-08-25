@@ -40,23 +40,23 @@ Source-pack compression/reference documents are available for future ChatGPT/Cod
 
 ## Watering Control Boundary
 
-ADR 0006 in [`docs/adr/0006-watering-logic-and-safety.md`](./adr/0006-watering-logic-and-safety.md) locks the current watering-control and safety boundary.
+ADR 0025 in [`docs/adr/0025-local-button-programs-and-automatic-control-retirement.md`](./adr/0025-local-button-programs-and-automatic-control-retirement.md) defines the current watering-control boundary. ADR 0006 and ADR 0018 remain historical/design evidence for the retired automatic-control direction.
 
 - ESP32 firmware owns watering decisions locally.
 - Supabase is telemetry/history only and must not be used for command/control.
-- Automatic watering remains fixed-duration batch watering.
-- Pump shutoff remains local and does not depend on Supabase.
-- Automatic watering includes a post-watering cooldown guard between automatic cycles.
-- Supported firmware exposes no HTTP watering endpoint. Physical-button watering remains local, with reservoir start/loss interlocks and max-hold shutoff.
-- The generic Gen2 automatic-control threshold, repeated-reading gates, startup settling, freshness guard, post-watering exclusion, fixed-duration behavior, and cooldown remain firmware-local extension boundaries.
-- Balcony02 has no direct `analogRead(SOIL_PIN)` control feed. Its SEN0308/ADS1115 measurements remain measurement evidence and Phase 8F.5 does not grant them watering authority.
+- Moisture-triggered automatic watering is not part of the current executable or configuration surface. No RMI or sensor value can start watering.
+- A press/release before `5,000 ms` selects a 30-second local cycle; a hold through `5,000 ms` or longer followed by release selects a 60-second local cycle. Selection starts on release.
+- A valid second press cancels an active cycle immediately; its release only re-arms the button.
+- Pump shutoff, programmed completion, button cancellation, reservoir start blocking, and reservoir-loss cutoff remain local and do not depend on Supabase. Empty-reservoir start blocking is immediate; active-run loss requires GPIO26 to remain continuously LOW for 20 ms so one transient raw read cannot masquerade as reservoir loss.
+- Supported firmware exposes no HTTP watering endpoint, and the hosted frontend exposes no watering-threshold or watering-control UI.
+- Current SEN0308/ADS1115 measurements and the hosted RMI scale remain observational evidence only.
 
 ## Offline Autonomy And Network Failure Boundary
 
 ADR 0011 in [`docs/adr/0011-offline-autonomy-and-wifi-recovery.md`](./adr/0011-offline-autonomy-and-wifi-recovery.md) locks the Phase 6G offline autonomy and Wi-Fi recovery boundary.
 
 - Local firmware owns watering decisions and pump shutoff.
-- Wi-Fi, internet, and Supabase are not required for local automatic watering logic.
+- Wi-Fi, internet, and Supabase are not required for local button programs or safety shutoff.
 - Wi-Fi is best-effort; unavailable Wi-Fi must not keep the ESP32 from entering local-control/offline mode.
 - Pump shutoff must be checked before client/server/network/telemetry work.
 - Supabase remains read-only telemetry/history for frontend use and must not control watering.

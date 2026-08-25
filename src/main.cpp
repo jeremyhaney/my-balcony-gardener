@@ -15,12 +15,7 @@
 
 #include "gen2_measurements.h"
 #include "gen2_sen0204.h"
-
-// 15-minute post-watering cooldown/soak guard for automatic watering only.
-// Guarded here because src/config.h contains local secrets and is intentionally ignored by Git.
-#ifndef WATERING_COOLDOWN_MS
-#define WATERING_COOLDOWN_MS 900000
-#endif
+#include "local_button_program.h"
 
 #ifndef WIFI_RECONNECT_INTERVAL_MS
 #define WIFI_RECONNECT_INTERVAL_MS 30000
@@ -40,22 +35,12 @@
 #define GEN2_MEASUREMENT_POST_INTERVAL_MS 900000
 #endif
 
-// Firmware-local Gen2 automatic-control quality gates. Balcony02 has no direct
-// analog control feed; this is the explicit boundary for a future Gen2 source.
-const unsigned long AUTOMATIC_CONTROL_STARTUP_SETTLING_MS = 60000;
-const unsigned long AUTOMATIC_CONTROL_LATEST_SAMPLE_FRESHNESS_MS = 5000;
-const unsigned long AUTOMATIC_CONTROL_POST_WATERING_EXCLUSION_MS = 300000;
-const int AUTOMATIC_CONTROL_STARTUP_QUALIFIED_SAMPLE_COUNT = 3;
-const int AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT = 3;
-const int AUTOMATIC_CONTROL_REQUIRED_LOW_SAMPLES = 2;
-
 // Initialize hardware
 WebServer server(80);
 
 // State management
 bool isWatering = false;
 unsigned long wateringStartTime = 0;
-unsigned long lastWateringEndTime = 0;
 unsigned long lastWateringDuration = 0;
 const char* activeWateringTriggerSource = "firmware_safety";
 unsigned long lastWiFiReconnectAttemptTime = 0;
@@ -77,12 +62,6 @@ bool hasLastSupabaseHttpStatus = false;
 int lastSupabaseHttpStatus = 0;
 unsigned long consecutiveSupabaseFailures = 0;
 String lastSupabaseErrorCategory = "none";
-unsigned long automaticControlBootTime = 0;
-unsigned long lastAutomaticControlSampleTime = 0;
-float automaticControlMoistureSamples[AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT] = {0};
-int automaticControlSampleIndex = 0;
-int automaticControlSampleCount = 0;
-int automaticControlQualifiedSampleCount = 0;
 unsigned long lastGen2MeasurementPostTime = 0;
 String lastSuccessfulMeasurementPostAt = "";
 unsigned long lastSuccessfulMeasurementPostUptimeSeconds = 0;
@@ -96,7 +75,8 @@ bool hasCompletedWateringSinceBoot = false;
 bool hasWiFiDisconnectReasonSinceBoot = false;
 
 #if MBG_PHYSICAL_BUTTON_ENABLED
-const int PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY = 4;
+const int PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY = 8;
+const unsigned long PHYSICAL_BUTTON_EVENT_RETRY_INTERVAL_MS = 5000;
 struct QueuedWateringEvent {
   String eventAt;
   const char* eventType;
@@ -104,15 +84,16 @@ struct QueuedWateringEvent {
   bool includeDuration;
   int durationSeconds;
   const char* reason;
+  int requestedDurationSeconds;
 };
 QueuedWateringEvent physicalButtonEventQueue[PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY];
 int physicalButtonEventHead = 0;
 int physicalButtonEventTail = 0;
 int physicalButtonEventCount = 0;
+unsigned long physicalButtonLastEventFlushAttemptTime = 0;
+bool physicalButtonHasEventFlushAttempt = false;
 bool physicalButtonLastRawPressed = false;
-bool physicalButtonDebouncedPressed = false;
-unsigned long physicalButtonLastRawChangeTime = 0;
-bool physicalButtonReleaseRequired = false;
+LocalButtonProgramController physicalButtonController(MBG_PHYSICAL_BUTTON_DEBOUNCE_MS);
 #endif
 
 // Function declarations
@@ -124,22 +105,14 @@ String supabaseTableUrl(const char* tableName);
 void connectToWiFi();
 void maintainWiFiConnection();
 void setupTime();
-bool automaticControlQualityGatesPass(float moisture, unsigned long sampledAt, unsigned long decisionAt);
-bool maybeStartAutomaticWatering(float moisture);
-void sendWateringEventToSupabase(
-  const char* eventType,
-  const char* triggerSource,
-  bool includeDuration,
-  int durationSeconds,
-  const char* reason
-);
-void sendWateringEventToSupabaseAt(
+bool sendWateringEventToSupabaseAt(
   const String &eventAt,
   const char* eventType,
   const char* triggerSource,
   bool includeDuration,
   int durationSeconds,
-  const char* reason
+  const char* reason,
+  int requestedDurationSeconds
 );
 void sendDeviceHeartbeatToSupabase(String heartbeatReason);
 #if MBG_PHYSICAL_BUTTON_ENABLED
@@ -149,16 +122,17 @@ void queuePhysicalButtonWateringEvent(
   const char* triggerSource,
   bool includeDuration,
   int durationSeconds,
-  const char* reason
+  const char* reason,
+  int requestedDurationSeconds
 );
 void flushOnePhysicalButtonWateringEvent();
-void startPhysicalButtonWatering(unsigned long now);
+void startPhysicalButtonWatering(unsigned long now, int requestedDurationSeconds);
 void stopPhysicalButtonWatering(
   unsigned long now,
   const char* eventType,
   const char* triggerSource,
   const char* reason,
-  bool requireRelease
+  int requestedDurationSeconds
 );
 void handlePhysicalButton(unsigned long now);
 #endif
@@ -388,134 +362,6 @@ void handleWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
   }
 }
 
-bool isQualifiedAutomaticControlSample(float moisture) {
-  // Gate: automatic control samples must be in the mapped moisture-index range.
-  // This is a basic structural check, not calibration or trend-believability validation.
-  return moisture >= 0.0 && moisture <= 100.0;
-}
-
-void recordAutomaticControlSample(float moisture, unsigned long sampledAt) {
-  if (!isQualifiedAutomaticControlSample(moisture)) {
-    return;
-  }
-
-  automaticControlMoistureSamples[automaticControlSampleIndex] = moisture;
-  automaticControlSampleIndex = (automaticControlSampleIndex + 1) % AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT;
-
-  if (automaticControlSampleCount < AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT) {
-    automaticControlSampleCount++;
-  }
-
-  automaticControlQualifiedSampleCount++;
-  lastAutomaticControlSampleTime = sampledAt;
-}
-
-bool automaticControlStartupSettled(unsigned long now) {
-  // Gate: block automatic watering during the initial boot/sensor settling period.
-  return now - automaticControlBootTime >= AUTOMATIC_CONTROL_STARTUP_SETTLING_MS;
-}
-
-bool automaticControlHasStartupSamples() {
-  // Gate: block automatic watering until enough qualified local control samples exist.
-  return automaticControlQualifiedSampleCount >= AUTOMATIC_CONTROL_STARTUP_QUALIFIED_SAMPLE_COUNT;
-}
-
-bool automaticControlLatestSampleFresh(unsigned long sampledAt, unsigned long decisionAt) {
-  // Gate: the latest local control sample must be fresh; older ring samples are history only.
-  return decisionAt - sampledAt <= AUTOMATIC_CONTROL_LATEST_SAMPLE_FRESHNESS_MS;
-}
-
-bool automaticControlPostWateringExcluded(unsigned long now) {
-  // Gate: immediate post-watering readings are not trusted for another automatic start.
-  if (lastWateringEndTime == 0) {
-    return false;
-  }
-
-  return now - lastWateringEndTime < AUTOMATIC_CONTROL_POST_WATERING_EXCLUSION_MS;
-}
-
-bool automaticControlRepeatedLowReadingsPass() {
-  // Gate: one low mapped moisture reading is not enough; require 2 of the recent 3.
-  if (automaticControlSampleCount < AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT) {
-    return false;
-  }
-
-  int lowSampleCount = 0;
-  for (int i = 0; i < AUTOMATIC_CONTROL_RECENT_SAMPLE_COUNT; i++) {
-    if (automaticControlMoistureSamples[i] < MOISTURE_THRESHOLD) {
-      lowSampleCount++;
-    }
-  }
-
-  return lowSampleCount >= AUTOMATIC_CONTROL_REQUIRED_LOW_SAMPLES;
-}
-
-bool automaticControlQualityGatesPass(float moisture, unsigned long sampledAt, unsigned long decisionAt) {
-  if (!isQualifiedAutomaticControlSample(moisture)) {
-    Serial.println("Auto-watering blocked: moisture sample is not qualified for control");
-    return false;
-  }
-
-  if (automaticControlPostWateringExcluded(decisionAt)) {
-    Serial.println("Auto-watering blocked: post-watering trust window is active");
-    return false;
-  }
-
-  if (!automaticControlLatestSampleFresh(sampledAt, decisionAt)) {
-    Serial.println("Auto-watering blocked: latest local moisture sample is stale");
-    return false;
-  }
-
-  recordAutomaticControlSample(moisture, sampledAt);
-
-  if (!automaticControlStartupSettled(decisionAt)) {
-    Serial.println("Auto-watering blocked: startup settling gate is active");
-    return false;
-  }
-
-  if (!automaticControlHasStartupSamples()) {
-    Serial.println("Auto-watering blocked: waiting for startup control samples");
-    return false;
-  }
-
-  if (!automaticControlRepeatedLowReadingsPass()) {
-    Serial.println("Auto-watering blocked: repeated-reading gate has not passed");
-    return false;
-  }
-
-  return true;
-}
-
-bool maybeStartAutomaticWatering(float moisture) {
-  if (!MBG_PUMP_CONTROL_AVAILABLE || !MBG_DEVICE_CAN_WATER) {
-    return false;
-  }
-
-  unsigned long now = millis();
-
-  // Cooldown prevents repeated automatic cycles before soil/sensor readings stabilize.
-  if (!isWatering &&
-      moisture < MOISTURE_THRESHOLD &&
-      (lastWateringEndTime == 0 || now - lastWateringEndTime >= WATERING_COOLDOWN_MS)) {
-    digitalWrite(RELAY_PIN, HIGH);
-    isWatering = true;
-    wateringStartTime = millis();
-    activeWateringTriggerSource = "automatic";
-    recordGen2WateringStart();
-    Serial.println("💧 Auto-watering triggered (low moisture)");
-    sendWateringEventToSupabase(
-      "watering_started",
-      activeWateringTriggerSource,
-      false,
-      0,
-      "automatic_watering_started"
-    );
-    return true;
-  }
-
-  return false;
-}
-
 #if MBG_PHYSICAL_BUTTON_ENABLED
 bool physicalButtonReadPressed() {
   int level = digitalRead(MBG_PHYSICAL_BUTTON_PIN);
@@ -527,7 +373,8 @@ void queuePhysicalButtonWateringEvent(
   const char* triggerSource,
   bool includeDuration,
   int durationSeconds,
-  const char* reason
+  const char* reason,
+  int requestedDurationSeconds
 ) {
   if (physicalButtonEventCount >= PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY) {
     Serial.println("Physical button watering event queue full; dropping event evidence");
@@ -541,6 +388,7 @@ void queuePhysicalButtonWateringEvent(
   event.includeDuration = includeDuration;
   event.durationSeconds = durationSeconds;
   event.reason = reason;
+  event.requestedDurationSeconds = requestedDurationSeconds;
 
   physicalButtonEventTail = (physicalButtonEventTail + 1) % PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY;
   physicalButtonEventCount++;
@@ -548,41 +396,57 @@ void queuePhysicalButtonWateringEvent(
 
 void flushOnePhysicalButtonWateringEvent() {
   if (isWatering ||
-      physicalButtonReleaseRequired ||
-      physicalButtonDebouncedPressed ||
+      physicalButtonController.state() == LocalButtonProgramState::AwaitingRelease ||
+      physicalButtonController.debouncedPressed() ||
       physicalButtonEventCount == 0) {
     return;
   }
 
+  unsigned long now = millis();
+  if (physicalButtonHasEventFlushAttempt &&
+      now - physicalButtonLastEventFlushAttemptTime < PHYSICAL_BUTTON_EVENT_RETRY_INTERVAL_MS) {
+    return;
+  }
+  physicalButtonLastEventFlushAttemptTime = now;
+  physicalButtonHasEventFlushAttempt = true;
+
   QueuedWateringEvent &event = physicalButtonEventQueue[physicalButtonEventHead];
-  sendWateringEventToSupabaseAt(
+  bool deliveryHandled = sendWateringEventToSupabaseAt(
     event.eventAt,
     event.eventType,
     event.triggerSource,
     event.includeDuration,
     event.durationSeconds,
-    event.reason
+    event.reason,
+    event.requestedDurationSeconds
   );
+  if (!deliveryHandled) {
+    return;
+  }
   event.eventAt = "";
 
   physicalButtonEventHead = (physicalButtonEventHead + 1) % PHYSICAL_BUTTON_EVENT_QUEUE_CAPACITY;
   physicalButtonEventCount--;
 }
 
-void startPhysicalButtonWatering(unsigned long now) {
+void startPhysicalButtonWatering(unsigned long now, int requestedDurationSeconds) {
   digitalWrite(RELAY_PIN, HIGH);
   isWatering = true;
   wateringStartTime = now;
   activeWateringTriggerSource = "physical_button";
   recordGen2WateringStart();
-  Serial.println("Physical button watering started");
+  const char* reason = requestedDurationSeconds == 60
+    ? "physical_button_program_60s_started"
+    : "physical_button_program_30s_started";
+  Serial.printf("Physical button %d-second program started\n", requestedDurationSeconds);
 
   queuePhysicalButtonWateringEvent(
     "watering_started",
     "physical_button",
     false,
     0,
-    "physical_button_pressed"
+    reason,
+    requestedDurationSeconds
   );
 }
 
@@ -591,12 +455,11 @@ void stopPhysicalButtonWatering(
   const char* eventType,
   const char* triggerSource,
   const char* reason,
-  bool requireRelease
+  int requestedDurationSeconds
 ) {
   unsigned long wateringDuration = now - wateringStartTime;
   digitalWrite(RELAY_PIN, LOW);
   isWatering = false;
-  lastWateringEndTime = now;
   lastWateringDuration = wateringDuration / 1000;
   hasCompletedWateringSinceBoot = true;
 
@@ -605,88 +468,82 @@ void stopPhysicalButtonWatering(
     triggerSource,
     true,
     (int)lastWateringDuration,
-    reason
+    reason,
+    requestedDurationSeconds
   );
 
   activeWateringTriggerSource = "firmware_safety";
-  physicalButtonReleaseRequired = requireRelease;
-  Serial.printf("Physical button watering stopped. Duration: %lu seconds\n", lastWateringDuration);
+  Serial.printf(
+    "Physical button program stopped. Requested: %d seconds; actual: %lu seconds\n",
+    requestedDurationSeconds,
+    lastWateringDuration
+  );
 }
 
 void handlePhysicalButton(unsigned long now) {
   bool rawPressed = physicalButtonReadPressed();
-  if (rawPressed != physicalButtonLastRawPressed) {
-    physicalButtonLastRawPressed = rawPressed;
-    physicalButtonLastRawChangeTime = now;
-  }
-
-  if (now - physicalButtonLastRawChangeTime >= MBG_PHYSICAL_BUTTON_DEBOUNCE_MS &&
-      rawPressed != physicalButtonDebouncedPressed) {
-    physicalButtonDebouncedPressed = rawPressed;
-
-    if (physicalButtonDebouncedPressed) {
-      if (!physicalButtonReleaseRequired &&
-          !isWatering &&
-          MBG_PUMP_CONTROL_AVAILABLE &&
-          MBG_DEVICE_CAN_WATER) {
+  bool reservoirLiquidDetected = true;
 #if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
-        if (!gen2Sen0204LiquidDetected()) {
-          digitalWrite(RELAY_PIN, LOW);
-          physicalButtonReleaseRequired = true;
-          Serial.println("Physical button watering blocked: WL01 liquid not detected");
-          queuePhysicalButtonWateringEvent(
-            "watering_blocked",
-            "physical_button",
-            false,
-            0,
-            "reservoir_liquid_not_detected"
-          );
-          return;
-        }
+  reservoirLiquidDetected = gen2Sen0204LiquidDetected();
 #endif
-        startPhysicalButtonWatering(now);
-      }
-    } else {
-      if (isWatering && strcmp(activeWateringTriggerSource, "physical_button") == 0) {
-        stopPhysicalButtonWatering(
-          now,
-          "watering_completed",
-          "physical_button",
-          "physical_button_released",
-          false
-        );
-      }
-      if (physicalButtonReleaseRequired) {
-        physicalButtonReleaseRequired = false;
-        Serial.println("Physical button release observed; re-armed");
-      }
-    }
-  }
 
-  if (isWatering && strcmp(activeWateringTriggerSource, "physical_button") == 0) {
-#if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
-    if (!gen2Sen0204LiquidDetected()) {
+  LocalButtonProgramAction action = physicalButtonController.update(
+    (uint32_t)now,
+    rawPressed,
+    reservoirLiquidDetected
+  );
+  int requestedDurationSeconds = (int)(action.requestedDurationMs / 1000);
+
+  switch (action.type) {
+    case LocalButtonProgramActionType::StartProgram:
+      if (MBG_PUMP_CONTROL_AVAILABLE && MBG_DEVICE_CAN_WATER) {
+        startPhysicalButtonWatering(now, requestedDurationSeconds);
+      }
+      break;
+    case LocalButtonProgramActionType::CompleteProgram:
+      stopPhysicalButtonWatering(
+        now,
+        "watering_completed",
+        "physical_button",
+        "physical_button_program_completed",
+        requestedDurationSeconds
+      );
+      break;
+    case LocalButtonProgramActionType::CancelProgram:
+      stopPhysicalButtonWatering(
+        now,
+        "watering_completed",
+        "physical_button",
+        "physical_button_cancelled",
+        requestedDurationSeconds
+      );
+      break;
+    case LocalButtonProgramActionType::ReservoirSafetyCutoff:
+      // Persistent WL01 LOW qualification is independent of button debounce.
+      // Shut off the relay before queueing evidence or allowing network work.
       stopPhysicalButtonWatering(
         now,
         "watering_safety_cutoff",
         "firmware_safety",
         "reservoir_liquid_lost",
-        true
+        requestedDurationSeconds
       );
       Serial.println("Physical button safety cutoff: WL01 liquid lost");
-      return;
-    }
-#endif
-    unsigned long wateringDuration = now - wateringStartTime;
-    if (wateringDuration >= MBG_PHYSICAL_BUTTON_MAX_HOLD_MS) {
-      stopPhysicalButtonWatering(
-        now,
-        "watering_safety_cutoff",
-        "firmware_safety",
-        "physical_button_hold_timeout",
-        true
+      break;
+    case LocalButtonProgramActionType::BlockedByReservoir:
+      digitalWrite(RELAY_PIN, LOW);
+      Serial.println("Physical button program blocked: WL01 liquid not detected");
+      queuePhysicalButtonWateringEvent(
+        "watering_blocked",
+        "physical_button",
+        false,
+        0,
+        "reservoir_liquid_not_detected",
+        requestedDurationSeconds
       );
-    }
+      break;
+    case LocalButtonProgramActionType::None:
+      break;
   }
 }
 #endif
@@ -767,43 +624,25 @@ void setupTime() {
   tzset();
 }
 
-// Send device-originated watering event evidence to Supabase.
-void sendWateringEventToSupabase(
-  const char* eventType,
-  const char* triggerSource,
-  bool includeDuration,
-  int durationSeconds,
-  const char* reason
-) {
-  String eventAt = getUtcIsoTimestamp();
-  sendWateringEventToSupabaseAt(
-    eventAt,
-    eventType,
-    triggerSource,
-    includeDuration,
-    durationSeconds,
-    reason
-  );
-}
-
-void sendWateringEventToSupabaseAt(
+// Send device-originated watering event evidence to Supabase. A false result
+// means delivery was not attempted and the queued event must be retained.
+bool sendWateringEventToSupabaseAt(
   const String &eventAt,
   const char* eventType,
   const char* triggerSource,
   bool includeDuration,
   int durationSeconds,
-  const char* reason
+  const char* reason,
+  int requestedDurationSeconds
 ) {
   if (WiFi.status() != WL_CONNECTED) {
     recordSupabasePostFailure(0, "wifi_unavailable");
-    Serial.println("Watering event post skipped: WiFi not connected");
-    return;
+    return false;
   }
 
   if (eventAt == "TIME_ERROR") {
     recordSupabasePostFailure(0, "time_unavailable");
-    Serial.println("Watering event post skipped: UTC time unavailable");
-    return;
+    return false;
   }
 
   WiFiClientSecure client;
@@ -833,9 +672,13 @@ void sendWateringEventToSupabaseAt(
   postData += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
   postData += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   postData += "\"details\":{";
-  postData += "\"phase\":\"7O.1\",";
+  postData += "\"phase\":\"8G.2\",";
   postData += "\"source\":\"firmware\",";
   postData += "\"uptime_seconds\":" + String(millis() / 1000);
+  if (requestedDurationSeconds > 0) {
+    postData += ",\"requested_duration_seconds\":" + String(requestedDurationSeconds);
+    postData += ",\"button_program\":\"" + String(requestedDurationSeconds) + "_second\"";
+  }
 #if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
   if (strcmp(reason, "reservoir_liquid_not_detected") == 0 ||
       strcmp(reason, "reservoir_liquid_lost") == 0) {
@@ -873,6 +716,7 @@ void sendWateringEventToSupabaseAt(
   }
 
   https.end();
+  return true;
 }
 
 // Send read-only device diagnostics heartbeat to Supabase
@@ -1256,7 +1100,6 @@ void handleNotFound() {
 void setup() {
   Serial.begin(115200);
   Serial.println("\n🌱 My Balcony Gardener Starting...");
-  automaticControlBootTime = millis();
 
   // Initialize installed Gen2 hardware.
   gen2Begin();
@@ -1267,15 +1110,12 @@ void setup() {
 #if MBG_PHYSICAL_BUTTON_ENABLED
   pinMode(MBG_PHYSICAL_BUTTON_PIN, INPUT_PULLUP);
   physicalButtonLastRawPressed = physicalButtonReadPressed();
-  physicalButtonDebouncedPressed = physicalButtonLastRawPressed;
-  physicalButtonLastRawChangeTime = millis();
-  physicalButtonReleaseRequired = physicalButtonDebouncedPressed;
+  physicalButtonController.begin((uint32_t)millis(), physicalButtonLastRawPressed);
   Serial.printf(
-    "Physical button enabled on GPIO%d, active-%s, debounce=%dms, max-hold=%dms\n",
+    "Physical button enabled on GPIO%d, active-%s, debounce=%dms, programs=30s/60s\n",
     MBG_PHYSICAL_BUTTON_PIN,
     MBG_PHYSICAL_BUTTON_ACTIVE_LOW ? "low" : "high",
-    MBG_PHYSICAL_BUTTON_DEBOUNCE_MS,
-    MBG_PHYSICAL_BUTTON_MAX_HOLD_MS
+    MBG_PHYSICAL_BUTTON_DEBOUNCE_MS
   );
 #endif
 
@@ -1301,36 +1141,11 @@ void loop() {
   handlePhysicalButton(now);
 #endif
 
-  // Pump shutoff has priority over client/server, network, and telemetry work.
+  // Local button cancellation, programmed completion, and reservoir cutoff are
+  // evaluated before client/server, network, event delivery, or telemetry work.
+  // Do no synchronous network work while the pump is active.
   if (isWatering) {
-    unsigned long wateringDuration = now - wateringStartTime;
-
-    if (strcmp(activeWateringTriggerSource, "physical_button") != 0 &&
-        wateringDuration >= WATERING_DURATION_MS) {
-      digitalWrite(RELAY_PIN, LOW);
-      isWatering = false;
-      lastWateringEndTime = millis();
-      lastWateringDuration = wateringDuration / 1000; // Convert to seconds
-
-      hasCompletedWateringSinceBoot = true;
-      const char* completionTriggerSource = "firmware_safety";
-      const char* completionReason = "watering_completed_trigger_source_fallback";
-      if (strcmp(activeWateringTriggerSource, "automatic") == 0) {
-        completionTriggerSource = "automatic";
-        completionReason = "automatic_watering_completed";
-      }
-
-      sendWateringEventToSupabase(
-        "watering_completed",
-        completionTriggerSource,
-        true,
-        (int)lastWateringDuration,
-        completionReason
-      );
-      activeWateringTriggerSource = "firmware_safety";
-
-      Serial.printf("✅ Watering complete. Duration: %lu seconds\n", lastWateringDuration);
-    }
+    return;
   }
 
 #if MBG_PHYSICAL_BUTTON_ENABLED

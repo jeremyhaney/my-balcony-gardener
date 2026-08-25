@@ -28,9 +28,6 @@
 #ifndef MBG_PHYSICAL_BUTTON_DEBOUNCE_MS
 #error "MBG_PHYSICAL_BUTTON_DEBOUNCE_MS must be defined by the supported firmware profile"
 #endif
-#ifndef MBG_PHYSICAL_BUTTON_MAX_HOLD_MS
-#error "MBG_PHYSICAL_BUTTON_MAX_HOLD_MS must be defined by the supported firmware profile"
-#endif
 #ifndef MBG_HAS_BME280
 #error "MBG_HAS_BME280 must be defined by the supported firmware profile"
 #endif

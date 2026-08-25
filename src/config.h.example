@@ -13,10 +13,6 @@
 // Device identity and firmware provenance are supplied by the explicit
 // PlatformIO device environment, not by this local secrets file.
 
-// Timing Configuration
-#define WATERING_DURATION_MS 15000
-#define MOISTURE_THRESHOLD 35
-
 // NTP Configuration
 #define NTP_SERVER1 "pool.ntp.org"
 #define NTP_SERVER2 "time.nist.gov"

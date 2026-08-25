@@ -115,6 +115,20 @@ test('presents firmware-truncated zero duration honestly as a sub-second cycle',
   assert.equal(formatWateringCycleDuration(cycles[0].durationSeconds), 'Under 1 second')
 })
 
+test('distinguishes programmed button completion and local cancellation', () => {
+  const cycles = getHostedWateringCycles([
+    wateringEvent('cycle-start', '2026-08-24T12:00:00Z', 'watering_started', 'physical_button', null, 'physical_button_program_30s_started'),
+    wateringEvent('cycle-end', '2026-08-24T12:00:30Z', 'watering_completed', 'physical_button', 30, 'physical_button_program_completed'),
+    wateringEvent('stop-start', '2026-08-24T12:01:00Z', 'watering_started', 'physical_button', null, 'physical_button_program_60s_started'),
+    wateringEvent('stop-end', '2026-08-24T12:01:12Z', 'watering_completed', 'physical_button', 12, 'physical_button_cancelled'),
+  ])
+
+  assert.deepEqual(
+    cycles.map((cycle) => cycle.markerLabel),
+    ['Button Stop · 12s', 'Button Cycle · 30s'],
+  )
+})
+
 test('preserves all seven production-evidence cycles without collapsing safety cutoffs', () => {
   const productionEvidence: HostedWateringEventRow[] = [
     wateringEvent('s1', '2026-08-19T17:50:48Z', 'watering_started', 'physical_button', null, 'physical_button_pressed'),

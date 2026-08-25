@@ -218,6 +218,22 @@ const getWateringPresentation = (
     }
   }
 
+  if (row.reason === 'physical_button_program_completed') {
+    return {
+      displayReason: 'Button Cycle',
+      markerColor: '#1d4ed8',
+      tone: 'button',
+    }
+  }
+
+  if (row.reason === 'physical_button_cancelled') {
+    return {
+      displayReason: 'Button Stop',
+      markerColor: '#1d4ed8',
+      tone: 'button',
+    }
+  }
+
   const displayReason = row.reason
     ? formatReason(row.reason, row.trigger_source)
     : formatTriggerSource(row.trigger_source)

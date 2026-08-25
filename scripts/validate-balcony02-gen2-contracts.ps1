@@ -13,7 +13,7 @@ param(
   [Parameter()]
   [string] $ExpectedBuildProfile = 'balcony02-gen2',
   [Parameter()]
-  [string] $ExpectedFirmwareVersion = 'phase8b4-gen2-status-contract'
+  [string] $ExpectedFirmwareVersion = 'phase8g2-local-button-programs-r3'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,6 +27,7 @@ function Test-Contract {
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $mainSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/main.cpp')
+$buttonProgramSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/local_button_program.h')
 $measurementsSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/gen2_measurements.cpp')
 $profileSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/profile_overrides.h')
 $platformioSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'platformio.ini')
@@ -100,22 +101,37 @@ Test-Contract $orderedRecordSources '/measurements source retains the exact inst
 $loopFunctionIndex = $mainSource.IndexOf('void loop()')
 $loopFunctionSource = if ($loopFunctionIndex -ge 0) { $mainSource.Substring($loopFunctionIndex) } else { '' }
 Test-Contract (
-  $loopFunctionSource.Contains('Pump shutoff has priority over client/server, network, and telemetry work.') -and
+  $loopFunctionSource.Contains('Do no synchronous network work while the pump is active.') -and
   $loopFunctionSource.IndexOf('if (isWatering)') -lt $loopFunctionSource.IndexOf('maintainWiFiConnection();') -and
   $loopFunctionSource.IndexOf('maintainWiFiConnection();') -lt $loopFunctionSource.IndexOf('sendGen2MeasurementsToSupabase();')
 ) 'pump shutoff remains ahead of network, HTTP, and telemetry work'
 Test-Contract (
-  $mainSource.Contains('if (!gen2Sen0204LiquidDetected())') -and
+  $mainSource.Contains('gen2Sen0204LiquidDetected()') -and
+  $buttonProgramSource.Contains('RESERVOIR_LOSS_CONFIRMATION_MS = 20') -and
+  $buttonProgramSource.Contains('reservoirLossQualificationActive_') -and
   $mainSource.Contains('reservoir_liquid_not_detected') -and
   $mainSource.Contains('reservoir_liquid_lost') -and
-  $mainSource.Contains('physical_button_hold_timeout')
-) 'physical-button reservoir and max-hold safety paths remain in source'
+  $mainSource.Contains('physical_button_cancelled') -and
+  $mainSource.Contains('physical_button_program_completed')
+) 'physical-button programmed completion, cancellation, and qualified reservoir safety paths remain in source'
+$retiredAutomaticControlPatterns = @(
+  'MOISTURE_THRESHOLD','WATERING_DURATION_MS','WATERING_COOLDOWN_MS',
+  'automaticControl','AutomaticControl','maybeStartAutomaticWatering',
+  'automatic_watering_started','automatic_watering_completed'
+)
+foreach ($pattern in $retiredAutomaticControlPatterns) {
+  Test-Contract (
+    -not $mainSource.Contains($pattern) -and
+    -not $profileSource.Contains($pattern) -and
+    -not $platformioSource.Contains($pattern) -and
+    -not $configExampleSource.Contains($pattern)
+  ) "current firmware/configuration omits retired automatic-control token $pattern"
+}
 Test-Contract (
-  $mainSource.Contains('automaticControlQualityGatesPass') -and
-  $mainSource.Contains('maybeStartAutomaticWatering') -and
-  $mainSource.Contains('AUTOMATIC_CONTROL_POST_WATERING_EXCLUSION_MS') -and
-  $mainSource.Contains('WATERING_COOLDOWN_MS')
-) 'generic local automatic-watering gates and start helper remain in source'
+  $mainSource.Contains('physicalButtonController.update') -and
+  $mainSource.Contains('if (isWatering) {') -and
+  $mainSource.Contains('Do no synchronous network work while the pump is active.')
+) 'local programmed watering safety evaluation precedes all synchronous network work'
 Test-Contract (
   $profileSource.Contains('Only an explicitly provisioned Gen2 firmware profile is supported') -and
   $profileSource.Contains('The Balcony02 profile is missing a required installed Gen2 module')
@@ -497,9 +513,9 @@ foreach ($status in @($status1, $status2)) {
   }
 
   if ($status.watering.currently_watering) {
-    Test-Contract ($status.watering.active_trigger_source -cin @(
-      'physical_button','automatic','manual_local','firmware_safety'
-    )) 'active watering trigger is approved'
+    Test-Contract (
+      $status.watering.active_trigger_source -ceq 'physical_button'
+    ) 'current active watering trigger is the local physical button'
   } else {
     Test-Contract ($null -eq $status.watering.active_trigger_source) 'idle watering trigger is null'
   }
