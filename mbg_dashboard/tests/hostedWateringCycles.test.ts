@@ -16,6 +16,7 @@ const wateringEvent = (
   durationSeconds: number | null,
   reason: string,
   createdAt = eventAt,
+  details: Record<string, unknown> = { source: 'firmware' },
 ): HostedWateringEventRow => ({
   id,
   device_id: deviceId,
@@ -28,7 +29,7 @@ const wateringEvent = (
   reason,
   firmware_version: 'phase8b4-gen2-status-contract',
   build_profile: 'balcony02-gen2',
-  details: { source: 'firmware' },
+  details,
   created_at: createdAt,
 })
 
@@ -127,6 +128,37 @@ test('distinguishes programmed button completion and local cancellation', () => 
     cycles.map((cycle) => cycle.markerLabel),
     ['Button Stop · 12s', 'Button Cycle · 30s'],
   )
+})
+
+test('labels simulated watering evidence without downgrading it from a watering cycle', () => {
+  const cycles = getHostedWateringCycles([
+    wateringEvent(
+      'simulation-start',
+      '2026-08-24T13:00:00Z',
+      'watering_started',
+      'physical_button',
+      null,
+      'physical_button_program_30s_started',
+      '2026-08-24T13:00:00Z',
+      { source: 'firmware', simulation: true, water_delivery: false },
+    ),
+    wateringEvent(
+      'simulation-end',
+      '2026-08-24T13:00:30Z',
+      'watering_completed',
+      'physical_button',
+      30,
+      'physical_button_program_completed',
+      '2026-08-24T13:00:30Z',
+      { source: 'firmware', simulation: true, water_delivery: false },
+    ),
+  ])
+
+  assert.equal(cycles.length, 1)
+  assert.equal(cycles[0].simulated, true)
+  assert.equal(cycles[0].displayReason, 'Simulated Button Cycle')
+  assert.equal(cycles[0].markerLabel, 'Simulated Button Cycle · 30s')
+  assert.equal(cycles[0].terminalEventType, 'watering_completed')
 })
 
 test('preserves all seven production-evidence cycles without collapsing safety cutoffs', () => {

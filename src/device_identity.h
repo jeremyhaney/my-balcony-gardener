@@ -25,9 +25,17 @@ constexpr bool stringsEqual(const char* left, const char* right) {
 }
 }
 
-static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_LABEL, "Balcony02"), "Unsupported device label");
-static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ID, "7e5bd328-ad68-4389-a71a-fa5cd01b3813"), "Unsupported device UUID");
-static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ROLE, "controller"), "Unsupported device role");
+#if MBG_PROFILE_BALCONY02
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_LABEL, "Balcony02"), "Unsupported Balcony02 device label");
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ID, "7e5bd328-ad68-4389-a71a-fa5cd01b3813"), "Unsupported Balcony02 device UUID");
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ROLE, "controller"), "Unsupported Balcony02 device role");
+#elif MBG_PROFILE_PROTOTYPE02
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_LABEL, "Prototype02"), "Unsupported Prototype02 device label");
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ID, "a5c59d97-5687-483c-8773-86c9e6a84aea"), "Unsupported Prototype02 device UUID");
+static_assert(mbg_device_profile::stringsEqual(MBG_DEVICE_ROLE, "bench"), "Unsupported Prototype02 device role");
+#else
+#error "Unsupported firmware profile selector"
+#endif
 
 #ifdef DEVICE_ID
 #undef DEVICE_ID

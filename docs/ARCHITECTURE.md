@@ -131,6 +131,7 @@ ADR 0016 in [`docs/adr/0016-gen2-modular-sensor-architecture.md`](./adr/0016-gen
 - The standard Gen2 pin map is GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature.
 - I2C SDA/SCL is approved as a short-range local sensor-module bus, not the long-distance field wiring strategy.
 - The Gen2 4-conductor local I2C sensor-module cable color standard is RED = 3.3V, BLK = GND, GRN = GPIO21 / I2C SDA, and WHT = GPIO22 / I2C SCL. This July 3, 2026 convention supersedes the earlier WHT = SDA / GRN = SCL documentation; GPIO21 remains SDA and GPIO22 remains SCL. This color standard applies only to short-range local I2C sensor-module wiring and is not the approved long-distance field wiring strategy. Factory SEN0562 leads remain a documented cable exception, including BLUE = GND and YELLOW = SCL, and do not redefine the MBG internal convention.
+- The MBG Gen2 controller/sensor electrical boundary is 3.3V-only. There is no 5V rail, 5V device supply, or 5V fallback in the approved Prototype01, Balcony02, or Prototype02 systems. Their mux, ADC, relay-control, WL01, SEN0562, BME280, SEN0308, and other local logic/sensor connections remain on the proven 3.3V/GND boundary; vendor nominal-voltage wording must not be used to infer or recommend a 5V change to these units.
 - Local ESP32 firmware remains the owner of watering decisions and pump shutoff.
 - Supabase remains telemetry/history/diagnostics storage only and must not become command/control.
 - Phase 7B historically implemented `bench-proto-gen2` and retained `bench-prototype` as a Gen1 fallback/reference. Phase 8F.4 retires both selectable profiles after Prototype01/Bench01 retirement.
@@ -235,6 +236,7 @@ ADR 0010 in [`docs/adr/0010-device-identity-and-production-traceability.md`](./a
 - `src/config.h` remains ignored/local-only for Wi-Fi and Supabase secrets.
 - This is not the final production provisioning system.
 - Phase 8F.4 narrows executable build configuration to the single supported `balcony02-gen2` device environment. PlatformIO's non-selectable `[env]` section retains only shared board/framework, monitor, and upload-port mechanics; it carries no device identity or behavior flags.
+- Phase 8G.3 subsequently adds `prototype02-gen2` as the second explicit supported device environment. It has its own new identity and complete static hardware contract; it does not restore or inherit retired Prototype01/Bench01 configuration. Balcony02 remains the pump-backed controller, while Prototype02 is watering-capable for controller-path testing through a relay/LED simulation that explicitly reports no pump and no physical water delivery.
 - Phase 8F.5 requires exact explicit Balcony02 identity, static sensor/control provisioning, and Gen2 enablement at compile time. There is no generic/default firmware selection.
 - Future numbered devices require a new explicit environment, UUID, static capability manifest, measurement validation, and an intentional extension of the supported-profile guards.
 

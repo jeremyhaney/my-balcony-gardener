@@ -15,9 +15,14 @@ constexpr bool stringsEqual(const char* left, const char* right) {
 }
 }
 
-static_assert(
-  mbg_firmware_profile::stringsEqual(MBG_BUILD_PROFILE, "balcony02-gen2"),
-  "Unsupported build profile: add an explicit current Gen2 profile and static contract before building"
-);
+#if MBG_PROFILE_BALCONY02
+static_assert(mbg_firmware_profile::stringsEqual(MBG_BUILD_PROFILE, "balcony02-gen2"), "Unsupported Balcony02 build profile");
+static_assert(mbg_firmware_profile::stringsEqual(MBG_FIRMWARE_VERSION, "phase8g2-local-button-programs-r3"), "Unsupported Balcony02 firmware version");
+#elif MBG_PROFILE_PROTOTYPE02
+static_assert(mbg_firmware_profile::stringsEqual(MBG_BUILD_PROFILE, "prototype02-gen2"), "Unsupported Prototype02 build profile");
+static_assert(mbg_firmware_profile::stringsEqual(MBG_FIRMWARE_VERSION, "phase8g3-prototype02-gen2-r1"), "Unsupported Prototype02 firmware version");
+#else
+#error "Unsupported build profile selector"
+#endif
 
 #endif

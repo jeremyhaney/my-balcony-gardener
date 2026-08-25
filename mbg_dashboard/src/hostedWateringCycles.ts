@@ -18,6 +18,7 @@ export type HostedWateringCycle = {
   endedTimestampMs: number
   terminalEventType: 'watering_completed' | 'watering_safety_cutoff'
   durationSeconds: number
+  simulated: boolean
   displayReason: string
   markerLabel: string
   markerColor: string
@@ -174,6 +175,10 @@ const mapTerminalEventToCycle = (
     ? start.timestampMs
     : terminal.timestampMs - durationSeconds * 1000
   const presentation = getWateringPresentation(terminal.row)
+  const simulated = terminal.row.details?.simulation === true
+  const displayReason = simulated
+    ? `Simulated ${presentation.displayReason}`
+    : presentation.displayReason
 
   return {
     id: terminal.row.id,
@@ -185,8 +190,9 @@ const mapTerminalEventToCycle = (
     endedTimestampMs: terminal.timestampMs,
     terminalEventType: terminal.row.event_type,
     durationSeconds,
-    displayReason: presentation.displayReason,
-    markerLabel: `${presentation.displayReason} · ${formatCompactDuration(durationSeconds)}`,
+    simulated,
+    displayReason,
+    markerLabel: `${displayReason} · ${formatCompactDuration(durationSeconds)}`,
     markerColor: presentation.markerColor,
     tone: presentation.tone,
   }

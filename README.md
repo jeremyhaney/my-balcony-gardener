@@ -7,7 +7,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Firmware compiles on BJ3 with PlatformIO.
 - Frontend lints, builds, runs, and loads on BJ3.
 - The frontend no longer contains a direct browser-to-device live/control path.
-- Phase 8F retires unsupported Gen1 paths, profiles, identities, rows, and schema/access surfaces. Phase 8G.1 revises the hosted observational RMI scale. Phase 8G.2 provides 30/60-second local button programs, immediate second-press cancellation, and reservoir start/cutoff authority while removing dormant automatic moisture-control code/configuration. No threshold UI or hosted watering control is added.
+- Phase 8F retires unsupported Gen1 paths, profiles, identities, rows, and schema/access surfaces. Phase 8G.1 revises the hosted observational RMI scale. Phase 8G.2 provides 30/60-second local button programs, immediate second-press cancellation, and reservoir start/cutoff authority while removing dormant automatic moisture-control code/configuration. Phase 8G.3 adds and commissions the new `Prototype02` / `prototype02-gen2` bench simulation unit without restoring Prototype01/Bench01. No threshold UI or hosted watering control is added.
 - Ordinary and hosted-readonly frontend builds now enter the same hosted Gen2 route shell.
 - Balcony02 posts Gen2 measurement batches, device heartbeats, and watering-event evidence to their current Supabase Data API tables; firmware no longer creates `sensor_logs` rows.
 - Firmware configuration now stores only the Supabase project root; the resolver constructs exactly `/rest/v1/sensor_measurement_batches`, `/rest/v1/device_heartbeats`, or `/rest/v1/watering_events` and accepts only an optional trailing root slash.
@@ -99,7 +99,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Phase 7G.0 Field Gen2 Soil Temperature and Scout BME280 Swap is field validated / complete pending commit/documentation closeout.
 - The Phase 7E field-unit profiles used GPIO25 relay/pump output, GPIO34 analog soil moisture, GPIO21 I2C SDA, GPIO22 I2C SCL, GPIO26 DHT11 / non-I2C auxiliary digital sensor, and GPIO27 DS18B20 / OneWire soil temperature.
 - Phase 7E historically used `balcony-installed-gen2` for Balcony01, `balcony-sensor-scout-01` for Scout01, and `bench-proto-gen2` for Prototype01. Phase 8F.4 retires those firmware profiles and identities from executable build configuration.
-- Balcony02 is the only supported firmware device environment. Future numbered devices receive new profiles, identities, and UUIDs rather than inheriting retired identity.
+- `balcony02-gen2` and `prototype02-gen2` are the supported firmware device environments. New numbered devices receive explicit profiles, identities, and UUIDs rather than inheriting retired identity.
 - `device_label` values are compile-time endpoint readability labels, not user-editable names or database-driven nicknames.
 - Balcony02 local endpoints include `device_label`, `firmware_version`, and `build_profile` on `/status`, `/capabilities`, and `/measurements`.
 - Gen2 firmware batch posts include top-level `firmware_version` and `build_profile`; `batch_details.phase` is now `7E`, and `batch_details.device_label` identifies the short device label.
@@ -163,7 +163,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - No additional Supabase query is required for the Device Status panel.
 - Protected watering evidence is displayed from hosted watering-event views, not `sensor_logs.data.watering`.
 - Firmware build profiles historically provided the Phase 6C prototype/small-batch bridge for intentional device identity.
-- `balcony02-gen2` is now the only selectable supported device environment and uses UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`.
+- The selectable supported device environments are `balcony02-gen2`, UUID `7e5bd328-ad68-4389-a71a-fa5cd01b3813`, and `prototype02-gen2`, UUID `a5c59d97-5687-483c-8773-86c9e6a84aea`.
 - Balcony02's ESP32 board/framework, validation hook, identity, and hardware contract live in the explicit `balcony02-gen2` environment; shared monitor/upload-port mechanics alone remain in non-selectable `[env]`. There is no default or generic device profile.
 - Tracked `src/device_identity.h` maps `MBG_DEVICE_ID` to the firmware `DEVICE_ID`.
 - Ignored local-only `src/config.h` remains for secrets and is not the repo-owned identity mechanism.
@@ -186,9 +186,10 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 ```bash
 # Build only; does not upload firmware
 pio run -e balcony02-gen2
+pio run -e prototype02-gen2
 ```
 
-- `balcony02-gen2` is the only supported firmware device profile.
+- `balcony02-gen2` is the physical pump-backed controller profile; `prototype02-gen2` is the pump-free relay/LED simulation profile. Both retain local button and WL01 safety behavior while reporting their physical capabilities honestly.
 - The shared `[env]` section contains monitor/upload mechanics only and is not a device identity or upload target.
 - Do not upload without an explicit environment and confirmed port.
 - Use `/status`, `/capabilities`, and `/measurements` for Gen2 validation.

@@ -5,19 +5,45 @@ param(
   [Parameter()]
   [switch] $StatusOnly,
   [Parameter()]
-  [string] $ExpectedDeviceLabel = 'Balcony02',
+  [ValidateSet('Balcony02','Prototype02')]
+  [string] $ContractProfile = 'Balcony02',
   [Parameter()]
-  [string] $ExpectedDeviceId = '7e5bd328-ad68-4389-a71a-fa5cd01b3813',
+  [string] $ExpectedDeviceLabel,
   [Parameter()]
-  [string] $ExpectedDeviceRole = 'controller',
+  [string] $ExpectedDeviceId,
   [Parameter()]
-  [string] $ExpectedBuildProfile = 'balcony02-gen2',
+  [string] $ExpectedDeviceRole,
   [Parameter()]
-  [string] $ExpectedFirmwareVersion = 'phase8g2-local-button-programs-r3'
+  [string] $ExpectedBuildProfile,
+  [Parameter()]
+  [string] $ExpectedFirmwareVersion
 )
 
 $ErrorActionPreference = 'Stop'
 $failures = [System.Collections.Generic.List[string]]::new()
+
+$profileExpectations = if ($ContractProfile -ceq 'Prototype02') {
+  @{
+    DeviceLabel = 'Prototype02'
+    DeviceId = 'a5c59d97-5687-483c-8773-86c9e6a84aea'
+    DeviceRole = 'bench'
+    BuildProfile = 'prototype02-gen2'
+    FirmwareVersion = 'phase8g3-prototype02-gen2-r1'
+  }
+} else {
+  @{
+    DeviceLabel = 'Balcony02'
+    DeviceId = '7e5bd328-ad68-4389-a71a-fa5cd01b3813'
+    DeviceRole = 'controller'
+    BuildProfile = 'balcony02-gen2'
+    FirmwareVersion = 'phase8g2-local-button-programs-r3'
+  }
+}
+if ([string]::IsNullOrWhiteSpace($ExpectedDeviceLabel)) { $ExpectedDeviceLabel = $profileExpectations.DeviceLabel }
+if ([string]::IsNullOrWhiteSpace($ExpectedDeviceId)) { $ExpectedDeviceId = $profileExpectations.DeviceId }
+if ([string]::IsNullOrWhiteSpace($ExpectedDeviceRole)) { $ExpectedDeviceRole = $profileExpectations.DeviceRole }
+if ([string]::IsNullOrWhiteSpace($ExpectedBuildProfile)) { $ExpectedBuildProfile = $profileExpectations.BuildProfile }
+if ([string]::IsNullOrWhiteSpace($ExpectedFirmwareVersion)) { $ExpectedFirmwareVersion = $profileExpectations.FirmwareVersion }
 
 function Test-Contract {
   param([bool] $Condition, [string] $Message)
@@ -34,13 +60,51 @@ $platformioSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'platform
 $configExampleSource = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'src/config.h.example')
 $supabaseConfigValidator = Join-Path $repoRoot 'scripts/validate-firmware-supabase-config.py'
 
+$selectedEnvironmentName = if ($ContractProfile -ceq 'Prototype02') { 'prototype02-gen2' } else { 'balcony02-gen2' }
+$environmentPattern = '(?ms)^\[env:' + [regex]::Escape($selectedEnvironmentName) + '\]\r?\n(?<body>.*?)(?=^\[|\z)'
+$environmentMatch = [regex]::Match($platformioSource, $environmentPattern)
+Test-Contract $environmentMatch.Success "PlatformIO defines the $selectedEnvironmentName environment"
+$environmentSource = if ($environmentMatch.Success) { $environmentMatch.Groups['body'].Value } else { '' }
+$expectedEnvironmentTokens = if ($ContractProfile -ceq 'Prototype02') {
+  @(
+    '-DMBG_DEVICE_LABEL=\"Prototype02\"',
+    '-DMBG_DEVICE_ID=\"a5c59d97-5687-483c-8773-86c9e6a84aea\"',
+    '-DMBG_DEVICE_ROLE=\"bench\"',
+    '-DMBG_BUILD_PROFILE=\"prototype02-gen2\"',
+    '-DMBG_FIRMWARE_VERSION=\"phase8g3-prototype02-gen2-r1\"',
+    '-DMBG_BME280_MUX_CHANNEL=4',
+    '-DMBG_PUMP_CONTROL_AVAILABLE=0',
+    '-DMBG_WATERING_OUTPUT_AVAILABLE=1',
+    '-DMBG_WATERING_OUTPUT_IS_SIMULATION=1',
+    '-DMBG_PHYSICAL_WATER_DELIVERY_AVAILABLE=0',
+    '-DMBG_DEVICE_CAN_WATER=1',
+    '-DMBG_SEN0308_A0_PHYSICAL_SENSOR_ID=\"SEN0308-M02\"',
+    '-DMBG_SEN0562_L01_PHYSICAL_SENSOR_ID=\"SEN0562-L04\"',
+    '-DMBG_DS18B20_PHYSICAL_SENSOR_ID=\"ST01\"'
+  )
+} else {
+  @(
+    '-DMBG_DEVICE_LABEL=\"Balcony02\"',
+    '-DMBG_DEVICE_ID=\"7e5bd328-ad68-4389-a71a-fa5cd01b3813\"',
+    '-DMBG_DEVICE_ROLE=\"controller\"',
+    '-DMBG_BUILD_PROFILE=\"balcony02-gen2\"',
+    '-DMBG_FIRMWARE_VERSION=\"phase8g2-local-button-programs-r3\"',
+    '-DMBG_PUMP_CONTROL_AVAILABLE=1',
+    '-DMBG_WATERING_OUTPUT_IS_SIMULATION=0',
+    '-DMBG_PHYSICAL_WATER_DELIVERY_AVAILABLE=1'
+  )
+}
+foreach ($token in $expectedEnvironmentTokens) {
+  Test-Contract $environmentSource.Contains($token) "$selectedEnvironmentName contains required token $token"
+}
+
 $registeredRoutes = @(
   [regex]::Matches($mainSource, 'server\.on\("([^"]+)"') |
     ForEach-Object { $_.Groups[1].Value }
 )
 Test-Contract (
   ($registeredRoutes -join '|') -ceq '/|/status|/capabilities|/measurements'
-) 'source registers exactly the approved Balcony02 HTTP routes in order'
+) 'source registers exactly the approved Gen2 HTTP routes in order'
 Test-Contract ($mainSource.Contains('server.onNotFound(handleNotFound);')) 'source retains the Gen2 not-found handler'
 
 $retiredMainPatterns = @(
@@ -56,7 +120,8 @@ foreach ($pattern in $retiredMainPatterns) {
 $retiredProfilePatterns = @(
   'MBG_HAS_DHT11','MBG_HAS_VEML6030','MBG_HAS_SOIL_MOISTURE',
   'MBG_WATERING_SIMULATION_AVAILABLE','MBG_HTTP_WATERING_ENDPOINT_ENABLED',
-  'MBG_CAPABILITIES_INCLUDE_DHT11_ALIAS','MBG_GEN2_ENABLE_LEGACY_LOGS'
+  'MBG_CAPABILITIES_INCLUDE_DHT11_ALIAS','MBG_GEN2_ENABLE_LEGACY_LOGS',
+  'MBG_SEN0204_PUMP_INTERLOCK_ENABLED'
 )
 foreach ($pattern in $retiredProfilePatterns) {
   Test-Contract (
@@ -77,9 +142,10 @@ foreach ($relativePath in $retiredModulePaths) {
 
 Test-Contract (
   $measurementsSource.Contains('return balcony02StaticCapabilitiesJson(deviceId, reportedAt);') -and
+  $measurementsSource.Contains('return prototype02StaticCapabilitiesJson(deviceId, reportedAt);') -and
   -not $measurementsSource.Contains('i2cScanJson') -and
   -not $measurementsSource.Contains('String(MBG_BUILD_PROFILE) ==')
-) '/capabilities source returns only the approved static Balcony02 manifest'
+) '/capabilities source selects an approved static manifest at compile time'
 
 $recordSources = @(
   'gen2Bme280MeasurementsJson','gen2Ds18b20MeasurementsJson',
@@ -101,10 +167,10 @@ Test-Contract $orderedRecordSources '/measurements source retains the exact inst
 $loopFunctionIndex = $mainSource.IndexOf('void loop()')
 $loopFunctionSource = if ($loopFunctionIndex -ge 0) { $mainSource.Substring($loopFunctionIndex) } else { '' }
 Test-Contract (
-  $loopFunctionSource.Contains('Do no synchronous network work while the pump is active.') -and
+  $loopFunctionSource.Contains('Do no synchronous network work while the controlled watering output is active.') -and
   $loopFunctionSource.IndexOf('if (isWatering)') -lt $loopFunctionSource.IndexOf('maintainWiFiConnection();') -and
   $loopFunctionSource.IndexOf('maintainWiFiConnection();') -lt $loopFunctionSource.IndexOf('sendGen2MeasurementsToSupabase();')
-) 'pump shutoff remains ahead of network, HTTP, and telemetry work'
+) 'watering-output shutoff remains ahead of network, HTTP, and telemetry work'
 Test-Contract (
   $mainSource.Contains('gen2Sen0204LiquidDetected()') -and
   $buttonProgramSource.Contains('RESERVOIR_LOSS_CONFIRMATION_MS = 20') -and
@@ -130,12 +196,19 @@ foreach ($pattern in $retiredAutomaticControlPatterns) {
 Test-Contract (
   $mainSource.Contains('physicalButtonController.update') -and
   $mainSource.Contains('if (isWatering) {') -and
-  $mainSource.Contains('Do no synchronous network work while the pump is active.')
+  $mainSource.Contains('Do no synchronous network work while the controlled watering output is active.')
 ) 'local programmed watering safety evaluation precedes all synchronous network work'
 Test-Contract (
   $profileSource.Contains('Only an explicitly provisioned Gen2 firmware profile is supported') -and
-  $profileSource.Contains('The Balcony02 profile is missing a required installed Gen2 module')
+  $profileSource.Contains('Exactly one supported firmware profile selector must be enabled') -and
+  $profileSource.Contains('Prototype02 requires a simulated relay output with no pump or physical water delivery')
 ) 'compile-time guards reject unsupported or incomplete profiles'
+Test-Contract (
+  $mainSource.Contains('#if MBG_WATERING_OUTPUT_IS_SIMULATION') -and
+  $mainSource.Contains('\"watering_mode\":\"simulated_watering\"') -and
+  $mainSource.Contains('\"pump_present\":false') -and
+  $mainSource.Contains('\"water_delivery\":false')
+) 'simulated watering events carry explicit no-pump/no-delivery evidence'
 
 $urlFunctionStart = $mainSource.IndexOf('String supabaseTableUrl(const char* tableName) {')
 $urlFunctionEnd = if ($urlFunctionStart -ge 0) {
@@ -201,20 +274,32 @@ Test-Contract (-not [string]::IsNullOrWhiteSpace($payload.device_role)) 'top-lev
 Test-Contract (-not [string]::IsNullOrWhiteSpace($payload.measured_at)) 'top-level measured_at is present'
 
 $records = @($payload.records)
-$expected = @(
-  @('bme280_air','BME280','air_temperature'),
-  @('bme280_air','BME280','relative_humidity'),
-  @('bme280_air','BME280','barometric_pressure'),
-  @('ds18b20_temperature','DS18B20','soil temp'),
-  @('sen0308_m01','sen0308','raw_adc'),
-  @('sen0308_m02','sen0308','raw_adc'),
-  @('sen0308_m03','sen0308','raw_adc'),
-  @('sen0562_l01','sen0562','ambient_light'),
-  @('sen0562_l02','sen0562','ambient_light'),
-  @('sen0562_l03','sen0562','ambient_light'),
-  @('sen0204_wl01','sen0204','reservoir_liquid_detected')
-)
-Test-Contract ($records.Count -eq 11) 'successful Balcony02 response contains exactly 11 records'
+$expected = if ($ContractProfile -ceq 'Prototype02') {
+  @(
+    @('bme280_air','BME280','air_temperature'),
+    @('bme280_air','BME280','relative_humidity'),
+    @('bme280_air','BME280','barometric_pressure'),
+    @('ds18b20_temperature','DS18B20','soil temp'),
+    @('sen0308_m01','sen0308','raw_adc'),
+    @('sen0562_l01','sen0562','ambient_light'),
+    @('sen0204_wl01','sen0204','reservoir_liquid_detected')
+  )
+} else {
+  @(
+    @('bme280_air','BME280','air_temperature'),
+    @('bme280_air','BME280','relative_humidity'),
+    @('bme280_air','BME280','barometric_pressure'),
+    @('ds18b20_temperature','DS18B20','soil temp'),
+    @('sen0308_m01','sen0308','raw_adc'),
+    @('sen0308_m02','sen0308','raw_adc'),
+    @('sen0308_m03','sen0308','raw_adc'),
+    @('sen0562_l01','sen0562','ambient_light'),
+    @('sen0562_l02','sen0562','ambient_light'),
+    @('sen0562_l03','sen0562','ambient_light'),
+    @('sen0204_wl01','sen0204','reservoir_liquid_detected')
+  )
+}
+Test-Contract ($records.Count -eq $expected.Count) "successful $ContractProfile response contains exactly $($expected.Count) records"
 for ($index = 0; $index -lt [Math]::Min($records.Count, $expected.Count); $index++) {
   $actual = $records[$index]
   $wanted = $expected[$index]
@@ -236,15 +321,26 @@ foreach ($record in $records) {
 }
 
 Test-Contract (-not ($records.sensor_key -contains 'sen0308_m04')) 'SEN0308 M04 emits no measurement'
-foreach ($key in @('bme280_air','ds18b20_temperature')) {
+foreach ($key in @('bme280_air')) {
   foreach ($record in @($records | Where-Object sensor_key -eq $key)) {
     Test-Contract ('physical_sensor_id' -notin @($record.PSObject.Properties.Name)) "$key omits physical_sensor_id"
   }
 }
-$physicalIds = @{
-  sen0308_m01='SEN0308-M01'; sen0308_m02='SEN0308-M02'; sen0308_m03='SEN0308-M03'
-  sen0562_l01='SEN0562-L01'; sen0562_l02='SEN0562-L02'; sen0562_l03='SEN0562-L03'
-  sen0204_wl01='WL01'
+$physicalIds = if ($ContractProfile -ceq 'Prototype02') {
+  @{
+    ds18b20_temperature='ST01'; sen0308_m01='SEN0308-M02'
+    sen0562_l01='SEN0562-L04'; sen0204_wl01='WL01'
+  }
+} else {
+  @{
+    sen0308_m01='SEN0308-M01'; sen0308_m02='SEN0308-M02'; sen0308_m03='SEN0308-M03'
+    sen0562_l01='SEN0562-L01'; sen0562_l02='SEN0562-L02'; sen0562_l03='SEN0562-L03'
+    sen0204_wl01='WL01'
+  }
+}
+if ($ContractProfile -ceq 'Balcony02') {
+  $ds18b20Record = $records | Where-Object sensor_key -eq 'ds18b20_temperature' | Select-Object -First 1
+  Test-Contract ('physical_sensor_id' -notin @($ds18b20Record.PSObject.Properties.Name)) 'Balcony02 DS18B20 retains its original record shape'
 }
 foreach ($key in $physicalIds.Keys) {
   $record = $records | Where-Object sensor_key -eq $key | Select-Object -First 1
@@ -268,15 +364,22 @@ try {
 }
 catch { Write-Error "/capabilities response was not valid JSON: $($_.Exception.Message)"; exit 1 }
 
-$expectedTopLevelOrder = @(
-  'device_label','device_id','device_role','firmware_version','build_profile','reported_at',
-  'can_water','control_authority','pinout','control_configuration','i2c','modules'
-)
+$expectedTopLevelOrder = if ($ContractProfile -ceq 'Prototype02') {
+  @(
+    'device_label','device_id','device_role','firmware_version','build_profile','reported_at',
+    'can_water','control_authority','watering_output','pinout','control_configuration','i2c','modules'
+  )
+} else {
+  @(
+    'device_label','device_id','device_role','firmware_version','build_profile','reported_at',
+    'can_water','control_authority','pinout','control_configuration','i2c','modules'
+  )
+}
 Test-Contract (
   (@($capabilities1.PSObject.Properties.Name) -join '|') -ceq ($expectedTopLevelOrder -join '|')
 ) '/capabilities has the exact approved top-level property order'
 
-# Identity and provenance are fixed for the compiled Balcony02 profile except
+# Identity and provenance are fixed for the selected compiled profile except
 # reported_at, which is generated for each endpoint snapshot.
 Test-Contract ($capabilities1.device_label -ceq $ExpectedDeviceLabel) "device_label is $ExpectedDeviceLabel"
 Test-Contract ($capabilities1.device_id -ceq $ExpectedDeviceId) 'device_id is the expected UUID'
@@ -289,14 +392,37 @@ Test-Contract ($capabilities1.control_authority -ceq 'local_firmware') 'control_
 
 # Compact JSON comparison checks property order, property set, value types, and
 # values for each exact nested object without accepting extra fields.
-$expectedPinout = '{"pump_relay":25,"physical_button":32,"reservoir_level":26,"soil_temperature":27,"i2c_sda":21,"i2c_scl":22}' | ConvertFrom-Json
-$expectedControlConfiguration = '{"pump_relay_active_state":"HIGH","physical_button_active_state":"LOW","reservoir_liquid_detected_state":"HIGH"}' | ConvertFrom-Json
+$expectedPinout = if ($ContractProfile -ceq 'Prototype02') {
+  '{"watering_relay":25,"physical_button":32,"reservoir_level":26,"soil_temperature":27,"i2c_sda":21,"i2c_scl":22}' | ConvertFrom-Json
+} else {
+  '{"pump_relay":25,"physical_button":32,"reservoir_level":26,"soil_temperature":27,"i2c_sda":21,"i2c_scl":22}' | ConvertFrom-Json
+}
+$expectedControlConfiguration = if ($ContractProfile -ceq 'Prototype02') {
+  '{"watering_relay_active_state":"HIGH","physical_button_active_state":"LOW","reservoir_liquid_detected_state":"HIGH"}' | ConvertFrom-Json
+} else {
+  '{"pump_relay_active_state":"HIGH","physical_button_active_state":"LOW","reservoir_liquid_detected_state":"HIGH"}' | ConvertFrom-Json
+}
 $expectedI2c = '{"mux_address":"0x70","ads1115_address":"0x48","ads1115_mux_channel":0}' | ConvertFrom-Json
+if ($ContractProfile -ceq 'Prototype02') {
+  $expectedWateringOutput = '{"kind":"relay_simulation","relay_gpio":25,"active_state":"HIGH","pump_present":false,"physical_water_delivery":false,"visible_feedback":true,"audible_feedback":true}' | ConvertFrom-Json
+  Test-Contract (($capabilities1.watering_output | ConvertTo-Json -Compress) -ceq ($expectedWateringOutput | ConvertTo-Json -Compress)) 'watering_output explicitly identifies relay simulation with no pump or delivery'
+}
 Test-Contract (($capabilities1.pinout | ConvertTo-Json -Compress) -ceq ($expectedPinout | ConvertTo-Json -Compress)) 'pinout has the exact approved fields, order, and values'
 Test-Contract (($capabilities1.control_configuration | ConvertTo-Json -Compress) -ceq ($expectedControlConfiguration | ConvertTo-Json -Compress)) 'control_configuration has the exact approved fields, order, and values'
 Test-Contract (($capabilities1.i2c | ConvertTo-Json -Compress) -ceq ($expectedI2c | ConvertTo-Json -Compress)) 'i2c has the exact approved fields, order, and values'
 
-$expectedModulesJson = @'
+$expectedModulesJson = if ($ContractProfile -ceq 'Prototype02') {
+@'
+[
+  {"sensor_key":"bme280_air","sensor_type":"BME280","installed":true,"connection":{"bus":"i2c_mux","mux_channel":4,"address":"0x76"}},
+  {"sensor_key":"ds18b20_temperature","sensor_type":"DS18B20","installed":true,"physical_sensor_id":"ST01","connection":{"bus":"onewire"}},
+  {"sensor_key":"sen0308_m01","sensor_type":"SEN0308","installed":true,"physical_sensor_id":"SEN0308-M02","connection":{"provider":"ads1115","channel":"A0"}},
+  {"sensor_key":"sen0562_l01","sensor_type":"SEN0562","installed":true,"physical_sensor_id":"SEN0562-L04","connection":{"bus":"i2c_mux","mux_channel":1,"address":"0x23"}},
+  {"sensor_key":"sen0204_wl01","sensor_type":"SEN0204","installed":true,"physical_sensor_id":"WL01","connection":{"gpio":26},"control_role":"watering_interlock"}
+]
+'@
+} else {
+@'
 [
   {"sensor_key":"bme280_air","sensor_type":"BME280","installed":true,"connection":{"bus":"i2c_mux","mux_channel":4,"address":"0x76"}},
   {"sensor_key":"ds18b20_temperature","sensor_type":"DS18B20","installed":true,"connection":{"bus":"onewire"}},
@@ -310,13 +436,14 @@ $expectedModulesJson = @'
   {"sensor_key":"sen0204_wl01","sensor_type":"SEN0204","installed":true,"physical_sensor_id":"WL01","connection":{"gpio":26},"control_role":"watering_interlock"}
 ]
 '@
+}
 # Windows PowerShell may preserve a top-level JSON array as one nested pipeline
 # object. Assign first, then pipe the parsed array to flatten its ten elements.
 $capabilityModules = @($capabilities1.modules)
 $expectedModulesParsed = $expectedModulesJson | ConvertFrom-Json
 $expectedModules = @($expectedModulesParsed | ForEach-Object { $_ })
 $capabilityModules = @($capabilities1.modules)
-Test-Contract ($capabilityModules.Count -eq 10) '/capabilities contains exactly ten modules'
+Test-Contract ($capabilityModules.Count -eq $expectedModules.Count) "/capabilities contains exactly $($expectedModules.Count) configured modules"
 Test-Contract (($capabilityModules.sensor_key -join '|') -ceq ($expectedModules.sensor_key -join '|')) 'modules have the exact approved order'
 for ($index = 0; $index -lt [Math]::Min($capabilityModules.Count, $expectedModules.Count); $index++) {
   $actualModuleJson = $capabilityModules[$index] | ConvertTo-Json -Depth 5 -Compress
@@ -324,10 +451,15 @@ for ($index = 0; $index -lt [Math]::Min($capabilityModules.Count, $expectedModul
   Test-Contract ($actualModuleJson -ceq $expectedModuleJson) "$($expectedModules[$index].sensor_key) has the exact approved fields and values"
 }
 
-$m04Capability = $capabilityModules | Where-Object sensor_key -ceq 'sen0308_m04' | Select-Object -First 1
 $l01Capability = $capabilityModules | Where-Object sensor_key -ceq 'sen0562_l01' | Select-Object -First 1
-Test-Contract ($null -ne $m04Capability -and $m04Capability.installed -ceq $false) 'SEN0308 M04 is present and installed false'
 Test-Contract ($null -ne $l01Capability -and $l01Capability.installed -ceq $true) 'SEN0562 L01 is present and installed true'
+if ($ContractProfile -ceq 'Balcony02') {
+  $m04Capability = $capabilityModules | Where-Object sensor_key -ceq 'sen0308_m04' | Select-Object -First 1
+  Test-Contract ($null -ne $m04Capability -and $m04Capability.installed -ceq $false) 'SEN0308 M04 is present and installed false'
+} else {
+  Test-Contract (-not ($capabilityModules.sensor_key -contains 'sen0308_m02')) 'Prototype02 omits uninstalled logical M02/M03/M04 modules'
+  Test-Contract (-not ($capabilityModules.sensor_key -contains 'sen0562_l02')) 'Prototype02 omits uninstalled logical L02/L03 modules'
+}
 $modulesWithControlRole = @($capabilityModules | Where-Object { 'control_role' -in @($_.PSObject.Properties.Name) })
 Test-Contract (
   $modulesWithControlRole.Count -eq 1 -and

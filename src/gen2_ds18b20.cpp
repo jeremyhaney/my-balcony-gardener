@@ -76,6 +76,9 @@ String gen2Ds18b20MeasurementsJson(const String &deviceId, const String &measure
   String response = "{";
   response += "\"sensor_key\":\"ds18b20_temperature\",";
   response += "\"sensor_type\":\"DS18B20\",";
+#if MBG_PROFILE_PROTOTYPE02
+  response += "\"physical_sensor_id\":\"" + String(MBG_DS18B20_PHYSICAL_SENSOR_ID) + "\",";
+#endif
   response += "\"measurement_name\":\"soil temp\",";
   response += "\"measurement_value\":";
   response += valid ? String(tempF, 2) : "null";

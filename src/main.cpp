@@ -483,7 +483,7 @@ void stopPhysicalButtonWatering(
 void handlePhysicalButton(unsigned long now) {
   bool rawPressed = physicalButtonReadPressed();
   bool reservoirLiquidDetected = true;
-#if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
+#if MBG_SEN0204_WATERING_INTERLOCK_ENABLED
   reservoirLiquidDetected = gen2Sen0204LiquidDetected();
 #endif
 
@@ -496,7 +496,7 @@ void handlePhysicalButton(unsigned long now) {
 
   switch (action.type) {
     case LocalButtonProgramActionType::StartProgram:
-      if (MBG_PUMP_CONTROL_AVAILABLE && MBG_DEVICE_CAN_WATER) {
+      if (MBG_WATERING_OUTPUT_AVAILABLE && MBG_DEVICE_CAN_WATER) {
         startPhysicalButtonWatering(now, requestedDurationSeconds);
       }
       break;
@@ -672,14 +672,21 @@ bool sendWateringEventToSupabaseAt(
   postData += "\"build_profile\":\"" + String(MBG_BUILD_PROFILE) + "\",";
   postData += "\"device_label\":\"" + String(DEVICE_LABEL) + "\",";
   postData += "\"details\":{";
-  postData += "\"phase\":\"8G.2\",";
+  postData += "\"phase\":\"" + String(MBG_EVIDENCE_PHASE) + "\",";
   postData += "\"source\":\"firmware\",";
   postData += "\"uptime_seconds\":" + String(millis() / 1000);
+#if MBG_WATERING_OUTPUT_IS_SIMULATION
+  postData += ",\"simulation\":true";
+  postData += ",\"watering_mode\":\"simulated_watering\"";
+  postData += ",\"output_type\":\"relay_led\"";
+  postData += ",\"pump_present\":false";
+  postData += ",\"water_delivery\":false";
+#endif
   if (requestedDurationSeconds > 0) {
     postData += ",\"requested_duration_seconds\":" + String(requestedDurationSeconds);
     postData += ",\"button_program\":\"" + String(requestedDurationSeconds) + "_second\"";
   }
-#if MBG_SEN0204_PUMP_INTERLOCK_ENABLED
+#if MBG_SEN0204_WATERING_INTERLOCK_ENABLED
   if (strcmp(reason, "reservoir_liquid_not_detected") == 0 ||
       strcmp(reason, "reservoir_liquid_lost") == 0) {
     postData += ",\"physical_sensor_id\":\"WL01\"";
@@ -1103,7 +1110,7 @@ void setup() {
 
   // Initialize installed Gen2 hardware.
   gen2Begin();
-  if (MBG_PUMP_CONTROL_AVAILABLE) {
+  if (MBG_WATERING_OUTPUT_AVAILABLE) {
     pinMode(RELAY_PIN, OUTPUT);
     digitalWrite(RELAY_PIN, LOW);
   }
@@ -1143,7 +1150,7 @@ void loop() {
 
   // Local button cancellation, programmed completion, and reservoir cutoff are
   // evaluated before client/server, network, event delivery, or telemetry work.
-  // Do no synchronous network work while the pump is active.
+  // Do no synchronous network work while the controlled watering output is active.
   if (isWatering) {
     return;
   }
