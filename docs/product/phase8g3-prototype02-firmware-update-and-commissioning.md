@@ -2,7 +2,7 @@
 
 ## Status
 
-Complete and runtime validated on 2026-08-25. Jeremy approved Stage 9 commit and push after reviewing the Stage 8 outcome. This record does not claim a frontend deployment or B02 upload.
+Complete, deployed, and hosted-validated on 2026-08-25. Jeremy approved Stage 9 commit and push after reviewing the Stage 8 outcome, then confirmed the deployed authenticated Support view showed Prototype02 readings and the simulation-specific watering-event presentation. B02 was not uploaded during this phase.
 
 ## Outcome
 
@@ -48,7 +48,7 @@ P02 is watering capable for physical and software controller-path testing, inclu
 - physical water delivery unavailable;
 - local firmware remains the only control authority.
 
-Every simulated event records `simulation:true`, `watering_mode:simulated_watering`, `output_type:relay_led`, `pump_present:false`, and `water_delivery:false`. The frontend adapter distinguishes P02's new event evidence as a simulated button cycle in the changed local source. That frontend change is validated locally but is not claimed deployed.
+Every simulated event records `simulation:true`, `watering_mode:simulated_watering`, `output_type:relay_led`, `pump_present:false`, and `water_delivery:false`. The frontend adapter distinguishes P02's event evidence as a simulated button cycle. Jeremy confirmed the deployed authenticated Support view showed `Simulated Button Cycle` and `Simulated Reservoir Safety Stop` evidence for Prototype02 on 2026-08-25.
 
 ## Firmware And Endpoint Contract
 
@@ -125,4 +125,4 @@ Historical documentation continues to mention Prototype01, Bench01, `bench-proto
 
 ## Closeout Boundary
 
-Stage 8 runtime validation and documentation are complete. B02 retains its Phase 8G.2 firmware and was not uploaded, cycled, or otherwise mutated during Phase 8G.3. P02 frontend wording changes are not claimed deployed. Jeremy separately approved Stage 9 commit and push on 2026-08-25.
+Phase 8G.3 is operationally closed. Stage 8 runtime validation passed, Jeremy approved Stage 9 commit and push, commit `7d3cb6c` was pushed to `main`, and Jeremy then confirmed the deployed authenticated Support view showed Prototype02 readings plus the simulation-specific watering-event wording on 2026-08-25. B02 retains its Phase 8G.2 firmware and was not uploaded, cycled, or otherwise mutated during Phase 8G.3.
