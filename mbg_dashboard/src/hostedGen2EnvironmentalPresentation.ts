@@ -37,6 +37,7 @@ export type HostedGen2EnvironmentalScale = {
   key: HostedGen2EnvironmentalScaleKey
   label: string
   positionPercent: number | null
+  background?: string
 }
 
 export const formatHostedGen2CardMeasurementValue = (
@@ -64,6 +65,38 @@ export type HostedGen2EnvironmentalPresentation = {
   label: string
   tone: Exclude<HostedGen2EnvironmentalTone, 'neutral'>
 }
+
+export type RelativeMoistureConditionBand = HostedGen2EnvironmentalPresentation & {
+  upperBound: number | null
+  upperInclusive: boolean
+  scaleColor: string
+}
+
+// The single frontend authority for interpreting an unrounded Revised RMI value.
+export const REVISED_RMI_CONDITION_BANDS: ReadonlyArray<RelativeMoistureConditionBand> = [
+  { upperBound: 35, upperInclusive: true, label: 'Too Dry', tone: 'moisture-too-dry', scaleColor: '#d2ad72' },
+  { upperBound: 55, upperInclusive: true, label: 'Dry', tone: 'moisture-dry', scaleColor: '#d3c986' },
+  { upperBound: 100, upperInclusive: false, label: 'Moist', tone: 'moisture-moist', scaleColor: '#a7c987' },
+  { upperBound: 225, upperInclusive: true, label: 'Well-watered', tone: 'moisture-well-watered', scaleColor: '#64aaa0' },
+  { upperBound: 235, upperInclusive: false, label: 'Very Wet', tone: 'moisture-very-wet', scaleColor: '#36869a' },
+  { upperBound: null, upperInclusive: true, label: 'Saturated', tone: 'moisture-saturated', scaleColor: '#1f6694' },
+]
+
+const REVISED_RMI_SCALE_LOWER_BOUND = 0
+const REVISED_RMI_SCALE_UPPER_BOUND = 250
+const REVISED_RMI_SCALE_BOUNDARIES = [
+  REVISED_RMI_SCALE_LOWER_BOUND,
+  ...REVISED_RMI_CONDITION_BANDS.flatMap(({ upperBound }) => upperBound === null ? [] : [upperBound]),
+  REVISED_RMI_SCALE_UPPER_BOUND,
+]
+
+export const REVISED_RMI_SCALE_BACKGROUND = `linear-gradient(90deg, ${
+  REVISED_RMI_CONDITION_BANDS.flatMap(({ scaleColor }, index) => {
+    const start = 100 * index / REVISED_RMI_CONDITION_BANDS.length
+    const end = 100 * (index + 1) / REVISED_RMI_CONDITION_BANDS.length
+    return [`${scaleColor} ${start}%`, `${scaleColor} ${end}%`]
+  }).join(', ')
+})`
 
 export const getHostedGen2EnvironmentalPresentation = (
   measurementName: string | null | undefined,
@@ -101,12 +134,9 @@ export const getRelativeMoisturePresentation = (
   value: number,
 ): HostedGen2EnvironmentalPresentation | null => {
   if (!Number.isFinite(value)) return null
-  if (value <= 35) return { label: 'Too Dry', tone: 'moisture-too-dry' }
-  if (value <= 55) return { label: 'Dry', tone: 'moisture-dry' }
-  if (value <= 85) return { label: 'Moist', tone: 'moisture-moist' }
-  if (value <= 140) return { label: 'Well-watered', tone: 'moisture-well-watered' }
-  if (value <= 180) return { label: 'Very Wet', tone: 'moisture-very-wet' }
-  return { label: 'Saturated', tone: 'moisture-saturated' }
+  const band = REVISED_RMI_CONDITION_BANDS.find(({ upperBound, upperInclusive }) =>
+    upperBound === null || value < upperBound || (upperInclusive && value === upperBound))
+  return band ? { label: band.label, tone: band.tone } : null
 }
 
 export const getHostedGen2EnvironmentalScale = (
@@ -137,7 +167,12 @@ export const getHostedGen2EnvironmentalScale = (
     case 'soil temp':
       return rangedScale('soil-temperature', 'Root-zone temperature scale from cold to hot', finiteValue, 10, 130)
     case 'moisture_index':
-      return rangedScale('moisture', 'Moisture scale from overdue-dry to saturated', finiteValue, 0, 180)
+      return {
+        key: 'moisture',
+        label: 'Moisture scale from overdue-dry to saturated',
+        positionPercent: finiteValue === null ? null : getRelativeMoistureScalePosition(finiteValue),
+        background: REVISED_RMI_SCALE_BACKGROUND,
+      }
     case 'reservoir_liquid_detected':
       return rangedScale('reservoir', 'Reservoir scale from refill to water detected', finiteValue, 0, 1)
     default:
@@ -165,6 +200,16 @@ const getLightScalePosition = (value: number): number => {
   if (value < 10000) return positionWithinBand(value, 2500, 10000, 2)
   if (value < 25000) return positionWithinBand(value, 10000, 25000, 3)
   return positionWithinBand(value, 25000, 65535, 4)
+}
+
+const getRelativeMoistureScalePosition = (value: number): number => {
+  const bandIndex = REVISED_RMI_CONDITION_BANDS.findIndex(({ upperBound, upperInclusive }) =>
+    upperBound === null || value < upperBound || (upperInclusive && value === upperBound))
+  const safeBandIndex = bandIndex < 0 ? REVISED_RMI_CONDITION_BANDS.length - 1 : bandIndex
+  const min = REVISED_RMI_SCALE_BOUNDARIES[safeBandIndex]
+  const max = REVISED_RMI_SCALE_BOUNDARIES[safeBandIndex + 1]
+  const bandWidth = 100 / REVISED_RMI_CONDITION_BANDS.length
+  return clampPercent(safeBandIndex * bandWidth + bandWidth * (value - min) / (max - min))
 }
 
 const positionWithinBand = (

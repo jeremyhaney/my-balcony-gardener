@@ -500,9 +500,12 @@ const EnvironmentalScalePill = ({
     ? `Current condition: ${conditionLabel}`
     : 'Current condition unavailable'
   const accessibleLabel = `${scale.label}. ${currentDescription}.`
-  const style = scale.positionPercent === null
-    ? undefined
-    : { '--condition-scale-position': `${scale.positionPercent}%` } as CSSProperties
+  const style = {
+    ...(scale.background ? { background: scale.background } : {}),
+    ...(scale.positionPercent === null
+      ? {}
+      : { '--condition-scale-position': `${scale.positionPercent}%` }),
+  } as CSSProperties
 
   return (
     <span

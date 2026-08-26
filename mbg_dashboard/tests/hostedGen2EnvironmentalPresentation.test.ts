@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   formatHostedGen2CardMeasurementValue,
+  REVISED_RMI_CONDITION_BANDS,
+  REVISED_RMI_SCALE_BACKGROUND,
   getHostedGen2EnvironmentalPresentation,
   getHostedGen2CardPillLabel,
   getHostedGen2EnvironmentalScale,
@@ -99,11 +101,11 @@ test('uses exact humidity bands and a non-judgmental pressure presentation', () 
 
 test('uses the revised exact unclamped RMI condition boundaries', () => {
   const cases: ReadonlyArray<[number, string]> = [
-    [-1, 'Too Dry'], [0, 'Too Dry'], [35, 'Too Dry'], [35.01, 'Dry'],
-    [55, 'Dry'], [55.01, 'Moist'], [85, 'Moist'], [85.01, 'Well-watered'],
-    [100, 'Well-watered'], [108, 'Well-watered'], [121, 'Well-watered'],
-    [131, 'Well-watered'], [140, 'Well-watered'], [140.01, 'Very Wet'],
-    [180, 'Very Wet'], [180.01, 'Saturated'],
+    [-1, 'Too Dry'], [34.99, 'Too Dry'], [35, 'Too Dry'], [35.01, 'Dry'],
+    [54.99, 'Dry'], [55, 'Dry'], [55.01, 'Moist'], [99.99, 'Moist'],
+    [100, 'Well-watered'], [100.01, 'Well-watered'], [224.99, 'Well-watered'],
+    [225, 'Well-watered'], [225.01, 'Very Wet'], [234.99, 'Very Wet'],
+    [235, 'Saturated'], [235.01, 'Saturated'], [300, 'Saturated'],
   ]
 
   for (const [value, expectedLabel] of cases) {
@@ -119,24 +121,44 @@ test('uses the revised exact unclamped RMI condition boundaries', () => {
   assert.deepEqual(getRelativeMoisturePresentation(56), {
     label: 'Moist', tone: 'moisture-moist',
   })
-  assert.deepEqual(getRelativeMoisturePresentation(108), {
+  assert.deepEqual(getRelativeMoisturePresentation(100), {
     label: 'Well-watered', tone: 'moisture-well-watered',
   })
-  assert.deepEqual(getRelativeMoisturePresentation(141), {
+  assert.deepEqual(getRelativeMoisturePresentation(225.01), {
     label: 'Very Wet', tone: 'moisture-very-wet',
   })
-  assert.deepEqual(getRelativeMoisturePresentation(181), {
+  assert.deepEqual(getRelativeMoisturePresentation(235), {
     label: 'Saturated', tone: 'moisture-saturated',
   })
+
+  assert.deepEqual(REVISED_RMI_CONDITION_BANDS.map(({ upperBound, upperInclusive, label }) => ({
+    upperBound, upperInclusive, label,
+  })), [
+    { upperBound: 35, upperInclusive: true, label: 'Too Dry' },
+    { upperBound: 55, upperInclusive: true, label: 'Dry' },
+    { upperBound: 100, upperInclusive: false, label: 'Moist' },
+    { upperBound: 225, upperInclusive: true, label: 'Well-watered' },
+    { upperBound: 235, upperInclusive: false, label: 'Very Wet' },
+    { upperBound: null, upperInclusive: true, label: 'Saturated' },
+  ])
 })
 
 test('provides a complete scale and bounded current-position marker for every card family', () => {
   assert.deepEqual(getHostedGen2EnvironmentalScale('moisture_index', 0), {
     key: 'moisture', label: 'Moisture scale from overdue-dry to saturated', positionPercent: 0,
+    background: REVISED_RMI_SCALE_BACKGROUND,
   })
-  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 90).positionPercent, 50)
-  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 180).positionPercent, 100)
-  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 200).positionPercent, 100)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 35).positionPercent, 100 / 6)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 55).positionPercent, 200 / 6)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 100).positionPercent, 50)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 225).positionPercent, 400 / 6)
+  assert.ok((getHostedGen2EnvironmentalScale('moisture_index', 225.01).positionPercent ?? 0) > 400 / 6)
+  assert.ok(Math.abs(
+    (getHostedGen2EnvironmentalScale('moisture_index', 235).positionPercent ?? 0) - 500 / 6,
+  ) < Number.EPSILON * 100)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 250).positionPercent, 100)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 300).positionPercent, 100)
+  assert.equal(getHostedGen2EnvironmentalScale('moisture_index', 100).background, REVISED_RMI_SCALE_BACKGROUND)
   assert.equal(getHostedGen2EnvironmentalScale('ambient_light', 0).positionPercent, 0)
   assert.equal(getHostedGen2EnvironmentalScale('ambient_light', 99).positionPercent, 19.8)
   assert.equal(getHostedGen2EnvironmentalScale('ambient_light', 100).positionPercent, 20)

@@ -28,7 +28,7 @@ RMI is an index, not a moisture percentage and not laboratory-calibrated volumet
 
 RMI is intentionally unclamped. Negative values describe conditions drier than the ordinary reference range, and values above `100` describe wetter conditions. RMI `100` is an adequately watered reference, not a maximum. A negative or otherwise out-of-band RMI is not independently an electrical fault; provider validity, electrical plausibility, presentation eligibility, quality, freshness, and evidence-state handling remain separate.
 
-Each reading describes the soil immediately around its probe. Roots and rootballs, soil packing, probe contact, emitter placement, sun exposure, drainage, plant consumption, and water distribution can create legitimate differences among installed probes. A normal four-cycle watering event produced revised readings near `108`, `121`, and `131`. The deliberately broad `Well-watered` band keeps all three reassuring instead of manufacturing conflicting conditions from ordinary local variation.
+Each reading describes the soil immediately around its probe. Roots and rootballs, soil packing, probe contact, emitter placement, sun exposure, drainage, plant consumption, and water distribution can create legitimate differences among installed probes. A normal four-cycle watering event produced revised readings near `108`, `121`, and `131`, which remain within the `Well-watered` band.
 
 ## Condition bands
 
@@ -38,12 +38,12 @@ Classification uses the unrounded calculated RMI. The card rounds only after cla
 | ---: | --- | --- |
 | `≤ 35` | Too Dry | Watering is overdue |
 | `> 35` and `≤ 55` | Dry | Watering is due |
-| `> 55` and `≤ 85` | Moist | Usable moisture remains |
-| `> 85` and `≤ 140` | Well-watered | Adequately watered; ordinary probe differences remain reassuring |
-| `> 140` and `≤ 180` | Very Wet | Wetter than normally necessary |
-| `> 180` | Saturated | Exceptional saturation-like evidence |
+| `> 55` and `< 100` | Moist | Usable moisture remains |
+| `≥ 100` and `≤ 225` | Well-watered | Adequately watered |
+| `> 225` and `< 235` | Very Wet | Wetter than normally necessary |
+| `≥ 235` | Saturated | Exceptional saturation-like evidence |
 
-`Saturated` is intentionally reserved for evidence substantially wetter than the observed normal watering event. These descriptions are presentation bands, not separate watering-control thresholds.
+`Saturated` is reserved for RMI `235` or greater. Values above `225` but below `235` are `Very Wet`. These descriptions are presentation bands, not separate watering-control thresholds.
 
 ## Provisional watering-due context
 
@@ -54,6 +54,7 @@ This context does not give the hosted frontend watering authority and does not c
 ## Implementation behavior
 
 - Current moisture cards, card trends, historical series, chart tooltips, condition labels, condition colors, and Support details use the same shared direct derivation.
+- The frontend condition table is the single authority for labels, tones, boundary inclusivity, and the six visually distinct gauge segments.
 - Derived RMI retains the exact source row's timestamp and evidence metadata and is unavailable when that raw source has no usable numeric value.
 - Raw ADC remains visible only as Support engineering evidence; ordinary gardener-facing cards and charts show the RMI as an `index` without raw ADC or formula detail.
 - Current cards preserve whole-index display rounding. Historical tooltips preserve their existing one-decimal maximum. Neither path clamps the calculated value.

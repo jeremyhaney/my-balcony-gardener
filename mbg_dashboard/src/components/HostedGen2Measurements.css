@@ -482,10 +482,6 @@
   background: linear-gradient(90deg, #c4b5e4 0%, #9c82ce 50%, #6f4fad 100%);
 }
 
-.hosted-gen2-measurements-scale-pill.is-moisture {
-  background: linear-gradient(90deg, #d2ad72 0%, #d3c986 25%, #a7c987 50%, #64aaa0 75%, #1f6694 100%);
-}
-
 .hosted-gen2-measurements-scale-pill.is-reservoir {
   background: linear-gradient(90deg, #b95f5f 0%, #d8c6a0 50%, #4f9b68 100%);
 }

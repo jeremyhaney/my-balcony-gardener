@@ -80,6 +80,16 @@ test('classifies the unrounded RMI before whole-number card display rounding', (
   assert.equal(getRelativeMoisturePresentation(55)?.label, 'Dry')
 })
 
+test('does not let whole-number display rounding cross the upper wet-band boundaries', () => {
+  assert.equal(formatGardenerMoistureIndexCardValue(99.99), '100 index')
+  assert.equal(getRelativeMoisturePresentation(99.99)?.label, 'Moist')
+  assert.equal(getRelativeMoisturePresentation(100)?.label, 'Well-watered')
+
+  assert.equal(formatGardenerMoistureIndexCardValue(234.99), '235 index')
+  assert.equal(getRelativeMoisturePresentation(234.99)?.label, 'Very Wet')
+  assert.equal(getRelativeMoisturePresentation(235)?.label, 'Saturated')
+})
+
 test('does not turn an eligible negative RMI into a sensor fault or clamp it', () => {
   const rawRow = row({ measurement_value: 14820 })
   const derived = deriveGardenerMoistureIndexRow(rawRow)
