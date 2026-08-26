@@ -1,4 +1,4 @@
-import { DEVICE_REGISTRY, type DeviceKey } from './deviceRegistry'
+import { DEVICE_REGISTRY, type DeviceKey } from './deviceRegistry.ts'
 
 export type HistoryDeviceKey = string
 export type HistoryWindowKey =
@@ -84,6 +84,22 @@ export const HISTORY_WINDOW_OPTIONS: HistoryWindowOption[] = [
 ]
 
 const DEFAULT_WINDOW_KEY: HistoryWindowKey = '24h'
+const PUBLIC_DEMO_WINDOW_KEYS: ReadonlySet<HistoryWindowKey> = new Set([
+  '3h',
+  '6h',
+  '12h',
+  '24h',
+])
+
+export const isPublicDemoHistoryWindowAvailable = (
+  key: HistoryWindowKey,
+): boolean => PUBLIC_DEMO_WINDOW_KEYS.has(key)
+
+export const constrainPublicDemoHistoryWindow = (
+  option: HistoryWindowOption,
+): HistoryWindowOption => isPublicDemoHistoryWindowAvailable(option.key)
+  ? option
+  : getHistoryWindowOption(DEFAULT_WINDOW_KEY)!
 
 export const getHistoryDeviceOption = (
   key: string | null,

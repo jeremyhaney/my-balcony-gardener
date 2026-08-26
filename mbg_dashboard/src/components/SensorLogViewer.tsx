@@ -16,6 +16,8 @@ import {
   getHistoryDeviceOptionsForDeviceKeys,
   getHistoryWindowOption,
   HISTORY_WINDOW_OPTIONS,
+  constrainPublicDemoHistoryWindow,
+  isPublicDemoHistoryWindowAvailable,
   type HistoryDeviceOption,
   type HistoryDeviceKey,
   type HistoryWindowOption,
@@ -40,6 +42,7 @@ import HostedWateringEvents from './HostedWateringEvents'
 import SensorHealthPanel from './SensorHealthPanel'
 
 const HISTORY_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+const PUBLIC_DEMO_REFRESH_INTERVAL_MS = 15 * 60 * 1000
 const HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE = 8
 const DEMO_DEVICE_OPTIONS = getHistoryDeviceOptionsForDeviceKeys(
   PHASE_7L1_PILOT_CUSTOMER_SITE.deviceKeys,
@@ -95,8 +98,16 @@ const SensorLogViewer = ({
     () => getHistoryControlStateFromUrl(DEMO_DEVICE_OPTIONS).device,
   )
   const [selectedWindow, setSelectedWindow] = useState<HistoryWindowOption>(
-    () => getHistoryControlStateFromUrl(DEMO_DEVICE_OPTIONS).window,
+    () => {
+      const initialWindow = getHistoryControlStateFromUrl(DEMO_DEVICE_OPTIONS).window
+      return hostedDataScope === 'demo'
+        ? constrainPublicDemoHistoryWindow(initialWindow)
+        : initialWindow
+    },
   )
+  const effectiveHistoryWindow = hostedDataScope === 'demo'
+    ? constrainPublicDemoHistoryWindow(selectedWindow)
+    : selectedWindow
 
   useEffect(() => {
     if (!isProtectedHostedScope) {
@@ -214,10 +225,10 @@ const SensorLogViewer = ({
       isRefreshRunning = true
       setIsRefreshing(true)
 
-      const lowerBoundIso = selectedWindow.getLowerBoundIso(new Date())
+      const lowerBoundIso = effectiveHistoryWindow.getLowerBoundIso(new Date())
       const hostedGen2Request = fetchHostedGen2Measurements(selectedDevice.deviceId, {
         startTime: lowerBoundIso,
-        limit: Math.max(1000, selectedWindow.limit * HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE),
+        limit: Math.max(1000, effectiveHistoryWindow.limit * HOSTED_GEN2_ROWS_PER_HISTORY_ROW_ESTIMATE),
         scope: hostedDataScope,
       })
         .then((rows) => ({ rows, error: null }))
@@ -287,7 +298,9 @@ const SensorLogViewer = ({
         if (!document.hidden) {
           void loadHistory()
         }
-      }, HISTORY_REFRESH_INTERVAL_MS)
+      }, hostedDataScope === 'demo'
+        ? PUBLIC_DEMO_REFRESH_INTERVAL_MS
+        : HISTORY_REFRESH_INTERVAL_MS)
     }
 
     const handleVisibilityChange = () => {
@@ -323,7 +336,7 @@ const SensorLogViewer = ({
     isAuthorizedDevicesLoading,
     isProtectedHostedScope,
     selectedDevice,
-    selectedWindow,
+    effectiveHistoryWindow,
   ])
 
   useEffect(() => {
@@ -334,7 +347,9 @@ const SensorLogViewer = ({
 
       const nextControlState = getHistoryControlStateFromUrl(deviceOptions)
       setSelectedDevice(nextControlState.device)
-      setSelectedWindow(nextControlState.window)
+      setSelectedWindow(hostedDataScope === 'demo'
+        ? constrainPublicDemoHistoryWindow(nextControlState.window)
+        : nextControlState.window)
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -342,7 +357,7 @@ const SensorLogViewer = ({
     return () => {
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [deviceOptions])
+  }, [deviceOptions, hostedDataScope])
 
   useEffect(() => {
     if (!openDeviceStatusPanel) {
@@ -387,6 +402,10 @@ const SensorLogViewer = ({
       return
     }
 
+    if (hostedDataScope === 'demo' && !isPublicDemoHistoryWindowAvailable(nextWindow.key)) {
+      return
+    }
+
     setSelectedWindow(nextWindow)
     updateHistoryControlUrl(selectedDevice.key, nextWindow.key)
   }
@@ -408,7 +427,7 @@ const SensorLogViewer = ({
     ? null
     : calculateHostedGen2Health(
         hostedGen2Rows,
-        selectedWindow.key,
+        effectiveHistoryWindow.key,
         new Date(),
         hostedDataScope === 'support' ? capabilityCardDescriptors : undefined,
       )
@@ -467,18 +486,22 @@ const SensorLogViewer = ({
     >
       <span>Window</span>
       <select
-        value={selectedWindow.key}
+        value={effectiveHistoryWindow.key}
         onChange={handleWindowChange}
         style={{
           minWidth: '140px',
           padding: '0.3rem 0.45rem',
         }}
       >
-        {HISTORY_WINDOW_OPTIONS.map((option) => (
-          <option key={option.key} value={option.key}>
-            {option.label}
-          </option>
-        ))}
+        {HISTORY_WINDOW_OPTIONS.map((option) => {
+          const isCustomerOnly = hostedDataScope === 'demo' &&
+            !isPublicDemoHistoryWindowAvailable(option.key)
+          return (
+            <option disabled={isCustomerOnly} key={option.key} value={option.key}>
+              {option.label}{isCustomerOnly ? ' — customer only' : ''}
+            </option>
+          )
+        })}
       </select>
     </label>
   )
@@ -518,7 +541,7 @@ const SensorLogViewer = ({
         marginBottom: 0,
       }}
     >
-      {deviceControl}
+      {hostedDataScope === 'demo' ? null : deviceControl}
       {refreshControl}
     </div>
   )
@@ -576,15 +599,17 @@ const SensorLogViewer = ({
         />
       ) : null}
 
-      <DeviceDiagnosticsPanel
-        diagnostics={diagnostics}
-        error={diagnosticsError}
-        fallbackDeviceLabel={selectedDeviceLabel}
-        isOpen={openDeviceStatusPanel === 'diagnostics'}
-        onOpenChange={(isOpen) =>
-          setOpenDeviceStatusPanel(isOpen ? 'diagnostics' : null)
-        }
-      />
+      {hostedDataScope === 'support' ? (
+        <DeviceDiagnosticsPanel
+          diagnostics={diagnostics}
+          error={diagnosticsError}
+          fallbackDeviceLabel={selectedDeviceLabel}
+          isOpen={openDeviceStatusPanel === 'diagnostics'}
+          onOpenChange={(isOpen) =>
+            setOpenDeviceStatusPanel(isOpen ? 'diagnostics' : null)
+          }
+        />
+      ) : null}
     </div>
   )
 
@@ -614,7 +639,7 @@ const SensorLogViewer = ({
           assignedDevices={deviceOptions}
         />
       ) : null}
-      {hostedDeviceControl}
+      {hostedDataScope === 'demo' ? null : hostedDeviceControl}
       {deviceStatusPanels}
       {supportCapabilityState ?? (
         <>
@@ -627,12 +652,12 @@ const SensorLogViewer = ({
             className={getDemoGuideTargetClass('readings')}
             supportEvidencePolicy={hostedDataScope === 'support'}
             deviceReportingActive={deviceReportingActive}
-            showSupportEngineering={hostedDataScope !== 'customer'}
+            showSupportEngineering={hostedDataScope === 'support'}
           />
           <HostedGen2TrendChart
             rows={hostedGen2Rows}
             seriesDescriptors={hostedDataScope === 'support' ? capabilityChartSeriesDescriptors : undefined}
-            historyWindowKey={selectedWindow.key}
+            historyWindowKey={effectiveHistoryWindow.key}
             isLoading={isHostedGen2Loading}
             error={hostedGen2Error}
             controls={hostedWindowControl}

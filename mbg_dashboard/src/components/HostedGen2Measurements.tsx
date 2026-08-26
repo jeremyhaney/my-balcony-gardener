@@ -234,6 +234,7 @@ const HostedGen2Measurements = ({
                     error={error}
                     evidence={evidence}
                     key={evidence.metric}
+                    showSupportEngineering={showSupportEngineering}
                     transportState={transportState}
                     trendRows={derivedAirTrendRows.get(evidence.metric) ?? []}
                   />
@@ -252,11 +253,13 @@ const DerivedAirCard = ({
   transportState,
   error,
   trendRows,
+  showSupportEngineering,
 }: {
   evidence: DerivedAirMetricEvidence
   transportState: TransportState
   error: string | null
   trendRows: HostedGen2MeasurementRow[]
+  showSupportEngineering: boolean
 }) => {
   const label = evidence.metric === 'feels-like' ? 'Feels Like' : 'Dew Point'
   const displayLabel = transportState === 'loading'
@@ -360,32 +363,36 @@ const DerivedAirCard = ({
           <dl className="hosted-gen2-measurements-status">
             <dt>State</dt>
             <dd>{displayLabel}</dd>
-            <dt>Consecutive pair failures</dt>
-            <dd>{evidence.failureCount.count === 0
-              ? 'None'
-              : `${evidence.failureCount.isLowerBound ? 'At least ' : ''}${evidence.failureCount.count}`}</dd>
-            <dt>Method</dt>
-            <dd>{formatDerivedAirMethod(evidence.reading?.method, evidence.metric)}</dd>
-            <dt>Calculation units</dt>
-            <dd>{evidence.metric === 'dew-point' ? '°F → °C → °F; relative humidity in %' : '°F and relative humidity in %'}</dd>
-            <dt>Formula</dt>
-            <dd>{evidence.metric === 'dew-point'
-              ? 'WMO Magnus water-phase constants 17.62 and 243.12 °C'
-              : 'NWS Heat Index with approved air-temperature fallback'}</dd>
-            <dt>Displayed measured at</dt>
+            <dt>Latest reading time</dt>
             <dd>{formatTimestamp(evidence.reading?.pair.measuredAt ?? null)}</dd>
-            <dt>Source batch ID</dt>
-            <dd>{pair?.batchId ?? 'Not available'}</dd>
-            <dt>Source device</dt>
-            <dd>{pair?.deviceId ?? 'Not available'}</dd>
-            <dt>Source measured at</dt>
-            <dd>{formatTimestamp(pair?.measuredAt ?? null)}</dd>
-            <dt>Source stored at</dt>
-            <dd>{formatTimestamp(pair?.batchCreatedAt ?? null)}</dd>
-            <dt>Air temperature source</dt>
-            <dd>{pair ? formatMeasurementValue(pair.temperatureRow) : 'Not available'}</dd>
-            <dt>Humidity source</dt>
-            <dd>{pair ? formatMeasurementValue(pair.humidityRow) : 'Not available'}</dd>
+            {showSupportEngineering ? (
+              <>
+                <dt>Consecutive pair failures</dt>
+                <dd>{evidence.failureCount.count === 0
+                  ? 'None'
+                  : `${evidence.failureCount.isLowerBound ? 'At least ' : ''}${evidence.failureCount.count}`}</dd>
+                <dt>Method</dt>
+                <dd>{formatDerivedAirMethod(evidence.reading?.method, evidence.metric)}</dd>
+                <dt>Calculation units</dt>
+                <dd>{evidence.metric === 'dew-point' ? '°F → °C → °F; relative humidity in %' : '°F and relative humidity in %'}</dd>
+                <dt>Formula</dt>
+                <dd>{evidence.metric === 'dew-point'
+                  ? 'WMO Magnus water-phase constants 17.62 and 243.12 °C'
+                  : 'NWS Heat Index with approved air-temperature fallback'}</dd>
+                <dt>Source batch ID</dt>
+                <dd>{pair?.batchId ?? 'Not available'}</dd>
+                <dt>Source device</dt>
+                <dd>{pair?.deviceId ?? 'Not available'}</dd>
+                <dt>Source measured at</dt>
+                <dd>{formatTimestamp(pair?.measuredAt ?? null)}</dd>
+                <dt>Source stored at</dt>
+                <dd>{formatTimestamp(pair?.batchCreatedAt ?? null)}</dd>
+                <dt>Air temperature source</dt>
+                <dd>{pair ? formatMeasurementValue(pair.temperatureRow) : 'Not available'}</dd>
+                <dt>Humidity source</dt>
+                <dd>{pair ? formatMeasurementValue(pair.humidityRow) : 'Not available'}</dd>
+              </>
+            ) : null}
           </dl>
         </details>
         <EnvironmentalScalePill
@@ -566,6 +573,20 @@ const MeasurementDetails = ({
   showSupportEngineering: boolean
 }) => {
   const row = card.latestRow
+
+  if (!showSupportEngineering) {
+    return (
+      <details className="hosted-gen2-measurements-details">
+        <summary>Reading details</summary>
+        <dl className="hosted-gen2-measurements-status">
+          <dt>State</dt>
+          <dd>{card.evidencePolicy?.label ?? card.reservoirState ?? card.state ?? 'Reading Unavailable'}</dd>
+          <dt>Latest reading time</dt>
+          <dd>{formatTimestamp(card.latestPackageMeasuredAt)}</dd>
+        </dl>
+      </details>
+    )
+  }
 
   return (
     <details className="hosted-gen2-measurements-details">

@@ -21,7 +21,7 @@ const PublicLandingPage = ({
           My Balcony Gardener
         </a>
         <div className="public-landing-nav-links">
-          <a href="/demo">Demo</a>
+          <a href="/demo">Live Example</a>
           <a href="/mygarden">My Garden</a>
           <button
             className="public-landing-login"
@@ -46,7 +46,7 @@ const PublicLandingPage = ({
             Monitor current conditions and watering history from your garden.
           </p>
           <a className="public-landing-primary-action" href="/demo">
-            View detailed demo
+            View live garden example
           </a>
         </div>
 

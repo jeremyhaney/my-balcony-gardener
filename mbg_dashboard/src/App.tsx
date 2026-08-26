@@ -84,9 +84,9 @@ const HostedReadonlyRoutes = () => {
 
     return (
       <HostedPageShell
-        eyebrow="Live Demo"
+        eyebrow="Live Example"
         title="Live garden data from Jeremy's balcony"
-        description="A detailed look at real growing conditions"
+        description="A customer-facing view of real growing conditions"
         onLoginClick={() => setIsLoginOpen(true)}
         onSignOut={handleSignOut}
         session={session}
@@ -260,8 +260,7 @@ type DemoGuideStep = {
 
 const DEMO_GUIDE_STEPS: DemoGuideStep[] = [
   { target: "readings", label: "Check current garden readings." },
-  { target: "status", label: "Open device status and diagnostics." },
-  { target: "device", label: "Change between garden units." },
+  { target: "status", label: "Review garden reading quality." },
   { target: "window", label: "Change the history window." },
   { target: "chart", label: "Choose which readings appear on the chart." },
 ];
@@ -346,7 +345,7 @@ const SiteNav = ({ onLoginClick, onSignOut, session }: SiteNavProps) => (
       My Balcony Gardener
     </a>
     <div className="site-nav-links">
-      <a href="/demo">Demo</a>
+      <a href="/demo">Live Example</a>
       <a href="/mygarden">My Garden</a>
       {session ? (
         <button className="site-nav-login" onClick={onSignOut} type="button">

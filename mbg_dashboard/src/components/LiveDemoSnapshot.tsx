@@ -142,7 +142,7 @@ const LiveDemoSnapshot = () => {
       ) : null}
 
       <a className="live-demo-snapshot-link" href="/demo">
-        View detailed demo
+        View live garden example
       </a>
     </section>
   );
