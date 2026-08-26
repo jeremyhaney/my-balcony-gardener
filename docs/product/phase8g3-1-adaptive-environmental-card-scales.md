@@ -14,7 +14,7 @@ The environmental reading cards are now the visible scales rather than single-co
 - gives the current condition neighborhood the dominant central field;
 - blends between neighboring conditions instead of presenting equal hard stoplight bands;
 - retains the explicit gardener-facing condition pill and numeric value;
-- includes a small `lower / current range / higher` orientation cue;
+- includes a compact full-scale mini-map with a marker at the exact current position;
 - exposes an accessible scale description and current-condition label.
 
 This presentation intentionally communicates fuzzy environmental interpretation. Temperature, light, humidity, dew point, soil moisture, and related weather/garden conditions have useful neighborhoods and gradual transitions even though their classification functions retain deterministic boundaries. The adaptive background does not change any measurement, threshold, classification, trend, or evidence-state rule.
@@ -29,7 +29,7 @@ The existing Phase 8C.5 and Phase 8G.1 environmental presentation authorities re
 - ordinary sensor cards and the derived Feels Like and Dew Point cards share the same treatment;
 - unavailable/neutral cards retain the established evidence presentation rather than inventing an environmental interpretation.
 
-The card condition pill remains the primary concise text interpretation. The background is supporting context, not the sole carrier of meaning.
+The card condition pill remains the primary concise text interpretation. The adaptive background supplies an enlarged fuzzy-condition view, while the compact scale pill acts as a full-range `you are here` mini-map. The background is supporting context, not the sole carrier of meaning.
 
 ## Reservoir exception
 
@@ -42,6 +42,7 @@ This is presentation behavior only. The firmware reservoir start block, active-r
 ## Accessibility and responsive behavior
 
 - Adaptive cards receive an accessible label containing the scale meaning and current condition.
+- Full-scale mini-maps receive an accessible description explaining that their line marks the current position.
 - Numeric values and text condition pills remain visible; color is not the only information channel.
 - Desktop retains the existing section-specific card grids.
 - Mobile retains the single-column card layout without horizontal overflow.
@@ -67,4 +68,3 @@ This is presentation behavior only. The firmware reservoir start block, active-r
 ## Non-changes and exclusions
 
 No firmware, firmware threshold, watering behavior, reservoir logic, button behavior, telemetry, heartbeat, watering-event evidence, Supabase query, schema, function, policy, RLS, grant, view, device identity, capability declaration, authentication rule, deployment, upload, or production-data mutation is part of Phase 8G.3.1.
-

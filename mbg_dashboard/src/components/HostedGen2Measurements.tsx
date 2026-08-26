@@ -388,9 +388,11 @@ const DerivedAirCard = ({
             <dd>{pair ? formatMeasurementValue(pair.humidityRow) : 'Not available'}</dd>
           </dl>
         </details>
-        <span className="hosted-gen2-measurements-scale-caption" aria-hidden="true">
-          lower <span>current range</span> higher
-        </span>
+        <EnvironmentalScalePill
+          conditionLabel={condition?.label ?? null}
+          measurementName={measurementName}
+          value={scaleValue}
+        />
       </div>
     </article>
   )
@@ -508,13 +510,51 @@ const MeasurementCard = ({
         <div className="hosted-gen2-measurements-card-footer">
           <MeasurementDetails card={card} showSupportEngineering={showSupportEngineering} />
           {card.descriptor.key === RESERVOIR_CARD_KEY ? null : (
-            <span className="hosted-gen2-measurements-scale-caption" aria-hidden="true">
-              lower <span>current range</span> higher
-            </span>
+            <EnvironmentalScalePill
+              conditionLabel={card.conditionLabel}
+              measurementName={scaleMeasurementName}
+              value={scaleValue}
+            />
           )}
         </div>
       ) : null}
     </article>
+  )
+}
+
+const EnvironmentalScalePill = ({
+  conditionLabel,
+  measurementName,
+  value,
+}: {
+  conditionLabel: string | null
+  measurementName: string | null | undefined
+  value: number | null
+}) => {
+  const scale = getHostedGen2EnvironmentalScale(measurementName, value)
+  const currentDescription = conditionLabel
+    ? `Current condition: ${conditionLabel}`
+    : 'Current condition unavailable'
+  const accessibleLabel = `${scale.label}. ${currentDescription}. Marker shows the current position on the full scale.`
+  const style = {
+    ...(scale.background ? { background: scale.background } : {}),
+    ...(scale.positionPercent === null
+      ? {}
+      : { '--condition-scale-position': `${scale.positionPercent}%` }),
+  } as CSSProperties
+
+  return (
+    <span
+      aria-label={accessibleLabel}
+      className={`hosted-gen2-measurements-scale-pill is-${scale.key}`}
+      role="img"
+      style={style}
+      title={accessibleLabel}
+    >
+      {scale.positionPercent === null ? null : (
+        <span aria-hidden="true" className="hosted-gen2-measurements-scale-marker" />
+      )}
+    </span>
   )
 }
 
