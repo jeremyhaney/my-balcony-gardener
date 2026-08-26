@@ -82,6 +82,16 @@ export const REVISED_RMI_CONDITION_BANDS: ReadonlyArray<RelativeMoistureConditio
   { upperBound: null, upperInclusive: true, label: 'Saturated', tone: 'moisture-saturated', scaleColor: '#1f6694' },
 ]
 
+const ENVIRONMENTAL_SCALE_COLORS: Readonly<Record<Exclude<HostedGen2EnvironmentalScaleKey, 'neutral' | 'reservoir'>, readonly string[]>> = {
+  light: ['#455a64', '#90a4ae', '#d9d7c7', '#f1d978', '#fff1a8'],
+  'air-temperature': ['#6f9ec4', '#8bc4c2', '#98bd87', '#d2a05f', '#b9685d'],
+  'soil-temperature': ['#6f9ec4', '#8bc4c2', '#98bd87', '#d2a05f', '#b9685d'],
+  humidity: ['#d0aa72', '#d0c989', '#99c38b', '#5aa99f', '#326e9d'],
+  'dew-point': ['#99c38b', '#5aa99f', '#326e9d', '#7353a6'],
+  pressure: ['#c4b5e4', '#9c82ce', '#6f4fad'],
+  moisture: REVISED_RMI_CONDITION_BANDS.map(({ scaleColor }) => scaleColor),
+}
+
 const REVISED_RMI_SCALE_LOWER_BOUND = 0
 const REVISED_RMI_SCALE_UPPER_BOUND = 250
 const REVISED_RMI_SCALE_BOUNDARIES = [
@@ -174,14 +184,18 @@ export const getHostedGen2EnvironmentalScale = (
         background: REVISED_RMI_SCALE_BACKGROUND,
       }
     case 'reservoir_liquid_detected':
-      return rangedScale('reservoir', 'Reservoir scale from refill to water detected', finiteValue, 0, 1)
+      return {
+        key: 'reservoir',
+        label: 'Reservoir scale from refill to water detected',
+        positionPercent: finiteValue === null ? null : clampPercent(100 * finiteValue),
+      }
     default:
       return { key: 'neutral', label: 'Measurement scale unavailable', positionPercent: null }
   }
 }
 
 const rangedScale = (
-  key: HostedGen2EnvironmentalScaleKey,
+  key: Exclude<HostedGen2EnvironmentalScaleKey, 'neutral' | 'reservoir'>,
   label: string,
   value: number | null,
   min: number,
@@ -191,6 +205,38 @@ const rangedScale = (
   label,
   positionPercent: value === null ? null : clampPercent(100 * (value - min) / (max - min)),
 })
+
+export const getHostedGen2AdaptiveScaleBackground = (
+  measurementName: string | null | undefined,
+  value: number | null,
+): string | undefined => {
+  const scale = getHostedGen2EnvironmentalScale(measurementName, value)
+  if (scale.key === 'neutral' || scale.key === 'reservoir' || scale.positionPercent === null) {
+    return undefined
+  }
+  return buildAdaptiveScaleBackground(
+    ENVIRONMENTAL_SCALE_COLORS[scale.key],
+    scale.positionPercent,
+  )
+}
+
+// Keeps the whole environmental continuum visible while making the current
+// neighborhood the dominant field. Soft shoulders communicate fuzzy boundaries.
+export const buildAdaptiveScaleBackground = (
+  colors: readonly string[],
+  positionPercent: number,
+): string | undefined => {
+  if (colors.length === 0) return undefined
+  const safePosition = clampPercent(positionPercent)
+  const currentIndex = Math.min(
+    colors.length - 1,
+    Math.floor(safePosition / (100 / colors.length)),
+  )
+  const current = colors[currentIndex]
+  const lower = colors[Math.max(0, currentIndex - 1)]
+  const upper = colors[Math.min(colors.length - 1, currentIndex + 1)]
+  return `linear-gradient(90deg, ${colors[0]} 0%, ${lower} 10%, ${current} 24%, ${current} 76%, ${upper} 90%, ${colors[colors.length - 1]} 100%)`
+}
 
 const clampPercent = (value: number): number => Math.min(100, Math.max(0, value))
 

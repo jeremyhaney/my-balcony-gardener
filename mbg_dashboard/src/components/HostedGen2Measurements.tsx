@@ -11,6 +11,7 @@ import {
   formatGardenerMoistureIndexCardValue,
   formatHostedGen2CardMeasurementValue,
   getHostedGen2EnvironmentalPresentation,
+  getHostedGen2AdaptiveScaleBackground,
   getHostedGen2EnvironmentalScale,
   getHostedGen2CardPillLabel,
   getRelativeMoisturePresentation,
@@ -288,9 +289,27 @@ const DerivedAirCard = ({
   const trendSummary = displayRow && trendRows.length > 0
     ? getHostedGen2TrendSummary(displayRow, trendRows)
     : null
+  const scaleValue = displayRow?.measurement_value ?? null
+  const scale = getHostedGen2EnvironmentalScale(measurementName, scaleValue)
+  const adaptiveScaleBackground = getHostedGen2AdaptiveScaleBackground(
+    measurementName,
+    scaleValue,
+  )
+  const cardStyle = adaptiveScaleBackground
+    ? { '--measurement-scale-background': adaptiveScaleBackground } as CSSProperties
+    : undefined
 
   return (
-    <article className={`hosted-gen2-measurements-card hosted-gen2-measurements-derived-card is-${condition?.tone ?? 'neutral'}`}>
+    <article
+      aria-label={adaptiveScaleBackground ? `${scale.label}. Current condition: ${condition?.label ?? 'unavailable'}.` : undefined}
+      className={[
+        'hosted-gen2-measurements-card',
+        'hosted-gen2-measurements-derived-card',
+        `is-${condition?.tone ?? 'neutral'}`,
+        adaptiveScaleBackground ? 'has-adaptive-scale' : '',
+      ].filter(Boolean).join(' ')}
+      style={cardStyle}
+    >
       <div className="hosted-gen2-measurements-card-main">
         <h3>{label}</h3>
         {visiblePillLabel ? (
@@ -369,11 +388,9 @@ const DerivedAirCard = ({
             <dd>{pair ? formatMeasurementValue(pair.humidityRow) : 'Not available'}</dd>
           </dl>
         </details>
-        <EnvironmentalScalePill
-          conditionLabel={condition?.label ?? null}
-          measurementName={measurementName}
-          value={displayRow?.measurement_value ?? null}
-        />
+        <span className="hosted-gen2-measurements-scale-caption" aria-hidden="true">
+          lower <span>current range</span> higher
+        </span>
       </div>
     </article>
   )
@@ -410,9 +427,32 @@ const MeasurementCard = ({
     evidenceLabel: card.pillLabel,
     evidenceIsCurrent,
   })
+  const scaleMeasurementName = card.moistureIndex !== null
+    ? 'moisture_index'
+    : card.descriptor.canonicalMeasurementName
+  const scaleValue = card.moistureIndex ?? card.displayRow?.measurement_value ?? null
+  const scale = getHostedGen2EnvironmentalScale(scaleMeasurementName, scaleValue)
+  const adaptiveScaleBackground = getHostedGen2AdaptiveScaleBackground(
+    scaleMeasurementName,
+    scaleValue,
+  )
+  const isCompactReservoir = card.descriptor.key === RESERVOIR_CARD_KEY &&
+    card.reservoirState === 'Water Detected' && evidenceIsCurrent
+  const cardStyle = adaptiveScaleBackground
+    ? { '--measurement-scale-background': adaptiveScaleBackground } as CSSProperties
+    : undefined
 
   return (
-    <article className={`hosted-gen2-measurements-card is-${card.tone}`}>
+    <article
+      aria-label={adaptiveScaleBackground ? `${scale.label}. Current condition: ${card.conditionLabel ?? 'unavailable'}.` : undefined}
+      className={[
+        'hosted-gen2-measurements-card',
+        `is-${card.tone}`,
+        adaptiveScaleBackground ? 'has-adaptive-scale' : '',
+        isCompactReservoir ? 'is-compact-reservoir' : '',
+      ].filter(Boolean).join(' ')}
+      style={cardStyle}
+    >
       <div className="hosted-gen2-measurements-card-main">
         <h3>{card.descriptor.label}</h3>
         {visiblePillLabel ? (
@@ -424,7 +464,9 @@ const MeasurementCard = ({
           ].filter(Boolean).join(' ')}>{visiblePillLabel}</span>
         ) : null}
       </div>
-      <p className="hosted-gen2-measurements-value">{card.primaryValue}</p>
+      {isCompactReservoir ? null : (
+        <p className="hosted-gen2-measurements-value">{card.primaryValue}</p>
+      )}
       {card.evidencePolicy?.detail ? (
         <p className="hosted-gen2-measurements-evidence-reason">{card.evidencePolicy.detail}</p>
       ) : null}
@@ -465,60 +507,14 @@ const MeasurementCard = ({
       {card.transportState !== 'loading' ? (
         <div className="hosted-gen2-measurements-card-footer">
           <MeasurementDetails card={card} showSupportEngineering={showSupportEngineering} />
-          <ConditionScalePill card={card} />
+          {card.descriptor.key === RESERVOIR_CARD_KEY ? null : (
+            <span className="hosted-gen2-measurements-scale-caption" aria-hidden="true">
+              lower <span>current range</span> higher
+            </span>
+          )}
         </div>
       ) : null}
     </article>
-  )
-}
-
-const ConditionScalePill = ({ card }: { card: HostedGen2CatalogCardModel }) => {
-  const scaleMeasurementName = card.moistureIndex !== null
-    ? 'moisture_index'
-    : card.descriptor.canonicalMeasurementName
-  const scaleValue = card.moistureIndex ?? card.displayRow?.measurement_value ?? null
-  return (
-    <EnvironmentalScalePill
-      conditionLabel={card.conditionLabel}
-      measurementName={scaleMeasurementName}
-      value={scaleValue}
-    />
-  )
-}
-
-const EnvironmentalScalePill = ({
-  conditionLabel,
-  measurementName,
-  value,
-}: {
-  conditionLabel: string | null
-  measurementName: string | null | undefined
-  value: number | null
-}) => {
-  const scale = getHostedGen2EnvironmentalScale(measurementName, value)
-  const currentDescription = conditionLabel
-    ? `Current condition: ${conditionLabel}`
-    : 'Current condition unavailable'
-  const accessibleLabel = `${scale.label}. ${currentDescription}.`
-  const style = {
-    ...(scale.background ? { background: scale.background } : {}),
-    ...(scale.positionPercent === null
-      ? {}
-      : { '--condition-scale-position': `${scale.positionPercent}%` }),
-  } as CSSProperties
-
-  return (
-    <span
-      aria-label={accessibleLabel}
-      className={`hosted-gen2-measurements-scale-pill is-${scale.key}`}
-      role="img"
-      style={style}
-      title={accessibleLabel}
-    >
-      {scale.positionPercent === null ? null : (
-        <span aria-hidden="true" className="hosted-gen2-measurements-scale-marker" />
-      )}
-    </span>
   )
 }
 

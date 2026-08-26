@@ -123,6 +123,21 @@
   background:
     linear-gradient(135deg, var(--measurement-status-background), var(--measurement-status-background-end));
   color: var(--measurement-card-text);
+  overflow: hidden;
+}
+
+.hosted-gen2-measurements-card.has-adaptive-scale {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(15, 23, 42, 0.09)),
+    var(--measurement-scale-background);
+}
+
+.hosted-gen2-measurements-card.has-adaptive-scale::before {
+  content: '';
+  height: 3px;
+  margin: -0.6rem -0.6rem 0.48rem;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.16);
 }
 
 .hosted-gen2-measurements-card.is-neutral {
@@ -450,56 +465,77 @@
   padding-top: 0.1rem;
 }
 
-.hosted-gen2-measurements-scale-pill {
-  position: relative;
-  flex: 0 0 4.7rem;
-  width: 4.7rem;
-  height: 1.25rem;
+.hosted-gen2-measurements-scale-caption {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.32rem;
+  color: var(--measurement-card-subtle);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.hosted-gen2-measurements-scale-caption span {
+  padding: 0.18rem 0.38rem;
+  border: 1px solid var(--measurement-trend-border);
+  border-radius: 999px;
+  background: var(--measurement-trend-background);
+  color: var(--measurement-card-muted);
+}
+
+.hosted-gen2-measurements-card.is-compact-reservoir {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  width: fit-content;
+  min-height: 0;
+  padding: 0.42rem 0.55rem;
+  border-radius: 999px;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.12);
+}
+
+.hosted-gen2-measurements-card.is-compact-reservoir .hosted-gen2-measurements-card-main {
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.hosted-gen2-measurements-card.is-compact-reservoir .hosted-gen2-measurements-card-main h3 {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.hosted-gen2-measurements-card.is-compact-reservoir .hosted-gen2-measurements-status-pill {
+  padding-block: 0.16rem;
+}
+
+.hosted-gen2-measurements-card.is-compact-reservoir .hosted-gen2-measurements-card-footer {
+  margin: 0 0 0 0.1rem;
+  padding: 0;
+}
+
+.hosted-gen2-measurements-card.is-compact-reservoir .hosted-gen2-measurements-details summary {
+  width: 1.7rem;
+  height: 1.7rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.1);
+  color: transparent;
+  font-size: 0;
 }
 
-.hosted-gen2-measurements-scale-pill.is-light {
-  background: linear-gradient(90deg, #455a64 0%, #90a4ae 25%, #d9d7c7 50%, #f1d978 75%, #fff1a8 100%);
-}
-
-.hosted-gen2-measurements-scale-pill.is-air-temperature,
-.hosted-gen2-measurements-scale-pill.is-soil-temperature {
-  background: linear-gradient(90deg, #6f9ec4 0%, #8bc4c2 25%, #98bd87 50%, #d2a05f 75%, #b9685d 100%);
-}
-
-.hosted-gen2-measurements-scale-pill.is-humidity {
-  background: linear-gradient(90deg, #d0aa72 0%, #d0c989 25%, #99c38b 50%, #5aa99f 75%, #326e9d 100%);
-}
-
-.hosted-gen2-measurements-scale-pill.is-dew-point {
-  background: linear-gradient(90deg, #d0aa72 0%, #d0c989 25%, #99c38b 50%, #5aa99f 75%, #326e9d 100%);
-}
-
-.hosted-gen2-measurements-scale-pill.is-pressure {
-  background: linear-gradient(90deg, #c4b5e4 0%, #9c82ce 50%, #6f4fad 100%);
-}
-
-.hosted-gen2-measurements-scale-pill.is-reservoir {
-  background: linear-gradient(90deg, #b95f5f 0%, #d8c6a0 50%, #4f9b68 100%);
-}
-
-.hosted-gen2-measurements-scale-pill.is-neutral {
-  background: linear-gradient(90deg, #94a3b8, #64748b);
-}
-
-.hosted-gen2-measurements-scale-marker {
-  position: absolute;
-  top: 1px;
-  bottom: 1px;
-  left: clamp(3px, var(--condition-scale-position), calc(100% - 3px));
-  width: 3px;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.72), 0 1px 3px rgba(15, 23, 42, 0.45);
-  transform: translateX(-50%);
+.hosted-gen2-measurements-card.is-compact-reservoir .hosted-gen2-measurements-details summary::before {
+  content: 'i';
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 1px solid var(--measurement-trend-border);
+  border-radius: 50%;
+  color: var(--measurement-card-muted);
+  font-family: Georgia, serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  place-items: center;
 }
 
 .hosted-gen2-measurements-details summary {
@@ -594,5 +630,9 @@
 
   .hosted-gen2-measurements-group.is-earth .hosted-gen2-measurements-card-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .hosted-gen2-measurements-group.is-water .hosted-gen2-measurements-card-grid:has(.is-compact-reservoir) {
+    display: block;
   }
 }
