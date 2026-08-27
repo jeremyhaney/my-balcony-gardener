@@ -1,0 +1,10 @@
+{
+  "asset_id": "873bc473-98fc-4b23-beeb-5d80e7bf945a",
+  "asset_tag": "MBG-SA-000001",
+  "payload": "urn:mbg:sensor-asset:873bc473-98fc-4b23-beeb-5d80e7bf945a",
+  "error_correction": "Q",
+  "png": "mbg-sa-000001-873bc473-98fc-4b23-beeb-5d80e7bf945a.png",
+  "svg": "mbg-sa-000001-873bc473-98fc-4b23-beeb-5d80e7bf945a.svg",
+  "png_sha256": "ED656FA23D857113A752B1D814BF13080700B75B220C7F9B6B72FD6202761F35",
+  "svg_sha256": "19EED4EBCDC4E09636B1FA3CECE564DBD88D6C5913140288BAFC2BD236C5DBB7"
+}

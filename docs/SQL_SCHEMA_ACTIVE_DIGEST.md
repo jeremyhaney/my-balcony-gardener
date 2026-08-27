@@ -253,6 +253,69 @@ Phase 8F.10 later supplies the authoritative retirement delta for the two legacy
 - Production result for the validated Support identity: All nine Balcony02 rows with correct device key and lifecycle values.
 - Command/control: No. Read-only commissioned configuration/history.
 
+### sensor_assets
+
+- Purpose: MBG-tagged physical sensor inventory, separating asset UUID/tag,
+  optional manufacturer serial, and optional discoverable hardware UID.
+- Source of rows: Authenticated/approved Support service workflow only. The
+  separately approved Phase 8G.4 digital-QR pilot registered MS02 as the first
+  asset-only row.
+- Device-originated inserts: No.
+- Browser/customer read path: `support_sensor_assets` only.
+- RLS/grants: RLS enabled, zero policies, and no anon or authenticated
+  base-table privileges.
+- Identity behavior: Asset tags and paired hardware UID scheme/value are
+  case-insensitively unique; manufacturer serial remains optional.
+- Command/control: No. Inventory/service evidence only.
+- Related SQL artifacts:
+  `docs/sql/phase8g4-sensor-asset-installation-contract-proposal.sql`.
+
+### sensor_installations
+
+- Purpose: Half-open effective-time history linking one physical asset to one
+  device-local logical sensor key without rewriting measurements.
+- Source of rows: Later authenticated/approved Support replacement workflow;
+  Phase 8G.4 production execution seeded zero rows.
+- Device-originated inserts: No.
+- Browser/customer read path: `support_sensor_installations` only.
+- RLS/grants: RLS enabled, zero policies, and no anon or authenticated
+  base-table privileges.
+- Lifecycle behavior: GiST exclusion constraints prevent logical-slot overlap
+  and simultaneous installation of one asset; `[effective_from,effective_to)`
+  boundaries provide historical as-of identity.
+- Command/control: No. Service evidence only.
+- Related SQL artifacts:
+  `docs/sql/phase8g4-sensor-asset-installation-contract-proposal.sql`.
+
+### support_sensor_assets
+
+- Purpose: Authenticated Support inventory projection, including optional
+  manufacturer and discoverable hardware identity.
+- Source objects: `sensor_assets` and `support_memberships`; no measurement,
+  watering, firmware-manifest, or control dependency.
+- View security: Owner-executed protected view with `security_barrier=true` and
+  an explicit active Support/admin `auth.uid()` membership filter.
+- Anon SELECT: No.
+- Authenticated SELECT: Yes; active Support/admin membership is required.
+- Production result after the Phase 8G.4 MS02 pilot: One Support-visible asset
+  row (`MBG-SA-000001`), with no manufacturer serial or discoverable hardware
+  UID.
+- Command/control: No. Read-only inventory evidence.
+
+### support_sensor_installations
+
+- Purpose: Authenticated Support physical-sensor installation history with
+  garden/device context and half-open effective intervals.
+- Source objects: `sensor_installations`, `sensor_assets`, and the established
+  membership-filtered `support_garden_devices` view; no measurement, watering,
+  firmware-manifest, or control dependency.
+- View security: Owner-executed protected view with `security_barrier=true`;
+  mandatory Support filtering is inherited from `support_garden_devices`.
+- Anon SELECT: No.
+- Authenticated SELECT: Yes.
+- Production result at Phase 8G.4 execution: Zero rows, by design.
+- Command/control: No. Read-only service history.
+
 ### support_garden_devices
 
 - Purpose: Authenticated support/admin read view for support-visible garden/device metadata.
