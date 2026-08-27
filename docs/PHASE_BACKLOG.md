@@ -1,10 +1,31 @@
 # My Balcony Gardener Phase Backlog
 
+> **Looking for what matters now? Start with [`PROJECT_ROADMAP.md`](./PROJECT_ROADMAP.md).** It is the Jeremy-readable control panel for current state, priorities, dependencies, next steps, and future directions.
+
+This document is now the detailed phase ledger and project memory. It preserves implementation context, completed-work history, deferred technical work, validation claims, guardrails, and links to authoritative evidence. It is intentionally comprehensive and is not the daily prioritization view.
+
+### How to use the two documents
+
+- Use [`PROJECT_ROADMAP.md`](./PROJECT_ROADMAP.md) to decide **what to work on and why**.
+- Use this backlog to understand **what happened, what constraints apply, and where detailed evidence lives**.
+- When this backlog's older planning language differs from the roadmap, the roadmap is the current prioritization authority. Historical safety and architecture guardrails still apply.
+- Nothing in either document is implementation approval; work still requires normal inspection, design, review, validation, and commit discipline.
+
+### Current handoff — 2026-08-27
+
+- **Highest product priority:** establish an evidence-based watering threshold after a useful basket dry-down window. Near-daily storms currently block clean evidence.
+- **Highest executable priority:** repair watering-event graph visibility so multiple event labels do not compress the customer-facing measurement plot.
+- **Threshold-phase companion:** when watering-threshold firmware work becomes executable, bundle the deferred Phase 8G.4 firmware payload cleanup into the same build, bench-validation, and separately approved device-upload cycle.
+- **Then:** establish a lightweight MBG brand foundation and first marketing material, especially a business card; proceed into Phase 8H customer adoption and customer-led UI modernization; then Phase 8I deterministic Demo.
+- **Deferred secondary direction:** Phase 9 local scheduling and sensor-assisted scheduled watering.
+
+Maintain the ordering, reasoning, dependency state, workstream map, and three-item completion window in the roadmap rather than duplicating them here.
+
+---
+
 > **Current I2C wiring authority (effective 2026-07-03):** MBG internal short-range I2C wiring uses RED = 3.3V, BLACK = GND, GREEN = GPIO21 / SDA, and WHITE = GPIO22 / SCL. GPIO21 remains SDA and GPIO22 remains SCL. Factory SEN0562 leads are exceptions, including BLUE = GND and YELLOW = SCL; they do not redefine the MBG internal convention. See ADR 0023.
 
-This document captures deferred work that should not be mixed into the current implementation phase.
-
-It is a planning guide, not an implementation approval. Each item still requires normal inspection, design, review, validation, and commit discipline before implementation.
+The material below retains its original detail and recorded evidence level. Completed items stay inline with their phase history rather than occupying the active roadmap.
 
 ## Hosted history polling correction
 
@@ -17,7 +38,7 @@ It is a planning guide, not an implementation approval. Each item still requires
 - Local B02 Gen2 Support View validation covered manual Refresh, local timestamp, Device/Window changes, hidden/visible behavior, responsive layout, lint, TypeScript/Vite production build, and `git diff --check`. Temporary control placement remains accepted pending the broader frontend redesign; Gen1-remnant retirement is closed through Phase 8F.11.
 - No SQL, schema, indexes, retention, firmware, telemetry/heartbeat cadence, device identity, authentication/RLS, watering behavior, or local control authority changed. This correction remains pending Jeremy approval and is not claimed committed, pushed, deployed, or production-validated.
 
-## Phase 8.0 - Product Direction and Backlog Visual Rebaseline
+## Historical Phase 8.0 Product Direction and Visual Rebaseline
 
 Phase 8 advances the current working Gen2 product through commissioned measurement evidence, hosted read-only Support presentation, and careful environmental interpretation without expanding watering authority. Optional local schedule persistence and sensor-assisted scheduled watering are a separate secondary direction deferred to Phase 9; they are not the Phase 8 base product or an implied outcome of Phase 8 completion.
 
@@ -31,7 +52,7 @@ Phase 8 advances the current working Gen2 product through commissioned measureme
 | Optional automation — Phase 9 | Local schedule persistence followed by separately designed sensor-assisted skip/allow behavior. | Deferred secondary direction; not current Phase 8 scope, not required for the working Gen2 product, and not approved watering authority. |
 | Future intelligence | Use sufficient trusted history to improve later threshold/window models. | Parked until evidence and a separately approved product/control boundary justify it. |
 
-## Current Roadmap Snapshot
+## Historical Phase 8 Roadmap Snapshot
 
 - ADR 0024 is accepted. The narrowed Phase 8C hosted capability contract and separate Balcony02 provisioning were executed and production-validated on 2026-08-14 from the exact committed statement bodies. The positive lifecycle table and protected customer/Support views are active; Balcony02 has nine current declarations and eleven expected measurement names, remains Support-visible/customer-hidden, and has no M04/L04/LUX04 declaration. Measurement-derived Support diagnostics remain deferred pending bounded-query design and production read-only `EXPLAIN`. Customer frontend consumption, runtime-capability evidence storage, and automatic reconciliation remain later slices. Execution evidence: [`docs/product/phase8c-hosted-device-capability-production-execution-evidence.md`](./product/phase8c-hosted-device-capability-production-execution-evidence.md).
 - Phase 8C.1 capability design and Phase 8C.2 Support implementation are operationally closed. See [`docs/product/phase8c1-hosted-frontend-capability-integration-design.md`](./product/phase8c1-hosted-frontend-capability-integration-design.md).
@@ -55,9 +76,9 @@ Phase 8 advances the current working Gen2 product through commissioned measureme
 - **The post-8C.5 priority sequence is approved and numbered:** Phase 8D restores recently broken watering-event visibility; Phase 8E adds Feels Like and Dew Point; Phase 8F inventories, contains, and retires Gen1 risk; Phase 8G covers moisture interpretation and controller-boundary work; Phase 8H combines real customer adoption with customer-led UI modernization; and Phase 8I builds the deterministic Demo after that product direction stabilizes. Threshold presentation remains evidence-gated because current firmware has no confirmed or implemented RMI controller threshold. See the [approved sequence](./product/phase8-post-8c5-priority-sequence.md).
 - Former Phase 8D/8E schedule and sensor-assisted timer work is deferred to **Phase 9: Optional Local Watering Automation**, because it is a distinct secondary product direction. Phase 9A is local schedule configuration and controller persistence; Phase 9B is sensor-assisted scheduled watering with conservative skip/allow behavior. Neither is current or implied by completion of the working Gen2 path.
 
-The compact roadmap near the top is the current planning view. Detailed phase history below remains historical evidence and may be reorganized in a later, separately prioritized documentation cleanup.
+This snapshot records how Phase 8 was sequenced at the time. It is historical context, not the current planning view. See [`PROJECT_ROADMAP.md`](./PROJECT_ROADMAP.md) for current priorities.
 
-### Active Phase 8 Continuation Map
+### Historical Phase 8 Continuation Map
 
 | Slice | Status | Purpose | Visible change? |
 | --- | --- | --- | --- |
@@ -81,7 +102,7 @@ The compact roadmap near the top is the current planning view. Detailed phase hi
 
 Phase 9A/9B optional automation is deliberately outside this sequence.
 
-Legend:
+### Historical Status Legend and Completion Index
 
 - ✅ COMPLETE — closed / validated / merged or otherwise complete
 - 🔵 CURRENT — current documentation or transition phase
@@ -117,9 +138,10 @@ Legend:
 | ✅ COMPLETE | Phase 8E | Feels Like and Dew Point | Committed, pushed, deployed, Jeremy-validated, and operationally closed with the exact package-provenance and display-only boundaries preserved. |
 | ✅ COMPLETE | Phase 8F | Gen1 Risk Review, Containment, and Retirement | Phase 8F.1–8F.10 retired the bounded runtime, configuration, identity/data, and schema/access surfaces; Phase 8F.11 completed the final repository audit and operational closeout. |
 | ✅ COMPLETE | Phase 8G.1 | Revised Relative Moisture Index Scale | Current hosted cards/history use the direct unclamped raw-ADC equation and revised bands; RMI remains presentation-only and actual controller-threshold presentation remains open. |
-| ⚠️ WATCH | Phase 8G | Watering-Threshold Presentation | Wait for field evidence and an implemented controller threshold. RMI `55` is a provisional target only; current firmware has no RMI watering-control capability or confirmed threshold to report. |
-| ➡️ NEXT | Phase 8G follow-on | Physical Sensor Identity and Service Lifecycle | Reconcile optional compile-time `physical_sensor_id` labels with durable database-backed installation/service history so field replacement does not require firmware identity edits. |
-| 🟡 PLANNED | Phase 8G follow-on | Watering-Marker Chart Layout | Preserve the data-plot height as event labels accumulate; retain count-preserving markers and full Watering History evidence without compressing the graph. |
+| 🔵 CURRENT | Phase 8G follow-on | Watering-Event Graph Visibility Repair | Highest executable priority: preserve the data-plot height as event labels accumulate while retaining count-preserving markers and full Watering History evidence. |
+| ✅ COMPLETE | Phase 8G.4 | Physical Sensor Identity and Service Lifecycle | Service-side identity model, production schema, MS02 asset registration, digital QR, and supporting documentation are complete. P02 remains a simulation unit with no installation interval. No firmware update was required for closeout. |
+| ⚠️ WATCH | Phase 8G | Watering-Threshold Evidence, Firmware, and Presentation | Highest product priority, but waiting on a useful basket dry-down window because near-daily storms currently prevent clean evidence. When firmware implementation proceeds, also remove routine manually maintained `physical_sensor_id` from `/measurements`, retain stable `sensor_key`, and limit `/capabilities` physical IDs to discoverable hardware UIDs. The combined change still requires build, bench validation, and separate per-device upload approval. |
+| 🟡 PLANNED | Roadmap follow-on | Brand Foundation and First Marketing Material | High-priority independent work: create a professional business card and the smallest useful provisional logo/visual foundation, with reusable elements that may later inform frontend modernization. |
 | 🟡 PLANNED | Phase 8H | Customer Adoption and Customer-Led UI Modernization | Use an authorized customer-visible commissioned device and real journey to drive targeted product modernization. |
 | 🟡 PLANNED | Phase 8I | Deterministic Demo | Curated non-live public showcase after customer and UI direction stabilize. |
 | 🧊 DEFERRED | Phase 9A | Local Schedule Foundation | Optional secondary direction: local schedule UI and controller-side persistence. |
@@ -292,7 +314,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 - Phase 8A.1 status: COMPLETE; Prototype01 installed sensor profile cleanup disables removed VEML6030 and GPIO34 legacy moisture for `bench-proto-gen2`, reports SEN0308/SEN0562 not-installed channel truth, preserves provider/channel metadata, and changes no watering authority or Balcony01 GPIO34/control behavior.
 - Phase 8A status: COMPLETE; hosted Support View derives a display-only gardener Moisture Index from Prototype01 SEN0308 A0 raw ADC, cleans the main cards into Soil/Light/Air Conditions, keeps raw ADC as supporting evidence, treats expected `profile_not_installed` rows as non-warning top-level status evidence, and changes no watering authority.
 - Phase 8B parent status: COMPLETE. Phase 8B.1 through Phase 8B.4 retain their recorded completion evidence; Phase 8B.5 is COMPLETE / PRODUCTION VALIDATED in commits `a291be6` and `a8b282e`; Phase 8B.6 Hosted Short History Window Expansion is COMPLETE / PRODUCTION VALIDATED in commit `9b8eb0f`.
-- Phase 8C.1–8C.5B status: COMPLETE at their recorded evidence levels; 8C.5B is committed, pushed, and hosted-validated. Phase 8D watering-event restoration is COMPLETE / HOSTED-VALIDATED in commit `406bce9`. Phase 8E Feels Like/Dew Point is COMPLETE / HOSTED-VALIDATED in commit `8d90cec77ec128ee7eeaba304fc24cd5cb3a2453`; it was pushed, deployed, Jeremy-validated, and operationally closed with the recorded live-feature/no-byte-correspondence proof boundary. Phase 8F is COMPLETE. Phase 8G.1 revised hosted RMI scale is COMPLETE / LOCALLY VALIDATED. Phase 8G.2 local button programs are COMPLETE / B02 QUICK-VALIDATED. Phase 8G.3 Prototype02 Gen2 update and commissioning is COMPLETE / DEPLOYED / HOSTED-VALIDATED in commit `7d3cb6c`. Phase 8G.3.1 adaptive environmental card scales are COMPLETE / LOCALLY VALIDATED and pending production deployment/hosted validation. Physical-sensor identity/service lifecycle reconciliation is next; watering-marker chart-height preservation follows. Watering-threshold presentation waits for field evidence and an implemented controller threshold. Phase 8H customer adoption/customer-led modernization and Phase 8I deterministic Demo remain planned. Phase 9A/9B optional automation is DEFERRED.
+- Phase 8C.1–8C.5B status: COMPLETE at their recorded evidence levels; 8C.5B is committed, pushed, and hosted-validated. Phase 8D watering-event restoration is COMPLETE / HOSTED-VALIDATED in commit `406bce9`. Phase 8E Feels Like/Dew Point is COMPLETE / HOSTED-VALIDATED in commit `8d90cec77ec128ee7eeaba304fc24cd5cb3a2453`; it was pushed, deployed, Jeremy-validated, and operationally closed with the recorded live-feature/no-byte-correspondence proof boundary. Phase 8F is COMPLETE. Phase 8G.1 revised hosted RMI scale is COMPLETE / LOCALLY VALIDATED. Phase 8G.2 local button programs are COMPLETE / B02 QUICK-VALIDATED. Phase 8G.3 Prototype02 Gen2 update and commissioning is COMPLETE / DEPLOYED / HOSTED-VALIDATED in commit `7d3cb6c`. Phase 8G.3.1 adaptive environmental card scales and Phase 8G.3.2 public live customer example are COMPLETE / LOCALLY VALIDATED and pending production deployment/hosted validation. Phase 8G.4 service-side physical sensor identity and lifecycle work is COMPLETE without a firmware update; its remaining firmware payload cleanup is deliberately bundled with the future watering-threshold firmware phase. Watering-event graph visibility is the highest executable priority. Watering-threshold evidence is the highest product priority but waits for a useful storm-free basket dry-down window. A lightweight brand foundation and first business card are the next independent customer-facing outcome, followed by Phase 8H customer adoption/customer-led modernization and Phase 8I deterministic Demo. Phase 9A/9B optional automation is DEFERRED. See [`PROJECT_ROADMAP.md`](./PROJECT_ROADMAP.md) for current ordering and rationale.
 - Code commit already exists: `a7488ba Add hosted read-only dashboard mode`
 - Production branch status: `main`
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`
@@ -300,7 +322,7 @@ Balcony02 is both a product-development and garden-mapping platform, and the mai
 
 ## Historical Recommended Phase Order
 
-The top `Current Roadmap Snapshot` is now the current planning view. This older phase-order list remains historical context; the approved Phase 8D–8I sequence supersedes its recommendations where they differ.
+This phase-order list remains historical context. [`PROJECT_ROADMAP.md`](./PROJECT_ROADMAP.md) is the current planning view and supersedes older recommendations where they differ.
 
 1. Phase 5D Validation - complete
 2. Phase 5D Closeout / merge - complete and merged to main

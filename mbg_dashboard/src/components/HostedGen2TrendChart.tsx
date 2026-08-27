@@ -82,40 +82,10 @@ type HostedGen2AxisConfig = {
   domain?: AxisDomain
 }
 
-type WateringLabelAnchor = 'start' | 'middle' | 'end'
-
-type HostedGen2WateringMarkerPresentation = {
-  cycle: HostedWateringCycle
-  label: string
-  lane: number
-  anchor: WateringLabelAnchor
-}
-
-type WateringMarkerLabelProps = {
-  label: string
-  lane: number
-  anchor: WateringLabelAnchor
-  markerId: string
-  color: string
-  tone: HostedWateringCycle['tone']
-  viewBox?: {
-    x?: number
-    y?: number
-  }
-}
-
-const MAX_WATERING_LABEL_COUNT = 10
 const LEFT_AXIS_WIDTH = 52
 const RIGHT_AXIS_WIDTH = 54
 const MINIMUM_PLOT_WIDTH = 560
 const BASE_CHART_TOP_MARGIN = 20
-const WATERING_LABEL_LANE_HEIGHT = 15
-const WATERING_LABEL_BASE_OFFSET = 8
-const WATERING_LABEL_ESTIMATED_CHARACTER_WIDTH = 6.5
-const WATERING_LABEL_HORIZONTAL_PADDING = 12
-const WATERING_LABEL_MINIMUM_WIDTH = 54
-const WATERING_LABEL_MINIMUM_GAP = 10
-const WATERING_LABEL_EDGE_THRESHOLD = 0.14
 
 const DEFAULT_SELECTED_CARD_KEYS: readonly HostedGen2CardKey[] = [
   'air-temperature',
@@ -218,29 +188,6 @@ const HostedGen2TrendChart = ({
     () => getVisibleWateringMarkers(wateringCycles, chartTimeDomain),
     [chartTimeDomain, wateringCycles],
   )
-  const labeledWateringMarkers = useMemo(
-    () => visibleWateringMarkers.slice(0, MAX_WATERING_LABEL_COUNT),
-    [visibleWateringMarkers],
-  )
-  const wateringMarkerPresentations = useMemo(
-    () => prepareWateringMarkerPresentations(
-      labeledWateringMarkers,
-      chartTimeDomain,
-      MINIMUM_PLOT_WIDTH,
-    ),
-    [chartTimeDomain, labeledWateringMarkers],
-  )
-  const wateringMarkerPresentationById = useMemo(
-    () => new Map(
-      wateringMarkerPresentations.map((presentation) => [presentation.cycle.id, presentation]),
-    ),
-    [wateringMarkerPresentations],
-  )
-  const wateringLabelLaneCount = wateringMarkerPresentations.length === 0
-    ? 0
-    : Math.max(...wateringMarkerPresentations.map((marker) => marker.lane)) + 1
-  const chartTopMargin =
-    BASE_CHART_TOP_MARGIN + wateringLabelLaneCount * WATERING_LABEL_LANE_HEIGHT
   const selectedAxes = getSelectedAxes(selectedSeries)
   const primaryAxisId = selectedAxes[0]?.id
   const rightAxisCount = Math.max(0, selectedAxes.length - 1)
@@ -384,17 +331,29 @@ const HostedGen2TrendChart = ({
       ) : null}
 
       {!isBlockingLoad && selectedSeries.length > 0 ? (
-        <div className="hosted-gen2-trend-chart-frame">
-          <div className="hosted-gen2-trend-chart-frame-scroll">
-            <div
-              className="hosted-gen2-trend-chart-canvas"
-              style={{ minWidth: `${minimumCanvasWidth}px` }}
-            >
+        <>
+          {visibleWateringMarkers.length > 0 ? (
+            <div className="hosted-gen2-trend-chart-watering-summary">
+              <span aria-hidden="true" className="hosted-gen2-trend-chart-watering-swatch" />
+              <span>
+                {visibleWateringMarkers.length === 1
+                  ? `1 watering marker · ${formatWateringCycleMarkerLabel(visibleWateringMarkers[0])}`
+                  : `${visibleWateringMarkers.length} watering markers`}
+                {' · Full details in Watering History'}
+              </span>
+            </div>
+          ) : null}
+          <div className="hosted-gen2-trend-chart-frame">
+            <div className="hosted-gen2-trend-chart-frame-scroll">
+              <div
+                className="hosted-gen2-trend-chart-canvas"
+                style={{ minWidth: `${minimumCanvasWidth}px` }}
+              >
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   accessibilityLayer
                   data={chartData}
-                  margin={{ top: chartTopMargin, right: 12, left: 12, bottom: 5 }}
+                  margin={{ top: BASE_CHART_TOP_MARGIN, right: 12, left: 12, bottom: 5 }}
                 >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
@@ -449,8 +408,6 @@ const HostedGen2TrendChart = ({
               />
               <Legend />
               {primaryAxisId ? visibleWateringMarkers.map((cycle) => {
-                const presentation = wateringMarkerPresentationById.get(cycle.id)
-
                 return (
                   <ReferenceLine
                     key={cycle.id}
@@ -460,16 +417,6 @@ const HostedGen2TrendChart = ({
                     strokeDasharray="4 4"
                     strokeWidth={1.5}
                     ifOverflow="visible"
-                    label={presentation ? (
-                      <WateringMarkerLabel
-                        anchor={presentation.anchor}
-                        color={cycle.markerColor}
-                        label={presentation.label}
-                        lane={presentation.lane}
-                        markerId={cycle.id}
-                        tone={cycle.tone}
-                      />
-                    ) : undefined}
                   />
                 )
               }) : null}
@@ -489,9 +436,10 @@ const HostedGen2TrendChart = ({
               ))}
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       ) : null}
     </section>
   )
@@ -737,104 +685,6 @@ const getSelectedAxes = (
   return Object.values(AXIS_CONFIGS)
     .filter((axis) => selectedAxisIds.has(axis.id))
     .sort((left, right) => left.order - right.order)
-}
-
-// Chronological collision planning assigns the first reusable vertical label lane.
-const prepareWateringMarkerPresentations = (
-  wateringCycles: HostedWateringCycle[],
-  chartTimeDomain: TimeDomain,
-  plotWidth: number,
-): HostedGen2WateringMarkerPresentation[] => {
-  const laneRightEdges: number[] = []
-  const domainWidth = chartTimeDomain[1] - chartTimeDomain[0]
-
-  return [...wateringCycles]
-    .sort(
-      (left, right) =>
-        left.startTimestampMs - right.startTimestampMs || left.id.localeCompare(right.id),
-    )
-    .map((cycle) => {
-      const label = formatWateringCycleMarkerLabel(cycle)
-      const normalizedPosition = Math.min(
-        1,
-        Math.max(0, (cycle.startTimestampMs - chartTimeDomain[0]) / domainWidth),
-      )
-      const horizontalPosition = normalizedPosition * plotWidth
-      const labelWidth = Math.max(
-        WATERING_LABEL_MINIMUM_WIDTH,
-        label.length * WATERING_LABEL_ESTIMATED_CHARACTER_WIDTH +
-          WATERING_LABEL_HORIZONTAL_PADDING,
-      )
-      const anchor: WateringLabelAnchor = normalizedPosition <= WATERING_LABEL_EDGE_THRESHOLD
-        ? 'start'
-        : normalizedPosition >= 1 - WATERING_LABEL_EDGE_THRESHOLD
-          ? 'end'
-          : 'middle'
-      const estimatedLeft = anchor === 'start'
-        ? horizontalPosition
-        : anchor === 'end'
-          ? horizontalPosition - labelWidth
-          : horizontalPosition - labelWidth / 2
-      const estimatedRight = anchor === 'start'
-        ? horizontalPosition + labelWidth
-        : anchor === 'end'
-          ? horizontalPosition
-          : horizontalPosition + labelWidth / 2
-      const intervalLeft = Math.max(0, estimatedLeft)
-      const intervalRight = Math.min(plotWidth, estimatedRight)
-      let lane = laneRightEdges.findIndex(
-        (rightEdge) => rightEdge + WATERING_LABEL_MINIMUM_GAP <= intervalLeft,
-      )
-
-      if (lane === -1) {
-        lane = laneRightEdges.length
-      }
-
-      laneRightEdges[lane] = intervalRight
-
-      return { cycle, label, lane, anchor }
-    })
-}
-
-// Recharts supplies each marker coordinate to this lane-aware SVG label.
-const WateringMarkerLabel = ({
-  label,
-  lane,
-  anchor,
-  markerId,
-  color,
-  tone,
-  viewBox,
-}: WateringMarkerLabelProps) => {
-  const x = viewBox?.x
-  const plotTop = viewBox?.y
-
-  if (
-    typeof x !== 'number' ||
-    typeof plotTop !== 'number' ||
-    !Number.isFinite(x) ||
-    !Number.isFinite(plotTop)
-  ) {
-    return null
-  }
-
-  return (
-    <text
-      className="hosted-gen2-trend-chart-watering-label"
-      data-watering-label-lane={lane}
-      data-watering-marker-id={markerId}
-      data-watering-event-tone={tone}
-      fill={color}
-      fontSize={11}
-      fontWeight={800}
-      pointerEvents="none"
-      textAnchor={anchor}
-      x={x}
-      y={plotTop - WATERING_LABEL_BASE_OFFSET - lane * WATERING_LABEL_LANE_HEIGHT}
-    >
-      {label}
-    </text>
-  )
 }
 
 const getChartTimeDomain = (
