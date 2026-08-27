@@ -82,6 +82,14 @@ type HostedGen2AxisConfig = {
   domain?: AxisDomain
 }
 
+type SingleWateringLabelProps = {
+  cycle: HostedWateringCycle
+  viewBox?: {
+    x?: number
+    y?: number
+  }
+}
+
 const LEFT_AXIS_WIDTH = 52
 const RIGHT_AXIS_WIDTH = 54
 const MINIMUM_PLOT_WIDTH = 560
@@ -240,7 +248,11 @@ const HostedGen2TrendChart = ({
       data-guide-target="chart"
       aria-label="Gen2 Trend Chart"
     >
-      {controls ? <div className="hosted-gen2-trend-chart-header">{controls}</div> : null}
+      {controls ? (
+        <div className="hosted-gen2-trend-chart-header">
+          {controls}
+        </div>
+      ) : null}
 
       {error ? <p className="hosted-gen2-trend-chart-error">{error}</p> : null}
 
@@ -332,18 +344,14 @@ const HostedGen2TrendChart = ({
 
       {!isBlockingLoad && selectedSeries.length > 0 ? (
         <>
-          {visibleWateringMarkers.length > 0 ? (
-            <div className="hosted-gen2-trend-chart-watering-summary">
-              <span aria-hidden="true" className="hosted-gen2-trend-chart-watering-swatch" />
-              <span>
-                {visibleWateringMarkers.length === 1
-                  ? `1 watering marker · ${formatWateringCycleMarkerLabel(visibleWateringMarkers[0])}`
-                  : `${visibleWateringMarkers.length} watering markers`}
-                {' · Full details in Watering History'}
-              </span>
-            </div>
-          ) : null}
           <div className="hosted-gen2-trend-chart-frame">
+            {visibleWateringMarkers.length > 1 ? (
+              <div className="hosted-gen2-trend-chart-watering-summary">
+                <span>
+                  {visibleWateringMarkers.length} waterings · Full details in Watering History
+                </span>
+              </div>
+            ) : null}
             <div className="hosted-gen2-trend-chart-frame-scroll">
               <div
                 className="hosted-gen2-trend-chart-canvas"
@@ -417,6 +425,9 @@ const HostedGen2TrendChart = ({
                     strokeDasharray="4 4"
                     strokeWidth={1.5}
                     ifOverflow="visible"
+                    label={visibleWateringMarkers.length === 1 ? (
+                      <SingleWateringLabel cycle={cycle} />
+                    ) : undefined}
                   />
                 )
               }) : null}
@@ -685,6 +696,35 @@ const getSelectedAxes = (
   return Object.values(AXIS_CONFIGS)
     .filter((axis) => selectedAxisIds.has(axis.id))
     .sort((left, right) => left.order - right.order)
+}
+
+const SingleWateringLabel = ({ cycle, viewBox }: SingleWateringLabelProps) => {
+  const x = viewBox?.x
+  const plotTop = viewBox?.y
+
+  if (
+    typeof x !== 'number' ||
+    typeof plotTop !== 'number' ||
+    !Number.isFinite(x) ||
+    !Number.isFinite(plotTop)
+  ) {
+    return null
+  }
+
+  return (
+    <text
+      className="hosted-gen2-trend-chart-single-watering-label"
+      fill={cycle.markerColor}
+      fontSize={11}
+      fontWeight={800}
+      pointerEvents="none"
+      textAnchor="middle"
+      x={x}
+      y={plotTop - 8}
+    >
+      {formatWateringCycleMarkerLabel(cycle)}
+    </text>
+  )
 }
 
 const getChartTimeDomain = (

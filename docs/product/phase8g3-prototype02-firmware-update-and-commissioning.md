@@ -50,6 +50,8 @@ P02 is watering capable for physical and software controller-path testing, inclu
 
 Every simulated event records `simulation:true`, `watering_mode:simulated_watering`, `output_type:relay_led`, `pump_present:false`, and `water_delivery:false`. The frontend adapter distinguishes P02's event evidence as a simulated button cycle. Jeremy confirmed the deployed authenticated Support view showed `Simulated Button Cycle` and `Simulated Reservoir Safety Stop` evidence for Prototype02 on 2026-08-25.
 
+Subsequent presentation follow-on, 2026-08-27: pump-free P02 button evidence now uses the plain-language label `Button Test`; `Reservoir Safety Stop` remains explicit. The stored simulation, output, pump-presence, and water-delivery facts remain unchanged. See [`watering-event-graph-visibility-repair-phase-slice.md`](./watering-event-graph-visibility-repair-phase-slice.md).
+
 ## Firmware And Endpoint Contract
 
 Phase 8G.3 adds an explicit `prototype02-gen2` environment and static P02 capability manifest while preserving the physical pump-backed B02 profile. Supported routes remain exactly:

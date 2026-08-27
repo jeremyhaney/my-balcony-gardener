@@ -4,7 +4,7 @@
 
 **Roadmap updated:** 2026-08-27  
 **Product stage:** Working Gen2 product moving from engineering proof toward a customer-ready experience  
-**Current focus:** Fix customer-facing watering-event graph visibility while field conditions delay watering-threshold evidence
+**Current focus:** Build the lightweight brand foundation and first business card while field conditions delay watering-threshold evidence
 
 ---
 
@@ -17,9 +17,9 @@ My Balcony Gardener currently has a commissioned Gen2 controller, local firmware
 | Priority lens | #1 priority | Why it is here | What happens now |
 | --- | --- | --- | --- |
 | **Product priority** | **Establish an evidence-based watering threshold** | Moisture-guided watering is the most important product learning still unresolved. | **WAITING ON NATURE.** Basket dry-down evidence is required, but near-daily storms prevent a clean observation window. Collect evidence when conditions permit; do not invent a threshold to keep the roadmap moving. |
-| **Execution priority** | **Repair watering-event graph visibility** | Multiple watering-event labels compress the plot and make a customer-facing graph difficult to read. | **DO NOW.** Preserve the plot height, event count, and full Watering History while making multiple events visually usable. |
+| **Execution priority** | **Create the brand foundation and first business card** | The graph repair is locally complete, and this independent customer-facing outcome can move while field learning waits on weather. | **DO NOW.** Define a lightweight reusable visual foundation and produce a practical first leave-behind without locking premature permanent branding. |
 
-> **Roadmap rule:** Weather can block evidence, but it does not block progress. The threshold remains the highest-value outcome while the graph repair becomes the first executable task.
+> **Roadmap rule:** Weather can block evidence, but it does not block progress. The threshold remains the highest-value outcome while brand foundation and the first business card become the next executable task.
 
 ## Current State
 
@@ -33,7 +33,6 @@ My Balcony Gardener currently has a commissioned Gen2 controller, local firmware
 
 ### What is not yet good enough
 
-- Multiple watering-event labels can consume graph space and make the actual data plot too small.
 - The product does not yet have enough clean basket dry-down evidence to establish or present a defensible watering threshold.
 - Phase 8G.4 established the durable service-side identity model, but routine firmware payload cleanup remains deliberately deferred.
 - MBG does not yet have a small, coherent brand foundation or a physical leave-behind for introducing the product to potential customers and partners.
@@ -51,8 +50,7 @@ Watering threshold evidence
         +-- when weather permits: observe -> evaluate -> decide -> design presentation
 
 HIGHEST EXECUTABLE WORK
-Graph visibility repair
-        -> brand foundation and business card
+Brand foundation and business card
         -> real customer adoption and UI modernization
         -> deterministic Demo
 
@@ -63,25 +61,7 @@ Local scheduling
 
 ## NOW — Active Attention
 
-### 1. Watering-Event Graph Visibility Repair
-
-**Lane:** Executable now  
-**Workstream:** Frontend UI/UX  
-**Recommended tool:** **Codex — `gpt-5.6-sol`, high effort.** Use the in-app browser for visual inspection and responsive validation.  
-**Why now:** It is a visible customer-facing defect. When several watering events appear, their labels reduce the height available for measurement trends—the graph's main purpose.
-
-**Desired outcome:** The measurement plot keeps a stable, useful height regardless of how many watering events occur. Every event remains count-preserving, and complete named evidence remains available in Watering History.
-
-**First decisions:**
-
-- Decide which event details belong directly on the graph versus in a tooltip or Watering History.
-- Contain or layer marker labels without hiding events.
-- Verify desktop and phone-sized behavior with dense watering-event examples.
-- Preserve existing event semantics, selected-window behavior, and read-only boundaries.
-
-**Done means:** One event and many events are both understandable; the graph remains readable; no event disappears; customer and Support behavior are verified.
-
-### 2. Watering-Threshold Evidence Watch
+### 1. Watering-Threshold Evidence Watch
 
 **Lane:** Highest product priority; environmentally blocked  
 **Workstream:** Product learning / Sensors / Future control  
@@ -110,9 +90,7 @@ Bundling is preferred because the watering-threshold implementation is already e
 
 **Done means:** The evidence supports a documented threshold or range, uncertainty is explicit, and any display or control implication receives separate design and approval.
 
-## NEXT — Prioritized Queue
-
-### 3. Brand Foundation and First Marketing Material
+### 2. Brand Foundation and First Marketing Material
 
 **Objective:** Create a small, usable MBG brand foundation and apply it to the first practical marketing deliverable, especially a business card.  
 **Why now:** It is customer-facing, relatively independent of the technical roadmap, and gives Jeremy something tangible to use when describing and marketing MBG before the broader customer-adoption phase.  
@@ -123,7 +101,9 @@ Bundling is preferred because the watering-threshold implementation is already e
 **Workstream:** Brand / Marketing / Product / Frontend visual foundation  
 **Recommended tool:** **ChatGPT — GPT-5.6 with high thinking effort and image generation.** Use Codex later if approved brand assets need to be organized in the repository or applied to the frontend.
 
-### 4. Phase 8H — Customer Adoption and Customer-Led UI Modernization
+## NEXT — Prioritized Queue
+
+### 3. Phase 8H — Customer Adoption and Customer-Led UI Modernization
 
 **Workstream:** Product / Frontend UI/UX / Customer experience  
 **Recommended tool:** **ChatGPT — GPT-5.6 with high thinking effort** for customer-journey discovery and product decisions; then **Codex — `gpt-5.6-sol`, high effort** for bounded repository implementation.  
@@ -133,7 +113,7 @@ Bundling is preferred because the watering-threshold implementation is already e
 
 **Likely focus areas:** Navigation, information hierarchy, plain-language status, responsive behavior, accessibility, setup expectations, and the separation between customer meaning and Support diagnostics.
 
-### 5. Phase 8I — Deterministic Demo
+### 4. Phase 8I — Deterministic Demo
 
 **Workstream:** Product / Frontend / Sales demonstration  
 **Recommended tool:** **Codex — `gpt-5.6-sol`, high effort.** Use ChatGPT first only if the demo story, audience, or sample scenario still needs product-level definition.  
@@ -174,21 +154,21 @@ Use this view when the question is not “what comes next?” but “where does 
 | --- | --- | --- | --- |
 | **Product and customer** | Watering-threshold learning | Real customer adoption | Alerts, broader onboarding, commercial readiness |
 | **Brand and marketing** | Define a lightweight visual foundation and business card | Reuse tested brand elements in customer adoption | Broader collateral after message and audience are proven |
-| **Frontend UI/UX** | Watering-event graph visibility | Customer-led modernization | Deterministic Demo and broader visual system |
+| **Frontend UI/UX** | Post-push graph validation; preserve the repaired stable plot | Customer-led modernization | Deterministic Demo and broader visual system |
 | **Hardware and firmware** | Preserve safe local authority | Bundle deferred 8G.4 payload cleanup with threshold firmware work | Hydraulic proof, service-friendly production design |
 | **Sensors and field learning** | Wait for clean basket dry-down | Threshold/range decision | Confidence models and richer microclimate learning |
 | **Data, database, and I/O** | Phase 8G.4 service-side identity model complete | Consume durable installation history without routine manual physical IDs | Cadence separation and evidence-based intelligence |
 | **Reliability and operations** | Continue soak observation | Turn repeated patterns into bounded work | Alerts, support tooling, production hardening |
-| **Technical debt** | Fix visible graph layout debt | Retire routine firmware `physical_sensor_id` duplication during threshold work | Address debt when it impairs customers, safety, or delivery |
+| **Technical debt** | Retire routine firmware `physical_sensor_id` duplication during threshold work | Address bounded customer-visible debt during modernization | Address debt when it impairs customers, safety, or delivery |
 | **Documentation** | Keep this roadmap current | Keep detailed evidence in phase records | Simplify old records only when navigation suffers |
 
 ## Recently Completed
 
 Only the three most recent meaningful outcomes stay here. Older completion evidence belongs in [`PHASE_BACKLOG.md`](./PHASE_BACKLOG.md).
 
-1. **Phase 8G.4 — Physical Sensor Identity and Service Lifecycle:** The service-side identity model, production schema, MS02 asset registration, digital QR, and documentation are complete without a firmware update. P02 remains a simulation unit with no installation interval. Deferred firmware payload cleanup is explicitly carried into the future watering-threshold firmware phase.
-2. **Phase 8G.3.2 — Public live customer example:** `/demo` now provides a constrained public customer-facing example without exposing Support diagnostics; locally validated, with production deployment and hosted validation not yet claimed.
-3. **Phase 8G.3.1 — Adaptive environmental card scales:** Environmental cards now make the current condition visually dominant while retaining context; locally validated, with production deployment and hosted validation not yet claimed.
+1. **Watering-event graph visibility repair:** The fixed-height measurement plot no longer shrinks as watering evidence accumulates. Every watering retains its dashed line; a single watering is named over its line, dense windows show one centered exact-count summary, and complete evidence remains in Watering History. Jeremy accepted the local desktop single- and 17-watering presentations; phone-sized and post-push hosted validation remain follow-ups.
+2. **Phase 8G.4 — Physical Sensor Identity and Service Lifecycle:** The service-side identity model, production schema, MS02 asset registration, digital QR, and documentation are complete without a firmware update. P02 remains a simulation unit with no installation interval. Deferred firmware payload cleanup is explicitly carried into the future watering-threshold firmware phase.
+3. **Phase 8G.3.2 — Public live customer example:** `/demo` now provides a constrained public customer-facing example without exposing Support diagnostics; locally validated, with production deployment and hosted validation not yet claimed.
 
 ## How to Start a Roadmap Item with ChatGPT
 

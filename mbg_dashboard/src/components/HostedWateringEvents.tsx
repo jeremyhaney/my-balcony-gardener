@@ -36,7 +36,7 @@ const HostedWateringEvents = ({
 
       {!isBlockingLoad && !hasCycles ? (
         <p className="hosted-watering-events-note">
-          No watering cycles recorded for this device in this window yet.
+          No watering recorded for this device in this window yet.
         </p>
       ) : null}
 
@@ -46,7 +46,7 @@ const HostedWateringEvents = ({
 
           {olderCycles.length > 0 ? (
             <details className="hosted-watering-events-older">
-              <summary>Older watering cycles</summary>
+              <summary>Older watering history</summary>
               <WateringCycleTable cycles={olderCycles} />
             </details>
           ) : null}

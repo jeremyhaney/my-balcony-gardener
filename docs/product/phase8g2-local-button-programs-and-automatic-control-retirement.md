@@ -41,6 +41,8 @@ The queue retains offline events instead of discarding them before a delivery at
 
 Hosted history interprets only the new terminal reasons as `Button Cycle` and `Button Stop`. Historical automatic, manual, button-release, timeout, and reservoir-safety records retain their existing interpretation.
 
+Subsequent presentation follow-on, 2026-08-27: both programmed completion and accepted button cancellation now use the simpler customer-facing label `Button Watering`; stored terminal reasons and durations remain unchanged. See [`watering-event-graph-visibility-repair-phase-slice.md`](./watering-event-graph-visibility-repair-phase-slice.md).
+
 ## Automatic-control retirement
 
 Current firmware and configuration no longer contain the automatic-control threshold/duration/cooldown macros, automatic sample buffers/timers/gates, moisture comparisons, automatic start helper, or automatic completion branch. The ignored private configuration had only those two obsolete definitions removed; secrets and unrelated settings were not changed or displayed.

@@ -2,7 +2,7 @@
 
 Date: 2026-08-27
 
-Status: Implemented and deterministically locally validated; desktop/phone dense-event and authenticated hosted validation remain open
+Status: Complete, locally validated, and Jeremy visually accepted; phone-sized and post-push authenticated hosted validation remain open
 
 Authority: [`../PROJECT_ROADMAP.md`](../PROJECT_ROADMAP.md)
 
@@ -23,25 +23,26 @@ Keep the measurement plot at a stable useful height for zero, one, or many selec
 - Keep every selected-window watering-cycle `ReferenceLine`, including its existing time, type-derived color, and event identity.
 - Remove variable-height SVG marker labels and their collision-lane layout.
 - Use the fixed base chart margin regardless of event count.
-- Add a compact summary immediately above the fixed-height chart:
-  - one event includes the complete short marker name and duration;
-  - many events show the exact marker count;
-  - both direct people to Watering History for complete details.
+- Add a compact summary in the chart header:
+  - one watering centers its plain-language type and duration directly over its dashed line in the matching type color;
+  - many waterings center the exact count over the graph and direct people to Watering History for complete details.
 - Preserve existing chart scrolling and phone breakpoint heights.
 
 ## Deliberate presentation decision
 
-The graph carries event timing, count, and type tone through marker lines. The compact summary carries the exact count and, when only one event is present, its short name and duration. Complete names, timestamps, durations, and types remain in Watering History.
+The graph carries watering timing, count, and type tone through its dashed lines. A single watering centers its plain-language type and duration over the corresponding line. A dense window replaces individual names with one centered exact-count summary and sends the reader to Watering History. Complete names, timestamps, durations, and types remain in Watering History.
+
+Customer-facing normal labels are `Auto Watering`, `Button Watering`, and `Manual Watering`. Prototype02's pump-free evidence is `Button Test` so the interface does not claim that water was delivered. Exceptional outcomes remain explicit as `Button Safety Stop`, `Reservoir Safety Stop`, or `Device Safety Stop`.
 
 A marker tooltip is excluded from this first slice. Recharts measurement tooltips do not inherently expose `ReferenceLine` details, and adding a separate interactive hit-target layer would enlarge the accessibility and touch-interaction scope. The existing Watering History remains the canonical complete named surface.
 
 ## Exclusions and safety boundaries
 
-- No watering-event pairing, classification, wording, sorting, selected-device, or selected-window change.
+- No watering-event pairing, classification semantics, sorting, selected-device, or selected-window change. Customer-facing wording was deliberately simplified without rewriting stored evidence.
 - No query, polling, API, Supabase, SQL, schema, RLS, grant, storage, or data mutation.
 - No firmware build or upload; no sensor, relay, pump, reservoir, or physical-device mutation.
 - No watering threshold, duration, cadence, cooldown, safety logic, command/control, or watering-authority change.
-- No customer assignment, public-demo data exposure, production deployment, commit, or push.
+- No customer assignment, public-demo data exposure, or production deployment command.
 - No general chart or hosted-interface redesign.
 
 ## Validation completed
@@ -49,30 +50,30 @@ A marker tooltip is excluded from this first slice. Recharts measurement tooltip
 - Dashboard test suite: `71/71` passing.
 - ESLint: passing.
 - TypeScript and default Vite production build: passing.
+- Hosted-read-only production build: passing.
+- `git diff --check`: passing.
 - The existing bundle-size warning remains and is unrelated to this slice.
 - Public/local route inspection confirmed that protected watering history is not exposed on the public example, preserving the established read-only/public-data boundary.
+- Jeremy visually accepted the final desktop single-watering and dense 17-watering presentations on 2026-08-27, including the fixed plot height, centered summary placement, count preservation, matching single-line color, and complete Watering History rows. Prototype02 wording was also reviewed from the authenticated Support presentation.
 
 ## Validation still required
 
-- Render a deterministic dense fixture or use authorized authenticated evidence to inspect one-event and many-event cases at desktop and phone-sized viewports.
-- Confirm that every visible Watering History cycle has one corresponding chart line in the same selected device/window.
-- Confirm Customer and Support surfaces render the same count-preserving result.
-- Re-run the hosted-read-only build before any deployment.
-- Deploy only with separate authorization, then perform authenticated hosted validation without generating watering or fabricated production evidence.
+- Inspect the final presentation at a phone-sized viewport with authorized watering evidence.
+- After the pushed `main` commit is deployed through the existing Cloudflare path, perform authenticated Customer and Support hosted validation without generating watering or fabricated production evidence.
 
 ## Acceptance criteria
 
 - The chart top margin and measurement plot height do not vary with watering-event count.
 - Zero, one, and many events do not hide or collapse marker lines.
-- The many-event summary reports the exact number of in-window cycle markers.
+- The many-watering summary reports the exact number of in-window dashed lines.
 - A single event remains understandable by short name and duration without opening history.
 - Watering History retains complete event names, start times, durations, and types.
 - Existing event semantics, selected-device/window behavior, read-only boundaries, and local firmware watering authority remain unchanged.
-- Desktop and phone-sized dense-event inspection passes on both Customer and Support surfaces.
+- Desktop single- and dense-watering inspection passes; phone-sized and post-push hosted checks remain release follow-ups rather than claims in this record.
 
 ## Decisions requiring Jeremy
 
-No product decision is required to continue local verification. Jeremy authorized commit and push on 2026-08-27. Production deployment remains separately controlled. Jeremy's authenticated observation is also required for final Customer/Support hosted closeout unless an approved deterministic protected-route test fixture is added in a separately bounded slice.
+No product decision remains open. Jeremy accepted the final presentation and authorized commit and push on 2026-08-27. The push may trigger the established Cloudflare deployment path, but this record does not claim deployment or hosted correspondence until separately observed.
 
 ## Expected system effects
 
@@ -83,4 +84,4 @@ No product decision is required to continue local verification. Jeremy authorize
 | Database / Supabase | None |
 | Hardware / device upload | None |
 | Watering authority | None; local firmware remains authoritative |
-| Deployment | None in this slice |
+| Deployment | No deployment command; pushing `main` may trigger the established Cloudflare path, with hosted validation still required |

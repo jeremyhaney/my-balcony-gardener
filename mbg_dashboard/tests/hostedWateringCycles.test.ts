@@ -97,8 +97,8 @@ test('includes and distinguishes button timeout and reservoir safety terminals',
       color: timeout.markerColor,
     },
     {
-      label: 'Button Safety Cutoff',
-      marker: 'Button Safety Cutoff · 15s',
+      label: 'Button Safety Stop',
+      marker: 'Button Safety Stop · 15s',
       tone: 'timeout-safety',
       color: '#a16207',
     },
@@ -126,7 +126,7 @@ test('distinguishes programmed button completion and local cancellation', () => 
 
   assert.deepEqual(
     cycles.map((cycle) => cycle.markerLabel),
-    ['Button Stop · 12s', 'Button Cycle · 30s'],
+    ['Button Watering · 12s', 'Button Watering · 30s'],
   )
 })
 
@@ -156,8 +156,8 @@ test('labels simulated watering evidence without downgrading it from a watering 
 
   assert.equal(cycles.length, 1)
   assert.equal(cycles[0].simulated, true)
-  assert.equal(cycles[0].displayReason, 'Simulated Button Cycle')
-  assert.equal(cycles[0].markerLabel, 'Simulated Button Cycle · 30s')
+  assert.equal(cycles[0].displayReason, 'Button Test')
+  assert.equal(cycles[0].markerLabel, 'Button Test · 30s')
   assert.equal(cycles[0].terminalEventType, 'watering_completed')
 })
 

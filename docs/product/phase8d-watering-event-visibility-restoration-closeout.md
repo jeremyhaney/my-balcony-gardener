@@ -107,3 +107,5 @@ The existing protected query continues to filter by selected device and selected
 ## Closeout
 
 Jeremy approved the bounded implementation, authorized commit and push, and confirmed the authenticated hosted result on 2026-08-19. Phase 8D is operationally closed at its frontend-only regression-repair boundary. Phase 8E — Feels Like and Dew Point — is next under the separate discovery and approval process in the roadmap authority.
+
+Subsequent presentation follow-on, 2026-08-27: the watering-event graph visibility repair preserves Phase 8D's pairing, count, timestamp, duration, type, selected-window, and read-only contracts while replacing variable-height label lanes with a fixed-height presentation. Current plain-language wording and layout are recorded in [`watering-event-graph-visibility-repair-phase-slice.md`](./watering-event-graph-visibility-repair-phase-slice.md); this does not rewrite the Phase 8D hosted evidence above.

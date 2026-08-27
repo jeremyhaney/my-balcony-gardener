@@ -176,8 +176,8 @@ const mapTerminalEventToCycle = (
     : terminal.timestampMs - durationSeconds * 1000
   const presentation = getWateringPresentation(terminal.row)
   const simulated = terminal.row.details?.simulation === true
-  const displayReason = simulated
-    ? `Simulated ${presentation.displayReason}`
+  const displayReason = simulated && presentation.tone === 'button'
+    ? 'Button Test'
     : presentation.displayReason
 
   return {
@@ -205,7 +205,7 @@ const getWateringPresentation = (
     switch (row.reason) {
       case 'physical_button_hold_timeout':
         return {
-          displayReason: 'Button Safety Cutoff',
+          displayReason: 'Button Safety Stop',
           markerColor: '#a16207',
           tone: 'timeout-safety',
         }
@@ -226,7 +226,7 @@ const getWateringPresentation = (
 
   if (row.reason === 'physical_button_program_completed') {
     return {
-      displayReason: 'Button Cycle',
+      displayReason: 'Button Watering',
       markerColor: '#1d4ed8',
       tone: 'button',
     }
@@ -234,7 +234,7 @@ const getWateringPresentation = (
 
   if (row.reason === 'physical_button_cancelled') {
     return {
-      displayReason: 'Button Stop',
+      displayReason: 'Button Watering',
       markerColor: '#1d4ed8',
       tone: 'button',
     }
@@ -261,7 +261,7 @@ const formatTriggerSource = (value: HostedWateringEventRow['trigger_source']): s
     case 'manual_local':
       return 'Manual Watering'
     case 'automatic':
-      return 'Automatic Watering'
+      return 'Auto Watering'
     case 'physical_button':
       return 'Button Watering'
     case 'firmware_safety':
@@ -279,7 +279,7 @@ const formatReason = (
       return 'Manual Watering'
     case 'automatic_watering_started':
     case 'automatic_watering_completed':
-      return 'Automatic Watering'
+      return 'Auto Watering'
     case 'watering_completed_trigger_source_fallback':
       return 'Device Safety'
     default:

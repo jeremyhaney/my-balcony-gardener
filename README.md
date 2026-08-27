@@ -25,7 +25,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Moisture-triggered automatic watering is absent from the current executable/configuration surface. RMI and all sensor measurements remain observational and cannot start the pump.
 - Normal Gen2 measurement batches and heartbeats post on approximately a 15-minute cadence; watering-event evidence remains immediate/best-effort outside that cadence.
 - Phase 5D/5F DHT, direct analog-soil, `/logs`, and `sensor_logs` behavior is historical evidence for retired firmware profiles, not current Balcony02 implementation.
-- Hosted watering events are presented from the protected Gen2 event-evidence path; the frontend no longer derives watering markers from `sensor_logs`.
+- Hosted watering evidence is presented from the protected Gen2 event-evidence path; the frontend preserves one selected-window chart line per watering without shrinking the measurement plot and keeps complete named evidence in Watering History. It no longer derives watering indicators from `sensor_logs`.
 - The frontend and supported firmware contain no `/logs` path.
 - Phase 6A hosted read-only dashboard was merged to `main`.
 - Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
