@@ -180,6 +180,8 @@ Jeremy visually confirmed the deployed production site after commit `9b8eb0f`. T
 
 Phase 8B.6 changed no firmware, PlatformIO profile, endpoint payload or frozen `/measurements`, `/capabilities`, or `/status` contract, SQL/schema/table/view/RLS/grant, Supabase command/control, Cloudflare or environment configuration, device identity, sensor, pin, I2C/mux topology, threshold, duration, cooldown, sampling or telemetry cadence, relay, physical button, reservoir interlock, automatic watering authority, local firmware ownership, hosted command/control, Water Now availability, card presentation, Garden Reading Quality, MBG Diagnostics, or chart-series/axis contract. It did not investigate mux behavior or remove Gen1.
 
+Subsequent presentation clarification, 2026-08-28: Garden Reading Quality now labels history-only coverage/gap findings as `History Gap` and `Worth Noting` when the latest readings are current and usable. Findings involving current freshness, availability, validity, usability, timestamps, or no data retain `Needs Attention`. The existing greater-than-45-minute gap predicate, 70% coverage threshold, evidence calculations, and read-only boundary are unchanged.
+
 ### Validation limitations
 
 Authenticated customer/support routes were not bypassed or fabricated. `/mygarden`, `/app`, and `/support` remained properly authentication-gated, so protected authenticated watering queries were not independently exercised. No naturally occurring greater-than-45-minute hosted gap was available. These limitations are not discovered Phase 8B.6 defects.

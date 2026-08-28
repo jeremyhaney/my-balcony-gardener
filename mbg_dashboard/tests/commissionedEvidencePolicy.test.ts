@@ -211,3 +211,50 @@ test('capability-driven health uses only provided commissioned descriptors', () 
   assert.equal(zero.sensorAvailability.expectedEntryCount, 0)
   assert.equal(zero.latestReadingChecks.expectedEntryCount, 0)
 })
+
+test('classifies a recovered historical interruption as a history gap', () => {
+  const timestamps = [
+    '2026-08-16T09:15:00Z',
+    '2026-08-16T09:30:00Z',
+    '2026-08-16T09:45:00Z',
+    '2026-08-16T10:00:00Z',
+    '2026-08-16T11:00:00Z',
+    '2026-08-16T11:15:00Z',
+    '2026-08-16T11:30:00Z',
+    '2026-08-16T11:45:00Z',
+    '2026-08-16T12:00:00Z',
+  ]
+  const rows = timestamps.map((measured_at, index) => row({
+    batch_id: `10000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    measured_at,
+  }))
+  const health = calculateHostedGen2Health(
+    rows,
+    '3h',
+    new Date('2026-08-16T12:07:00Z'),
+    [descriptor],
+  )
+
+  assert.equal(health.status, 'warning')
+  assert.equal(health.readingAge.isCurrent, true)
+  assert.equal(health.latestReadingChecks.usableEntryCount, 1)
+  assert.equal(health.readingHistory.hasGapWarning, true)
+  assert.deepEqual(health.attentionItems.map((item) => item.key), ['gap'])
+  assert.equal(health.attentionLevel, 'history-gap')
+})
+
+test('retains needs-attention language when current readings are also stale', () => {
+  const health = calculateHostedGen2Health(
+    [
+      row({ measured_at: '2026-08-16T09:00:00Z' }),
+      row({ measured_at: '2026-08-16T10:00:00Z' }),
+    ],
+    '3h',
+    new Date('2026-08-16T12:00:00Z'),
+    [descriptor],
+  )
+
+  assert.equal(health.readingHistory.hasGapWarning, true)
+  assert.equal(health.attentionItems.some((item) => item.key === 'not-current'), true)
+  assert.equal(health.attentionLevel, 'needs-attention')
+})

@@ -84,6 +84,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Hosted Gen2 Garden Reading Quality uses already-fetched Gen2 rows for the selected device/window; the frontend legacy `sensor_logs` health calculation is retired.
 - Garden Reading Quality checks latest Gen2 report sample age, unique `measured_at` sample count, expected sample coverage, largest gap, Gen2 measurement metadata such as `valid`, `quality`, and `reason`, and whether the latest sample has displayable numeric measurements.
 - Garden Reading Quality is informational only and does not perform calibration, plant diagnosis, fault diagnosis, alerts, or command/control.
+- Garden Reading Quality distinguishes a recovered historical continuity issue from a current reading problem. When the only findings are low history coverage or a greater-than-45-minute gap, the amber summary reads `History Gap`, the detail heading reads `Worth Noting`, and the explanation says that some updates are missing while the latest readings are current and usable. `Needs Attention` remains reserved for current/stale, missing, invalid, unusable, future-timestamp, or no-data evidence. The 45-minute gap and 70% coverage thresholds are unchanged.
 - Hosted Gen2 trend labels and tooltips adapt to the selected history window.
 - Hosted read-only mode does not call local ESP32 `/logs` or `/water-now`.
 - Hosted read-only production build scan found no `Water Now`, `/water-now`, `/logs`, or `10.0.0.200` strings after the lazy/dynamic import fix.

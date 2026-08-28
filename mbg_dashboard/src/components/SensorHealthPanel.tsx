@@ -76,6 +76,10 @@ const HostedGen2HealthPanel = ({
   onOpenChange?: (isOpen: boolean) => void
 }) => {
   const styles = statusStyles[health.status]
+  const hasHistoryGapOnly = health.attentionLevel === 'history-gap'
+  const attentionMessages = hasHistoryGapOnly
+    ? ['Some reading updates are missing from the selected window. The latest readings are current and usable.']
+    : health.attentionItems.map((item) => item.message)
   const summaries: StatusSummary[] = [
     {
       tone: health.readingAge.tone,
@@ -124,7 +128,9 @@ const HostedGen2HealthPanel = ({
           Garden Reading Quality
         </span>
         {health.attentionItems.length > 0 ? (
-          <span className="sensor-health-message">Needs Attention</span>
+          <span className="sensor-health-message">
+            {hasHistoryGapOnly ? 'History Gap' : 'Needs Attention'}
+          </span>
         ) : null}
       </button>
 
@@ -151,10 +157,10 @@ const HostedGen2HealthPanel = ({
 
           {health.attentionItems.length > 0 ? (
             <section className="sensor-health-advanced">
-              <h3>Needs Attention</h3>
+              <h3>{hasHistoryGapOnly ? 'Worth Noting' : 'Needs Attention'}</h3>
               <ul>
-                {health.attentionItems.map((item) => (
-                  <li key={item.key}>{item.message}</li>
+                {attentionMessages.map((message) => (
+                  <li key={message}>{message}</li>
                 ))}
               </ul>
             </section>

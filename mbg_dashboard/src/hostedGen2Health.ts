@@ -67,6 +67,8 @@ export type HostedGen2AttentionItem = {
   message: string
 }
 
+export type HostedGen2AttentionLevel = 'history-gap' | 'needs-attention' | null
+
 export type HostedGen2Health = DeviceStatusHealth<string> & {
   kind: 'hosted-gen2'
   readingAge: HostedGen2ReadingAge
@@ -74,6 +76,7 @@ export type HostedGen2Health = DeviceStatusHealth<string> & {
   readingHistory: HostedGen2ReadingHistory
   latestReadingChecks: HostedGen2LatestReadingChecks
   attentionItems: HostedGen2AttentionItem[]
+  attentionLevel: HostedGen2AttentionLevel
 }
 
 type Gen2ReportSample = {
@@ -124,7 +127,8 @@ export const calculateHostedGen2Health = (
     matchedEntries, Boolean(latestSample), expectedDescriptors.length,
   )
 
-  // Needs Attention contains only observed, qualifying evidence.
+  // Attention contains only observed, qualifying evidence. Historical continuity
+  // is distinguished from a problem with current readings.
   const attentionItems = getAttentionItems({
     rows,
     latestSample,
@@ -141,6 +145,7 @@ export const calculateHostedGen2Health = (
         ? 'warning'
         : 'healthy'
   const notes = attentionItems.map((item) => item.message)
+  const attentionLevel = getAttentionLevel(attentionItems)
 
   return buildHostedGen2Health({
     status,
@@ -162,7 +167,20 @@ export const calculateHostedGen2Health = (
     readingHistory,
     latestReadingChecks,
     attentionItems,
+    attentionLevel,
   })
+}
+
+const getAttentionLevel = (
+  attentionItems: HostedGen2AttentionItem[],
+): HostedGen2AttentionLevel => {
+  if (attentionItems.length === 0) {
+    return null
+  }
+
+  return attentionItems.every((item) => item.key === 'coverage' || item.key === 'gap')
+    ? 'history-gap'
+    : 'needs-attention'
 }
 
 const buildHostedGen2Health = (
