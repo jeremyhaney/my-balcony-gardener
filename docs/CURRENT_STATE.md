@@ -69,8 +69,8 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
 - Cloudflare Pages project `my-balcony-gardener` is connected to GitHub, and Production deployment from `main` is validated.
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
-- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
-- The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
+- Final production custom domain: `https://mybalconygardener.com/`. Cloudflare activation and DNS status require revalidation following the domain-removal notice.
+- Historical migration: the previous custom domain `https://mybalconygardener.boileragency.com` was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 - Ordinary and hosted production builds select the same hosted route shell without a dashboard-mode environment input.
 - Current frontend environment configuration is limited to `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 - Phase 6E hosted read-only device/window controls are validated locally and on the Cloudflare custom domain.
@@ -404,7 +404,7 @@ This file is the short operational freeze note for the repo after the Phase 2 hy
 - Phase 7L.2 does not change the app-level brand/header in `App.tsx`.
 - Phase 7L.3 Minimal Landing Page with Embedded Live Demo and Hosted App Route Shell is implemented pending validation, Jeremy review, commit approval, and merge approval.
 - Phase 7L.3 creates product artifact [`docs/product/phase7l3-public-landing-page-and-hosted-route-shell.md`](./product/phase7l3-public-landing-page-and-hosted-route-shell.md).
-- Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete, merged to `main`, pushed, Cloudflare production auto-deployed from `main`, and production/credentialed browser validated at `https://mybalconygardener.boileragency.com`.
+- Phase 7L.4 Customer Auth, Garden Membership, and RLS Implementation is complete, merged to `main`, pushed, Cloudflare production auto-deployed from `main`, and production/credentialed browser validated at `https://mybalconygardener.boileragency.com` (previous domain; historical validation).
 - Phase 7L.4 was implemented in commit `1706798 Add customer auth garden membership RLS` from branch `phase7l4-customer-auth-garden-rls`.
 - Phase 7L.4 SQL artifact [`docs/sql/phase7l4-customer-auth-garden-membership-rls.sql`](./sql/phase7l4-customer-auth-garden-membership-rls.sql) was manually applied in Supabase SQL Editor after hash review. Seed validation confirmed `customer_garden_devices` returns Balcony01 and Scout01 only, while `support_garden_devices` returns Balcony01, Scout01, and Bench01 / Prototype01.
 - Phase 7L.4 frontend implementation adds Supabase email/password login, sign out, authenticated `/mygarden` and `/support` route gates, and protected customer/support data helpers that read `customer_*` and `support_*` views instead of public demo views. Header login from `/` or `/demo` redirects to `/mygarden`; direct logged-out `/support` login returns to `/support`; sign out returns protected routes to login/access-required states.
