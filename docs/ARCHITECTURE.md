@@ -325,8 +325,8 @@ Phase 8F.10 found no frontend, firmware, script, fixture, view, function, or tri
 - The browser-to-device fallback path is retired; local read-only endpoints remain available only for direct device inspection outside the frontend.
 - Cloudflare Pages project `my-balcony-gardener` has a validated Production deployment from branch `main`.
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
-- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
-- The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
+- Final production custom domain: `https://mybalconygardener.com/`. Cloudflare activation and DNS status require revalidation following the domain-removal notice.
+- Historical migration: the previous custom domain `https://mybalconygardener.boileragency.com` was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 
 ## Deferred Architecture Areas
 
