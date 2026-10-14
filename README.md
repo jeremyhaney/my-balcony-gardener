@@ -31,8 +31,8 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 - Code commit `a7488ba Add hosted read-only dashboard mode` added the hosted read-only dashboard mode.
 - Cloudflare Pages project `my-balcony-gardener` is connected to GitHub, and Production deployment from `main` is validated.
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
-- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
-- The custom domain was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
+- Final production custom domain: `https://mybalconygardener.com/`. Cloudflare activation and DNS status require revalidation following the domain-removal notice.
+- Historical migration: the previous custom domain `https://mybalconygardener.boileragency.com` was moved from the obsolete old `mybalconygardener` Cloudflare Pages/Tunnel setup to the current `my-balcony-gardener` Pages project.
 - Ordinary and hosted production builds use the same hosted route shell and require no dashboard-mode setting.
 - Phase 6E hosted read-only device/window controls are validated on the custom domain.
 - Phase 6F hosted read-only Device Status / telemetry quality panel is validated locally, on Cloudflare preview, and on the hosted custom domain.
@@ -145,7 +145,7 @@ My Balcony Gardener is an ESP32-based balcony irrigation project with a React/Vi
 
 - Cloudflare Pages Production is validated from branch `main`.
 - Production hosted dashboard URL: `https://my-balcony-gardener.pages.dev`.
-- Custom domain is configured and validated: `https://mybalconygardener.boileragency.com`.
+- Final production custom domain: `https://mybalconygardener.com/`. Cloudflare activation and DNS status require revalidation following the domain-removal notice.
 - Ordinary and hosted production builds use the same route shell and generated assets.
 - Hosted read-only builds require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; do not document real values.
 - Hosted read-only routing now uses `/` for the public landing page, `/demo` for the public detailed demo, `/mygarden` for the customer `My Garden` dashboard shell, `/app` as a backward-compatible alias, `/login` for a placeholder login dialog, and `/support` for temporary read-only support review by direct URL.
